@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.36.0] — 2026-05-16
+### Added
+- **Go: NetworkInfraHandler** — cables CRUD (`/api/network/cables/*`), connections, cores, segments (joint-closures + OTBs), splices CRUD + per joint-closure, feeder-cables per OTB, joint-closure import template, network trace, auto-connect
+- **Go: Misc routes (batch 12)** — logout-log, admin agent-deposits, admin isolate-user, admin settings/isolation (+ mikrotik-script), cron olt-poll + telegram, invoices check, pay/manual, payment duitku-methods, radius/accounting, tickets dispatch-data, router setup-radius + test + test-gateway, ONU reboot + ONU detail, batch ONU reboot
+- **Go: Customer portal** — WiFi get/update (`/api/customer/wifi`), ONT reboot, invoice regenerate-payment, invoice payment
+- **Go: Hotspot** — delete-multiple vouchers
+### Files
+- `internal/api/handlers/network_infra_ext_handler.go` — NEW: cables, connections, cores, segments, splices, feeder-cables, trace, auto-connect
+- `internal/api/handlers/misc_handler.go` — added 20+ new methods (batch 12)
+- `internal/api/handlers/customer_portal_ext2.go` — added GetWifi, UpdateWifiSettings, RebootONT, RegeneratePayment, InvoicePayment
+- `internal/api/handlers/hotspot_ext.go` — added DeleteMultiple
+- `internal/api/router.go` — ~50 new routes registered (batch 12)
+
 ## [2.35.0] — 2026-05-16
 ### Added
 - **Go: AdminMiscHandler** — APK build management (`/api/admin/apk/*`), Cloudflare tunnel settings (`/api/admin/cloudflare-tunnel`), system info (`/api/admin/system/info`), FreeRADIUS backup CRUD + download/restore/upload (`/api/admin/system/freeradius-backup/*`), admin profile 2FA (`/api/admin/profile/2fa`), admin auth pre-login (`/api/admin/auth/pre-login`), PPPoE sync-all + user deposit, invoice import (`/api/admin/invoices/import`), laporan/reports (`/api/admin/laporan`), OLT model-profiles CRUD + test-connection, APK download
