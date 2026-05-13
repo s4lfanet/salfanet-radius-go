@@ -469,6 +469,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.38.0 — 2026-05-14
+
+### Added
+- **Go: OLT test-connection alias** — `POST /api/olt/test-connection` (non-admin alias to existing handler)
+- **Go: PPPoE customers bulk** — `GET /api/pppoe/customers/bulk` (template stub) + `POST /api/pppoe/customers/bulk` (alias to BulkCreateCustomers, path was `/bulk-create` before)
+- **Go: Admin suspend-requests PUT** — `PUT /api/admin/suspend-requests/:id` with `{action: "APPROVE"|"REJECT"}` body (unified approve/reject)
+### Files
+- `internal/api/handlers/admin.go` — added `SuspendRequestAction`
+- `internal/api/handlers/pppoe_ext.go` — added `BulkCustomersTemplate`
+- `internal/api/router.go` — batch 14 routes (+4 routes)
+
 ### v2.37.0 — 2026-05-14
 
 ### Added
@@ -571,22 +582,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/cronhandler.go` — added ListSchedules, UpdateSchedule, DeleteSchedule
 - `internal/api/handlers/olt.go` — added GetUplink, CreateUplink
 - `internal/api/router.go` — registered all batch 8 routes (~80 new routes)
-
-### v2.34.7 — 2026-05-13
-
-### Added
-- **Go: CustomerExtHandler** — customer portal extended: `auth/send-otp`, cash-payment, manual-payment, products, profile OTP, renewal, sessions, extend, ONT, wifi update, diagnostics (ping/speedtest/traceroute)
-- **Go: WhatsappCrudHandler** — full CRUD for providers, history, templates, reminder-settings, send endpoint
-- **Go: NetworkHandler extensions (network_ext.go)** — router CRUD (`get/update/delete/:id`), router test-connection/detect-public-ip/interfaces/isolation-settings/ping-olt/setup-isolir/uplinks/status/import, OLT list/import/template, OLT-routers, ODC/ODP/OTB import+template, OTB stats+get, fiber paths CRUD+trace, joint closures CRUD+import, nodes CRUD, servers, paths, detect-NAS, assign customer to ODP, customers with GPS location
-- **Go: AdminJobsHandler** — admin registrations workflow (list/get/approve/reject/mark-installed/request-info/tech-survey), customer-registrations CRUD, admin jobs approvals/stats/escalate/submit-approval/materials/approval-history/recurring, technician jobs (list/get/complete/customer-data/generate-credentials), team jobs
-- **Go: MiscHandler** — health/db, health/radius, RADIUS protocol stubs (authorize/post-auth/coa), PPPoE search+upload-photo+traffic+bulk+check-isolation+batch-status+send-notification+sync-mikrotik, coordinator auth portal (OTP/verify/logout/session/stats/tasks), public homepage, company info, NAS list, email broadcast, notification helpers, pay-by-token, payment gateway config, inventory variance+reorder
-### Files
-- `internal/api/handlers/customer_ext.go` — created
-- `internal/api/handlers/whatsapp_crud.go` — created
-- `internal/api/handlers/network_ext.go` — created (extends network.go)
-- `internal/api/handlers/admin_jobs.go` — created
-- `internal/api/handlers/misc_handler.go` — created
-- `internal/api/router.go` — registered ~130 new batch 7 routes
 
 <!-- AUTO-CHANGELOG:END -->
 
