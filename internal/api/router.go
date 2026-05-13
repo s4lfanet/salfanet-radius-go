@@ -113,6 +113,10 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	adminHRH := handlers.NewAdminHRHandler(db)
 	fcmH := handlers.NewFCMHandler(db)
 
+	// ─── Batch 11 handlers ───────────────────────────────────────────────────
+	adminMiscH := handlers.NewAdminMiscHandler(db)
+	networkVPNH := handlers.NewNetworkVPNHandler(db)
+
 	// ─── Public routes (NO auth — must be before the api group) ──────────────
 	app.Get("/api/system/health", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
@@ -1079,6 +1083,69 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 10: FCM device tokens ─────────────────────────────────────────
 	app.Post("/api/fcm/token", fcmH.RegisterToken)
 	app.Post("/api/fcm/test", fcmH.Test)
+
+	// ─── Batch 11: Admin misc ─────────────────────────────────────────────────
+	// APK
+	api.Get("/admin/apk/status", adminMiscH.ApkStatus)
+	api.Post("/admin/apk/trigger", adminMiscH.ApkTrigger)
+	api.Post("/admin/apk/build", adminMiscH.ApkBuild)
+	api.Get("/admin/apk/file", adminMiscH.ApkFile)
+	api.Get("/admin/download-apk", adminMiscH.DownloadApk)
+	// Cloudflare tunnel
+	api.Get("/admin/cloudflare-tunnel", adminMiscH.GetCloudflareTunnel)
+	api.Put("/admin/cloudflare-tunnel", adminMiscH.UpdateCloudflareTunnel)
+	// System info
+	api.Get("/admin/system/info", adminMiscH.SystemInfo)
+	// FreeRADIUS backup
+	api.Get("/admin/system/freeradius-backup", adminMiscH.ListFreeradiusBackups)
+	api.Post("/admin/system/freeradius-backup", adminMiscH.CreateFreeradiusBackup)
+	api.Get("/admin/system/freeradius-backup/download", adminMiscH.DownloadFreeradiusBackup)
+	api.Post("/admin/system/freeradius-backup/restore", adminMiscH.RestoreFreeradiusBackup)
+	api.Post("/admin/system/freeradius-backup/upload", adminMiscH.UploadFreeradiusBackup)
+	// Admin profile 2FA
+	api.Get("/admin/profile/2fa", adminMiscH.Get2FA)
+	api.Post("/admin/profile/2fa", adminMiscH.Update2FA)
+	// Admin auth pre-login
+	app.Post("/api/admin/auth/pre-login", adminMiscH.PreLogin)
+	// PPPoE admin
+	api.Post("/admin/pppoe/sync-all-radius", adminMiscH.SyncAllRadius)
+	api.Post("/admin/pppoe/users/:id/deposit", adminMiscH.PPPoEUserDeposit)
+	// Invoice import
+	api.Post("/admin/invoices/import", adminMiscH.ImportInvoices)
+	// Reports / Laporan
+	api.Get("/admin/laporan", adminMiscH.Laporan)
+	// OLT model profiles
+	api.Get("/admin/olt/model-profiles", adminMiscH.ListOLTModelProfiles)
+	api.Post("/admin/olt/model-profiles", adminMiscH.CreateOLTModelProfile)
+	api.Post("/admin/olt/test-connection", adminMiscH.TestOLTConnection)
+
+	// ─── Batch 11: Network VPN/VPS ────────────────────────────────────────────
+	api.Get("/network/vpn-server", networkVPNH.GetVPNServer)
+	api.Post("/network/vpn-server", networkVPNH.UpdateVPNServer)
+	api.Post("/network/vpn-server/setup", networkVPNH.SetupVPNServer)
+	api.Post("/network/vpn-server/test", networkVPNH.TestVPNServer)
+	api.Post("/network/vpn-server/l2tp-control", networkVPNH.L2TPControl)
+	api.Post("/network/vpn-server/pptp-control", networkVPNH.PPTPControl)
+	api.Post("/network/vpn-server/sstp-control", networkVPNH.SSTPControl)
+	api.Get("/network/vpn-client", networkVPNH.ListVPNClients)
+	api.Post("/network/vpn-client", networkVPNH.CreateVPNClient)
+	api.Get("/network/vpn-routing", networkVPNH.ListVPNRouting)
+	api.Post("/network/vpn-routing", networkVPNH.CreateVPNRoute)
+	api.Get("/network/vps-info", networkVPNH.GetVPSInfo)
+	api.Get("/network/vps-l2tp-info", networkVPNH.GetVPSL2TPInfo)
+	api.Get("/network/vps-l2tp-peer", networkVPNH.ListL2TPPeers)
+	api.Post("/network/vps-l2tp-peer", networkVPNH.CreateL2TPPeer)
+	api.Get("/network/vps-wg-peer", networkVPNH.ListWGPeers)
+	api.Post("/network/vps-wg-peer", networkVPNH.CreateWGPeer)
+
+	// ─── Batch 11: Agent portal extras ────────────────────────────────────────
+	api.Get("/agent/deposit/check", agentH.DepositCheck)
+	api.Post("/agent/deposit/manual-request", agentH.DepositManualRequest)
+	api.Get("/agent/deposit/payment-methods", agentH.ListDepositPaymentMethods)
+	api.Get("/agent/notifications", agentH.GetAgentNotifications)
+	api.Get("/agent/sessions", agentH.GetAgentSessions)
+	api.Get("/agent/tickets", agentH.GetAgentTickets)
+	api.Get("/agent/tickets/:id", agentH.GetAgentTicket)
 
 	// ─────────────────────────────────────────────────────────────────────────
 
