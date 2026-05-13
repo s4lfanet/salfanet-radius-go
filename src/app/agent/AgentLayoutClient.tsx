@@ -16,6 +16,7 @@ import {
   Moon,
   LifeBuoy,
   Clock,
+  Wallet,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AgentNotificationDropdown from '@/components/agent/NotificationDropdown';
@@ -37,6 +38,11 @@ const menuItems: MenuItem[] = [
     titleKey: 'agent.portal.dashboard',
     icon: <LayoutDashboard className="w-4 h-4" />,
     href: '/agent/dashboard',
+  },
+  {
+    titleKey: 'agent.portal.deposit',
+    icon: <Wallet className="w-4 h-4" />,
+    href: '/agent/deposit',
   },
   {
     titleKey: 'agent.portal.vouchers',

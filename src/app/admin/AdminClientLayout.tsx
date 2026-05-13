@@ -144,6 +144,12 @@ const menuGroups: MenuGroup[] = [
         requiredPermission: 'invoices.view',
       },
       {
+        titleKey: 'nav.invoiceTemplates',
+        icon: <FileText className="w-4 h-4" />,
+        href: '/admin/invoice-templates',
+        requiredPermission: 'invoices.view',
+      },
+      {
         titleKey: 'nav.payment',
         icon: <CreditCard className="w-4 h-4" />,
         requiredPermission: 'settings.payment',
@@ -193,6 +199,16 @@ const menuGroups: MenuGroup[] = [
           { titleKey: 'nav.routerNas', href: '/admin/network/routers', requiredPermission: 'routers.view' },
           { titleKey: 'nav.vpnServer', href: '/admin/network/vpn-server', requiredPermission: 'routers.view' },
           { titleKey: 'nav.vpnClient', href: '/admin/network/vpn-client', requiredPermission: 'routers.view' },
+        ],
+      },
+      {
+        titleKey: 'nav.vpnManagement',
+        icon: <Shield className="w-4 h-4" />,
+        requiredPermission: 'routers.view',
+        children: [
+          { titleKey: 'nav.vpnClients', href: '/admin/vpn/clients', requiredPermission: 'routers.view' },
+          { titleKey: 'nav.vpnSites', href: '/admin/vpn/sites', requiredPermission: 'routers.view' },
+          { titleKey: 'nav.vpnSettings', href: '/admin/vpn/settings', requiredPermission: 'settings.view' },
         ],
       },
       {
@@ -305,6 +321,32 @@ const menuGroups: MenuGroup[] = [
           { titleKey: 'nav.inventoryMovements', href: '/admin/inventory/movements', requiredPermission: 'settings.view' },
           { titleKey: 'nav.inventoryCategories', href: '/admin/inventory/categories', requiredPermission: 'settings.view' },
           { titleKey: 'nav.inventorySuppliers', href: '/admin/inventory/suppliers', requiredPermission: 'settings.view' },
+        ],
+      },
+      {
+        titleKey: 'nav.troubleshooting',
+        icon: <AlertTriangle className="w-4 h-4" />,
+        requiredPermission: 'settings.view',
+        children: [
+          { titleKey: 'nav.troubleshootingChecklists', href: '/admin/troubleshooting', requiredPermission: 'settings.view' },
+          { titleKey: 'nav.troubleshootingJobs', href: '/admin/troubleshooting/jobs', requiredPermission: 'settings.view' },
+        ],
+      },
+      {
+        titleKey: 'nav.payrollTemplates',
+        icon: <FileText className="w-4 h-4" />,
+        href: '/admin/payroll-templates',
+        requiredPermission: 'settings.view',
+      },
+      {
+        titleKey: 'nav.hrManagement',
+        icon: <UserCheck className="w-4 h-4" />,
+        requiredPermission: 'settings.view',
+        children: [
+          { titleKey: 'nav.attendance', href: '/admin/attendance', requiredPermission: 'settings.view' },
+          { titleKey: 'nav.cashAdvances', href: '/admin/cash-advances', requiredPermission: 'settings.view' },
+          { titleKey: 'nav.commissions', href: '/admin/commissions', requiredPermission: 'settings.view' },
+          { titleKey: 'nav.payroll', href: '/admin/payroll', requiredPermission: 'settings.view' },
         ],
       },
       {

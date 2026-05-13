@@ -107,6 +107,12 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	troubleshootH := handlers.NewTroubleshootingHandler(db)
 	evoucherH := handlers.NewEvoucherHandler(db)
 
+	// ─── Batch 10 handlers ───────────────────────────────────────────────────
+	adminVPNH := handlers.NewAdminVPNHandler(db)
+	adminPayrollH := handlers.NewAdminPayrollHandler(db)
+	adminHRH := handlers.NewAdminHRHandler(db)
+	fcmH := handlers.NewFCMHandler(db)
+
 	// ─── Public routes (NO auth — must be before the api group) ──────────────
 	app.Get("/api/system/health", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
@@ -1013,6 +1019,66 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/admin/evoucher/orders/:id/cancel", evoucherH.AdminCancelOrder)
 	api.Post("/admin/evoucher/orders/:id/resend", evoucherH.AdminResendOrder)
 	api.Delete("/admin/evoucher/orders/bulk-delete", evoucherH.AdminBulkDelete)
+
+	// ─── Batch 10: Admin VPN ─────────────────────────────────────────────────
+	api.Get("/admin/vpn/clients", adminVPNH.ListClients)
+	api.Post("/admin/vpn/clients", adminVPNH.CreateClient)
+	api.Get("/admin/vpn/clients/:id", adminVPNH.GetClient)
+	api.Put("/admin/vpn/clients/:id", adminVPNH.UpdateClient)
+	api.Delete("/admin/vpn/clients/:id", adminVPNH.DeleteClient)
+	api.Post("/admin/vpn/clients/:id/approve", adminVPNH.ApproveClient)
+	api.Post("/admin/vpn/clients/:id/reject", adminVPNH.RejectClient)
+	api.Get("/admin/vpn/clients/:id/config", adminVPNH.GetClientConfig)
+	api.Get("/admin/vpn/clients/:id/qr", adminVPNH.GetClientQR)
+	api.Post("/admin/vpn/generate-keys", adminVPNH.GenerateKeys)
+	api.Get("/admin/vpn/service", adminVPNH.GetService)
+	api.Put("/admin/vpn/service", adminVPNH.UpdateService)
+	api.Get("/admin/vpn/settings", adminVPNH.GetSettings)
+	api.Put("/admin/vpn/settings", adminVPNH.UpdateSettings)
+	api.Get("/admin/vpn/sites", adminVPNH.ListSites)
+	api.Post("/admin/vpn/sites", adminVPNH.CreateSite)
+	api.Get("/admin/vpn/sites/:id", adminVPNH.GetSite)
+	api.Put("/admin/vpn/sites/:id", adminVPNH.UpdateSite)
+	api.Delete("/admin/vpn/sites/:id", adminVPNH.DeleteSite)
+	api.Get("/admin/vpn/sites/:id/config", adminVPNH.GetSiteConfig)
+
+	// ─── Batch 10: Admin Payroll ─────────────────────────────────────────────
+	api.Get("/admin/payroll", adminPayrollH.List)
+	api.Get("/admin/payroll/:id", adminPayrollH.Get)
+	api.Put("/admin/payroll/:id", adminPayrollH.Update)
+	api.Delete("/admin/payroll/:id", adminPayrollH.Delete)
+	api.Post("/admin/payroll/generate", adminPayrollH.Generate)
+	api.Get("/admin/payroll/overtime", adminPayrollH.ListOvertime)
+	api.Post("/admin/payroll/overtime", adminPayrollH.CreateOvertime)
+	api.Post("/admin/payroll/pay/:id", adminPayrollH.Pay)
+
+	// ─── Batch 10: Admin HR (Attendance) ─────────────────────────────────────
+	api.Get("/admin/attendance", adminHRH.ListAttendance)
+	api.Post("/admin/attendance", adminHRH.CreateAttendance)
+	api.Post("/admin/attendance/bulk-delete", adminHRH.BulkDeleteAttendance)
+	api.Get("/admin/attendance-locations", adminHRH.ListLocations)
+	api.Post("/admin/attendance-locations", adminHRH.CreateLocation)
+
+	// ─── Batch 10: Admin HR (Cash Advances) ──────────────────────────────────
+	api.Get("/admin/cash-advances", adminHRH.ListCashAdvances)
+	api.Post("/admin/cash-advances", adminHRH.CreateCashAdvance)
+	api.Get("/admin/cash-advances/:id", adminHRH.GetCashAdvance)
+	api.Put("/admin/cash-advances/:id", adminHRH.UpdateCashAdvance)
+	api.Delete("/admin/cash-advances/:id", adminHRH.DeleteCashAdvance)
+	api.Post("/admin/cash-advances/pay/:id", adminHRH.PayCashAdvance)
+
+	// ─── Batch 10: Admin HR (Commissions) ────────────────────────────────────
+	api.Get("/admin/commissions", adminHRH.ListCommissions)
+	api.Post("/admin/commissions", adminHRH.CreateCommission)
+	api.Get("/admin/commissions/:id", adminHRH.GetCommission)
+	api.Put("/admin/commissions/:id", adminHRH.UpdateCommission)
+	api.Delete("/admin/commissions/:id", adminHRH.DeleteCommission)
+	api.Post("/admin/commissions/:id/approve", adminHRH.ApproveCommission)
+	api.Post("/admin/commissions/:id/reject", adminHRH.RejectCommission)
+
+	// ─── Batch 10: FCM device tokens ─────────────────────────────────────────
+	app.Post("/api/fcm/token", fcmH.RegisterToken)
+	app.Post("/api/fcm/test", fcmH.Test)
 
 	// ─────────────────────────────────────────────────────────────────────────
 

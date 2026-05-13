@@ -404,15 +404,15 @@ func (ManualPayment) TableName() string { return "manual_payments" }
 // ─── Payment (gateway payments table) ────────────────────────────────────────
 
 type Payment struct {
-	ID        string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	InvoiceID string     `gorm:"index" json:"invoiceId"`
-	Amount    int        `json:"amount"`
-	Method    string     `json:"method"`
-	GatewayID *string    `gorm:"index" json:"gatewayId"`
-	Status    string     `gorm:"default:PENDING;index" json:"status"`
-	Notes     *string    `gorm:"type:text" json:"notes"`
-	PaidAt    time.Time  `json:"paidAt"`
-	CreatedAt time.Time  `json:"createdAt"`
+	ID        string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	InvoiceID string    `gorm:"index" json:"invoiceId"`
+	Amount    int       `json:"amount"`
+	Method    string    `json:"method"`
+	GatewayID *string   `gorm:"index" json:"gatewayId"`
+	Status    string    `gorm:"default:PENDING;index" json:"status"`
+	Notes     *string   `gorm:"type:text" json:"notes"`
+	PaidAt    time.Time `json:"paidAt"`
+	CreatedAt time.Time `json:"createdAt"`
 
 	Invoice *Invoice `gorm:"foreignKey:InvoiceID" json:"invoice,omitempty"`
 }

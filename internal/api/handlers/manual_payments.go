@@ -224,11 +224,11 @@ func (h *ManualPaymentHandler) Review(c fiber.Ctx) error {
 		var category models.TransactionCategory
 		if err := tx.Where("name = ? AND type = 'INCOME'", "Pembayaran PPPoE").First(&category).Error; err != nil {
 			// Create category if not exists
-		category = models.TransactionCategory{
+			category = models.TransactionCategory{
 				ID:   uuid.New().String(),
 				Name: "Pembayaran PPPoE",
 				Type: "INCOME",
-		}
+			}
 			tx.Create(&category)
 		}
 

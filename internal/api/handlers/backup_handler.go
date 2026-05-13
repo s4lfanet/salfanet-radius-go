@@ -173,10 +173,10 @@ func (h *BackupHandler) Health(c fiber.Ctx) error {
 	dbInfo, _ := h.db.DB()
 	dbOk := dbInfo != nil && dbInfo.Ping() == nil
 	return c.JSON(fiber.Map{
-		"success":      true,
-		"database":     dbOk,
-		"backupCount":  count,
-		"backupDir":    backupDir,
+		"success":     true,
+		"database":    dbOk,
+		"backupCount": count,
+		"backupDir":   backupDir,
 	})
 }
 
