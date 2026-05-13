@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.37.0] — 2026-05-14
+### Added
+- **Go: Auth path aliases** — `/api/customer/auth/login`, `/api/customer/auth/verify-otp`, `/api/customer/login`, `/api/agent/login` (alias to existing handlers)
+- **Go: Hotspot voucher singular** — `GET/POST /api/hotspot/voucher` (alias to `ListVouchers`/`GenerateVouchers`)
+- **Go: Network OLTs status** — `GET /api/network/olts/status` returns connectivity status of all OLTs
+### Files
+- `internal/api/handlers/misc_handler.go` — added `NetworkOLTStatus`
+- `internal/api/router.go` — batch 13 routes (+9 routes)
+
 ## [2.36.0] — 2026-05-16
 ### Added
 - **Go: NetworkInfraHandler** — cables CRUD (`/api/network/cables/*`), connections, cores, segments (joint-closures + OTBs), splices CRUD + per joint-closure, feeder-cables per OTB, joint-closure import template, network trace, auto-connect
