@@ -6,7 +6,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.34.10] — 2026-05-15
+## [2.35.0] — 2026-05-16
+### Added
+- **Go: AdminMiscHandler** — APK build management (`/api/admin/apk/*`), Cloudflare tunnel settings (`/api/admin/cloudflare-tunnel`), system info (`/api/admin/system/info`), FreeRADIUS backup CRUD + download/restore/upload (`/api/admin/system/freeradius-backup/*`), admin profile 2FA (`/api/admin/profile/2fa`), admin auth pre-login (`/api/admin/auth/pre-login`), PPPoE sync-all + user deposit, invoice import (`/api/admin/invoices/import`), laporan/reports (`/api/admin/laporan`), OLT model-profiles CRUD + test-connection, APK download
+- **Go: NetworkVPNHandler** — VPN server get/update/setup/test + L2TP/PPTP/SSTP control (`/api/network/vpn-server/*`), VPN client list/create (`/api/network/vpn-client`), VPN routing list/create (`/api/network/vpn-routing`), VPS info/L2TP-info/L2TP-peer/WG-peer (`/api/network/vps-*`)
+- **Go: Agent portal extras** — deposit check, manual deposit request, payment methods list, agent notifications, agent sessions (hotspot), agent tickets list + detail
+### Files
+- `internal/api/handlers/admin_misc_handler.go` — NEW: ~20 methods for misc admin endpoints
+- `internal/api/handlers/network_vpn_ext_handler.go` — NEW: ~17 methods for VPN server/client/VPS
+- `internal/api/handlers/agent.go` — added DepositCheck, DepositManualRequest, ListDepositPaymentMethods, GetAgentNotifications, GetAgentSessions, GetAgentTickets, GetAgentTicket
+- `internal/api/router.go` — ~37 new routes registered (batch 11)
+
+
 ### Added
 - **Go: AdminVPNHandler** — WireGuard VPN management: clients CRUD, approve/reject, config download, QR, generate-keys, service control, settings, sites CRUD + config (`/api/admin/vpn/*`)
 - **Go: AdminPayrollHandler** — payroll records list/get/update/delete, generate by month, overtime CRUD, pay action (`/api/admin/payroll*`)
