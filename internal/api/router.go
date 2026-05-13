@@ -96,6 +96,10 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	adminJobsH := handlers.NewAdminJobsHandler(db)
 	miscH := handlers.NewMiscHandler(db)
 
+	// ─── Batch 8 handlers ────────────────────────────────────────────────────
+	custExt2H := handlers.NewCustomerPortalExt2Handler(db)
+	paymentH := handlers.NewPaymentHandler(db)
+
 	// ─── Public routes (NO auth — must be before the api group) ──────────────
 	app.Get("/api/system/health", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
@@ -834,6 +838,102 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/inventory/reserve", inventoryH.CreateMovement)
 	api.Get("/inventory/variance", miscH.InventoryVariance)
 	api.Post("/inventory/reorder", miscH.InventoryReorder)
+
+	// ─── Batch 8: Company bank ────────────────────────────────────────────────
+	api.Get("/company/bank", miscH.CompanyBank)
+	api.Post("/company/bank", miscH.UpdateCompanyBank)
+
+	// ─── Batch 8: OLT uplink ─────────────────────────────────────────────────
+	olt.Get("/:id/uplink", oltH.GetUplink)
+	olt.Post("/:id/uplink", oltH.CreateUplink)
+
+	// ─── Batch 8: Cron schedule management ───────────────────────────────────
+	api.Get("/cron/schedules", cronH.ListSchedules)
+	api.Put("/cron/schedules/:job", cronH.UpdateSchedule)
+	api.Delete("/cron/schedules/:job", cronH.DeleteSchedule)
+
+	// ─── Batch 8: Payment routes ──────────────────────────────────────────────
+	// Webhook is public (no admin auth, verified by signature)
+	app.Post("/api/payment/webhook", paymentH.Webhook)
+	api.Post("/payment/create", paymentH.CreatePayment)
+	api.Get("/payment/check-order", paymentH.CheckOrder)
+
+	// ─── Batch 8: Customer Portal Ext 2 ──────────────────────────────────────
+	// Public: bypass-login (generates session from admin token)
+	app.Post("/api/customer/auth/bypass-login", custExt2H.BypassLogin)
+	// Authenticated customer routes
+	customer.Get("/payments", custExt2H.GetPayments)
+	customer.Post("/payments", custExt2H.CreatePayment)
+	customer.Post("/payments/:id/proof", custExt2H.UploadPaymentProof)
+	customer.Get("/payment-methods", custExt2H.GetPaymentMethods)
+	customer.Post("/notifications/:id/read", custExt2H.MarkNotificationRead)
+	customer.Post("/topup-direct", custExt2H.TopupDirect)
+	customer.Post("/upgrade", custExt2H.UpgradePackage)
+	customer.Post("/upgrade-package", custExt2H.UpgradePackageAlt)
+	customer.Get("/referral", custExt2H.GetReferral)
+	customer.Post("/referral", custExt2H.CreateReferral)
+	customer.Get("/referral/rewards", custExt2H.GetReferralRewards)
+	customer.Post("/invoices/:id/manual-payment", custExt2H.PayInvoiceManual)
+
+	// ─── Batch 8: GenieACS extended routes ───────────────────────────────────
+	genieacs := api.Group("/genieacs")
+	// Devices
+	genieacs.Get("/devices", genieacsH.ListDevices)
+	genieacs.Get("/devices/:deviceId", genieacsH.GetDevice)
+	genieacs.Delete("/devices/:deviceId", genieacsH.DeleteDevice)
+	genieacs.Get("/devices/:deviceId/all-parameters", genieacsH.DeviceAllParameters)
+	genieacs.Post("/devices/:deviceId/download", genieacsH.DeviceDownload)
+	genieacs.Get("/devices/:deviceId/parameters", genieacsH.GetDeviceParameters)
+	genieacs.Post("/devices/:deviceId/parameters", genieacsH.SetDeviceParameters)
+	genieacs.Get("/devices/:deviceId/tasks", genieacsH.GetDeviceTasks)
+	genieacs.Post("/devices/:deviceId/tasks", genieacsH.CreateDeviceTask)
+	genieacs.Post("/devices/:deviceId/wan", genieacsH.DeviceWAN)
+	genieacs.Put("/devices/:deviceId/wan", genieacsH.DeviceWAN)
+	genieacs.Delete("/devices/:deviceId/wan", genieacsH.DeviceWAN)
+	genieacs.Get("/devices/:deviceId/wifi", genieacsH.GetDeviceWifi)
+	genieacs.Post("/devices/:deviceId/reboot", genieacsH.RebootDevice)
+	genieacs.Post("/devices/:deviceId/refresh", genieacsH.RefreshDevice)
+	genieacs.Post("/devices/:deviceId/factory-reset", genieacsH.FactoryResetDevice)
+	// Tasks
+	genieacs.Post("/tasks/:taskId/retry", genieacsH.RetryTask)
+	// Sync
+	genieacs.Post("/sync", genieacsH.SyncDevices)
+	// Presets
+	genieacs.Get("/presets", genieacsH.ListPresets)
+	genieacs.Post("/presets", genieacsH.CreatePreset)
+	genieacs.Get("/presets/:presetId", genieacsH.GetPreset)
+	genieacs.Put("/presets/:presetId", genieacsH.UpdatePreset)
+	genieacs.Delete("/presets/:presetId", genieacsH.DeletePreset)
+	// Provisions
+	genieacs.Get("/provisions", genieacsH.ListProvisions)
+	genieacs.Post("/provisions", genieacsH.CreateProvision)
+	genieacs.Get("/provisions/:provisionId", genieacsH.GetProvision)
+	genieacs.Put("/provisions/:provisionId", genieacsH.UpdateProvision)
+	genieacs.Delete("/provisions/:provisionId", genieacsH.DeleteProvision)
+	// Virtual Parameters
+	genieacs.Get("/virtual-parameters", genieacsH.ListVirtualParameters)
+	genieacs.Post("/virtual-parameters", genieacsH.CreateVirtualParameter)
+	genieacs.Get("/virtual-parameters/:vpId", genieacsH.GetVirtualParameter)
+	genieacs.Put("/virtual-parameters/:vpId", genieacsH.UpdateVirtualParameter)
+	genieacs.Delete("/virtual-parameters/:vpId", genieacsH.DeleteVirtualParameter)
+	// Files
+	genieacs.Get("/files", genieacsH.ListFiles)
+	genieacs.Post("/files", genieacsH.UploadFile)
+	genieacs.Delete("/files", genieacsH.DeleteFile)
+	// Faults
+	genieacs.Get("/faults", genieacsH.ListFaults)
+	genieacs.Delete("/faults/:faultId", genieacsH.DeleteFault)
+	// Config
+	genieacs.Get("/config", genieacsH.ListConfig)
+	genieacs.Put("/config", genieacsH.UpdateConfig)
+	genieacs.Delete("/config", genieacsH.DeleteConfig)
+	// Backup
+	genieacs.Get("/backup", genieacsH.GetBackup)
+	genieacs.Post("/backup", genieacsH.CreateBackup)
+	// Auto-provision
+	genieacs.Get("/auto-provision", genieacsH.ListAutoProvision)
+	genieacs.Post("/auto-provision", genieacsH.CreateAutoProvision)
+	genieacs.Delete("/auto-provision", genieacsH.DeleteAutoProvision)
 
 	// ─────────────────────────────────────────────────────────────────────────
 

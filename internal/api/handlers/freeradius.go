@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bufio"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -194,17 +193,4 @@ func (h *FreeradiusHandler) SaveConfig(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "message": "Config saved"})
 }
 
-// scanLines reads first n lines of a file into a slice
-func scanLines(path string, n int) []string {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil
-	}
-	defer f.Close()
-	var lines []string
-	sc := bufio.NewScanner(f)
-	for sc.Scan() && len(lines) < n {
-		lines = append(lines, sc.Text())
-	}
-	return lines
-}
+

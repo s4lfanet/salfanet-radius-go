@@ -120,25 +120,18 @@ func (h *PppoeExtHandler) SendNotification(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	// Create notification records
-	sent := 0
-	for _, uid := range body.UserIDs {
-		uid := uid
-		n := models.Notification{
-			ID:      generateID(),
-			Type:    body.Type,
-			Title:   body.Title,
-			Message: body.Message,
-			Link:    nil,
-			IsRead:  false,
-		}
-		_ = uid // notifications are admin-facing, not per-user in this model
-		if err := h.db.Create(&n).Error; err == nil {
-			sent++
-		}
-		break // only create one global notification
+	// Create notification record (global, not per-user)
+	n := models.Notification{
+		ID:      generateID(),
+		Type:    body.Type,
+		Title:   body.Title,
+		Message: body.Message,
+		Link:    nil,
+		IsRead:  false,
 	}
-	_ = sent
+	if err := h.db.Create(&n).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to create notification"})
+	}
 	return c.JSON(fiber.Map{"success": true, "message": "notification sent"})
 }
 

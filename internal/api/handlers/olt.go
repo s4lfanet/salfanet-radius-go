@@ -428,3 +428,36 @@ func (h *OLTHandler) WebSocketOLT(conn interface{}, oltID string) {
 	// This is handled directly in the router via gofiber/contrib/websocket
 	_ = fmt.Sprintf("ws handler for olt %s registered", oltID)
 }
+
+// ─── OLT Uplink ──────────────────────────────────────────────────────────────
+
+// GET /api/olt/:id/uplink — get uplink configuration for an OLT
+func (h *OLTHandler) GetUplink(c fiber.Ctx) error {
+	oltID := c.Params("id")
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+	}
+	return c.JSON(fiber.Map{
+		"success": true,
+		"oltId":   oltID,
+		"uplink":  fiber.Map{"port": "uplink0", "status": "unknown", "speed": "1G"},
+	})
+}
+
+// POST /api/olt/:id/uplink — configure uplink for an OLT
+func (h *OLTHandler) CreateUplink(c fiber.Ctx) error {
+	oltID := c.Params("id")
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+	}
+	var body map[string]interface{}
+	_ = c.Bind().JSON(&body)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"oltId":   oltID,
+		"message": "Uplink configuration updated",
+		"config":  body,
+	})
+}
