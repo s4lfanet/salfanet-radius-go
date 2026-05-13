@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.38.0] — 2026-05-14
+### Added
+- **Go: OLT test-connection alias** — `POST /api/olt/test-connection` (non-admin alias to existing handler)
+- **Go: PPPoE customers bulk** — `GET /api/pppoe/customers/bulk` (template stub) + `POST /api/pppoe/customers/bulk` (alias to BulkCreateCustomers, path was `/bulk-create` before)
+- **Go: Admin suspend-requests PUT** — `PUT /api/admin/suspend-requests/:id` with `{action: "APPROVE"|"REJECT"}` body (unified approve/reject)
+### Files
+- `internal/api/handlers/admin.go` — added `SuspendRequestAction`
+- `internal/api/handlers/pppoe_ext.go` — added `BulkCustomersTemplate`
+- `internal/api/router.go` — batch 14 routes (+4 routes)
+
 ## [2.37.0] — 2026-05-14
 ### Added
 - **Go: Auth path aliases** — `/api/customer/auth/login`, `/api/customer/auth/verify-otp`, `/api/customer/login`, `/api/agent/login` (alias to existing handlers)
