@@ -6,6 +6,41 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.34.9] — 2026-05-14
+### Added
+- **Go: Backup info routes** — `GET /api/backup` (list history), `GET /api/backup/health` (DB ping + count), `POST /api/backup/telegram/test`
+- **Go: Cron info routes** — `GET /api/cron` (service info), `GET /api/cron/status` (last run + job count)
+- **Go: Invoice extras** — `POST /api/invoices/:id/void`, `POST /api/invoices/bulk-delete`
+- **Go: Manual payments bulk-delete** — `POST /api/manual-payments/bulk-delete`
+- **Go: Tickets create-job** — `POST /api/tickets/:id/create-job`
+- **Go: Jobs photos** — `GET /api/jobs/:id/photos`
+- **Go: Agent self-service portal** — `GET /api/agent/dashboard`, `POST /api/agent/deposit/create`, `POST /api/agent/deposit/webhook` (public), `POST /api/agent/generate-voucher`, `POST /api/agent/record-sales`
+- **Go: PaymentsApprovalHandler** — `GET /api/payments`, `POST /api/payments/:id/approve`, `POST /api/payments/:id/reject`, `GET/POST /api/payments/manual`
+- **Go: Payment gateways list** — `GET /api/payment/gateways` (public)
+- **Go: InvoiceTemplateHandler** — full CRUD + set-default (`/api/invoice-templates`)
+- **Go: PayrollTemplateHandler** — full CRUD + set-default (`/api/payroll-templates`)
+- **Go: TroubleshootingHandler** — checklists CRUD, jobs list/get/materials (`/api/troubleshooting`)
+- **Go: EvoucherHandler** — public portal (profiles, purchase, order-by-token) + admin (list/cancel/resend/bulk-delete)
+- **Go: Payment model** — added `Payment` struct to models.go (table: `payments`)
+### Files
+- `internal/api/handlers/backup_handler.go` — added ListBackups, Health, TelegramTest
+- `internal/api/handlers/agent.go` — added Dashboard, CreateDeposit, DepositWebhook, GenerateVoucher, RecordSales
+- `internal/api/handlers/cronhandler.go` — added Info, Status
+- `internal/api/handlers/invoices_ext.go` — added Void, BulkDelete
+- `internal/api/handlers/manual_payments.go` — added BulkDelete
+- `internal/api/handlers/ticket_ext.go` — added CreateJob
+- `internal/api/handlers/jobs.go` — added ListPhotos
+- `internal/api/handlers/payment_handler.go` — added ListGateways
+- `internal/api/handlers/payments_approval_handler.go` — new file
+- `internal/api/handlers/invoice_template_handler.go` — new file
+- `internal/api/handlers/payroll_template_handler.go` — new file
+- `internal/api/handlers/troubleshooting_handler.go` — new file
+- `internal/api/handlers/evoucher_handler.go` — new file
+- `internal/db/models/models.go` — added Payment struct
+- `internal/api/router.go` — registered all batch 9 routes (~50 new routes)
+
+---
+
 ## [2.34.8] — 2026-05-13
 ### Added
 - **Go: GenieACS extended handler** — full proxy CRUD for devices (list, get, delete, all-parameters, download, parameters, tasks, WAN, WiFi GET, reboot, refresh, factory-reset), tasks retry, presets CRUD, provisions CRUD, virtual-parameters CRUD, files (list/upload/delete), faults (list/delete), config (list/update/delete), backup (get/create), auto-provision (list/create/delete), sync endpoint
