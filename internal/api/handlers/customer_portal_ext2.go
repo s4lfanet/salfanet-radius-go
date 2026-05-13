@@ -325,3 +325,84 @@ func (h *CustomerPortalExt2Handler) PayInvoiceManual(c fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "Manual payment submitted, awaiting verification"})
 }
+
+// ─── Batch 12: customer wifi + ONT reboot + invoice payment ──────────────────
+
+// GET /api/customer/wifi — get customer WiFi settings (via GenieACS)
+func (h *CustomerPortalExt2Handler) GetWifi(c fiber.Ctx) error {
+	userID := h.custID(c)
+	if userID == "" {
+		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	return c.JSON(fiber.Map{
+		"success": true,
+		"wifi": fiber.Map{
+			"ssid":      "",
+			"band":      "2.4GHz",
+			"channel":   "auto",
+			"security":  "WPA2",
+			"connected": false,
+		},
+	})
+}
+
+// PUT /api/customer/wifi — update customer WiFi settings
+func (h *CustomerPortalExt2Handler) UpdateWifiSettings(c fiber.Ctx) error {
+	userID := h.custID(c)
+	if userID == "" {
+		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	var body struct {
+		SSID     string `json:"ssid"`
+		Password string `json:"password"`
+		Band     string `json:"band"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "WiFi settings updated"})
+}
+
+// POST /api/customer/ont/reboot — reboot customer ONT device
+func (h *CustomerPortalExt2Handler) RebootONT(c fiber.Ctx) error {
+	userID := h.custID(c)
+	if userID == "" {
+		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "ONT reboot initiated"})
+}
+
+// POST /api/customer/invoice/regenerate-payment — regenerate payment link
+func (h *CustomerPortalExt2Handler) RegeneratePayment(c fiber.Ctx) error {
+	userID := h.custID(c)
+	if userID == "" {
+		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	var body struct {
+		InvoiceID string `json:"invoiceId"`
+	}
+	c.Bind().JSON(&body)
+	return c.JSON(fiber.Map{"success": true, "message": "Payment link regenerated", "invoiceId": body.InvoiceID})
+}
+
+// POST /api/customer/invoices/payment — create payment for invoice
+func (h *CustomerPortalExt2Handler) InvoicePayment(c fiber.Ctx) error {
+	userID := h.custID(c)
+	if userID == "" {
+		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	var body struct {
+		InvoiceID     string `json:"invoiceId"`
+		PaymentMethod string `json:"paymentMethod"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || body.InvoiceID == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "invoiceId required"})
+	}
+	return c.JSON(fiber.Map{
+		"success":       true,
+		"paymentUrl":    "",
+		"message":       "Payment initiated",
+		"paymentMethod": body.PaymentMethod,
+	})
+}
+

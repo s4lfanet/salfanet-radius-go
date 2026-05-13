@@ -188,3 +188,16 @@ func generateShortCode(n int) string {
 	}
 	return string(result)
 }
+
+// POST /api/hotspot/voucher/delete-multiple — delete multiple vouchers by IDs
+func (h *HotspotExtHandler) DeleteMultiple(c fiber.Ctx) error {
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || len(body.IDs) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "ids required"})
+	}
+	result := h.db.Where("id IN ?", body.IDs).Delete(&models.HotspotVoucher{})
+	return c.JSON(fiber.Map{"success": true, "deleted": result.RowsAffected})
+}
+

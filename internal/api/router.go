@@ -116,6 +116,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 11 handlers ───────────────────────────────────────────────────
 	adminMiscH := handlers.NewAdminMiscHandler(db)
 	networkVPNH := handlers.NewNetworkVPNHandler(db)
+	// NOTE: networkInfraH is instantiated near batch 12 routes (after olt group)
 
 	// ─── Public routes (NO auth — must be before the api group) ──────────────
 	app.Get("/api/system/health", func(c fiber.Ctx) error {
@@ -1146,6 +1147,89 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/agent/sessions", agentH.GetAgentSessions)
 	api.Get("/agent/tickets", agentH.GetAgentTickets)
 	api.Get("/agent/tickets/:id", agentH.GetAgentTicket)
+
+	// ─── Batch 12 handlers ───────────────────────────────────────────────────
+	networkInfraH := handlers.NewNetworkInfraHandler(db)
+
+	// ─── Batch 12: Auth ───────────────────────────────────────────────────────
+	app.Post("/api/auth/logout-log", miscH.LogoutLog)
+
+	// ─── Batch 12: Admin ─────────────────────────────────────────────────────
+	api.Get("/admin/agent-deposits", miscH.AdminAgentDeposits)
+	api.Post("/admin/isolate-user", miscH.AdminIsolateUser)
+	api.Get("/admin/settings/isolation", miscH.AdminGetIsolationSettings)
+	api.Put("/admin/settings/isolation", miscH.AdminUpdateIsolationSettings)
+	api.Get("/admin/settings/isolation/mikrotik-script", miscH.AdminGetMikrotikScript)
+	api.Get("/admin/users/:id/renewal", pppoeExtH.ExtendUser)
+
+	// ─── Batch 12: Cron extras ────────────────────────────────────────────────
+	api.Get("/cron/olt-poll", miscH.CronOLTPoll)
+	api.Post("/cron/olt-poll", miscH.CronOLTPoll)
+	api.Get("/cron/telegram", miscH.CronTelegram)
+	api.Post("/cron/telegram", miscH.CronTelegram)
+
+	// ─── Batch 12: Invoices check ─────────────────────────────────────────────
+	api.Get("/invoices/check", miscH.CheckInvoice)
+
+	// ─── Batch 12: Payment extras ─────────────────────────────────────────────
+	app.Post("/api/pay/manual", miscH.PayManual)
+	api.Get("/payment/duitku-methods", miscH.DuitkuMethods)
+
+	// ─── Batch 12: RADIUS accounting ─────────────────────────────────────────
+	app.Get("/api/radius/accounting", miscH.RadiusAccounting)
+	app.Post("/api/radius/accounting", miscH.RadiusAccounting)
+
+	// ─── Batch 12: Tickets dispatch-data ─────────────────────────────────────
+	api.Get("/tickets/dispatch-data", miscH.TicketDispatchData)
+
+	// ─── Batch 12: Network routers extras ────────────────────────────────────
+	api.Post("/network/routers/:id/setup-radius", miscH.SetupRadiusOnRouter)
+	api.Post("/network/routers/test", miscH.TestRouterGeneric)
+	api.Post("/network/routers/test-gateway", miscH.TestGateway)
+
+	// ─── Batch 12: OLT extras ─────────────────────────────────────────────────
+	olt.Post("/:id/onus/:onuId/reboot", miscH.RebootONU)
+	olt.Post("/:id/onus/batch-reboot", miscH.BatchRebootONUs)
+	olt.Get("/:id/onus/:onuId/detail", miscH.ONUDetail)
+
+	// ─── Batch 12: Network infrastructure ────────────────────────────────────
+	api.Get("/network/cables", networkInfraH.ListCables)
+	api.Post("/network/cables", networkInfraH.CreateCable)
+	api.Get("/network/cables/:id", networkInfraH.GetCable)
+	api.Put("/network/cables/:id", networkInfraH.UpdateCable)
+	api.Delete("/network/cables/:id", networkInfraH.DeleteCable)
+	api.Get("/network/connections", networkInfraH.ListConnections)
+	api.Post("/network/connections", networkInfraH.CreateConnection)
+	api.Get("/network/cores", networkInfraH.ListCores)
+	api.Post("/network/cores", networkInfraH.CreateCore)
+	api.Get("/network/joint-closures/:id/segments", networkInfraH.ListJointClosureSegments)
+	api.Post("/network/joint-closures/:id/segments", networkInfraH.CreateJointClosureSegment)
+	api.Get("/network/joint-closures/:id/splices", networkInfraH.ListJointClosureSplices)
+	api.Post("/network/joint-closures/:id/splices", networkInfraH.CreateJointClosureSplice)
+	api.Get("/network/joint-closures/template", networkInfraH.JointClosureTemplate)
+	api.Get("/network/otbs/:id/feeder-cables", networkInfraH.ListFeederCables)
+	api.Post("/network/otbs/:id/feeder-cables", networkInfraH.CreateFeederCable)
+	api.Get("/network/otbs/:id/segments", networkInfraH.ListOTBSegments)
+	api.Post("/network/otbs/:id/segments", networkInfraH.CreateOTBSegment)
+	api.Get("/network/splices", networkInfraH.ListSplices)
+	api.Post("/network/splices", networkInfraH.CreateSplice)
+	api.Get("/network/splices/:id", networkInfraH.GetSplice)
+	api.Put("/network/splices/:id", networkInfraH.UpdateSplice)
+	api.Delete("/network/splices/:id", networkInfraH.DeleteSplice)
+	api.Get("/network/trace", networkInfraH.NetworkTrace)
+	api.Post("/network/trace", networkInfraH.NetworkTrace)
+	api.Post("/network/auto-connect", networkInfraH.AutoConnect)
+
+	// ─── Batch 12: Hotspot extras ─────────────────────────────────────────────
+	hotspot.Post("/voucher/delete-multiple", hotspotExtH.DeleteMultiple)
+
+	// ─── Batch 12: Customer portal extras ────────────────────────────────────
+	customer.Get("/wifi", custExt2H.GetWifi)
+	customer.Put("/wifi", custExt2H.UpdateWifiSettings)
+	customer.Post("/ont/reboot", custExt2H.RebootONT)
+	customer.Post("/invoice/regenerate-payment", custExt2H.RegeneratePayment)
+	customer.Get("/invoices/payment", custExt2H.InvoicePayment)
+	customer.Post("/invoices/payment", custExt2H.InvoicePayment)
 
 	// ─────────────────────────────────────────────────────────────────────────
 
