@@ -469,7 +469,7 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
-### v2.34.7 — 2026-05-18
+### v2.34.7 — 2026-05-13
 
 ### Added
 - **Go: CustomerExtHandler** — customer portal extended: `auth/send-otp`, cash-payment, manual-payment, products, profile OTP, renewal, sessions, extend, ONT, wifi update, diagnostics (ping/speedtest/traceroute)
@@ -485,7 +485,7 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/misc_handler.go` — created
 - `internal/api/router.go` — registered ~130 new batch 7 routes
 
-### v2.34.6 — 2026-05-18
+### v2.34.6 — 2026-05-13
 
 ### Added
 - **Go: PPPoE extended handler** — `user-status`, `export-users`, `bulk-create`, `bulk-status`, `check-isolation`, `send-notification`, `sync-mikrotik`, `user-activity`, `extend`, `mark-paid`, `export-customers`, `bulk-create-customers`, `sync-profiles-mikrotik`, `sync-profiles-radius`, `sync-radius`, `list-with-filters`
@@ -507,7 +507,7 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/router.go` — registered all new routes (~80 new routes)
 - `internal/db/models/extra.go` — added 6 new GORM models
 
-### v2.34.5 — 2026-05-17
+### v2.34.5 — 2026-05-13
 
 ### Added
 - **Go: 17 new handler files** — notifications, public, freeradius, invoices_ext, referrals, admin_users, technician_admin, activity_log, hotspot_ext, voucher_templates, ticket_ext, analytics, settings_ext, backup_handler, telegram_handler, push_handler, olt_ext
@@ -553,7 +553,7 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/olt_ext.go` — new
 - `internal/api/router.go` — registered all 17 new handlers (~140 new routes)
 
-### v2.34.4 — 2026-05-14
+### v2.34.4 — 2026-05-13
 
 ### Added
 - **Sidebar: Permintaan Top-Up & Suspend** — tambah `nav.topupRequests` (`/admin/topup-requests`) dan `nav.suspendRequests` (`/admin/suspend-requests`) sebagai child PPPoE
