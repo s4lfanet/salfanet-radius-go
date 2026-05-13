@@ -200,4 +200,3 @@ func (h *HotspotExtHandler) DeleteMultiple(c fiber.Ctx) error {
 	result := h.db.Where("id IN ?", body.IDs).Delete(&models.HotspotVoucher{})
 	return c.JSON(fiber.Map{"success": true, "deleted": result.RowsAffected})
 }
-

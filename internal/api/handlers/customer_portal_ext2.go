@@ -405,4 +405,3 @@ func (h *CustomerPortalExt2Handler) InvoicePayment(c fiber.Ctx) error {
 		"paymentMethod": body.PaymentMethod,
 	})
 }
-

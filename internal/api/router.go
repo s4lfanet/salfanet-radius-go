@@ -1231,6 +1231,20 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	customer.Get("/invoices/payment", custExt2H.InvoicePayment)
 	customer.Post("/invoices/payment", custExt2H.InvoicePayment)
 
+	// ─── Batch 13: Auth path aliases ─────────────────────────────────────────
+	// Next.js frontend calls these paths; alias to existing auth handlers
+	app.Post("/api/customer/auth/login", authH.CustomerLogin)
+	app.Post("/api/customer/auth/verify-otp", authH.CustomerVerifyOTP)
+	app.Post("/api/customer/login", authH.CustomerLogin)
+	app.Post("/api/agent/login", authH.AgentLogin)
+
+	// ─── Batch 13: Hotspot voucher singular path ──────────────────────────────
+	hotspot.Get("/voucher", hotspotH.ListVouchers)
+	hotspot.Post("/voucher", hotspotH.GenerateVouchers)
+
+	// ─── Batch 13: Network OLTs status ───────────────────────────────────────
+	api.Get("/network/olts/status", miscH.NetworkOLTStatus)
+
 	// ─────────────────────────────────────────────────────────────────────────
 
 	return app

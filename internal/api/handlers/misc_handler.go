@@ -733,12 +733,27 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"success": true,
 		"detail": fiber.Map{
-			"oltId":       oltID,
-			"onuId":       onuID,
+			"oltId":        oltID,
+			"onuId":        onuID,
 			"opticalPower": "-20.5 dBm",
 			"temperature":  "45°C",
 			"uptime":       "10d 5h",
 			"firmware":     "V300R016C10SPC100",
 		},
 	})
+}
+
+// ─── Batch 13 additions ───────────────────────────────────────────────────────
+
+// GET /api/network/olts/status — return connectivity status of all OLTs
+func (h *MiscHandler) NetworkOLTStatus(c fiber.Ctx) error {
+	type oltRow struct {
+		ID     uint   `json:"id"`
+		Name   string `json:"name"`
+		Host   string `json:"host"`
+		Status string `json:"status"`
+	}
+	var rows []oltRow
+	h.db.Raw(`SELECT id, name, host, COALESCE(status, 'unknown') AS status FROM olts WHERE deleted_at IS NULL ORDER BY id`).Scan(&rows)
+	return c.JSON(fiber.Map{"olts": rows, "count": len(rows)})
 }
