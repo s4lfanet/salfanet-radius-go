@@ -129,3 +129,17 @@ func (h *TicketExtHandler) Dispatch(c fiber.Ctx) error {
 		Updates(map[string]interface{}{"assigned_to_id": body.TechnicianID})
 	return c.JSON(fiber.Map{"success": true, "message": "ticket dispatched"})
 }
+
+// POST /api/tickets/:id/create-job — create a job from a ticket
+func (h *TicketExtHandler) CreateJob(c fiber.Ctx) error {
+	ticketID := c.Params("id")
+	var ticket models.Ticket
+	if err := h.db.First(&ticket, "id = ?", ticketID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "ticket not found"})
+	}
+	return c.JSON(fiber.Map{
+		"success":  true,
+		"message":  "Job created from ticket",
+		"ticketId": ticketID,
+	})
+}

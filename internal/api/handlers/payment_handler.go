@@ -138,15 +138,23 @@ func (h *PaymentHandler) Webhook(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"received": true})
 	}
 
-	if status == "settlement" || status == "capture" || status == "paid" || status == "PAID" {
+	switch status {
+	case "settlement", "capture", "paid", "PAID":
 		now := time.Now()
 		h.db.Model(&invoice).Updates(map[string]interface{}{
 			"status":  "PAID",
 			"paid_at": now,
 		})
-	} else if status == "expire" || status == "cancel" || status == "EXPIRED" {
+	case "expire", "cancel", "EXPIRED":
 		h.db.Model(&invoice).Update("status", "EXPIRED")
 	}
 
 	return c.JSON(fiber.Map{"received": true})
+}
+
+// GET /api/payment/gateways — list all payment gateways (public, for checkout UI)
+func (h *PaymentHandler) ListGateways(c fiber.Ctx) error {
+	var gateways []models.PaymentGateway
+	h.db.Where("is_active = ?", true).Order("created_at").Find(&gateways)
+	return c.JSON(fiber.Map{"success": true, "gateways": gateways})
 }

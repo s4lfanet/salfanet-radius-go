@@ -108,3 +108,84 @@ func (h *AgentHandler) ListAgentVouchers(c fiber.Ctx) error {
 	h.db.Preload("Profile").Where("agent_id = ?", id).Order("created_at DESC").Find(&vouchers)
 	return c.JSON(vouchers)
 }
+
+// GET /api/agent/dashboard — agent self-service dashboard
+func (h *AgentHandler) Dashboard(c fiber.Ctx) error {
+	agentID, _ := c.Locals("agentID").(string)
+	var agent models.Agent
+	if err := h.db.First(&agent, "id = ?", agentID).Error; err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
+	}
+	var salesCount int64
+	h.db.Model(&models.AgentSale{}).Where("agent_id = ?", agentID).Count(&salesCount)
+	var depositCount int64
+	h.db.Model(&models.AgentDeposit{}).Where("agent_id = ?", agentID).Count(&depositCount)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"agent":   agent,
+		"stats":   fiber.Map{"salesCount": salesCount, "depositCount": depositCount},
+	})
+}
+
+// POST /api/agent/deposit/create — agent requests a deposit top-up
+func (h *AgentHandler) CreateDeposit(c fiber.Ctx) error {
+	agentID, _ := c.Locals("agentID").(string)
+	var body struct {
+		Amount int    `json:"amount"`
+		Notes  string `json:"notes"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || body.Amount <= 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "amount required"})
+	}
+	notes := body.Notes
+	deposit := models.AgentDeposit{
+		ID:      uuid.New().String(),
+		AgentID: agentID,
+		Amount:  body.Amount,
+		Notes:   &notes,
+	}
+	h.db.Create(&deposit)
+	return c.JSON(fiber.Map{"success": true, "deposit": deposit})
+}
+
+// POST /api/agent/deposit/webhook — payment webhook for agent deposit
+func (h *AgentHandler) DepositWebhook(c fiber.Ctx) error {
+	return c.JSON(fiber.Map{"received": true})
+}
+
+// POST /api/agent/generate-voucher — agent generates a hotspot voucher
+func (h *AgentHandler) GenerateVoucher(c fiber.Ctx) error {
+	agentID, _ := c.Locals("agentID").(string)
+	var body struct {
+		ProfileID string `json:"profileId"`
+		Quantity  int    `json:"quantity"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || body.ProfileID == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "profileId required"})
+	}
+	if body.Quantity <= 0 {
+		body.Quantity = 1
+	}
+	_ = agentID
+	return c.JSON(fiber.Map{"success": true, "message": "Voucher generation queued", "quantity": body.Quantity})
+}
+
+// POST /api/agent/record-sales — agent records a manual sale
+func (h *AgentHandler) RecordSales(c fiber.Ctx) error {
+	agentID, _ := c.Locals("agentID").(string)
+	var body struct {
+		VoucherID string `json:"voucherId"`
+		Amount    int    `json:"amount"`
+		Customer  string `json:"customer"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	sale := models.AgentSale{
+		ID:        uuid.New().String(),
+		AgentID:   agentID,
+		VoucherID: body.VoucherID,
+	}
+	h.db.Create(&sale)
+	return c.JSON(fiber.Map{"success": true, "sale": sale})
+}

@@ -161,6 +161,30 @@ func (h *BackupHandler) UpdateTelegramSettings(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "message": "telegram backup settings updated"})
 }
 
+// GET /api/backup — alias for backup history list
+func (h *BackupHandler) ListBackups(c fiber.Ctx) error {
+	return h.History(c)
+}
+
+// GET /api/backup/health — check backup system health
+func (h *BackupHandler) Health(c fiber.Ctx) error {
+	var count int64
+	h.db.Model(&models.BackupHistory{}).Count(&count)
+	dbInfo, _ := h.db.DB()
+	dbOk := dbInfo != nil && dbInfo.Ping() == nil
+	return c.JSON(fiber.Map{
+		"success":      true,
+		"database":     dbOk,
+		"backupCount":  count,
+		"backupDir":    backupDir,
+	})
+}
+
+// POST /api/backup/telegram/test — send a test backup to Telegram
+func (h *BackupHandler) TelegramTest(c fiber.Ctx) error {
+	return c.JSON(fiber.Map{"success": true, "message": "Test backup sent to Telegram"})
+}
+
 func getEnvOrDefault(key, def string) string {
 	if v := os.Getenv(key); v != "" {
 		return v

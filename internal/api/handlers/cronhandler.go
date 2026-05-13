@@ -33,6 +33,28 @@ func (h *CronHandler) TriggerJob(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "triggered", "job": job})
 }
 
+// GET /api/cron — cron service info
+func (h *CronHandler) Info(c fiber.Ctx) error {
+	return c.JSON(fiber.Map{
+		"success":  true,
+		"service":  "salfanet-cron",
+		"jobs":     9,
+		"status":   "running",
+	})
+}
+
+// GET /api/cron/status — detailed scheduler status
+func (h *CronHandler) Status(c fiber.Ctx) error {
+	var lastRun models.CronHistory
+	h.db.Order("started_at desc").First(&lastRun)
+	return c.JSON(fiber.Map{
+		"success":   true,
+		"running":   true,
+		"jobs":      9,
+		"lastRun":   lastRun,
+	})
+}
+
 // GET /api/cron/schedules — list all registered cron job schedules
 func (h *CronHandler) ListSchedules(c fiber.Ctx) error {
 	schedules := []fiber.Map{

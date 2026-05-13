@@ -58,7 +58,7 @@ type session struct {
 
 // connect dials and authenticates the session.
 func connect(cfg Config) (*session, error) {
-	addr := fmt.Sprintf("%s:%d", cfg.Host, cfg.Port)
+	addr := net.JoinHostPort(cfg.Host, fmt.Sprintf("%d", cfg.Port))
 	conn, err := net.DialTimeout("tcp", addr, 15*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("telnet dial %s: %w", addr, err)

@@ -254,3 +254,31 @@ func (h *InvoiceExtHandler) GetPDF(c fiber.Ctx) error {
 	// Return invoice data; PDF generation handled client-side or via Next.js
 	return c.JSON(fiber.Map{"success": true, "invoice": inv})
 }
+
+// POST /api/invoices/:id/void
+func (h *InvoiceExtHandler) Void(c fiber.Ctx) error {
+	id := c.Params("id")
+	var inv models.Invoice
+	if err := h.db.First(&inv, "id = ?", id).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
+	}
+	if inv.Status == "PAID" {
+		return c.Status(400).JSON(fiber.Map{"error": "cannot void a paid invoice"})
+	}
+	if err := h.db.Model(&inv).Update("status", "VOID").Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to void invoice"})
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "Invoice voided"})
+}
+
+// POST /api/invoices/bulk-delete
+func (h *InvoiceExtHandler) BulkDelete(c fiber.Ctx) error {
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || len(body.IDs) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "ids required"})
+	}
+	h.db.Where("id IN ? AND status != ?", body.IDs, "PAID").Delete(&models.Invoice{})
+	return c.JSON(fiber.Map{"success": true, "message": "Bulk deleted"})
+}

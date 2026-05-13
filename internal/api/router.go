@@ -100,6 +100,13 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	custExt2H := handlers.NewCustomerPortalExt2Handler(db)
 	paymentH := handlers.NewPaymentHandler(db)
 
+	// ─── Batch 9 handlers ────────────────────────────────────────────────────
+	paymentsApprovalH := handlers.NewPaymentsApprovalHandler(db)
+	invoiceTplH := handlers.NewInvoiceTemplateHandler(db)
+	payrollTplH := handlers.NewPayrollTemplateHandler(db)
+	troubleshootH := handlers.NewTroubleshootingHandler(db)
+	evoucherH := handlers.NewEvoucherHandler(db)
+
 	// ─── Public routes (NO auth — must be before the api group) ──────────────
 	app.Get("/api/system/health", func(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
@@ -934,6 +941,78 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	genieacs.Get("/auto-provision", genieacsH.ListAutoProvision)
 	genieacs.Post("/auto-provision", genieacsH.CreateAutoProvision)
 	genieacs.Delete("/auto-provision", genieacsH.DeleteAutoProvision)
+
+	// ─── Batch 9: Backup info routes ─────────────────────────────────────────
+	api.Get("/backup", backupH.ListBackups)
+	api.Get("/backup/health", backupH.Health)
+	api.Post("/backup/telegram/test", backupH.TelegramTest)
+
+	// ─── Batch 9: Cron info routes ───────────────────────────────────────────
+	api.Get("/cron", cronH.Info)
+	api.Get("/cron/status", cronH.Status)
+
+	// ─── Batch 9: Invoice extras ─────────────────────────────────────────────
+	api.Post("/invoices/:id/void", invExtH.Void)
+	api.Post("/invoices/bulk-delete", invExtH.BulkDelete)
+
+	// ─── Batch 9: Manual payments bulk-delete ────────────────────────────────
+	api.Post("/manual-payments/bulk-delete", manualPayH.BulkDelete)
+
+	// ─── Batch 9: Tickets create-job ─────────────────────────────────────────
+	api.Post("/tickets/:id/create-job", ticketExtH.CreateJob)
+
+	// ─── Batch 9: Jobs photos ────────────────────────────────────────────────
+	api.Get("/jobs/:id/photos", jobH.ListPhotos)
+
+	// ─── Batch 9: Agent self-service portal ──────────────────────────────────
+	api.Get("/agent/dashboard", agentH.Dashboard)
+	api.Post("/agent/deposit/create", agentH.CreateDeposit)
+	app.Post("/api/agent/deposit/webhook", agentH.DepositWebhook) // public
+	api.Post("/agent/generate-voucher", agentH.GenerateVoucher)
+	api.Post("/agent/record-sales", agentH.RecordSales)
+
+	// ─── Batch 9: Payments approval ──────────────────────────────────────────
+	api.Get("/payments", paymentsApprovalH.List)
+	api.Post("/payments/:id/approve", paymentsApprovalH.Approve)
+	api.Post("/payments/:id/reject", paymentsApprovalH.Reject)
+	api.Get("/payments/manual", paymentsApprovalH.ListManual)
+	api.Post("/payments/manual", paymentsApprovalH.CreateManual)
+
+	// ─── Batch 9: Payment gateways public list ───────────────────────────────
+	app.Get("/api/payment/gateways", paymentH.ListGateways)
+
+	// ─── Batch 9: Invoice templates ──────────────────────────────────────────
+	api.Get("/invoice-templates", invoiceTplH.List)
+	api.Post("/invoice-templates", invoiceTplH.Create)
+	api.Get("/invoice-templates/:id", invoiceTplH.Get)
+	api.Put("/invoice-templates/:id", invoiceTplH.Update)
+	api.Delete("/invoice-templates/:id", invoiceTplH.Delete)
+	api.Post("/invoice-templates/:id/default", invoiceTplH.SetDefault)
+
+	// ─── Batch 9: Payroll templates ──────────────────────────────────────────
+	api.Get("/payroll-templates", payrollTplH.List)
+	api.Post("/payroll-templates", payrollTplH.Create)
+	api.Get("/payroll-templates/:id", payrollTplH.Get)
+	api.Put("/payroll-templates/:id", payrollTplH.Update)
+	api.Delete("/payroll-templates/:id", payrollTplH.Delete)
+	api.Post("/payroll-templates/:id/default", payrollTplH.SetDefault)
+
+	// ─── Batch 9: Troubleshooting ────────────────────────────────────────────
+	api.Get("/troubleshooting/checklists", troubleshootH.ListChecklists)
+	api.Post("/troubleshooting/checklists", troubleshootH.CreateChecklist)
+	api.Get("/troubleshooting/jobs", troubleshootH.ListJobs)
+	api.Get("/troubleshooting/jobs/:id", troubleshootH.GetJob)
+	api.Get("/troubleshooting/jobs/:id/materials", troubleshootH.JobMaterials)
+
+	// ─── Batch 9: E-Voucher public portal ────────────────────────────────────
+	app.Get("/api/evoucher/profiles", evoucherH.ListProfiles)
+	app.Post("/api/evoucher/purchase", evoucherH.Purchase)
+	app.Get("/api/evoucher/order/:token", evoucherH.GetOrder)
+	// E-Voucher admin
+	api.Get("/admin/evoucher/orders", evoucherH.AdminListOrders)
+	api.Post("/admin/evoucher/orders/:id/cancel", evoucherH.AdminCancelOrder)
+	api.Post("/admin/evoucher/orders/:id/resend", evoucherH.AdminResendOrder)
+	api.Delete("/admin/evoucher/orders/bulk-delete", evoucherH.AdminBulkDelete)
 
 	// ─────────────────────────────────────────────────────────────────────────
 

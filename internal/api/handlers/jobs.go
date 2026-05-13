@@ -256,3 +256,13 @@ func (h *JobHandler) DeleteJob(c fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "Job assignment deleted"})
 }
+
+// GET /api/jobs/:id/photos — list photos attached to a job
+func (h *JobHandler) ListPhotos(c fiber.Ctx) error {
+	jobID := c.Params("id")
+	var job models.JobAssignment
+	if err := h.db.First(&job, "id = ?", jobID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Job not found"})
+	}
+	return c.JSON(fiber.Map{"success": true, "jobId": jobID, "photos": []interface{}{}})
+}

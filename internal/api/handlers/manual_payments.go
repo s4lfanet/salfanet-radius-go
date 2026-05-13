@@ -278,3 +278,15 @@ func (h *ManualPaymentHandler) Delete(c fiber.Ctx) error {
 	h.db.Delete(&payment)
 	return c.JSON(fiber.Map{"success": true, "message": "Payment deleted"})
 }
+
+// POST /api/manual-payments/bulk-delete
+func (h *ManualPaymentHandler) BulkDelete(c fiber.Ctx) error {
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || len(body.IDs) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "ids required"})
+	}
+	h.db.Where("id IN ? AND status = ?", body.IDs, "PENDING").Delete(&models.ManualPayment{})
+	return c.JSON(fiber.Map{"success": true, "message": "Bulk deleted"})
+}
