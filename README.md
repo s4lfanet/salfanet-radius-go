@@ -469,6 +469,20 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.36.0 — 2026-05-16
+
+### Added
+- **Go: NetworkInfraHandler** — cables CRUD (`/api/network/cables/*`), connections, cores, segments (joint-closures + OTBs), splices CRUD + per joint-closure, feeder-cables per OTB, joint-closure import template, network trace, auto-connect
+- **Go: Misc routes (batch 12)** — logout-log, admin agent-deposits, admin isolate-user, admin settings/isolation (+ mikrotik-script), cron olt-poll + telegram, invoices check, pay/manual, payment duitku-methods, radius/accounting, tickets dispatch-data, router setup-radius + test + test-gateway, ONU reboot + ONU detail, batch ONU reboot
+- **Go: Customer portal** — WiFi get/update (`/api/customer/wifi`), ONT reboot, invoice regenerate-payment, invoice payment
+- **Go: Hotspot** — delete-multiple vouchers
+### Files
+- `internal/api/handlers/network_infra_ext_handler.go` — NEW: cables, connections, cores, segments, splices, feeder-cables, trace, auto-connect
+- `internal/api/handlers/misc_handler.go` — added 20+ new methods (batch 12)
+- `internal/api/handlers/customer_portal_ext2.go` — added GetWifi, UpdateWifiSettings, RebootONT, RegeneratePayment, InvoicePayment
+- `internal/api/handlers/hotspot_ext.go` — added DeleteMultiple
+- `internal/api/router.go` — ~50 new routes registered (batch 12)
+
 ### v2.35.0 — 2026-05-16
 
 ### Added
@@ -585,52 +599,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/telegram_handler.go` — added `SendHealth`
 - `internal/api/router.go` — registered all new routes (~80 new routes)
 - `internal/db/models/extra.go` — added 6 new GORM models
-
-### v2.34.5 — 2026-05-13
-
-### Added
-- **Go: 17 new handler files** — notifications, public, freeradius, invoices_ext, referrals, admin_users, technician_admin, activity_log, hotspot_ext, voucher_templates, ticket_ext, analytics, settings_ext, backup_handler, telegram_handler, push_handler, olt_ext
-- **Go: Notification routes** — `GET/PUT /api/notifications`, `DELETE /api/notifications/:id`
-- **Go: Public routes (no auth)** — `GET /api/public/company|areas|profiles|stats|payment-gateways`, `POST /api/public/upload-registration`
-- **Go: FreeRADIUS management** — `GET /api/freeradius/status|logs|radcheck|config/list|config/read`, `POST /api/freeradius/start|stop|restart|radtest|config/save`
-- **Go: Root-level invoice routes** — `GET/POST/DELETE /api/invoices`, counts, generate, export, send-reminder, send-reminders-bulk, by-token, PDF
-- **Go: Referral routes** — `GET/PUT/DELETE /api/admin/referrals`, `GET/PUT /api/admin/referrals/config`
-- **Go: Admin User CRUD** — `GET/POST/PUT/DELETE /api/admin/users/:id`, `GET/PUT /api/admin/users/:id/permissions`
-- **Go: Technician Admin CRUD** — `GET/POST/PUT/DELETE /api/admin/technicians/:id`
-- **Go: Activity Log** — `GET /api/admin/activity-logs`
-- **Go: Hotspot extensions** — bulk generate/delete, export, resync, validate, send-whatsapp, delete-expired, rekap-voucher, agent balance/history
-- **Go: Voucher Templates CRUD** — `GET/POST/PUT/DELETE /api/voucher-templates/:id`
-- **Go: Ticket extensions** — categories CRUD, stats, messages, dispatch
-- **Go: Analytics** — `GET /api/admin/analytics`, `GET /api/dashboard/analytics|traffic`
-- **Go: Settings extensions** — email templates, test email, timezone, map settings, email history
-- **Go: Backup** — history, create (mysqldump+gzip), delete, download, restore, telegram settings
-- **Go: Telegram & Push notification routes**
-- **Go: OLT alert management** — list, get, resolve; monitoring, metrics
-- **Go: Health endpoint** — `GET /api/health`
-- **Go: `generateID()` helper** — shared UUID generator in handlers package
-### Fixed
-- **ticket_ext.go** — `Preload("Customer")` (was `Preload("User")`), `assigned_to_id` column
-- **invoices_ext.go** — `user.Profile.Price` direct access (Profile is not a pointer)
-### Files
-- `internal/api/handlers/helpers.go` — added `generateID()` helper
-- `internal/api/handlers/notifications.go` — new
-- `internal/api/handlers/public.go` — new
-- `internal/api/handlers/freeradius.go` — new
-- `internal/api/handlers/invoices_ext.go` — new
-- `internal/api/handlers/referrals.go` — new
-- `internal/api/handlers/admin_users.go` — new
-- `internal/api/handlers/technician_admin.go` — new
-- `internal/api/handlers/activity_log.go` — new
-- `internal/api/handlers/hotspot_ext.go` — new
-- `internal/api/handlers/voucher_templates.go` — new
-- `internal/api/handlers/ticket_ext.go` — new
-- `internal/api/handlers/analytics.go` — new
-- `internal/api/handlers/settings_ext.go` — new
-- `internal/api/handlers/backup_handler.go` — new
-- `internal/api/handlers/telegram_handler.go` — new
-- `internal/api/handlers/push_handler.go` — new
-- `internal/api/handlers/olt_ext.go` — new
-- `internal/api/router.go` — registered all 17 new handlers (~140 new routes)
 
 <!-- AUTO-CHANGELOG:END -->
 
