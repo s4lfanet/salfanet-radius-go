@@ -469,6 +469,40 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.34.9 — 2026-05-14
+
+### Added
+- **Go: Backup info routes** — `GET /api/backup` (list history), `GET /api/backup/health` (DB ping + count), `POST /api/backup/telegram/test`
+- **Go: Cron info routes** — `GET /api/cron` (service info), `GET /api/cron/status` (last run + job count)
+- **Go: Invoice extras** — `POST /api/invoices/:id/void`, `POST /api/invoices/bulk-delete`
+- **Go: Manual payments bulk-delete** — `POST /api/manual-payments/bulk-delete`
+- **Go: Tickets create-job** — `POST /api/tickets/:id/create-job`
+- **Go: Jobs photos** — `GET /api/jobs/:id/photos`
+- **Go: Agent self-service portal** — `GET /api/agent/dashboard`, `POST /api/agent/deposit/create`, `POST /api/agent/deposit/webhook` (public), `POST /api/agent/generate-voucher`, `POST /api/agent/record-sales`
+- **Go: PaymentsApprovalHandler** — `GET /api/payments`, `POST /api/payments/:id/approve`, `POST /api/payments/:id/reject`, `GET/POST /api/payments/manual`
+- **Go: Payment gateways list** — `GET /api/payment/gateways` (public)
+- **Go: InvoiceTemplateHandler** — full CRUD + set-default (`/api/invoice-templates`)
+- **Go: PayrollTemplateHandler** — full CRUD + set-default (`/api/payroll-templates`)
+- **Go: TroubleshootingHandler** — checklists CRUD, jobs list/get/materials (`/api/troubleshooting`)
+- **Go: EvoucherHandler** — public portal (profiles, purchase, order-by-token) + admin (list/cancel/resend/bulk-delete)
+- **Go: Payment model** — added `Payment` struct to models.go (table: `payments`)
+### Files
+- `internal/api/handlers/backup_handler.go` — added ListBackups, Health, TelegramTest
+- `internal/api/handlers/agent.go` — added Dashboard, CreateDeposit, DepositWebhook, GenerateVoucher, RecordSales
+- `internal/api/handlers/cronhandler.go` — added Info, Status
+- `internal/api/handlers/invoices_ext.go` — added Void, BulkDelete
+- `internal/api/handlers/manual_payments.go` — added BulkDelete
+- `internal/api/handlers/ticket_ext.go` — added CreateJob
+- `internal/api/handlers/jobs.go` — added ListPhotos
+- `internal/api/handlers/payment_handler.go` — added ListGateways
+- `internal/api/handlers/payments_approval_handler.go` — new file
+- `internal/api/handlers/invoice_template_handler.go` — new file
+- `internal/api/handlers/payroll_template_handler.go` — new file
+- `internal/api/handlers/troubleshooting_handler.go` — new file
+- `internal/api/handlers/evoucher_handler.go` — new file
+- `internal/db/models/models.go` — added Payment struct
+- `internal/api/router.go` — registered all batch 9 routes (~50 new routes)
+
 ### v2.34.8 — 2026-05-13
 
 ### Added
@@ -569,36 +603,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/push_handler.go` — new
 - `internal/api/handlers/olt_ext.go` — new
 - `internal/api/router.go` — registered all 17 new handlers (~140 new routes)
-
-### v2.34.4 — 2026-05-13
-
-### Added
-- **Sidebar: Permintaan Top-Up & Suspend** — tambah `nav.topupRequests` (`/admin/topup-requests`) dan `nav.suspendRequests` (`/admin/suspend-requests`) sebagai child PPPoE
-- **Sidebar: ODC, ODP, Peta Jaringan** — tambah 3 item ke Topology: Network Map, ODC, ODP
-- **Sidebar: Fiber ODC & Fiber ODP** — tambah ke seksi Manajemen Fiber
-- **Sidebar: GenieACS Files** — tambah child `nav.files` ke seksi GenieACS
-- **Sidebar: Kelola Teknisi** — tambah item standalone di catManagement
-- **Sidebar: Log Aktivitas** — tambah item standalone di catManagement
-- **Sidebar: Pengaturan Keamanan** — tambah child `/admin/settings/security` ke settingsMenu
-- **Sidebar: WhatsApp jadi submenu** — ubah dari single link ke children (Settings, Riwayat, Template, Kirim, Notifikasi, Providers)
-- **i18n: tambah nav keys** — `topupRequests`, `suspendRequests`, `activityLogs`, `security`, `fiberOdcs`, `fiberOdps`
-### Files
-- `src/app/admin/AdminClientLayout.tsx` — tambah menu items, WhatsApp jadi submenu, import UserCog
-- `src/locales/id.json` — tambah 6 nav translation keys
-
-
-### Added
-- **Go: GenieACS proxy handler** — `POST /api/genieacs/devices/:deviceId/wifi` (TR-069 setParameterValues), `POST /api/genieacs/devices/:deviceId/connection-request`, `GET /api/genieacs/tasks`, `DELETE /api/genieacs/tasks/:taskId`
-- **Go: GenieACS settings** — `GET/POST /api/settings/genieacs` (simpan host/username/password ke DB)
-- **Go: Admin Employees full CRUD** — `GET /api/admin/employees` (enhanced: stats byRole, pagination, filters), `POST /api/admin/employees`, `PUT /api/admin/employees/:id`, `DELETE /api/admin/employees/:id`
-- **Go: Job Assignments routes** — `GET /api/admin/job-assignments` (alias untuk jobH.List), `DELETE /api/admin/job-assignments/:id`
-- **Go: GenieacsSettings model** — `genieacs_settings` table
-### Files
-- `internal/api/handlers/genieacs.go` — baru
-- `internal/api/handlers/employees_admin.go` — baru
-- `internal/api/handlers/jobs.go` — tambah DeleteJob
-- `internal/db/models/extra.go` — tambah GenieacsSettings model
-- `internal/api/router.go` — tambah semua routes batch 4
 
 <!-- AUTO-CHANGELOG:END -->
 
