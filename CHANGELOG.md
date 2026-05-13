@@ -6,7 +6,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.34.9] — 2026-05-14
+## [2.34.10] — 2026-05-15
+### Added
+- **Go: AdminVPNHandler** — WireGuard VPN management: clients CRUD, approve/reject, config download, QR, generate-keys, service control, settings, sites CRUD + config (`/api/admin/vpn/*`)
+- **Go: AdminPayrollHandler** — payroll records list/get/update/delete, generate by month, overtime CRUD, pay action (`/api/admin/payroll*`)
+- **Go: AdminHRHandler** — attendance records CRUD + bulk-delete, attendance locations, cash advances CRUD + pay, commissions CRUD + approve/reject (`/api/admin/attendance*`, `/api/admin/cash-advances*`, `/api/admin/commissions*`)
+- **Go: FCMHandler** — FCM device token registration + test notification (`/api/fcm/token`, `/api/fcm/test`)
+- **Admin sidebar** — added VPN Management (under Network), Invoice Templates (under Billing), Troubleshooting, Payroll Templates, HR Management (under Management)
+- **Agent sidebar** — added Deposit menu item (`/agent/deposit`)
+### Files
+- `internal/api/handlers/admin_vpn_handler.go` — NEW: 20 methods for VPN management
+- `internal/api/handlers/admin_payroll_handler.go` — NEW: 7 methods for payroll
+- `internal/api/handlers/admin_hr_handler.go` — NEW: 13 methods for HR (attendance/cash/commissions)
+- `internal/api/handlers/fcm_handler.go` — NEW: RegisterToken, Test
+- `internal/api/router.go` — ~55 new routes registered (batch 10)
+- `src/app/admin/AdminClientLayout.tsx` — added VPN, Invoice Templates, Troubleshooting, Payroll Templates, HR Management sidebar items
+- `src/app/agent/AgentLayoutClient.tsx` — added Deposit sidebar item
+
+
 ### Added
 - **Go: Backup info routes** — `GET /api/backup` (list history), `GET /api/backup/health` (DB ping + count), `POST /api/backup/telegram/test`
 - **Go: Cron info routes** — `GET /api/cron` (service info), `GET /api/cron/status` (last run + job count)
