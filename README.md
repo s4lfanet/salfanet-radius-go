@@ -469,6 +469,23 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.34.8 — 2026-05-13
+
+### Added
+- **Go: GenieACS extended handler** — full proxy CRUD for devices (list, get, delete, all-parameters, download, parameters, tasks, WAN, WiFi GET, reboot, refresh, factory-reset), tasks retry, presets CRUD, provisions CRUD, virtual-parameters CRUD, files (list/upload/delete), faults (list/delete), config (list/update/delete), backup (get/create), auto-provision (list/create/delete), sync endpoint
+- **Go: CustomerPortalExt2Handler** — payments (list/create/proof upload), payment-methods (safe list), notifications read, topup-direct, upgrade-package, referral (get/create/rewards), bypass-login (public), invoice manual-payment
+- **Go: PaymentHandler** — `POST /api/payment/create`, `GET /api/payment/check-order`, `POST /api/payment/webhook` (public, gateway callback)
+- **Go: Cron schedule management** — `GET /api/cron/schedules`, `PUT /api/cron/schedules/:job`, `DELETE /api/cron/schedules/:job`
+- **Go: Company bank routes** — `GET/POST /api/company/bank` (was missing from router, methods existed in miscH)
+- **Go: OLT uplink routes** — `GET/POST /api/olt/:id/uplink` (new methods on OLTHandler)
+### Files
+- `internal/api/handlers/genieacs_ext.go` — new file (methods on existing GenieacsHandler)
+- `internal/api/handlers/customer_portal_ext2.go` — new file
+- `internal/api/handlers/payment_handler.go` — new file
+- `internal/api/handlers/cronhandler.go` — added ListSchedules, UpdateSchedule, DeleteSchedule
+- `internal/api/handlers/olt.go` — added GetUplink, CreateUplink
+- `internal/api/router.go` — registered all batch 8 routes (~80 new routes)
+
 ### v2.34.7 — 2026-05-13
 
 ### Added
@@ -582,28 +599,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/jobs.go` — tambah DeleteJob
 - `internal/db/models/extra.go` — tambah GenieacsSettings model
 - `internal/api/router.go` — tambah semua routes batch 4
-
-### v2.34.2 — 2026-05-13
-
-### Added
-- **Go: Manual Payments handler** — `GET/POST /api/manual-payments`, `PUT /api/manual-payments/:id` (approve/reject dengan extend expiry + buat transaction), `DELETE /api/manual-payments/:id`
-- **Go: Jobs handler** — `GET/POST /api/admin/jobs`, `GET /api/admin/jobs/stats`, `GET /api/admin/jobs/:id`, `PATCH /api/admin/jobs/:id/status`
-- **Go: Employees list** — `GET /api/admin/employees` (for job assignment dropdown)
-- **Go: Users list with ODP/ODC filter** — `GET /api/users/list`
-- **Go: Employee, JobAssignment, OdpCustomerAssignment models**
-### Changed
-- **Go: ManualPayment model** — updated sesuai schema actual (bankName, accountName, transferDate, reviewedBy, dll)
-- **Go: PppoeUser model** — tambah Router + ODPAssignment relations
-- **Go: NetworkODP model** — tambah Status field + ODC relation
-### Fixed
-- **Go: billing.go** — fix ManualPayment struct creation sesuai model baru
-### Files
-- `internal/api/handlers/manual_payments.go` — baru
-- `internal/api/handlers/jobs.go` — baru
-- `internal/api/handlers/pppoe.go` — tambah ListUsersForSelect
-- `internal/db/models/models.go` — ManualPayment + PppoeUser update
-- `internal/db/models/extra.go` — Employee, JobAssignment, OdpCustomerAssignment, NetworkODP update
-- `internal/api/router.go` — manual-payments, jobs, employees, users/list routes
 
 <!-- AUTO-CHANGELOG:END -->
 
