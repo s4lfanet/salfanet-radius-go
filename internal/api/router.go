@@ -1245,6 +1245,15 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 13: Network OLTs status ───────────────────────────────────────
 	api.Get("/network/olts/status", miscH.NetworkOLTStatus)
 
+	// ─── Batch 14: Audit fixes ────────────────────────────────────────────────
+	// POST /api/olt/test-connection (non-admin alias; same handler as /admin/olt/test-connection)
+	olt.Post("/test-connection", adminMiscH.TestOLTConnection)
+	// GET /api/pppoe/customers/bulk (template download) + POST alias for bulk-create
+	api.Get("/pppoe/customers/bulk", pppoeExtH.BulkCustomersTemplate)
+	api.Post("/pppoe/customers/bulk", pppoeExtH.BulkCreateCustomers)
+	// PUT /api/admin/suspend-requests/:id (unified action: APPROVE | REJECT)
+	admin.Put("/suspend-requests/:id", adminH.SuspendRequestAction)
+
 	// ─────────────────────────────────────────────────────────────────────────
 
 	return app

@@ -313,5 +313,19 @@ func (h *PppoeExtHandler) ListUsersWithFilters(c fiber.Ctx) error {
 	})
 }
 
+// GET /api/pppoe/customers/bulk — template for bulk customer import
+func (h *PppoeExtHandler) BulkCustomersTemplate(c fiber.Ctx) error {
+	t := c.Query("type")
+	if t == "template" {
+		columns := []string{"customerId", "name", "phone", "email", "address", "idCardNumber"}
+		sample := []fiber.Map{
+			{"customerId": "", "name": "Budi Santoso", "phone": "08123456789", "email": "budi@example.com", "address": "Jl. Merdeka No. 10", "idCardNumber": "3171234567890001"},
+			{"customerId": "", "name": "Siti Rahayu", "phone": "08987654321", "email": "", "address": "", "idCardNumber": ""},
+		}
+		return c.JSON(fiber.Map{"success": true, "columns": columns, "sample": sample})
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "use ?type=template to download import template"})
+}
+
 // helper to satisfy import
 var _ = strconv.Itoa

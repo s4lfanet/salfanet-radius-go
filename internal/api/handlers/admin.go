@@ -312,3 +312,41 @@ func (h *AdminHandler) RejectSuspend(c fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{"message": "rejected"})
 }
+
+// SuspendRequestAction godoc
+// PUT /api/admin/suspend-requests/:id
+// Body: { action: "APPROVE" | "REJECT", adminNotes?: string }
+func (h *AdminHandler) SuspendRequestAction(c fiber.Ctx) error {
+	id := c.Params("id")
+	var body struct {
+		Action     string  `json:"action"`
+		AdminNotes *string `json:"adminNotes"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	now := time.Now()
+	switch body.Action {
+	case "APPROVE":
+		var req struct {
+			UserID string
+			Status string
+		}
+		if err := h.db.Raw("SELECT userId, status FROM suspend_requests WHERE id = ?", id).Scan(&req).Error; err != nil || req.UserID == "" {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "request not found"})
+		}
+		if req.Status != "pending" {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "already processed"})
+		}
+		h.db.Exec("UPDATE suspend_requests SET status='approved', processedAt=? WHERE id=?", now, id)
+		h.db.Exec("UPDATE pppoe_users SET status='suspended' WHERE id=?", req.UserID)
+	case "REJECT":
+		res := h.db.Exec("UPDATE suspend_requests SET status='rejected', processedAt=? WHERE id=? AND status='pending'", now, id)
+		if res.RowsAffected == 0 {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "not found or already processed"})
+		}
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "action must be APPROVE or REJECT"})
+	}
+	return c.JSON(fiber.Map{"success": true})
+}
