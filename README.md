@@ -469,6 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.37.0 — 2026-05-14
+
+### Added
+- **Go: Auth path aliases** — `/api/customer/auth/login`, `/api/customer/auth/verify-otp`, `/api/customer/login`, `/api/agent/login` (alias to existing handlers)
+- **Go: Hotspot voucher singular** — `GET/POST /api/hotspot/voucher` (alias to `ListVouchers`/`GenerateVouchers`)
+- **Go: Network OLTs status** — `GET /api/network/olts/status` returns connectivity status of all OLTs
+### Files
+- `internal/api/handlers/misc_handler.go` — added `NetworkOLTStatus`
+- `internal/api/router.go` — batch 13 routes (+9 routes)
+
 ### v2.36.0 — 2026-05-16
 
 ### Added
@@ -577,28 +587,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/admin_jobs.go` — created
 - `internal/api/handlers/misc_handler.go` — created
 - `internal/api/router.go` — registered ~130 new batch 7 routes
-
-### v2.34.6 — 2026-05-13
-
-### Added
-- **Go: PPPoE extended handler** — `user-status`, `export-users`, `bulk-create`, `bulk-status`, `check-isolation`, `send-notification`, `sync-mikrotik`, `user-activity`, `extend`, `mark-paid`, `export-customers`, `bulk-create-customers`, `sync-profiles-mikrotik`, `sync-profiles-radius`, `sync-radius`, `list-with-filters`
-- **Go: Technician portal handler** — full mobile app auth (OTP, verify, login, logout, session), profile, work-orders, tasks, customers CRUD, form-data, isolated/offline users, sessions, tickets, monitor, GenieACS proxy, file upload
-- **Go: Upload handler** — `POST /api/upload/logo|payment-proof|pppoe-customer`, `GET /api/uploads/logos/:filename`, `GET /api/pwa/icon`
-- **Go: WhatsApp extended handler** — broadcast, broadcast-invoice, provider status/QR/restart/test, public webhook
-- **Go: Push extended handler** — agent-subscribe/unsubscribe, technician-subscribe/unsubscribe
-- **Go: Settings GenieACS handler** — devices list/detail/parameters/reboot/refresh, tasks, test, parameter-display, virtual-parameters, isolation templates CRUD, restart-services, realtime-sessions, system-radius, SSE voucher-updates
-- **Go: TelegramHandler.SendHealth** — `POST /api/telegram/send-health`
-- **Go: 6 new models** — `TelegramBackupSettings`, `WorkOrder`, `TechnicianOtp`, `PushBroadcast`, `AgentPushSubscription`, `TechnicianPushSubscription`
-### Files
-- `internal/api/handlers/pppoe_ext.go` — created
-- `internal/api/handlers/technician_portal.go` — created
-- `internal/api/handlers/upload.go` — created
-- `internal/api/handlers/whatsapp_ext.go` — created
-- `internal/api/handlers/push_ext.go` — created
-- `internal/api/handlers/settings_genieacs.go` — created
-- `internal/api/handlers/telegram_handler.go` — added `SendHealth`
-- `internal/api/router.go` — registered all new routes (~80 new routes)
-- `internal/db/models/extra.go` — added 6 new GORM models
 
 <!-- AUTO-CHANGELOG:END -->
 
