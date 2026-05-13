@@ -6,7 +6,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.34.7] — 2026-05-18
+## [2.34.7] — 2026-05-13
 ### Added
 - **Go: CustomerExtHandler** — customer portal extended: `auth/send-otp`, cash-payment, manual-payment, products, profile OTP, renewal, sessions, extend, ONT, wifi update, diagnostics (ping/speedtest/traceroute)
 - **Go: WhatsappCrudHandler** — full CRUD for providers, history, templates, reminder-settings, send endpoint
@@ -23,7 +23,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.34.6] — 2026-05-18
+## [2.34.6] — 2026-05-13
 ### Added
 - **Go: PPPoE extended handler** — `user-status`, `export-users`, `bulk-create`, `bulk-status`, `check-isolation`, `send-notification`, `sync-mikrotik`, `user-activity`, `extend`, `mark-paid`, `export-customers`, `bulk-create-customers`, `sync-profiles-mikrotik`, `sync-profiles-radius`, `sync-radius`, `list-with-filters`
 - **Go: Technician portal handler** — full mobile app auth (OTP, verify, login, logout, session), profile, work-orders, tasks, customers CRUD, form-data, isolated/offline users, sessions, tickets, monitor, GenieACS proxy, file upload
@@ -46,7 +46,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.34.5] — 2026-05-17
+## [2.34.5] — 2026-05-13
 ### Added
 - **Go: 17 new handler files** — notifications, public, freeradius, invoices_ext, referrals, admin_users, technician_admin, activity_log, hotspot_ext, voucher_templates, ticket_ext, analytics, settings_ext, backup_handler, telegram_handler, push_handler, olt_ext
 - **Go: Notification routes** — `GET/PUT /api/notifications`, `DELETE /api/notifications/:id`
@@ -91,7 +91,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `internal/api/handlers/olt_ext.go` — new
 - `internal/api/router.go` — registered all 17 new handlers (~140 new routes)
 
-## [2.34.4] — 2026-05-14
+## [2.34.4] — 2026-05-13
 ### Added
 - **Sidebar: Permintaan Top-Up & Suspend** — tambah `nav.topupRequests` (`/admin/topup-requests`) dan `nav.suspendRequests` (`/admin/suspend-requests`) sebagai child PPPoE
 - **Sidebar: ODC, ODP, Peta Jaringan** — tambah 3 item ke Topology: Network Map, ODC, ODP
@@ -221,7 +221,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.33.0] — 2026-05-14
+## [2.33.0] — 2026-05-13
 ### Added
 - **Go Cron: PPPoE Session Sync** — port penuh dari `pppoe-session-sync.ts`; sync radacct ↔ radcheck/radreply dengan GREATEST/LEAST safeguard untuk mencegah int overflow di MariaDB; mutex lock agar tidak overlap jika satu run lambat
 - **Go Cron: FreeRADIUS Health Check** — sinkronisasi tabel `nas` otomatis dari `routers`, ganti/tambah entri NAS jika ada router baru atau secret berubah
