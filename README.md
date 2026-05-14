@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.17 — 2026-05-15
+
+### Fixed
+- **Fresh install: folder `uploads/` tidak dibuat** — `install-go.sh` hanya membuat `bin/` dan `logs/`, tidak membuat `uploads/logos`, `uploads/payment-proofs`, `uploads/customer-photos`. Meskipun `ReadWritePaths` sudah include `/uploads`, foldernya belum ada → Go server akan error saat pertama kali upload. Fix: tambah `mkdir -p` untuk ketiga subfolder uploads di kedua tempat dalam script.
+### Files
+- `vps-install/install-go.sh` — tambah `mkdir -p uploads/logos uploads/payment-proofs uploads/customer-photos`
+
 ### v2.47.16 — 2026-05-15
 
 ### Fixed
@@ -507,17 +514,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **`POST /api/upload/logo` → 500 masih gagal** — root cause sebenarnya: systemd service menggunakan `ProtectSystem=strict` yang membuat seluruh filesystem read-only. Hanya `/var/www/salfanet-radius/logs` yang ada di `ReadWritePaths`, sehingga proses tidak bisa menulis ke `/uploads/`. Fix: tambah `/var/www/salfanet-radius/uploads` ke `ReadWritePaths` di `/etc/systemd/system/salfanet-api.service`.
 ### Files
 - `/etc/systemd/system/salfanet-api.service` (VPS) — `ReadWritePaths` ditambah path `/uploads`
-
-### v2.47.12 — 2026-05-15
-
-### Fixed
-- **`GET /api/admin/apk/trigger` → 405** — Frontend `fetchEnv` di halaman `/admin/download-apk` memanggil `GET /api/admin/apk/trigger` tapi hanya `POST` yang terdaftar. Fix: tambah handler `ApkEnv` baru yang mengecek ketersediaan Java dan Android SDK di server, daftarkan ke `GET /api/admin/apk/env`, dan update frontend untuk memanggil endpoint yang benar.
-- **`POST /api/upload/logo` → 500** — `c.SaveFile()` di Fiber v3 beta.4 gagal meskipun directory sudah ada. Fix: rewrite semua upload handler (`UploadLogo`, `UploadPaymentProof`, `UploadCustomerPhoto`) menggunakan `file.Open()` + `os.Create()` + `io.Copy()` secara manual.
-### Files
-- `internal/api/handlers/admin_misc_handler.go` — tambah `ApkEnv()` handler
-- `internal/api/handlers/upload.go` — rewrite pakai manual io.Copy (bukan c.SaveFile)
-- `internal/api/router.go` — tambah `GET /admin/apk/env`
-- `src/app/admin/download-apk/page.tsx` — ubah fetchEnv → `/api/admin/apk/env`
 
 <!-- AUTO-CHANGELOG:END -->
 
