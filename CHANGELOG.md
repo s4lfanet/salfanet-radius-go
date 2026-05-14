@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.17] — 2026-05-15
+### Fixed
+- **Fresh install: folder `uploads/` tidak dibuat** — `install-go.sh` hanya membuat `bin/` dan `logs/`, tidak membuat `uploads/logos`, `uploads/payment-proofs`, `uploads/customer-photos`. Meskipun `ReadWritePaths` sudah include `/uploads`, foldernya belum ada → Go server akan error saat pertama kali upload. Fix: tambah `mkdir -p` untuk ketiga subfolder uploads di kedua tempat dalam script.
+### Files
+- `vps-install/install-go.sh` — tambah `mkdir -p uploads/logos uploads/payment-proofs uploads/customer-photos`
+
 ## [2.47.16] — 2026-05-15
 ### Fixed
 - **Installer: `--domain` CLI flag diabaikan** — `init_installation()` melakukan `export VPS_DOMAIN=""` yang overwrite nilai yang sudah di-set via `--domain` CLI arg. Fix: ubah ke `export VPS_DOMAIN="${VPS_DOMAIN:-}"` agar CLI value dipertahankan.
