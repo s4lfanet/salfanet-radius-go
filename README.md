@@ -469,6 +469,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.46.2 — 2026-05-14
+
+### Fixed
+- **Nginx smart API routing** — Routing `/api/` sebelumnya mengarahkan semua ke Go backend, menyebabkan `GET /api/company` dan `POST /api/admin/auth/pre-login` menghasilkan 401 "missing authorization header". Sekarang ada routing granular: Go JWT auth (`/api/auth/login`, `/api/auth/logout`, `/api/auth/refresh`, `/api/auth/customer/`, `/api/auth/agent/`), NextAuth (`/api/auth/callback/`, `/api/auth/session`, `/api/auth/csrf`, `/api/auth/signout`), portal API (`/api/customer/`, `/api/agent/`, `/api/technician/`) ke Go, dan catch-all `/api/` → Next.js untuk admin panel.
+- **Admin login 401 resolved** — `POST /api/admin/auth/pre-login` kini mengarah ke Next.js (handler Prisma+2FA yang sesungguhnya), bukan Go stub yang dilindungi AuthMiddleware
+
+### Files
+- `vps-install/install-nginx.sh` — Ganti 2 location block lama (`/api/auth/` + `/api/`) dengan routing granular komprehensif di kedua fungsi `_proxy_locations()` dan `_proxy_locations_https_domain()`
+
 ### v2.46.1 — 2026-05-14
 
 ### Fixed
@@ -579,18 +588,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/pppoe_ext.go` — expiredAt
 - `internal/api/handlers/invoices_ext.go` — subscriptionType, invoiceType
 - `internal/api/handlers/auth.go` — removed dead otp_code key
-
-### v2.41.0 — 2026-05-14
-
-### Fixed
-- **HR tables migration** — Created missing DB tables: `attendance_records`, `attendance_locations`, `cash_advances`, `commissions` with correct camelCase column names
-- **registration_requests migration** — Added missing `processedAt datetime(3)` column to `registration_requests` table
-- **processedAt column** — Fixed `"processed_at"` → `"processedAt"` in Updates maps across `admin_jobs.go` and `pppoe.go`
-- **HR handler column names** — Fixed `"employee_id = ?"` → `"employeeId = ?"` and `"check_in desc"` → `"checkIn desc"` in `admin_hr_handler.go`
-### Files
-- `internal/api/handlers/admin_jobs.go` — processedAt in registration approve/reject/install
-- `internal/api/handlers/pppoe.go` — processedAt in registration approve/reject
-- `internal/api/handlers/admin_hr_handler.go` — employeeId WHERE, checkIn ORDER BY
 
 <!-- AUTO-CHANGELOG:END -->
 
