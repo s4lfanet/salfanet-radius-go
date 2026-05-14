@@ -469,6 +469,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.7 — 2026-05-15
+
+### Fixed
+- **RADIUS status dashboard selalu "Offline"** — deteksi status sebelumnya menggunakan heuristik radacct (ada sesi aktif atau aktivitas 1 jam terakhir). Jika belum ada koneksi PPPoE sama sekali, nilai menjadi 0 → status "stopped". Diganti dengan `systemctl is-active freeradius` via `exec.Command` yang langsung mengecek state systemd service yang sesungguhnya. Berlaku di endpoint `/api/system/radius` maupun di `systemStatus.radius` pada `/api/dashboard/stats`.
+### Files
+- `internal/api/handlers/settings_genieacs.go` — `checkFreeradiusRunning()` helper baru via systemctl; `SystemRadius()` diupdate
+- `internal/api/handlers/admin.go` — `Stats()` gunakan `checkFreeradiusRunning()` untuk `systemStatus.radius`
+
 ### v2.47.6 — 2026-05-15
 
 ### Fixed
@@ -514,15 +522,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Admin dashboard crash** (`TypeError: Cannot read properties of undefined (reading 'length')`) — Go `/api/admin/activity-logs` mengembalikan `logs` + nested `pagination`, tapi frontend expect `activities` + flat `total`/`hasMore`/`offset`
 ### Files
 - `internal/api/handlers/activity_log.go` — ganti response key `logs`→`activities`, flatten pagination, gunakan `offset` bukan `page`
-
-### v2.47.1 — 2026-05-14
-
-### Fixed
-- **Admin dashboard crash** — `TypeError: Cannot read properties of undefined (reading 'length')` akibat `Unknown column 'type'` di query analytics; fix ke `invoiceType`
-- **Payment gateways public API** — SELECT clause menggunakan kolom `is_active`, `is_production` yang tidak ada di DB; fix ke `isActive` saja
-### Files
-- `internal/api/handlers/analytics.go` — `SELECT type` → `SELECT invoiceType`, `GROUP BY type` → `GROUP BY invoiceType`
-- `internal/api/handlers/public.go` — SELECT clause fix ke kolom yang valid (`id`, `provider`, `isActive`)
 
 <!-- AUTO-CHANGELOG:END -->
 
