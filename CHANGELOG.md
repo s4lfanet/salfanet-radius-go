@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.2] — 2026-05-14
+### Fixed
+- **Admin dashboard crash** (`TypeError: Cannot read properties of undefined (reading 'length')`) — Go `/api/admin/activity-logs` mengembalikan `logs` + nested `pagination`, tapi frontend expect `activities` + flat `total`/`hasMore`/`offset`
+### Files
+- `internal/api/handlers/activity_log.go` — ganti response key `logs`→`activities`, flatten pagination, gunakan `offset` bukan `page`
+
 ## [2.47.1] — 2026-05-14
 ### Fixed
 - **Admin dashboard crash** — `TypeError: Cannot read properties of undefined (reading 'length')` akibat `Unknown column 'type'` di query analytics; fix ke `invoiceType`
