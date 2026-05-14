@@ -6,6 +6,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.46.6] — 2026-05-15
+### Fixed
+- **404: `/api/admin/cash-advances/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus data
+- **404: `/api/admin/commissions/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus komisi
+- **404: `/api/admin/payroll/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus payroll
+
+### Added
+- **`/api/admin/attendance-locations`** — Dibuat Next.js route `GET/POST` untuk lokasi absen
+- **`companies` table seeded** — Insert default company record agar `/api/settings/isolation` tidak 404
+
+### Files
+- `src/app/api/admin/cash-advances/[id]/route.ts` — GET/PUT/DELETE by ID
+- `src/app/api/admin/commissions/[id]/route.ts` — GET/PUT/DELETE by ID
+- `src/app/api/admin/payroll/[id]/route.ts` — GET/PUT/DELETE by ID
+- `src/app/api/admin/attendance-locations/route.ts` — GET/POST lokasi absen
+
+---
+
 ## [2.46.5] — 2026-05-15
 ### Fixed
 - **500: `/api/network/cables`** — Relasi Prisma salah: `cable_segments` → `segments`; status enum salah: `ASSIGNED` → `USED`
