@@ -469,6 +469,29 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.46.3 — 2026-05-14
+
+### Fixed
+- **404: `/admin/invoice-templates`** — Halaman frontend tidak ada; dibuat `src/app/admin/invoice-templates/page.tsx` lengkap dengan tabel, modal create/edit, preview HTML, set-default
+- **404: `/admin/logs/activity`** — File `page.tsx` ada di lokal tapi belum di-commit ke git; sekarang sudah dicommit
+- **404: `/api/troubleshooting/checklists`** — Endpoint hanya ada di Go (butuh Bearer token), sedangkan admin panel tidak mengirim token. Dibuat Next.js API route (`src/app/api/troubleshooting/checklists/route.ts` dan `[id]/route.ts`) menggunakan Prisma `$queryRaw` langsung ke tabel MySQL
+- **404: `/api/invoice-templates`** — Sama dengan troubleshooting; dibuat Next.js API route lengkap (GET/POST list, GET/PUT/DELETE per-id, POST set-default)
+
+### Added
+- **14 missing nav translation keys** — Ditambahkan ke `src/locales/id.json`: `invoiceTemplates`, `troubleshooting`, `troubleshootingChecklists`, `troubleshootingJobs`, `hrManagement`, `attendance`, `cashAdvances`, `commissions`, `payroll`, `payrollTemplates`, `vpnManagement`, `vpnClients`, `vpnSites`, `vpnSettings`
+- **DB migration SQL** — `scripts/migrate-missing-tables.sql` membuat tabel `troubleshooting_checklists`, `troubleshooting_jobs`, `troubleshooting_materials`, `invoice_templates`
+
+### Files
+- `src/app/admin/invoice-templates/page.tsx` — Halaman baru (dibuat)
+- `src/app/admin/logs/activity/page.tsx` — Commit ke git (sebelumnya untracked)
+- `src/app/api/troubleshooting/checklists/route.ts` — GET + POST
+- `src/app/api/troubleshooting/checklists/[id]/route.ts` — PUT + DELETE
+- `src/app/api/invoice-templates/route.ts` — GET + POST
+- `src/app/api/invoice-templates/[id]/route.ts` — GET + PUT + DELETE
+- `src/app/api/invoice-templates/[id]/default/route.ts` — POST (set default)
+- `src/locales/id.json` — Tambah 14 nav keys
+- `scripts/migrate-missing-tables.sql` — SQL migration baru
+
 ### v2.46.2 — 2026-05-14
 
 ### Fixed
@@ -571,23 +594,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/admin/commissions/page.tsx` — halaman baru
 - `src/app/admin/payroll-templates/page.tsx` — halaman baru
 - `src/app/admin/payroll/page.tsx` — halaman baru
-
-### v2.42.0 — 2026-05-14
-
-### Fixed
-- **DB camelCase 100% complete** — Fixed final 8 remaining snake_case column references across 5 files
-- **TechnicianOtp** — `Update("used_at", now)` → `Update("isUsed", true)` (model uses `bool`, not `*time.Time`)
-- **Technician auth** — `Update("last_login_at", now)` → `Update("lastLoginAt", now)` in both login paths
-- **PPPoE sync** — `Update("synced_to_radius", true)` → `Update("syncedToRadius", true)`
-- **PPPoE expiry** — `Update("expired_at", newExpiry)` → `Update("expiredAt", newExpiry)`
-- **Invoice generator** — `"subscription_type = ?"` → `"subscriptionType = ?"` and `"invoice_type = ?"` → `"invoiceType = ?"`
-- **Auth 2FA** — removed dead `"otp_code": nil` key (column doesn't exist in `admin_two_factor_pending`)
-### Files
-- `internal/api/handlers/technician_portal.go` — isUsed, lastLoginAt
-- `internal/api/handlers/pppoe.go` — syncedToRadius
-- `internal/api/handlers/pppoe_ext.go` — expiredAt
-- `internal/api/handlers/invoices_ext.go` — subscriptionType, invoiceType
-- `internal/api/handlers/auth.go` — removed dead otp_code key
 
 <!-- AUTO-CHANGELOG:END -->
 
