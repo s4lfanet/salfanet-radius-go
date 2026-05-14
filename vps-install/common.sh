@@ -16,6 +16,10 @@ export PURPLE='\033[0;35m'
 export WHITE='\033[1;37m'
 export NC='\033[0m' # No Color
 
+# Prevent apt/dpkg interactive prompts — essential for unattended/automated installs
+export DEBIAN_FRONTEND=noninteractive
+export DEBCONF_NONINTERACTIVE_SEEN=true
+
 # Global configuration variables
 export NODE_VERSION="${NODE_VERSION:-20}"
 export APP_DIR="${APP_DIR:-/var/www/salfanet-radius}"

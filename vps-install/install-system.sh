@@ -15,7 +15,11 @@ source "$SCRIPT_DIR/common.sh"
 
 install_system_packages() {
     print_step "Step 1: Updating system and installing dependencies"
-    
+
+    # Prevent apt/dpkg from showing interactive prompts (essential for unattended install)
+    export DEBIAN_FRONTEND=noninteractive
+    export DEBCONF_NONINTERACTIVE_SEEN=true
+
     print_info "Updating package lists..."
     apt-get update || {
         print_error "Failed to update package lists"
@@ -23,12 +27,16 @@ install_system_packages() {
     }
     
     print_info "Upgrading existing packages..."
-    apt-get upgrade -y || {
+    DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" || {
         print_warning "Some packages failed to upgrade (continuing...)"
     }
     
     print_info "Installing base dependencies..."
-    apt-get install -y \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" \
         curl \
         wget \
         git \
