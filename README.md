@@ -469,6 +469,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.5 — 2026-05-15
+
+### Fixed
+- **Email templates crash** (`TypeError: Cannot read properties of undefined (reading 'forEach')`) — Go returned `"templates"` key but frontend used `data.data.forEach`; fixed to `"data"`
+- **Email history crash** (`TypeError: Cannot read properties of undefined (reading 'length')`) — Go returned `"emails"` key but frontend used `data.history`; fixed to `"history"`
+- **WhatsApp notifications null crash** (`TypeError: Cannot read properties of null (reading 'success')`) — Go handler `GetReminderSettings` was querying the wrong model (`WhatsappReminderSetting` with mismatched columns), causing GORM to return nil slice → `c.JSON(nil)` → response body `null`. Added `WhatsappGlobalSettings` model matching the actual Prisma DB schema and rewrote GET/PUT handlers to use it correctly.
+### Files
+- `internal/api/handlers/settings_ext.go` — `ListEmailTemplates`: `"templates"` → `"data"`; `EmailHistory`: `"emails"` → `"history"`
+- `internal/db/models/extra.go` — Added `WhatsappGlobalSettings` struct matching actual `whatsapp_reminder_settings` table columns
+- `internal/api/handlers/whatsapp.go` — `GetReminderSettings`: uses new model, returns `{success, settings:{...}}`; `UpdateReminderSettings`: accepts flat object body matching frontend format
+
 ### v2.47.4 — 2026-05-15
 
 ### Fixed
@@ -520,18 +531,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/router.go` — ganti `AuthMiddleware` → `CombinedAuthMiddleware` untuk protected routes
 - `/etc/nginx/sites-available/salfanet-radius` (VPS) — catch-all `/api/` → Go:8080
 - `vps-install/install-nginx.sh` — fix fresh installer: catch-all `/api/` → Go:8080 (sebelumnya 3000)
-
-### v2.46.7 — 2026-05-15
-
-### Performance
-- **PM2 `fork` mode** — Ganti dari `cluster` mode (instances:1) ke `fork` mode; eliminasi overhead master process + IPC routing; ~30MB RAM lebih hemat
-- **Hapus `cron_restart`** — Dihapus jadwal restart paksa tiap 6 jam (`0 */6 * * *`) yang menyebabkan downtime ~10 detik sebanyak 4x sehari
-- **Heap Node.js 400MB → 512MB** — Kurangi GC pressure; `--optimize-for-size` dihapus (menukar speed demi size, tidak cocok untuk production server)
-- **`max_memory_restart` 450M → 600M** — Toleransi memory lebih besar sebelum auto-restart
-- **Clear VPS swap** — Cleared 672MB swap residual dari proses `npm run build`; menghilangkan disk I/O latency
-
-### Files
-- `production/ecosystem.config.js` — PM2 config fix: fork mode, heap 512M, no cron_restart
 
 <!-- AUTO-CHANGELOG:END -->
 
