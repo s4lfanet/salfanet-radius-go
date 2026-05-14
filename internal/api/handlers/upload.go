@@ -20,31 +20,6 @@ func NewUploadHandler(db *gorm.DB) *UploadHandler {
 
 const uploadDir = "/var/www/salfanet-radius/uploads"
 
-// saveUploadedFile saves a multipart file to dest using manual io.Copy (Fiber v3 compatible)
-func saveUploadedFile(c fiber.Ctx, fieldName, dest string) error {
-	file, err := c.FormFile(fieldName)
-	if err != nil {
-		return err
-	}
-	src, err := file.Open()
-	if err != nil {
-		return err
-	}
-	defer src.Close()
-
-	if err2 := os.MkdirAll(filepath.Dir(dest), 0755); err2 != nil {
-		return err2
-	}
-	dst, err := os.Create(dest)
-	if err != nil {
-		return err
-	}
-	defer dst.Close()
-
-	_, err = io.Copy(dst, src)
-	return err
-}
-
 // POST /api/upload/logo — upload company logo
 func (h *UploadHandler) UploadLogo(c fiber.Ctx) error {
 	file, err := c.FormFile("file")
