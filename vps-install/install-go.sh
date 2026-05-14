@@ -84,7 +84,7 @@ build_go_binary() {
         return 1
     }
 
-    mkdir -p "$_APP_DIR/bin" "$_APP_DIR/logs"
+    mkdir -p "$_APP_DIR/bin" "$_APP_DIR/logs" "$_APP_DIR/uploads/logos" "$_APP_DIR/uploads/payment-proofs" "$_APP_DIR/uploads/customer-photos"
 
     print_info "Running go mod download..."
     go mod download 2>&1 | tail -5 || true
@@ -220,7 +220,7 @@ _standalone_install() {
         useradd --system --no-create-home --shell /bin/false "$_APP_USER"
 
     # 6. App directory
-    mkdir -p "$_APP_DIR/bin" "$_APP_DIR/logs" "$_APP_DIR/public"
+    mkdir -p "$_APP_DIR/bin" "$_APP_DIR/logs" "$_APP_DIR/public" "$_APP_DIR/uploads/logos" "$_APP_DIR/uploads/payment-proofs" "$_APP_DIR/uploads/customer-photos"
 
     # 7. Clone / update repo
     if [ -d "$_APP_DIR/.git" ]; then
