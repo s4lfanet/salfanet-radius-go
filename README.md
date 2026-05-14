@@ -469,6 +469,27 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.44.0 — 2026-05-14
+
+### Changed
+- **nginx /api/ routing** — All server blocks now route `/api/` → Go backend (port 8080) instead of Next.js (port 3000)
+- **install-nginx.sh** — Updated `_proxy_locations()` & `_proxy_locations_https_domain()` helpers; added `salfanet_api` upstream (port 8080, keepalive 32)
+- **install-go.sh** — Refactored into proper module with `install_go_runtime()`, `build_go_binary()`, `setup_go_systemd_service()`, `start_go_service()`, `install_go_backend()` functions; standalone mode preserved
+- **updater.sh** — Added Go binary rebuild + systemd service restart step before Node.js install
+- **vps-installer.sh** — Added Step 4.5: Go backend build & systemd service after app setup; added Go version + service status to install summary
+- **ecosystem.config.js** — `salfanet-cron` `API_URL` updated from port 3000 → port 8080 (Go backend)
+- **install-app.sh** — `.env` template extended with Go-specific vars (`PORT`, `APP_ENV`, `JWT_SECRET`, `CORS_ORIGINS`, `WA_SERVICE_URL`, `GO_API_URL`)
+- **production/nginx-salfanet-radius.conf** — `/api/` → port 8080 in all 4 server blocks; SSL cert paths updated (Let's Encrypt for domain blocks, self-signed comment for IP blocks)
+
+### Files
+- `vps-install/install-nginx.sh` — Go upstream + /api/ proxy to port 8080
+- `vps-install/install-go.sh` — Full module refactor with proper functions
+- `vps-install/updater.sh` — Go binary build step added
+- `vps-install/vps-installer.sh` — Step 4.5 + summary info for Go service
+- `vps-install/install-app.sh` — Go env vars in .env template
+- `production/ecosystem.config.js` — cron API_URL → 8080
+- `production/nginx-salfanet-radius.conf` — /api/ → Go:8080 + LE cert paths
+
 ### v2.43.0 — 2026-05-14
 
 ### Added
@@ -549,22 +570,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/ticket_ext.go` — categoryId in raw SQL analytics
 - `internal/api/handlers/misc_handler.go` — isActive in raw SQL technician query
 - `internal/api/handlers/*.go` (30+ more files) — isActive, isDefault, isResolved, approvalStatus, assignedToId, technicianId, referrerId, referredId, sentAt, daysBefore, paymentToken etc.
-
-### v2.39.0 — 2026-05-15
-
-### Fixed
-- **DB column naming — camelCase consistency** — Fixed 70+ `ORDER BY created_at` errors across all handler files; DB uses Prisma camelCase convention (`createdAt`, `updatedAt`, `paidAt`, `isActive`, `isResolved`, `userId`, `agentId`, `profileId`, `technicianId`, `assignedToId`, `startedAt`, etc.)
-- **ManualPayment model** — Added explicit `gorm:"column:xxx"` tags: `userId`, `paymentDate`, `receiptImage`, `approvedBy`, `approvedAt`, `rejectionReason`, `accountNumber`
-- **Raw SQL WHERE/Updates** — Fixed column key names in map-based Updates and WHERE clauses across 46 handler files
-- **Admin/Billing** — Fixed `paid_at` → `paidAt` in invoices, payments, payroll; `is_read` → `isRead` in notifications; `is_active` → `isActive` in profiles/gateways/areas; `started_at` → `startedAt` in cron history
-- **Analytics** — Fixed `DATE_FORMAT(paid_at/created_at)` → `DATE_FORMAT(paidAt/createdAt)` in raw SQL revenue/growth queries
-- **Jobs** — Fixed `technician_notes` → `technicianNotes`, `completed_date` → `completedAt`, `approval_status` → `approvalStatus` in work orders
-- **Tickets** — Fixed `assigned_to_id` → `assignedToId`, `customer_id` → `customerId`
-- **Referrals** — Fixed `referrer_id`/`referred_id` → `referrerId`/`referredId` in JOIN clauses and WHERE
-### Files
-- `internal/db/models/models.go` — ManualPayment model column tags corrected
-- `internal/api/handlers/manual_payments.go` — raw SQL WHERE/Updates column names corrected
-- `internal/api/handlers/*.go` (46 files) — camelCase DB column names in Order/Where/Updates/raw SQL
 
 <!-- AUTO-CHANGELOG:END -->
 
