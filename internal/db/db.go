@@ -117,6 +117,12 @@ func convertDSN(url string) (string, error) {
 	host := hostDB[:slashIdx]
 	dbname := hostDB[slashIdx+1:]
 
+	// Strip Prisma-specific query params (connection_limit, pool_timeout, socket_timeout, etc.)
+	// These are not valid MySQL session variables. We append our own MySQL-compatible params below.
+	if qIdx := strings.Index(dbname, "?"); qIdx >= 0 {
+		dbname = dbname[:qIdx]
+	}
+
 	dsn := fmt.Sprintf("%s@tcp(%s)/%s?parseTime=True&loc=Local&charset=utf8mb4&collation=utf8mb4_unicode_ci", userInfo, host, dbname)
 	return dsn, nil
 }
