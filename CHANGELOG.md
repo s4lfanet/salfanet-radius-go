@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.39.0] — 2026-05-15
+### Fixed
+- **DB column naming — camelCase consistency** — Fixed 70+ `ORDER BY created_at` errors across all handler files; DB uses Prisma camelCase convention (`createdAt`, `updatedAt`, `paidAt`, `isActive`, `isResolved`, `userId`, `agentId`, `profileId`, `technicianId`, `assignedToId`, `startedAt`, etc.)
+- **ManualPayment model** — Added explicit `gorm:"column:xxx"` tags: `userId`, `paymentDate`, `receiptImage`, `approvedBy`, `approvedAt`, `rejectionReason`, `accountNumber`
+- **Raw SQL WHERE/Updates** — Fixed column key names in map-based Updates and WHERE clauses across 46 handler files
+- **Admin/Billing** — Fixed `paid_at` → `paidAt` in invoices, payments, payroll; `is_read` → `isRead` in notifications; `is_active` → `isActive` in profiles/gateways/areas; `started_at` → `startedAt` in cron history
+- **Analytics** — Fixed `DATE_FORMAT(paid_at/created_at)` → `DATE_FORMAT(paidAt/createdAt)` in raw SQL revenue/growth queries
+- **Jobs** — Fixed `technician_notes` → `technicianNotes`, `completed_date` → `completedAt`, `approval_status` → `approvalStatus` in work orders
+- **Tickets** — Fixed `assigned_to_id` → `assignedToId`, `customer_id` → `customerId`
+- **Referrals** — Fixed `referrer_id`/`referred_id` → `referrerId`/`referredId` in JOIN clauses and WHERE
+### Files
+- `internal/db/models/models.go` — ManualPayment model column tags corrected
+- `internal/api/handlers/manual_payments.go` — raw SQL WHERE/Updates column names corrected
+- `internal/api/handlers/*.go` (46 files) — camelCase DB column names in Order/Where/Updates/raw SQL
+
 ## [2.38.0] — 2026-05-14
 ### Added
 - **Go: OLT test-connection alias** — `POST /api/olt/test-connection` (non-admin alias to existing handler)
