@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.16 — 2026-05-15
+
+### Fixed
+- **Installer: `--domain` CLI flag diabaikan** — `init_installation()` melakukan `export VPS_DOMAIN=""` yang overwrite nilai yang sudah di-set via `--domain` CLI arg. Fix: ubah ke `export VPS_DOMAIN="${VPS_DOMAIN:-}"` agar CLI value dipertahankan.
+### Files
+- `vps-install/vps-installer.sh` — preserve VPS_DOMAIN from CLI flag
+
 ### v2.47.15 — 2026-05-15
 
 ### Fixed
@@ -511,20 +518,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/upload.go` — rewrite pakai manual io.Copy (bukan c.SaveFile)
 - `internal/api/router.go` — tambah `GET /admin/apk/env`
 - `src/app/admin/download-apk/page.tsx` — ubah fetchEnv → `/api/admin/apk/env`
-
-### v2.47.11 — 2026-05-15
-
-### Fixed
-- **Halaman `/admin/settings/database` crash** — `GET /api/backup/history` mengembalikan key `backups` tapi frontend membaca `historyData.history` → undefined → `.length` crash. Fix: rename key ke `history` + nil guard.
-- **Halaman `/admin/settings/database` health kosong** — `GET /api/backup/health` mengembalikan flat object tapi frontend mengharapkan `{"health": {status, size, tables, connections, lastBackup, uptime}}`. Fix: rewrite handler dengan nested health object + query DB untuk size & table count.
-- **Halaman `/admin/settings/cron` crash** — tiga root cause: (1) `GET /api/cron/status` tidak terdaftar di router → 404; (2) handler lama mengembalikan `"jobs": 9` (integer) bukan array; (3) frontend `statusData.jobs.flatMap()` tidak aman. Fix: daftarkan route, rewrite `Status()` dengan array CronJob, fix frontend dengan fallback `|| []`.
-- **`POST /api/company` → 405 Method Not Allowed** — router hanya punya `PUT /api/company` tapi frontend menggunakan `method: 'POST'`. Fix: tambah alias `POST /api/company`.
-- **`POST /api/upload/logo` → 500** — directory `/var/www/salfanet-radius/uploads/logos` tidak ada di VPS. Fix: buat directory dengan chmod 755.
-### Files
-- `internal/api/handlers/backup_handler.go` — fix `History()` key + rewrite `Health()` dengan nested object
-- `internal/api/handlers/cronhandler.go` — `Status()` rewrite: kembalikan jobs sebagai array CronJob dengan data dari DB
-- `internal/api/router.go` — tambah `POST /company` dan `GET /cron/status`
-- `src/app/admin/settings/cron/page.tsx` — safe flatMap dengan fallback array kosong
 
 <!-- AUTO-CHANGELOG:END -->
 
