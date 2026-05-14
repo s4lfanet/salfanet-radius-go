@@ -24,17 +24,16 @@ module.exports = {
       script: '.next/standalone/server.js',
       cwd: APP_DIR,
       instances: 1,
-      exec_mode: 'cluster',
+      exec_mode: 'fork',          // fork: 1 process, no cluster master overhead
       watch: false,
-      max_memory_restart: '450M',
+      max_memory_restart: '600M', // increased from 450M (VPS has 3.8GB)
       node_args: [
-        '--max-old-space-size=400',
-        '--max-semi-space-size=8',
-        '--optimize-for-size',
+        '--max-old-space-size=512', // increased from 400M, reduces GC pressure
+        '--max-semi-space-size=16',
       ],
       env: {
         NODE_ENV: 'production',
-        NODE_OPTIONS: '--max-old-space-size=400',
+        NODE_OPTIONS: '--max-old-space-size=512',
         PORT: 3000,
         HOSTNAME: '127.0.0.1',
         TZ: 'Asia/Jakarta',
@@ -45,8 +44,8 @@ module.exports = {
       merge_logs: true,
       autorestart: true,
       max_restarts: 10,
-      min_uptime: '10s',
-      cron_restart: '0 */6 * * *',
+      min_uptime: '30s',
+      // cron_restart removed — was causing 4x/day forced downtime
     },
 
     // ─────────────────────────────────────────────────────────────────────
