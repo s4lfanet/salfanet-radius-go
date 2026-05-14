@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.2 — 2026-05-14
+
+### Fixed
+- **Admin dashboard crash** (`TypeError: Cannot read properties of undefined (reading 'length')`) — Go `/api/admin/activity-logs` mengembalikan `logs` + nested `pagination`, tapi frontend expect `activities` + flat `total`/`hasMore`/`offset`
+### Files
+- `internal/api/handlers/activity_log.go` — ganti response key `logs`→`activities`, flatten pagination, gunakan `offset` bukan `page`
+
 ### v2.47.1 — 2026-05-14
 
 ### Fixed
@@ -524,26 +531,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/api/admin/commissions/[id]/route.ts` — GET/PUT/DELETE by ID
 - `src/app/api/admin/payroll/[id]/route.ts` — GET/PUT/DELETE by ID
 - `src/app/api/admin/attendance-locations/route.ts` — GET/POST lokasi absen
-
-### v2.46.5 — 2026-05-15
-
-### Fixed
-- **500: `/api/network/cables`** — Relasi Prisma salah: `cable_segments` → `segments`; status enum salah: `ASSIGNED` → `USED`
-- **404: `/api/admin/attendance`** — Dibuat Next.js API route `GET/POST` dengan `$queryRawUnsafe` ke tabel `attendance_records`
-- **404: `/api/admin/cash-advances`** — Dibuat Next.js API route `GET/POST` ke tabel `cash_advances`
-- **404: `/api/admin/commissions`** — Dibuat Next.js API route `GET/POST` ke tabel `commissions`
-- **404: `/api/admin/payroll`** — Dibuat Next.js API route `GET/POST` ke tabel `payroll_records`
-
-### Added
-- **DB migration HR tables** — `scripts/migrate-hr-tables.sql` membuat tabel: `attendance_locations`, `attendance_records`, `cash_advances`, `commissions`, `payroll_records`, `payroll_overtime`
-
-### Files
-- `src/app/api/network/cables/route.ts` — Fix relasi `segments` dan enum `USED`
-- `src/app/api/admin/attendance/route.ts` — BARU: GET/POST attendance
-- `src/app/api/admin/cash-advances/route.ts` — BARU: GET/POST cash advances
-- `src/app/api/admin/commissions/route.ts` — BARU: GET/POST commissions
-- `src/app/api/admin/payroll/route.ts` — BARU: GET/POST payroll records
-- `scripts/migrate-hr-tables.sql` — BARU: SQL migration HR tables
 
 <!-- AUTO-CHANGELOG:END -->
 
