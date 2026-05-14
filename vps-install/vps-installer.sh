@@ -22,12 +22,22 @@ set -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Parse CLI args
+export UNATTENDED="${UNATTENDED:-false}"
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --env) export DEPLOY_ENV="$2"; shift ;;
-        --ip)  export FORCE_IP="$2";   shift ;;
+        --env)         export DEPLOY_ENV="$2";        shift ;;
+        --ip)          export FORCE_IP="$2";          shift ;;
+        --domain)      export VPS_DOMAIN="$2";        shift ;;
+        --db-pass)     export DB_PASSWORD="$2";       shift ;;
+        --unattended)  export UNATTENDED="true" ;;
         --help|-h)
-            echo "Usage: bash vps-installer.sh [--env vps|lxc|vm|bare] [--ip IP_ADDRESS]"
+            echo "Usage: bash vps-installer.sh [--env vps|lxc|vm|bare] [--ip IP] [--domain DOMAIN] [--db-pass PASS] [--unattended]"
+            echo ""
+            echo "  --env vps|lxc|vm|bare  Force environment type (default: auto-detect)"
+            echo "  --ip ADDRESS           Force IP address"
+            echo "  --domain DOMAIN        Set domain for SSL (skips prompt)"
+            echo "  --db-pass PASS         Set DB password (default: from common.sh)"
+            echo "  --unattended           Non-interactive mode, use all defaults"
             exit 0
             ;;
     esac
@@ -76,8 +86,13 @@ select_environment() {
         vps)  DEFAULT_CHOICE="1" ;;
     esac
 
-    read -t 20 -p "Pilih [1/2/3/4] (default: ${DEFAULT_CHOICE} - ${DEPLOY_ENV_LABEL}): " ENV_CHOICE </dev/tty \
-        || ENV_CHOICE="$DEFAULT_CHOICE"
+    if [ "${UNATTENDED}" = "true" ]; then
+        ENV_CHOICE="$DEFAULT_CHOICE"
+        echo "[unattended] Menggunakan environment: ${DEPLOY_ENV_LABEL}"
+    else
+        read -t 20 -p "Pilih [1/2/3/4] (default: ${DEFAULT_CHOICE} - ${DEPLOY_ENV_LABEL}): " ENV_CHOICE </dev/tty \
+            || ENV_CHOICE="$DEFAULT_CHOICE"
+    fi
     echo ""
 
     case "${ENV_CHOICE:-$DEFAULT_CHOICE}" in
@@ -137,7 +152,12 @@ initialize_installer() {
     # Konfirmasi / override IP
     echo -e "IP yang akan digunakan: ${CYAN}${DETECTED_IP}${NC} (${IP_TYPE})"
     echo ""
-    read -t 15 -p "Gunakan IP ini? [Y/n/custom]: " IP_CONFIRM </dev/tty || IP_CONFIRM="y"
+    if [ "${UNATTENDED}" = "true" ]; then
+        IP_CONFIRM="y"
+        echo "[unattended] Menggunakan IP: ${DETECTED_IP}"
+    else
+        read -t 15 -p "Gunakan IP ini? [Y/n/custom]: " IP_CONFIRM </dev/tty || IP_CONFIRM="y"
+    fi
     echo ""
 
     if [[ "$IP_CONFIRM" =~ ^[Nn]$ ]]; then
@@ -180,14 +200,23 @@ initialize_installer() {
         echo -e "  ${YELLOW}Pastikan DNS domain sudah pointing ke IP ${VPS_IP} sebelum lanjut.${NC}"
         echo -e "  Kosongkan jika ingin akses pakai IP saja."
         echo ""
-        read -t 30 -p "Masukkan domain (kosong = skip): " DOMAIN_INPUT </dev/tty || DOMAIN_INPUT=""
+        if [ "${UNATTENDED}" = "true" ]; then
+            DOMAIN_INPUT="${VPS_DOMAIN:-}"
+            [ -n "$DOMAIN_INPUT" ] && echo "[unattended] Domain: ${DOMAIN_INPUT}" || echo "[unattended] Domain dilewati (akses via IP)"
+        else
+            read -t 30 -p "Masukkan domain (kosong = skip): " DOMAIN_INPUT </dev/tty || DOMAIN_INPUT=""
+        fi
         echo ""
         if [ -n "$DOMAIN_INPUT" ]; then
             # Validasi format domain sederhana
             if [[ "$DOMAIN_INPUT" =~ ^[a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})+$ ]]; then
                 export VPS_DOMAIN="$DOMAIN_INPUT"
                 echo ""
-                read -t 15 -p "Email untuk SSL certificate (Let's Encrypt): " SSL_EMAIL </dev/tty || SSL_EMAIL=""
+                if [ "${UNATTENDED}" = "true" ]; then
+                    SSL_EMAIL="admin@${VPS_DOMAIN}"
+                else
+                    read -t 15 -p "Email untuk SSL certificate (Let's Encrypt): " SSL_EMAIL </dev/tty || SSL_EMAIL=""
+                fi
                 export VPS_SSL_EMAIL="${SSL_EMAIL:-admin@${VPS_DOMAIN}}"
                 export VPS_USE_SSL="true"
                 print_success "Domain: ${VPS_DOMAIN}"
@@ -225,11 +254,15 @@ confirm_installation() {
     echo -e "  UFW         : ${GREEN}$([ "${SKIP_UFW}" = "true" ] && echo "DILEWATI (LXC)" || echo "Aktif")${NC}"
     echo -e "${WHITE}=====================================================${NC}"
     echo ""
-    read -t 30 -p "Mulai instalasi? [Y/n]: " CONFIRM_START </dev/tty || CONFIRM_START="y"
-    echo ""
-    if [[ "$CONFIRM_START" =~ ^[Nn]$ ]]; then
-        print_info "Instalasi dibatalkan."
-        exit 0
+    if [ "${UNATTENDED}" = "true" ]; then
+        echo "[unattended] Melanjutkan instalasi otomatis..."
+    else
+        read -t 30 -p "Mulai instalasi? [Y/n]: " CONFIRM_START </dev/tty || CONFIRM_START="y"
+        echo ""
+        if [[ "$CONFIRM_START" =~ ^[Nn]$ ]]; then
+            print_info "Instalasi dibatalkan."
+            exit 0
+        fi
     fi
 }
 
