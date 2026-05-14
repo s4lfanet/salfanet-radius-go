@@ -46,12 +46,12 @@ type troubleshootingJob struct {
 func (troubleshootingJob) TableName() string { return "troubleshooting_jobs" }
 
 type troubleshootingMaterial struct {
-	ID      string `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	JobID   string `gorm:"index" json:"jobId"`
-	Name    string `json:"name"`
-	Qty     int    `json:"qty"`
-	Unit    string `json:"unit"`
-	Notes   string `json:"notes"`
+	ID    string `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	JobID string `gorm:"index" json:"jobId"`
+	Name  string `json:"name"`
+	Qty   int    `json:"qty"`
+	Unit  string `json:"unit"`
+	Notes string `json:"notes"`
 }
 
 func (troubleshootingMaterial) TableName() string { return "troubleshooting_materials" }
@@ -107,6 +107,6 @@ func (h *TroubleshootingHandler) GetJob(c fiber.Ctx) error {
 func (h *TroubleshootingHandler) JobMaterials(c fiber.Ctx) error {
 	jobID := c.Params("id")
 	var materials []troubleshootingMaterial
-	h.db.Where("job_id = ?", jobID).Find(&materials)
+	h.db.Where("jobId = ?", jobID).Find(&materials)
 	return c.JSON(fiber.Map{"success": true, "materials": materials})
 }
