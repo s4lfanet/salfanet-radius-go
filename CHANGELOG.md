@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.1] — 2026-05-14
+### Fixed
+- **Admin dashboard crash** — `TypeError: Cannot read properties of undefined (reading 'length')` akibat `Unknown column 'type'` di query analytics; fix ke `invoiceType`
+- **Payment gateways public API** — SELECT clause menggunakan kolom `is_active`, `is_production` yang tidak ada di DB; fix ke `isActive` saja
+### Files
+- `internal/api/handlers/analytics.go` — `SELECT type` → `SELECT invoiceType`, `GROUP BY type` → `GROUP BY invoiceType`
+- `internal/api/handlers/public.go` — SELECT clause fix ke kolom yang valid (`id`, `provider`, `isActive`)
+
 ## [2.47.0] — 2026-05-14
 ### Added (Architecture)
 - **Full routing ke Go backend** — Semua `/api/` request sekarang dihandle Go (sebelumnya hanya customer/agent/technician portal)
