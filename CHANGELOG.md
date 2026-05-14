@@ -6,6 +6,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.0] — 2026-05-14
+### Added (Architecture)
+- **Full routing ke Go backend** — Semua `/api/` request sekarang dihandle Go (sebelumnya hanya customer/agent/technician portal)
+- **NextAuth session bridge** — Go middleware `CombinedAuthMiddleware`: validasi JWT Bearer token (mobile/API) ATAU NextAuth session cookie (admin panel browser) — tanpa perlu ubah frontend
+- **`validateNextAuthSession`** — fungsi internal di Go yang memanggil `http://127.0.0.1:3000/api/auth/session` untuk memverifikasi admin browser session
+- **Nginx catch-all update** — `location /api/ { proxy_pass → 8080 }` (sebelumnya 3000). NextAuth protocol endpoints (`/api/auth/callback`, `/api/auth/session`, `/api/auth/csrf`, `/api/auth/signout`) tetap ke Next.js:3000
+
+### Impact
+- Semua admin API routes (`/api/admin/*`, `/api/pppoe/*`, `/api/settings/*`, `/api/network/*`, `/api/invoices/*`, dll.) sekarang dihandle Go Fiber — tidak ada lagi Prisma ORM overhead + NextAuth session check per request
+- Next.js:3000 sekarang hanya handle: halaman frontend, NextAuth protocol endpoints
+
+### Files
+- `internal/api/middleware/auth.go` — tambah `CombinedAuthMiddleware` + `validateNextAuthSession`
+- `internal/api/router.go` — ganti `AuthMiddleware` → `CombinedAuthMiddleware` untuk protected routes
+- `/etc/nginx/sites-available/salfanet-radius` (VPS) — catch-all `/api/` → Go:8080
+
+---
+
 ## [2.46.7] — 2026-05-15
 ### Performance
 - **PM2 `fork` mode** — Ganti dari `cluster` mode (instances:1) ke `fork` mode; eliminasi overhead master process + IPC routing; ~30MB RAM lebih hemat
