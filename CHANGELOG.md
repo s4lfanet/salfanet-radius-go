@@ -6,6 +6,28 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.44.0] — 2026-05-14
+### Changed
+- **nginx /api/ routing** — All server blocks now route `/api/` → Go backend (port 8080) instead of Next.js (port 3000)
+- **install-nginx.sh** — Updated `_proxy_locations()` & `_proxy_locations_https_domain()` helpers; added `salfanet_api` upstream (port 8080, keepalive 32)
+- **install-go.sh** — Refactored into proper module with `install_go_runtime()`, `build_go_binary()`, `setup_go_systemd_service()`, `start_go_service()`, `install_go_backend()` functions; standalone mode preserved
+- **updater.sh** — Added Go binary rebuild + systemd service restart step before Node.js install
+- **vps-installer.sh** — Added Step 4.5: Go backend build & systemd service after app setup; added Go version + service status to install summary
+- **ecosystem.config.js** — `salfanet-cron` `API_URL` updated from port 3000 → port 8080 (Go backend)
+- **install-app.sh** — `.env` template extended with Go-specific vars (`PORT`, `APP_ENV`, `JWT_SECRET`, `CORS_ORIGINS`, `WA_SERVICE_URL`, `GO_API_URL`)
+- **production/nginx-salfanet-radius.conf** — `/api/` → port 8080 in all 4 server blocks; SSL cert paths updated (Let's Encrypt for domain blocks, self-signed comment for IP blocks)
+
+### Files
+- `vps-install/install-nginx.sh` — Go upstream + /api/ proxy to port 8080
+- `vps-install/install-go.sh` — Full module refactor with proper functions
+- `vps-install/updater.sh` — Go binary build step added
+- `vps-install/vps-installer.sh` — Step 4.5 + summary info for Go service
+- `vps-install/install-app.sh` — Go env vars in .env template
+- `production/ecosystem.config.js` — cron API_URL → 8080
+- `production/nginx-salfanet-radius.conf` — /api/ → Go:8080 + LE cert paths
+
+---
+
 ## [2.43.0] — 2026-05-14
 ### Added
 - **Troubleshooting DB tables** — Created `troubleshooting_checklists`, `troubleshooting_jobs`, `troubleshooting_materials` tables in MySQL

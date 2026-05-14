@@ -98,9 +98,9 @@ _proxy_locations() {
         add_header Cache-Control "public, immutable";
     }
 
-    # API routes — no cache, return JSON not HTML on error
+    # API routes — Go backend (port 8080), no cache
     location /api/ {
-        proxy_pass         http://127.0.0.1:3000;
+        proxy_pass         http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header   Host $host;
         proxy_set_header   X-Real-IP $remote_addr;
@@ -206,9 +206,9 @@ _proxy_locations_https_domain() {
         access_log off;
     }
 
-    # API routes - NO cache, bypass Cloudflare CDN
+    # API routes — Go backend (port 8080), no cache, bypass Cloudflare CDN
     location /api/ {
-        proxy_pass         http://127.0.0.1:3000;
+        proxy_pass         http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header   Host $host;
         proxy_set_header   X-Real-IP $remote_addr;
@@ -228,7 +228,7 @@ _proxy_locations_https_domain() {
         proxy_hide_header X-Content-Type-Options;
     }
 
-    # All other routes (pages) - no CDN cache
+    # All other routes (pages — Next.js frontend, port 3000)
     location / {
         proxy_pass         http://127.0.0.1:3000;
         proxy_http_version 1.1;
@@ -277,10 +277,16 @@ events {
 }
 
 http {
-    # upstream keepalive to Node.js — reuse TCP connections
+    # upstream keepalive to Next.js frontend — reuse TCP connections
     upstream nextjs {
         server 127.0.0.1:3000;
         keepalive 16;
+    }
+
+    # upstream keepalive to Go API backend — reuse TCP connections
+    upstream salfanet_api {
+        server 127.0.0.1:8080;
+        keepalive 32;
     }
 
     sendfile            on;

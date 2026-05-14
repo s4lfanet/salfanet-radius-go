@@ -1,10 +1,13 @@
 /**
  * PM2 Ecosystem Configuration — Salfanet Radius ISP
  *
- * Three managed processes:
- *   1. salfanet-radius  — Next.js app (standalone server.js, port 3000)
- *   2. salfanet-cron    — Background billing/expiry cron jobs
+ * Managed processes (post Go-backend migration):
+ *   1. salfanet-radius  — Next.js frontend (standalone server.js, port 3000, UI only)
+ *   2. salfanet-cron    — Background billing/expiry cron (calls Go API on port 8080)
  *   3. salfanet-wa      — Baileys WhatsApp native service (port 4000, internal only)
+ *
+ * Go API backend is managed by systemd (salfanet-api.service, port 8080).
+ * Nginx routes /api/ → Go:8080, / → Next.js:3000
  *
  * This file is copied by install-pm2.sh and updater.sh to APP_DIR/ecosystem.config.js
  */
@@ -65,7 +68,7 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         NODE_OPTIONS: '--max-old-space-size=120',
-        API_URL: 'http://localhost:3000',
+        API_URL: 'http://localhost:8080',
         TZ: 'Asia/Jakarta',
       },
       error_file: './logs/cron-error.log',

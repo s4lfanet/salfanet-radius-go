@@ -292,7 +292,45 @@ if [ -n "$USE_BRANCH" ]; then
     done
     print_success "Stale file cleanup done"
 
-    print_step "Installing dependencies"
+    # ── Build Go backend binary ────────────────────────────────────────────
+    print_step "Building Go backend binary"
+    if command -v go &>/dev/null; then
+        cd "$APP_DIR"
+        export PATH="/usr/local/go/bin:$PATH"
+        if go build -o bin/server ./cmd/server/ 2>/tmp/go-build.log; then
+            chmod +x "$APP_DIR/bin/server"
+            print_success "Go binary built: bin/server ($(du -sh "$APP_DIR/bin/server" | cut -f1))"
+        else
+            print_error "Go build failed!"
+            cat /tmp/go-build.log
+            exit 1
+        fi
+        # Restart Go API service
+        if systemctl is-active --quiet salfanet-api 2>/dev/null; then
+            systemctl restart salfanet-api
+            print_success "Go API service (systemd) restarted"
+        elif systemctl is-active --quiet salfanet-radius-go 2>/dev/null; then
+            systemctl restart salfanet-radius-go
+            print_success "Go API service (systemd) restarted"
+        else
+            # Fallback: kill port + restart with nohup
+            fuser -k 8080/tcp 2>/dev/null || true
+            sleep 1
+            mkdir -p "$APP_DIR/logs"
+            nohup "$APP_DIR/bin/server" > "$APP_DIR/logs/server.log" 2>&1 &
+            sleep 2
+            if curl -sf http://localhost:8080/api/health >/dev/null 2>&1; then
+                print_success "Go API server restarted (nohup, port 8080 OK)"
+            else
+                print_warning "Go server started but health check failed — check logs/server.log"
+            fi
+        fi
+    else
+        print_warning "Go runtime not found — skipping Go binary build"
+        print_info "Install Go: bash $APP_DIR/vps-install/install-go.sh"
+    fi
+
+    print_step "Installing Node.js dependencies"
     # Try npm ci first (faster, strict lock file) — fall back to npm install
     # if lock file is out of sync with package.json (common after refactor).
     if ! npm ci --omit=dev 2>/tmp/updater-npm-ci.log; then

@@ -271,7 +271,15 @@ run_installation() {
         print_error "Application setup failed!"
         exit 1
     }
-    
+
+    # Step 4.5: Go Backend Build & Systemd Service
+    print_info "Running Step 4.5: Go Backend (build + systemd service)..."
+    source "$SCRIPT_DIR/install-go.sh"
+    install_go_backend || {
+        print_error "Go backend installation failed!"
+        exit 1
+    }
+
     # Step 5: FreeRADIUS Installation
     print_info "Running Step 5: FreeRADIUS Installation..."
     source "$SCRIPT_DIR/install-freeradius.sh"
@@ -346,6 +354,8 @@ npm Version     : $(npm --version 2>/dev/null || echo 'N/A')
 MySQL Version   : $(mysql --version 2>/dev/null | awk '{print $3}' || echo 'N/A')
 FreeRADIUS      : $(freeradius -v 2>&1 | head -n1 || echo 'N/A')
 PM2 Version     : $(pm2 --version 2>/dev/null || echo 'N/A')
+Go Version      : $(go version 2>/dev/null | awk '{print $3}' || echo 'N/A')
+Go API Service  : $(systemctl is-active salfanet-api 2>/dev/null || echo 'N/A')
 
 [>] DATABASE CREDENTIALS
 -----------------------

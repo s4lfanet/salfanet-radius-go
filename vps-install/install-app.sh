@@ -114,8 +114,26 @@ create_env_file() {
     fi
 
     cat > ${APP_DIR}/.env <<EOF
-# Database Configuration
+# === Go API Backend ============================================================
+APP_ENV=production
+PORT=8080
+APP_TIMEZONE=${SYSTEM_TIMEZONE:-Asia/Jakarta}
+
+# JWT secret for Go API (minimum 32 characters)
+JWT_SECRET=${NEXTAUTH_SECRET}
+
+# CORS origins — add your domain here (comma-separated)
+CORS_ORIGINS=http://${VPS_IP}$([ -n "${VPS_DOMAIN:-}" ] && echo ",https://${VPS_DOMAIN}" || true)
+
+# WhatsApp sidecar (internal)
+WA_SERVICE_URL=http://localhost:3001
+
+# === Next.js Frontend ==========================================================
+# Database Configuration (used by Prisma / Next.js API routes still in Next.js)
 DATABASE_URL="mysql://${DB_USER}:${DB_PASSWORD}@127.0.0.1:3306/${DB_NAME}?connection_limit=10&pool_timeout=20"
+
+# Go API URL — used by Next.js server-side to proxy requests to Go backend
+GO_API_URL="http://127.0.0.1:8080"
 
 # Timezone - CRITICAL for WIB handling
 TZ="Asia/Jakarta"
@@ -130,7 +148,6 @@ NEXTAUTH_SECRET="${NEXTAUTH_SECRET}"
 NEXTAUTH_URL="${APP_BASE_URL}"
 
 # RADIUS Server IP — used by setup-radius route to generate NAS config
-# Set automatically to detected VPS/server IP during installation
 RADIUS_SERVER_IP="${VPS_IP}"
 
 # Agent Portal JWT
