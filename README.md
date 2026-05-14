@@ -469,6 +469,22 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.39.0 — 2026-05-15
+
+### Fixed
+- **DB column naming — camelCase consistency** — Fixed 70+ `ORDER BY created_at` errors across all handler files; DB uses Prisma camelCase convention (`createdAt`, `updatedAt`, `paidAt`, `isActive`, `isResolved`, `userId`, `agentId`, `profileId`, `technicianId`, `assignedToId`, `startedAt`, etc.)
+- **ManualPayment model** — Added explicit `gorm:"column:xxx"` tags: `userId`, `paymentDate`, `receiptImage`, `approvedBy`, `approvedAt`, `rejectionReason`, `accountNumber`
+- **Raw SQL WHERE/Updates** — Fixed column key names in map-based Updates and WHERE clauses across 46 handler files
+- **Admin/Billing** — Fixed `paid_at` → `paidAt` in invoices, payments, payroll; `is_read` → `isRead` in notifications; `is_active` → `isActive` in profiles/gateways/areas; `started_at` → `startedAt` in cron history
+- **Analytics** — Fixed `DATE_FORMAT(paid_at/created_at)` → `DATE_FORMAT(paidAt/createdAt)` in raw SQL revenue/growth queries
+- **Jobs** — Fixed `technician_notes` → `technicianNotes`, `completed_date` → `completedAt`, `approval_status` → `approvalStatus` in work orders
+- **Tickets** — Fixed `assigned_to_id` → `assignedToId`, `customer_id` → `customerId`
+- **Referrals** — Fixed `referrer_id`/`referred_id` → `referrerId`/`referredId` in JOIN clauses and WHERE
+### Files
+- `internal/db/models/models.go` — ManualPayment model column tags corrected
+- `internal/api/handlers/manual_payments.go` — raw SQL WHERE/Updates column names corrected
+- `internal/api/handlers/*.go` (46 files) — camelCase DB column names in Order/Where/Updates/raw SQL
+
 ### v2.38.0 — 2026-05-14
 
 ### Added
@@ -565,23 +581,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/evoucher_handler.go` — new file
 - `internal/db/models/models.go` — added Payment struct
 - `internal/api/router.go` — registered all batch 9 routes (~50 new routes)
-
-### v2.34.8 — 2026-05-13
-
-### Added
-- **Go: GenieACS extended handler** — full proxy CRUD for devices (list, get, delete, all-parameters, download, parameters, tasks, WAN, WiFi GET, reboot, refresh, factory-reset), tasks retry, presets CRUD, provisions CRUD, virtual-parameters CRUD, files (list/upload/delete), faults (list/delete), config (list/update/delete), backup (get/create), auto-provision (list/create/delete), sync endpoint
-- **Go: CustomerPortalExt2Handler** — payments (list/create/proof upload), payment-methods (safe list), notifications read, topup-direct, upgrade-package, referral (get/create/rewards), bypass-login (public), invoice manual-payment
-- **Go: PaymentHandler** — `POST /api/payment/create`, `GET /api/payment/check-order`, `POST /api/payment/webhook` (public, gateway callback)
-- **Go: Cron schedule management** — `GET /api/cron/schedules`, `PUT /api/cron/schedules/:job`, `DELETE /api/cron/schedules/:job`
-- **Go: Company bank routes** — `GET/POST /api/company/bank` (was missing from router, methods existed in miscH)
-- **Go: OLT uplink routes** — `GET/POST /api/olt/:id/uplink` (new methods on OLTHandler)
-### Files
-- `internal/api/handlers/genieacs_ext.go` — new file (methods on existing GenieacsHandler)
-- `internal/api/handlers/customer_portal_ext2.go` — new file
-- `internal/api/handlers/payment_handler.go` — new file
-- `internal/api/handlers/cronhandler.go` — added ListSchedules, UpdateSchedule, DeleteSchedule
-- `internal/api/handlers/olt.go` — added GetUplink, CreateUplink
-- `internal/api/router.go` — registered all batch 8 routes (~80 new routes)
 
 <!-- AUTO-CHANGELOG:END -->
 
