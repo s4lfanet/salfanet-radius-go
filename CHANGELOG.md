@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.14] — 2026-05-15
+### Fixed
+- **PWA icon error "resource isn't a valid image"** — Handler `PwaIcon` mengembalikan 1×1 transparent PNG karena mencari `logo.png` yang tidak pernah ada (file upload dinamai `logo-{timestamp}.png`). Fix: handler sekarang mencari file logo terbaru di `uploads/logos/`, fallback ke `public/pwa/icon-192.png` / `icon-512.png` berdasarkan query `?size`.
+- **Subdomain `radius.hotspotapp.net`** — Tambah nginx server block khusus untuk subdomain (Cloudflare proxy, port 80). Update `.env` `NEXTAUTH_URL` dan `NEXT_PUBLIC_APP_URL` dari IP ke `https://radius.hotspotapp.net`. Rebuild Next.js dan restart PM2.
+### Files
+- `internal/api/handlers/upload.go` — `PwaIcon` handler baru dengan fallback ke icon publik
+- `production/nginx-radius.hotspotapp.net.conf` — nginx config untuk subdomain
+- `/var/www/salfanet-radius/.env` (VPS) — `NEXTAUTH_URL` dan `NEXT_PUBLIC_APP_URL` diupdate ke subdomain
+
 ## [2.47.13] — 2026-05-15
 ### Fixed
 - **`POST /api/upload/logo` → 500 masih gagal** — root cause sebenarnya: systemd service menggunakan `ProtectSystem=strict` yang membuat seluruh filesystem read-only. Hanya `/var/www/salfanet-radius/logs` yang ada di `ReadWritePaths`, sehingga proses tidak bisa menulis ke `/uploads/`. Fix: tambah `/var/www/salfanet-radius/uploads` ke `ReadWritePaths` di `/etc/systemd/system/salfanet-api.service`.

@@ -148,14 +148,41 @@ func (h *UploadHandler) ServeLogoFile(c fiber.Ctx) error {
 	return c.SendFile(dest)
 }
 
-// GET /api/pwa/icon — PWA app icon
+// GET /api/pwa/icon — PWA app icon (supports ?size=192 / ?size=512)
 func PwaIcon(c fiber.Ctx) error {
-	// Return a minimal transparent PNG (1x1 pixel) as placeholder
-	iconPath := uploadDir + "/logos/logo.png"
-	if _, err := os.Stat(iconPath); err == nil {
-		return c.SendFile(iconPath)
+	size := c.Query("size", "192")
+
+	// 1. Try to serve the latest uploaded company logo from uploads/logos/
+	logosDir := uploadDir + "/logos"
+	if entries, err := os.ReadDir(logosDir); err == nil {
+		// Find the most recently uploaded logo file
+		var latest string
+		for _, e := range entries {
+			if !e.IsDir() && (strings.HasSuffix(e.Name(), ".png") || strings.HasSuffix(e.Name(), ".jpg") || strings.HasSuffix(e.Name(), ".webp")) {
+				latest = filepath.Join(logosDir, e.Name())
+			}
+		}
+		if latest != "" {
+			c.Set("Cache-Control", "public, max-age=3600")
+			return c.SendFile(latest)
+		}
 	}
-	// Fallback: 1x1 transparent PNG
+
+	// 2. Serve pre-built icons from public/pwa/
+	publicBase := "/var/www/salfanet-radius/public/pwa"
+	iconFile := publicBase + "/icon-" + size + ".png"
+	if _, err := os.Stat(iconFile); err == nil {
+		c.Set("Cache-Control", "public, max-age=3600")
+		return c.SendFile(iconFile)
+	}
+	// Fallback to 192
+	icon192 := publicBase + "/icon-192.png"
+	if _, err := os.Stat(icon192); err == nil {
+		c.Set("Cache-Control", "public, max-age=3600")
+		return c.SendFile(icon192)
+	}
+
+	// 3. Last resort: minimal 1x1 transparent PNG (avoids 404)
 	png1x1 := []byte{
 		0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
 		0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
