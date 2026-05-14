@@ -14,14 +14,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **TERM env crash** — `print_banner()` di `common.sh` menggunakan `clear 2>/dev/null || true`; tambah `export TERM="${TERM:-xterm}"` di `vps-installer.sh` agar tidak crash di sesi non-interactive
 - **dpkg interactive prompts** — Set `DEBIAN_FRONTEND=noninteractive` + `DEBCONF_NONINTERACTIVE_SEEN=true` secara global di `common.sh` dan apt-get upgrade/install di `install-system.sh` menggunakan `--force-confdef --force-confold` agar tidak ada prompt config file conflict
 - **`initialize_user_selection` read prompt** — Skip `read` prompt untuk pilihan user saat mode `--unattended`
+- **Go backend `connection_limit` crash** — `convertDSN()` di `internal/db/db.go` sekarang strip Prisma-specific URL params (`connection_limit`, `pool_timeout`, dll) sebelum build MySQL DSN. MySQL tidak mengenal params ini sebagai session variable.
 
 ### Changed
 - **Repo cleanup** — Hapus file non-produksi dari GitHub: `oltc320_v2.1.1_linux/`, `baileys_whatsapp_patch/`, `bin/server.exe`, `nginx-frontend.conf`, `ZTE_OID_TABLE.md`, `.air.toml`, debug scripts; perbarui `.gitignore`
+
+### Verified
+- **Fresh install test passed** — Instalasi dari nol di Ubuntu 22.04 LTS berhasil: MySQL, Node.js v20, FreeRADIUS, nginx, PM2 (salfanet-radius + salfanet-cron + salfanet-wa), Go backend (port 8080, 820 handlers), 101 tabel Prisma schema, seed admin user — semua services `active`
 
 ### Files
 - `vps-install/vps-installer.sh` — Tambah flag `--unattended`, `--env`, `--ip`, `--domain`, `--db-pass`; export TERM default
 - `vps-install/common.sh` — `DEBIAN_FRONTEND=noninteractive` global; `clear` toleran error; `--unattended` skip user selection prompt
 - `vps-install/install-system.sh` — apt-get upgrade + install dengan `--force-confdef --force-confold`
+- `internal/db/db.go` — Strip Prisma URL params sebelum build MySQL DSN
 - `.gitignore` — Tambah entri untuk file/folder non-produksi
 
 ---
