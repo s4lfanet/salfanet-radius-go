@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.13 — 2026-05-15
+
+### Fixed
+- **`POST /api/upload/logo` → 500 masih gagal** — root cause sebenarnya: systemd service menggunakan `ProtectSystem=strict` yang membuat seluruh filesystem read-only. Hanya `/var/www/salfanet-radius/logs` yang ada di `ReadWritePaths`, sehingga proses tidak bisa menulis ke `/uploads/`. Fix: tambah `/var/www/salfanet-radius/uploads` ke `ReadWritePaths` di `/etc/systemd/system/salfanet-api.service`.
+### Files
+- `/etc/systemd/system/salfanet-api.service` (VPS) — `ReadWritePaths` ditambah path `/uploads`
+
 ### v2.47.12 — 2026-05-15
 
 ### Fixed
@@ -520,16 +527,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/freeradius.go` — full rewrite dengan format response yang benar
 - `internal/api/router.go` — tambah POST/DELETE `/radcheck`, ubah `config/read` ke POST
-
-### v2.47.8 — 2026-05-15
-
-### Fixed
-- **Status FreeRADIUS halaman `/admin/freeradius/status` selalu "Berhenti"** — root cause: `JWT_SESSION_ERROR: Invalid Compact JWE` menyebabkan `getServerSession` return `null` → route GET `/api/freeradius/status` return 401 → `setStatus` di frontend tidak pernah dipanggil → `status = null` → `status?.running = undefined` (falsy) → menampilkan "Berhenti".
-  - Fix 1: Hapus auth check dari GET handler (read-only, tidak sensitif; start/stop/restart tetap pakai auth)
-  - Fix 2: Tambah `fetchError` state di halaman — jika API gagal/error, tampilkan pesan "Tidak dapat memuat data" dengan tombol Refresh, bukan misleading "Berhenti"
-### Files
-- `src/app/api/freeradius/status/route.ts` — hapus `getServerSession` check dari GET handler
-- `src/app/admin/freeradius/status/page.tsx` — tambah `fetchError` state, handle 401/error response, render error UI
 
 <!-- AUTO-CHANGELOG:END -->
 
