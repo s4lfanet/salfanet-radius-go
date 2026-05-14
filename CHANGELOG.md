@@ -6,6 +6,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.46.4] — 2026-05-14
+### Fixed
+- **Sidebar: Hapus menu "Manajemen VPN"** — Submenu duplikat (Klien VPN, Site VPN, Pengaturan VPN) dihapus dari sidebar karena VPN Client sudah ada di menu Router
+- **CSP: Leaflet CSS dari cdnjs diblokir** — Ditambahkan `https://cdnjs.cloudflare.com`, `https://fonts.googleapis.com`, `https://cdn.jsdelivr.net` ke `style-src` di `next.config.ts`
+- **404: `/api/payroll-templates`** — Endpoint hanya ada di Go (butuh Bearer token); dibuat Next.js API route `GET/POST` + `[id]` `GET/PUT/DELETE` + `[id]/default POST` menggunakan `prisma.$queryRaw`
+- **500: `/api/network/cables`** — Tabel `fiber_cables` beserta relasi tidak ada di DB VPS; dibuat SQL migration `scripts/migrate-fiber-payroll-tables.sql`
+
+### Added
+- **DB migration SQL** — `scripts/migrate-fiber-payroll-tables.sql` membuat tabel: `payroll_templates`, `fiber_cables`, `fiber_tubes`, `fiber_cores`, `splice_points`, `cable_segments`, `core_assignment_history`
+
+### Files
+- `src/app/admin/AdminClientLayout.tsx` — Hapus blok `vpnManagement` dari sidebar
+- `next.config.ts` — Tambah CDN ke `style-src` CSP
+- `src/app/api/payroll-templates/route.ts` — Baru: GET list, POST create
+- `src/app/api/payroll-templates/[id]/route.ts` — Baru: GET, PUT, DELETE
+- `src/app/api/payroll-templates/[id]/default/route.ts` — Baru: POST set-default
+- `scripts/migrate-fiber-payroll-tables.sql` — Baru: SQL migration fiber + payroll
+
+---
+
 ## [2.46.3] — 2026-05-14
 ### Fixed
 - **404: `/admin/invoice-templates`** — Halaman frontend tidak ada; dibuat `src/app/admin/invoice-templates/page.tsx` lengkap dengan tabel, modal create/edit, preview HTML, set-default
