@@ -469,6 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.14 — 2026-05-15
+
+### Fixed
+- **PWA icon error "resource isn't a valid image"** — Handler `PwaIcon` mengembalikan 1×1 transparent PNG karena mencari `logo.png` yang tidak pernah ada (file upload dinamai `logo-{timestamp}.png`). Fix: handler sekarang mencari file logo terbaru di `uploads/logos/`, fallback ke `public/pwa/icon-192.png` / `icon-512.png` berdasarkan query `?size`.
+- **Subdomain `radius.hotspotapp.net`** — Tambah nginx server block khusus untuk subdomain (Cloudflare proxy, port 80). Update `.env` `NEXTAUTH_URL` dan `NEXT_PUBLIC_APP_URL` dari IP ke `https://radius.hotspotapp.net`. Rebuild Next.js dan restart PM2.
+### Files
+- `internal/api/handlers/upload.go` — `PwaIcon` handler baru dengan fallback ke icon publik
+- `production/nginx-radius.hotspotapp.net.conf` — nginx config untuk subdomain
+- `/var/www/salfanet-radius/.env` (VPS) — `NEXTAUTH_URL` dan `NEXT_PUBLIC_APP_URL` diupdate ke subdomain
+
 ### v2.47.13 — 2026-05-15
 
 ### Fixed
@@ -507,26 +517,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Halaman Log Langsung error "t.logs.split is not a function"** — Go backend mengembalikan `logs` sebagai `string[]` (sudah di-split per baris), tapi frontend memanggil `.split('\n')` langsung pada array. Fix: periksa apakah `data.logs` array atau string sebelum di-split.
 ### Files
 - `src/app/admin/freeradius/logs/page.tsx` — handle `logs` sebagai array atau string
-
-### v2.47.9 — 2026-05-15
-
-### Fixed
-- **Halaman FreeRADIUS Status menampilkan "Gagal memuat"** — root cause: nginx routing `/api/` ke Go port 8080, bukan Next.js. Handler Go lama `GetStatus` mengembalikan `{running, pid, uptime, version}` tanpa field `success` dan tanpa nested `status`, sehingga `data.success` undefined → `setStatus` tidak pernah dipanggil → halaman stuck di error.
-### Changed
-- **Migrasi semua endpoint `/api/freeradius/*` ke Go backend** — rewrite `freeradius.go` dengan format response yang sesuai frontend:
-  - `GetStatus`: `{success, status:{running, pid, uptime, cpu, memory, memoryMB, version, startTime, activeConnections, totalAuthRequests, totalAcctRequests, lastRestart}}`
-  - `Start/Stop/Restart`: `{success, message}` dengan verifikasi status post-action
-  - `GetLogs`: `{success, logs:[...]}`
-  - `GetRadcheck`: `{success, data:[...], total, page, limit}` — support pagination dan search
-  - `CreateRadcheck` (POST `/radcheck`): insert row baru ke radcheck
-  - `DeleteRadcheck` (DELETE `/radcheck?id=`): hapus row berdasarkan id
-  - `RunRadtest`: `{result:{success, responseCode, responseType, duration, attributes, rawOutput}}`
-  - `ListConfigs`: `{success, groups:[{id, name, files:[{name,path,type}]}]}`
-  - `ReadConfig` (POST, body `{filename}`): `{success, content}` — ubah dari GET+query param
-  - `SaveConfig` (POST, body `{filename, content}`): `{success, message}` — ubah field body dari `file` ke `filename`
-### Files
-- `internal/api/handlers/freeradius.go` — full rewrite dengan format response yang benar
-- `internal/api/router.go` — tambah POST/DELETE `/radcheck`, ubah `config/read` ke POST
 
 <!-- AUTO-CHANGELOG:END -->
 
