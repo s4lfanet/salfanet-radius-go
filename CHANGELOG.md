@@ -6,7 +6,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.47.3] — 2026-05-14
+## [2.47.3] — 2026-05-15
 ### Fixed
 - **Login page 401 on pre-login** — `POST /api/admin/auth/pre-login` was registered after the `api := app.Group("/api", CombinedAuthMiddleware)` group; in Fiber v3 this caused the auth middleware to intercept the request. Fixed by moving the route to before the protected api group.
 - **Sidebar shows only Dashboard** — `GET /api/admin/users/:id/permissions` only queried `UserPermission` table; if empty (no custom overrides), all menu items requiring permissions were hidden. Fixed by falling back to `RolePermission` for the user's role, matching original Next.js logic.
