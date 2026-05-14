@@ -469,7 +469,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
-### v2.46.0 — 2026-05-15
+### v2.46.1 — 2026-05-14
+
+### Fixed
+- **NextAuth 401 error** — Nginx mengarahkan semua `/api/*` ke Go backend (port 8080), termasuk `/api/auth/*` yang dikelola Next.js. Tambah `location /api/auth/` → port 3000 **sebelum** block `location /api/` di kedua server block (HTTP + HTTPS). Sebelumnya semua `GET /api/auth/session` dan `POST /api/auth/_log` menghasilkan 401 dari Go backend.
+
+### Files
+- `vps-install/install-nginx.sh` — Tambah `location /api/auth/` → Next.js (port 3000) sebelum `location /api/` di HTTP dan HTTPS server block
+
 
 ### Added
 - **Uninstaller `--unattended` mode** — `vps-uninstaller.sh` kini mendukung `--unattended` (alias `--force`/`-y`) untuk menghapus semua komponen tanpa interaksi manual; flag tambahan `--keep-nodejs`, `--keep-mysql`, `--keep-pm2`
