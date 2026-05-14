@@ -469,6 +469,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.41.0 — 2026-05-14
+
+### Fixed
+- **HR tables migration** — Created missing DB tables: `attendance_records`, `attendance_locations`, `cash_advances`, `commissions` with correct camelCase column names
+- **registration_requests migration** — Added missing `processedAt datetime(3)` column to `registration_requests` table
+- **processedAt column** — Fixed `"processed_at"` → `"processedAt"` in Updates maps across `admin_jobs.go` and `pppoe.go`
+- **HR handler column names** — Fixed `"employee_id = ?"` → `"employeeId = ?"` and `"check_in desc"` → `"checkIn desc"` in `admin_hr_handler.go`
+### Files
+- `internal/api/handlers/admin_jobs.go` — processedAt in registration approve/reject/install
+- `internal/api/handlers/pppoe.go` — processedAt in registration approve/reject
+- `internal/api/handlers/admin_hr_handler.go` — employeeId WHERE, checkIn ORDER BY
+
 ### v2.40.0 — 2026-05-15
 
 ### Fixed
@@ -532,20 +544,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/misc_handler.go` — added `NetworkOLTStatus`
 - `internal/api/router.go` — batch 13 routes (+9 routes)
-
-### v2.36.0 — 2026-05-16
-
-### Added
-- **Go: NetworkInfraHandler** — cables CRUD (`/api/network/cables/*`), connections, cores, segments (joint-closures + OTBs), splices CRUD + per joint-closure, feeder-cables per OTB, joint-closure import template, network trace, auto-connect
-- **Go: Misc routes (batch 12)** — logout-log, admin agent-deposits, admin isolate-user, admin settings/isolation (+ mikrotik-script), cron olt-poll + telegram, invoices check, pay/manual, payment duitku-methods, radius/accounting, tickets dispatch-data, router setup-radius + test + test-gateway, ONU reboot + ONU detail, batch ONU reboot
-- **Go: Customer portal** — WiFi get/update (`/api/customer/wifi`), ONT reboot, invoice regenerate-payment, invoice payment
-- **Go: Hotspot** — delete-multiple vouchers
-### Files
-- `internal/api/handlers/network_infra_ext_handler.go` — NEW: cables, connections, cores, segments, splices, feeder-cables, trace, auto-connect
-- `internal/api/handlers/misc_handler.go` — added 20+ new methods (batch 12)
-- `internal/api/handlers/customer_portal_ext2.go` — added GetWifi, UpdateWifiSettings, RebootONT, RegeneratePayment, InvoicePayment
-- `internal/api/handlers/hotspot_ext.go` — added DeleteMultiple
-- `internal/api/router.go` — ~50 new routes registered (batch 12)
 
 <!-- AUTO-CHANGELOG:END -->
 
