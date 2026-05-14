@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.41.0] — 2026-05-14
+### Fixed
+- **HR tables migration** — Created missing DB tables: `attendance_records`, `attendance_locations`, `cash_advances`, `commissions` with correct camelCase column names
+- **registration_requests migration** — Added missing `processedAt datetime(3)` column to `registration_requests` table
+- **processedAt column** — Fixed `"processed_at"` → `"processedAt"` in Updates maps across `admin_jobs.go` and `pppoe.go`
+- **HR handler column names** — Fixed `"employee_id = ?"` → `"employeeId = ?"` and `"check_in desc"` → `"checkIn desc"` in `admin_hr_handler.go`
+### Files
+- `internal/api/handlers/admin_jobs.go` — processedAt in registration approve/reject/install
+- `internal/api/handlers/pppoe.go` — processedAt in registration approve/reject
+- `internal/api/handlers/admin_hr_handler.go` — employeeId WHERE, checkIn ORDER BY
+
 ## [2.40.0] — 2026-05-15
 ### Fixed
 - **DB camelCase — round 2 complete** — Fixed remaining snake_case column references across all handler files and models; DB naming now 100% consistent with Prisma camelCase convention
