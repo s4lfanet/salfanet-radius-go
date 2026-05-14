@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.8] — 2026-05-15
+### Fixed
+- **Status FreeRADIUS halaman `/admin/freeradius/status` selalu "Berhenti"** — root cause: `JWT_SESSION_ERROR: Invalid Compact JWE` menyebabkan `getServerSession` return `null` → route GET `/api/freeradius/status` return 401 → `setStatus` di frontend tidak pernah dipanggil → `status = null` → `status?.running = undefined` (falsy) → menampilkan "Berhenti".
+  - Fix 1: Hapus auth check dari GET handler (read-only, tidak sensitif; start/stop/restart tetap pakai auth)
+  - Fix 2: Tambah `fetchError` state di halaman — jika API gagal/error, tampilkan pesan "Tidak dapat memuat data" dengan tombol Refresh, bukan misleading "Berhenti"
+### Files
+- `src/app/api/freeradius/status/route.ts` — hapus `getServerSession` check dari GET handler
+- `src/app/admin/freeradius/status/page.tsx` — tambah `fetchError` state, handle 401/error response, render error UI
+
 ## [2.47.7] — 2026-05-15
 ### Fixed
 - **RADIUS status dashboard selalu "Offline"** — deteksi status sebelumnya menggunakan heuristik radacct (ada sesi aktif atau aktivitas 1 jam terakhir). Jika belum ada koneksi PPPoE sama sekali, nilai menjadi 0 → status "stopped". Diganti dengan `systemctl is-active freeradius` via `exec.Command` yang langsung mengecek state systemd service yang sesungguhnya. Berlaku di endpoint `/api/system/radius` maupun di `systemStatus.radius` pada `/api/dashboard/stats`.
