@@ -446,7 +446,6 @@ Info File       : /etc/wireguard/wg-server-info.json
 MySQL     : $(systemctl is-active mysql 2>/dev/null || echo 'N/A')
 FreeRADIUS: $(systemctl is-active freeradius 2>/dev/null || echo 'N/A')
 Nginx     : $(systemctl is-active nginx 2>/dev/null || echo 'N/A')
-Redis     : $(systemctl is-active redis-server 2>/dev/null || echo 'tidak diinstall')
 PM2 App   : $(pm2 list 2>/dev/null | grep -q "salfanet-radius.*online" && echo "online" || echo "offline")
 
 [>] NETWORK / FIREWALL
@@ -488,7 +487,6 @@ tail -f /var/log/freeradius/radius.log  # Logs
 2. Login admin, ganti password
 3. Tambahkan NAS/router di pengaturan RADIUS
 4. Bagikan link APK ke customer: $([ -n "${VPS_DOMAIN:-}" ] && echo "https://${VPS_DOMAIN}/downloads/salfanet-radius.apk" || echo "http://${VPS_IP}/downloads/salfanet-radius.apk")
-$([ "${REDIS_INSTALLED:-false}" = "false" ] && echo "5. [Opsional] Install Redis: bash ${APP_DIR}/vps-install/install-redis.sh" || echo "")
 $([ "${DEPLOY_ENV}" = "vps" ] && [ -z "${VPS_DOMAIN:-}" ] && echo "6. Setup SSL: certbot --nginx -d yourdomain.com" || \
   echo "6. [Opsional] Setup Cloudflare Tunnel untuk akses dari internet")
 
@@ -530,12 +528,7 @@ show_final_summary() {
         echo -e "  ${YELLOW}APK belum dibuild. Jalankan: bash ${APP_DIR}/vps-install/install-apk.sh${NC}"
     fi
     echo ""
-    if [ "${REDIS_INSTALLED:-false}" = "true" ]; then
-        echo -e "  Redis   : ${GREEN}Aktif (redis://127.0.0.1:6379)${NC}"
-    else
-        echo -e "  ${YELLOW}Redis: tidak diinstall. Jalankan: bash ${APP_DIR}/vps-install/install-redis.sh${NC}"
-    fi
-    echo ""
+
     if [ "${DEPLOY_ENV}" = "lxc" ]; then
         echo -e "${YELLOW}Info Proxmox LXC:${NC}"
         echo "  - Akses dari host/LAN: http://${VPS_IP}"

@@ -159,9 +159,6 @@ ENCRYPTION_KEY="${ENCRYPTION_KEY}"
 # Node Environment
 NODE_ENV="production"
 
-# Redis Cache (Opsional - aktifkan dengan: bash vps-install/install-redis.sh)
-# REDIS_URL=redis://127.0.0.1:6379
-
 # GenieACS Configuration (optional - configure in admin panel)
 # GENIEACS_URL="http://YOUR_GENIEACS_IP:7557"
 # GENIEACS_USERNAME=""
