@@ -31,6 +31,7 @@ export default function FreeRADIUSStatusPage() {
     const [status, setStatus] = useState<RadiusStatus | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [fetchError, setFetchError] = useState(false);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showDebugInfo, setShowDebugInfo] = useState(false);
 
@@ -40,9 +41,13 @@ export default function FreeRADIUSStatusPage() {
             const data = await response.json();
             if (response.ok && data.success) {
                 setStatus(data.status);
+                setFetchError(false);
+            } else {
+                setFetchError(true);
             }
         } catch (error) {
             console.error('Error fetching RADIUS status:', error);
+            setFetchError(true);
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -98,6 +103,22 @@ export default function FreeRADIUSStatusPage() {
         return (
             <div className="flex items-center justify-center h-64">
                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+        );
+    }
+
+    if (fetchError || !status) {
+        return (
+            <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
+                <AlertTriangle className="w-10 h-10 text-amber-500" />
+                <p className="text-sm">{t('common.failedToLoad') || 'Tidak dapat memuat data status. Coba refresh halaman.'}</p>
+                <button
+                    onClick={() => { setFetchError(false); setLoading(true); fetchStatus(); }}
+                    className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary hover:bg-primary/10 rounded-lg transition-colors"
+                >
+                    <RefreshCw className="w-4 h-4" />
+                    {t('common.refresh') || 'Refresh'}
+                </button>
             </div>
         );
     }
