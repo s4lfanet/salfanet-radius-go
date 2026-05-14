@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.20] — 2026-05-15
+### Fixed
+- **`GET /api/company` 404 pada fresh install** — Go handler mengembalikan 404 saat tabel `companies` kosong (belum ada data). Frontend admin layout memanggil endpoint ini saat pertama buka, sehingga layout tidak bisa load data perusahaan. Fix: handler sekarang mengembalikan nilai default (name, timezone, base URL, dsb.) dengan status 200 jika belum ada record, bukan 404.
+### Files
+- `internal/api/handlers/company.go` — `GetCompany` mengembalikan default ketika DB kosong
+
 ## [2.47.19] — 2026-05-15
 ### Removed
 - **Hapus fitur APK Builder** — `install-apk.sh` dihapus beserta semua referensinya. Mobile app (React Native/Expo) tidak bisa dibuild di VPS karena folder `mobile-app/` ada di `.gitignore` dan tidak ikut deploy. Java 17 + Android SDK yang terlanjur terinstall di VPS juga dihapus.
