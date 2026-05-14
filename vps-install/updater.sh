@@ -292,6 +292,20 @@ if [ -n "$USE_BRANCH" ]; then
     done
     print_success "Stale file cleanup done"
 
+    # ── Patch systemd service if ReadWritePaths is missing /uploads ───────
+    # (Fixed in v2.47.13 — ProtectSystem=strict blocked writes to /uploads)
+    local SVC_FILE="/etc/systemd/system/salfanet-api.service"
+    if [ -f "$SVC_FILE" ]; then
+        if grep -q "ReadWritePaths" "$SVC_FILE" && ! grep "ReadWritePaths" "$SVC_FILE" | grep -q "uploads"; then
+            print_info "Patching salfanet-api.service: adding /uploads to ReadWritePaths..."
+            sed -i "s|ReadWritePaths=\(.*\)|ReadWritePaths=\1 ${APP_DIR}/uploads|" "$SVC_FILE"
+            systemctl daemon-reload
+            print_success "Systemd service patched — uploads now writable"
+        fi
+        # Ensure uploads dir exists
+        mkdir -p "${APP_DIR}/uploads/logos" "${APP_DIR}/uploads/payment-proofs" "${APP_DIR}/uploads/customer-photos"
+    fi
+
     # ── Build Go backend binary ────────────────────────────────────────────
     print_step "Building Go backend binary"
     if command -v go &>/dev/null; then

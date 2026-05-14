@@ -614,8 +614,266 @@ _proxy_locations_https_domain() {
 LOCATIONS
 }
 
+# Helper: Cloudflare-proxied domain location blocks
+# Cloudflare Flexible SSL sends HTTP to origin with X-Forwarded-Proto: https header.
+# Uses $http_x_forwarded_proto so backends see the real client protocol (https).
+_proxy_locations_cloudflare() {
+    cat <<'LOCATIONS'
+    client_max_body_size 100M;
+
+    proxy_connect_timeout 600;
+    proxy_send_timeout    600;
+    proxy_read_timeout    600;
+    send_timeout          600;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_proxied any;
+    gzip_comp_level 6;
+    gzip_buffers 16 8k;
+    gzip_types text/plain text/css text/xml text/javascript application/json application/javascript;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+
+    access_log /var/log/nginx/salfanet-radius-access.log;
+    error_log  /var/log/nginx/salfanet-radius-error.log;
+
+    location /downloads/ {
+        alias /var/www/salfanet-radius/public/downloads/;
+        autoindex off;
+        add_header Content-Disposition 'attachment';
+    }
+
+    location ~ ^/manifest(-[a-z]+)?\.json$ {
+        root /var/www/salfanet-radius/public;
+        expires 1d;
+        add_header Cache-Control "public, max-age=86400";
+        add_header Content-Type "application/manifest+json";
+    }
+
+    location = /sw.js {
+        root /var/www/salfanet-radius/public;
+        expires off;
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        add_header Service-Worker-Allowed "/";
+    }
+
+    location /pwa/ {
+        root /var/www/salfanet-radius/public;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000, immutable";
+        access_log off;
+    }
+
+    location /_next/static/ {
+        alias /var/www/salfanet-radius/.next/static/;
+        expires 365d;
+        access_log off;
+        add_header Cache-Control "public, immutable";
+    }
+
+    location /api/auth/callback/ {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+    }
+    location = /api/auth/session {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+    }
+    location = /api/auth/csrf {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+    }
+    location = /api/auth/signout {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+    }
+    location = /api/auth/login {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    location = /api/auth/logout {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    location = /api/auth/refresh {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    location /api/auth/customer/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    location /api/auth/agent/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    location /api/auth/ {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+    }
+    location = /api/health {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+    }
+    location /api/public/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    location /api/uploads/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+    }
+    location /api/pwa/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+    }
+    location = /api/whatsapp/webhook {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    location /api/customer/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+        add_header Cache-Control 'no-store, no-cache, must-revalidate' always;
+        add_header CDN-Cache-Control 'no-store' always;
+        add_header Pragma 'no-cache' always;
+    }
+    location /api/agent/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+        add_header Cache-Control 'no-store, no-cache, must-revalidate' always;
+        add_header CDN-Cache-Control 'no-store' always;
+        add_header Pragma 'no-cache' always;
+    }
+    location /api/technician/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+        add_header Cache-Control 'no-store, no-cache, must-revalidate' always;
+        add_header CDN-Cache-Control 'no-store' always;
+        add_header Pragma 'no-cache' always;
+    }
+    location /api/billing/payment-gateway/webhook/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    location /api/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+        add_header Cache-Control 'no-store, no-cache, must-revalidate' always;
+        add_header CDN-Cache-Control 'no-store' always;
+        add_header Pragma 'no-cache' always;
+    }
+    location / {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Upgrade $http_upgrade;
+        proxy_set_header   Connection 'upgrade';
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $http_x_forwarded_proto;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+        proxy_cache_bypass $http_upgrade;
+        add_header Cache-Control 'no-cache, must-revalidate' always;
+        add_header CDN-Cache-Control 'no-store' always;
+    }
+LOCATIONS
+}
+
 tune_nginx_global() {
-    print_info "Tuning Nginx global config (nginx.conf)..."
 
     # Detect CPU count for worker_processes
     local CPU_COUNT
@@ -711,17 +969,83 @@ create_nginx_config() {
     local KEY="/etc/ssl/private/nginx-selfsigned.key"
 
     # ---------------------------------------------------------------------------
+    # Detect if domain is behind Cloudflare proxy (orange cloud)
+    # If yes: DNS resolves to Cloudflare IPs, not our VPS IP.
+    # Cloudflare Flexible: sends HTTP to origin → no redirect, use $http_x_forwarded_proto
+    # Cloudflare Full/Full Strict: sends HTTPS → normal 4-block config is fine.
+    # ---------------------------------------------------------------------------
+    local IS_CLOUDFLARE_PROXIED=false
+    if [ -n "${VPS_DOMAIN:-}" ]; then
+        local DOMAIN_RESOLVED_IP
+        DOMAIN_RESOLVED_IP=$(dig +short "${VPS_DOMAIN}" 2>/dev/null | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | tail -1)
+        if [ -n "$DOMAIN_RESOLVED_IP" ] && [ "$DOMAIN_RESOLVED_IP" != "${VPS_IP}" ]; then
+            # Check if resolved IP belongs to Cloudflare ASN (rough check via org name)
+            local RESOLVED_ORG
+            RESOLVED_ORG=$(whois "$DOMAIN_RESOLVED_IP" 2>/dev/null | grep -iE "^org-name:|^OrgName:|^descr:" | head -1 | tr '[:upper:]' '[:lower:]' || true)
+            if echo "$RESOLVED_ORG" | grep -qi "cloudflare"; then
+                IS_CLOUDFLARE_PROXIED=true
+                print_info "Cloudflare proxy terdeteksi untuk ${VPS_DOMAIN} → config Cloudflare-compatible"
+            fi
+        fi
+    fi
+
+    # ---------------------------------------------------------------------------
     # 4-block config:
-    #   1. HTTP domain → redirect to HTTPS          (if domain set)
+    #   1. HTTP domain → redirect to HTTPS (skip if Cloudflare proxied)
     #   2. HTTP default_server (IP fallback)
-    #   3. HTTPS domain block (self-signed, to be upgraded by certbot later)  (if domain set)
+    #   3. HTTPS domain block (self-signed, to be upgraded by certbot later)
     #   4. HTTPS default_server (IP fallback)
     # ---------------------------------------------------------------------------
 
     if [ -n "${VPS_DOMAIN:-}" ]; then
-        print_info "Domain: ${VPS_DOMAIN} — generating 4-block HTTPS config..."
 
-        cat > /etc/nginx/sites-available/salfanet-radius <<EOF
+        if [ "$IS_CLOUDFLARE_PROXIED" = "true" ]; then
+            # ── Cloudflare config: HTTP only on port 80 for the domain ──────────
+            # Cloudflare handles HTTPS for clients and sends HTTP to origin.
+            # DO NOT redirect HTTP → HTTPS (would cause infinite redirect with Flexible SSL).
+            # Use $http_x_forwarded_proto so backends see 'https' from Cloudflare header.
+            print_info "Domain: ${VPS_DOMAIN} — Cloudflare mode: HTTP-only domain block..."
+
+            cat > /etc/nginx/sites-available/salfanet-radius <<EOF
+# Block 1: HTTP domain (Cloudflare proxy — Cloudflare handles HTTPS)
+# NOTE: Cloudflare Flexible SSL sends HTTP to origin. Do NOT redirect here.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${VPS_DOMAIN};
+
+$(_proxy_locations_cloudflare)
+}
+
+# Block 2: HTTP default_server (direct IP access)
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _ ${VPS_IP};
+
+$(_proxy_locations)
+}
+
+# Block 3: HTTPS default_server (direct IP access, self-signed cert)
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _ ${VPS_IP};
+
+    ssl_certificate     ${CERT};
+    ssl_certificate_key ${KEY};
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+$(_proxy_locations)
+}
+EOF
+
+        else
+            # ── Standard config: domain with HTTPS redirect ──────────────────────
+            print_info "Domain: ${VPS_DOMAIN} — generating 4-block HTTPS config..."
+
+            cat > /etc/nginx/sites-available/salfanet-radius <<EOF
 # Block 1: HTTP domain → HTTPS redirect
 server {
     listen 80;
@@ -773,6 +1097,7 @@ server {
 $(_proxy_locations)
 }
 EOF
+        fi
 
     else
         # No domain: 2-block config (HTTP + HTTPS) with IP only
