@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.6] — 2026-05-15
+### Fixed
+- **Dashboard stat cards tidak muncul** — Go handler `adminH.Stats` di `/api/dashboard/stats` mengembalikan format salah (`{customers, invoices, onu}` tanpa key `success`). Frontend mengecek `if (data.success)` sehingga semua data diabaikan. Handler ditulis ulang lengkap sesuai format yang diharapkan: `{success, stats:{totalPppoeUsers, activePppoeUsers, activeSessionsPPPoE, ...}, systemStatus:{radius, database, api}, activities, agentSales, radiusAuthLog, radiusAuthStats, periodLabel, monthKey, isCurrentMonth}`
+- **Status RADIUS/Database/API selalu Offline** — `systemStatus` tidak dikembalikan oleh handler lama (undefined → semua false). Sekarang dikembalikan dengan: `database: true`, `api: true`, `radius:` berdasarkan pengecekan radacct aktif 1 jam terakhir
+- **`/api/system/radius` tidak punya field `status`** — Frontend menggunakan `radiusStatus?.status === 'running'` tapi handler tidak mengembalikan field itu. Ditambahkan `status: "running"|"stopped"` dan `uptime` berdasarkan sesi aktif dan aktivitas radacct terbaru
+### Files
+- `internal/api/handlers/admin.go` — Complete rewrite of `Stats()`: correct response structure, all stat fields, systemStatus, agentSales, radiusAuthLog, activities
+- `internal/api/handlers/settings_genieacs.go` — `SystemRadius()`: added `status` and `uptime` fields
+
 ## [2.47.5] — 2026-05-15
 ### Fixed
 - **Email templates crash** (`TypeError: Cannot read properties of undefined (reading 'forEach')`) — Go returned `"templates"` key but frontend used `data.data.forEach`; fixed to `"data"`
