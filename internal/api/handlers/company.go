@@ -17,7 +17,34 @@ func NewCompanyHandler(db *gorm.DB) *CompanyHandler { return &CompanyHandler{db:
 func (h *CompanyHandler) GetCompany(c fiber.Ctx) error {
 	var company models.Company
 	if err := h.db.First(&company).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "company not configured"})
+		// Fresh install: no company record yet — return safe defaults instead of 404
+		defaultBaseURL := "http://localhost:3000"
+		defaultTimezone := "Asia/Jakarta"
+		defaultPoweredBy := "SALFANET RADIUS"
+		defaultInvoiceDays := 7
+		defaultGracePeriod := 0
+		defaultIsolation := true
+		defaultAllowDns := true
+		defaultAllowPayment := true
+		defaultNotifyWA := false
+		defaultNotifyEmail := false
+		defaultReferral := false
+		defaultReferralAmount := 10000
+		return c.JSON(models.Company{
+			Name:                    "SALFANET RADIUS",
+			BaseURL:                 &defaultBaseURL,
+			Timezone:                &defaultTimezone,
+			PoweredBy:               &defaultPoweredBy,
+			InvoiceGenerateDays:     &defaultInvoiceDays,
+			GracePeriodDays:         &defaultGracePeriod,
+			IsolationEnabled:        &defaultIsolation,
+			IsolationAllowDns:       &defaultAllowDns,
+			IsolationAllowPayment:   &defaultAllowPayment,
+			IsolationNotifyWhatsapp: &defaultNotifyWA,
+			IsolationNotifyEmail:    &defaultNotifyEmail,
+			ReferralEnabled:         &defaultReferral,
+			ReferralRewardAmount:    &defaultReferralAmount,
+		})
 	}
 	return c.JSON(company)
 }
