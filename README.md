@@ -469,6 +469,26 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.9 — 2026-05-15
+
+### Fixed
+- **Halaman FreeRADIUS Status menampilkan "Gagal memuat"** — root cause: nginx routing `/api/` ke Go port 8080, bukan Next.js. Handler Go lama `GetStatus` mengembalikan `{running, pid, uptime, version}` tanpa field `success` dan tanpa nested `status`, sehingga `data.success` undefined → `setStatus` tidak pernah dipanggil → halaman stuck di error.
+### Changed
+- **Migrasi semua endpoint `/api/freeradius/*` ke Go backend** — rewrite `freeradius.go` dengan format response yang sesuai frontend:
+  - `GetStatus`: `{success, status:{running, pid, uptime, cpu, memory, memoryMB, version, startTime, activeConnections, totalAuthRequests, totalAcctRequests, lastRestart}}`
+  - `Start/Stop/Restart`: `{success, message}` dengan verifikasi status post-action
+  - `GetLogs`: `{success, logs:[...]}`
+  - `GetRadcheck`: `{success, data:[...], total, page, limit}` — support pagination dan search
+  - `CreateRadcheck` (POST `/radcheck`): insert row baru ke radcheck
+  - `DeleteRadcheck` (DELETE `/radcheck?id=`): hapus row berdasarkan id
+  - `RunRadtest`: `{result:{success, responseCode, responseType, duration, attributes, rawOutput}}`
+  - `ListConfigs`: `{success, groups:[{id, name, files:[{name,path,type}]}]}`
+  - `ReadConfig` (POST, body `{filename}`): `{success, content}` — ubah dari GET+query param
+  - `SaveConfig` (POST, body `{filename, content}`): `{success, message}` — ubah field body dari `file` ke `filename`
+### Files
+- `internal/api/handlers/freeradius.go` — full rewrite dengan format response yang benar
+- `internal/api/router.go` — tambah POST/DELETE `/radcheck`, ubah `config/read` ke POST
+
 ### v2.47.8 — 2026-05-15
 
 ### Fixed
@@ -507,24 +527,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/settings_ext.go` — `ListEmailTemplates`: `"templates"` → `"data"`; `EmailHistory`: `"emails"` → `"history"`
 - `internal/db/models/extra.go` — Added `WhatsappGlobalSettings` struct matching actual `whatsapp_reminder_settings` table columns
 - `internal/api/handlers/whatsapp.go` — `GetReminderSettings`: uses new model, returns `{success, settings:{...}}`; `UpdateReminderSettings`: accepts flat object body matching frontend format
-
-### v2.47.4 — 2026-05-15
-
-### Fixed
-- **Isolation templates crash** (`TypeError: Cannot read properties of undefined (reading 'map')`) — Go returned `{success, templates:[...]}` but frontend expected `data.data`; fixed key to `"data"`
-- **Isolation mikrotik crash** (`TypeError: Cannot read properties of undefined (reading 'isolationIpPool')`) — Go returned `{success, settings:{...}}` but frontend expected `data.data.isolationIpPool`; fixed key to `"data"`
-- **Isolation settings page** — same `data.data` mismatch (no crash due to fallbacks, but values were not loaded from server)
-### Files
-- `internal/api/handlers/settings.go` — `GetIsolationSettings`: `"settings"` → `"data"`
-- `internal/api/handlers/settings_genieacs.go` — `ListIsolationTemplates`: `"templates"` → `"data"`
-
-
-### Fixed
-- **Login page 401 on pre-login** — `POST /api/admin/auth/pre-login` was registered after the `api := app.Group("/api", CombinedAuthMiddleware)` group; in Fiber v3 this caused the auth middleware to intercept the request. Fixed by moving the route to before the protected api group.
-- **Sidebar shows only Dashboard** — `GET /api/admin/users/:id/permissions` only queried `UserPermission` table; if empty (no custom overrides), all menu items requiring permissions were hidden. Fixed by falling back to `RolePermission` for the user's role, matching original Next.js logic.
-### Files
-- `internal/api/router.go` — moved pre-login route to public section (before `api` group)
-- `internal/api/handlers/admin_users.go` — `GetPermissions`: added role fallback when no custom permissions found
 
 <!-- AUTO-CHANGELOG:END -->
 
