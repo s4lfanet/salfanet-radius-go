@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.7] — 2026-05-15
+### Fixed
+- **RADIUS status dashboard selalu "Offline"** — deteksi status sebelumnya menggunakan heuristik radacct (ada sesi aktif atau aktivitas 1 jam terakhir). Jika belum ada koneksi PPPoE sama sekali, nilai menjadi 0 → status "stopped". Diganti dengan `systemctl is-active freeradius` via `exec.Command` yang langsung mengecek state systemd service yang sesungguhnya. Berlaku di endpoint `/api/system/radius` maupun di `systemStatus.radius` pada `/api/dashboard/stats`.
+### Files
+- `internal/api/handlers/settings_genieacs.go` — `checkFreeradiusRunning()` helper baru via systemctl; `SystemRadius()` diupdate
+- `internal/api/handlers/admin.go` — `Stats()` gunakan `checkFreeradiusRunning()` untuk `systemStatus.radius`
+
 ## [2.47.6] — 2026-05-15
 ### Fixed
 - **Dashboard stat cards tidak muncul** — Go handler `adminH.Stats` di `/api/dashboard/stats` mengembalikan format salah (`{customers, invoices, onu}` tanpa key `success`). Frontend mengecek `if (data.success)` sehingga semua data diabaikan. Handler ditulis ulang lengkap sesuai format yang diharapkan: `{success, stats:{totalPppoeUsers, activePppoeUsers, activeSessionsPPPoE, ...}, systemStatus:{radius, database, api}, activities, agentSales, radiusAuthLog, radiusAuthStats, periodLabel, monthKey, isCurrentMonth}`
