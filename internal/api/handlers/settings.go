@@ -74,7 +74,7 @@ func (h *SettingsHandler) GetIsolationSettings(c fiber.Ctx) error {
 	if err := h.db.First(&company).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(fiber.Map{"success": true, "settings": company})
+	return c.JSON(fiber.Map{"success": true, "data": company})
 }
 
 // UpdateIsolationSettings PUT /api/settings/isolation
