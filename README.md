@@ -469,6 +469,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.46.7 — 2026-05-15
+
+### Performance
+- **PM2 `fork` mode** — Ganti dari `cluster` mode (instances:1) ke `fork` mode; eliminasi overhead master process + IPC routing; ~30MB RAM lebih hemat
+- **Hapus `cron_restart`** — Dihapus jadwal restart paksa tiap 6 jam (`0 */6 * * *`) yang menyebabkan downtime ~10 detik sebanyak 4x sehari
+- **Heap Node.js 400MB → 512MB** — Kurangi GC pressure; `--optimize-for-size` dihapus (menukar speed demi size, tidak cocok untuk production server)
+- **`max_memory_restart` 450M → 600M** — Toleransi memory lebih besar sebelum auto-restart
+- **Clear VPS swap** — Cleared 672MB swap residual dari proses `npm run build`; menghilangkan disk I/O latency
+
+### Files
+- `production/ecosystem.config.js` — PM2 config fix: fork mode, heap 512M, no cron_restart
+
 ### v2.46.6 — 2026-05-15
 
 ### Fixed
@@ -547,15 +559,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/api/invoice-templates/[id]/default/route.ts` — POST (set default)
 - `src/locales/id.json` — Tambah 14 nav keys
 - `scripts/migrate-missing-tables.sql` — SQL migration baru
-
-### v2.46.2 — 2026-05-14
-
-### Fixed
-- **Nginx smart API routing** — Routing `/api/` sebelumnya mengarahkan semua ke Go backend, menyebabkan `GET /api/company` dan `POST /api/admin/auth/pre-login` menghasilkan 401 "missing authorization header". Sekarang ada routing granular: Go JWT auth (`/api/auth/login`, `/api/auth/logout`, `/api/auth/refresh`, `/api/auth/customer/`, `/api/auth/agent/`), NextAuth (`/api/auth/callback/`, `/api/auth/session`, `/api/auth/csrf`, `/api/auth/signout`), portal API (`/api/customer/`, `/api/agent/`, `/api/technician/`) ke Go, dan catch-all `/api/` → Next.js untuk admin panel.
-- **Admin login 401 resolved** — `POST /api/admin/auth/pre-login` kini mengarah ke Next.js (handler Prisma+2FA yang sesungguhnya), bukan Go stub yang dilindungi AuthMiddleware
-
-### Files
-- `vps-install/install-nginx.sh` — Ganti 2 location block lama (`/api/auth/` + `/api/`) dengan routing granular komprehensif di kedua fungsi `_proxy_locations()` dan `_proxy_locations_https_domain()`
 
 <!-- AUTO-CHANGELOG:END -->
 
