@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+	"math"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -20,51 +23,250 @@ func NewAdminHandler(db *gorm.DB) *AdminHandler {
 	return &AdminHandler{db: db}
 }
 
+var monthNamesID = []string{"", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"}
+
+func formatIDR(amount int64) string {
+	negative := amount < 0
+	if negative {
+		amount = -amount
+	}
+	s := strconv.FormatInt(amount, 10)
+	// insert thousands separators
+	result := ""
+	for i, ch := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			result += "."
+		}
+		result += string(ch)
+	}
+	if negative {
+		return "-Rp\u00a0" + result
+	}
+	return "Rp\u00a0" + result
+}
+
 // Stats godoc
-// GET /api/admin/stats
+// GET /api/dashboard/stats
 func (h *AdminHandler) Stats(c fiber.Ctx) error {
-	var totalCustomers, activeCustomers, isolatedCustomers int64
-	h.db.Model(&models.PppoeUser{}).Count(&totalCustomers)
-	h.db.Model(&models.PppoeUser{}).Where("status = ?", "active").Count(&activeCustomers)
-	h.db.Model(&models.PppoeUser{}).Where("status = ?", "isolated").Count(&isolatedCustomers)
+	now := time.Now()
 
-	var pendingInvoices, paidInvoices int64
-	var pendingRevenue, paidRevenue int64
-	h.db.Model(&models.Invoice{}).Where("status = ?", "PENDING").Count(&pendingInvoices)
-	h.db.Model(&models.Invoice{}).Where("status = ?", "PAID").Count(&paidInvoices)
-	h.db.Model(&models.Invoice{}).Where("status = ?", "PENDING").Select("COALESCE(SUM(amount), 0)").Scan(&pendingRevenue)
-	h.db.Model(&models.Invoice{}).Where("status = ?", "PAID").Select("COALESCE(SUM(amount), 0)").Scan(&paidRevenue)
+	// Parse optional ?month=YYYY-MM
+	monthParam := c.Query("month")
+	var selectedYear, selectedMonth int
+	re := regexp.MustCompile(`^\d{4}-\d{2}$`)
+	if re.MatchString(monthParam) {
+		fmt.Sscanf(monthParam, "%d-%d", &selectedYear, &selectedMonth)
+	} else {
+		selectedYear = now.Year()
+		selectedMonth = int(now.Month())
+	}
+	monthKey := fmt.Sprintf("%04d-%02d", selectedYear, selectedMonth)
+	periodLabel := fmt.Sprintf("%s %d", monthNamesID[selectedMonth], selectedYear)
+	isCurrentMonth := selectedYear == now.Year() && selectedMonth == int(now.Month())
 
-	var totalONU, onlineONU, offlineONU int64
-	h.db.Model(&models.OLTONUStatus{}).Count(&totalONU)
-	h.db.Model(&models.OLTONUStatus{}).Where("status = ?", "online").Count(&onlineONU)
-	h.db.Model(&models.OLTONUStatus{}).Where("status != ?", "online").Count(&offlineONU)
+	startOfMonth := time.Date(selectedYear, time.Month(selectedMonth), 1, 0, 0, 0, 0, time.UTC)
+	startOfNextMonth := time.Date(selectedYear, time.Month(selectedMonth)+1, 1, 0, 0, 0, 0, time.UTC)
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	sevenDaysFromNow := now.Add(7 * 24 * time.Hour)
 
-	// Month revenue
-	startOfMonth := time.Now().Truncate(24*time.Hour).AddDate(0, 0, -time.Now().Day()+1)
-	var monthRevenue int64
+	// ── PPPoE user counts ──────────────────────────────────────────────────────
+	var totalPppoeUsers, activePppoeUsers, isolatedCount, suspendedCount int64
+	h.db.Model(&models.PppoeUser{}).Count(&totalPppoeUsers)
+	h.db.Model(&models.PppoeUser{}).Where("status IN ?", []string{"active", "ACTIVE"}).Count(&activePppoeUsers)
+	h.db.Model(&models.PppoeUser{}).Where("status IN ?", []string{"isolated", "ISOLATED", "blocked", "BLOCKED"}).Count(&isolatedCount)
+	h.db.Model(&models.PppoeUser{}).Where("status IN ?", []string{"suspended", "SUSPENDED"}).Count(&suspendedCount)
+
+	// ── New registrations ───────────────────────────────────────────────────────
+	var newRegistrations int64
+	h.db.Model(&models.RegistrationRequest{}).Where("status IN ?", []string{"PENDING", "REVIEWING"}).Count(&newRegistrations)
+
+	// ── Active sessions (PPPoE vs Hotspot from radacct) ────────────────────────
+	var activeSessionsPPPoE, activeSessionsHotspot int64
+	h.db.Model(&models.Radacct{}).Where("acctstoptime IS NULL").Count(&activeSessionsPPPoE)
+	// simple: all active = PPPoE sessions for now (exact split would need join)
+
+	// ── Unused vouchers ────────────────────────────────────────────────────────
+	var unusedVouchers int64
+	h.db.Model(&models.HotspotVoucher{}).Where("status = ?", "WAITING").Count(&unusedVouchers)
+
+	// ── Upcoming invoices (H-7) ────────────────────────────────────────────────
+	type upcomingRow struct {
+		InvoiceNumber    string    `json:"invoiceNumber"`
+		CustomerName     *string   `json:"customerName"`
+		CustomerUsername *string   `json:"customerUsername"`
+		Amount           int       `json:"amount"`
+		DueDate          time.Time `json:"dueDate"`
+		Status           string    `json:"status"`
+	}
+	var rawUpcoming []upcomingRow
 	h.db.Model(&models.Invoice{}).
-		Where("status = ? AND paidAt >= ?", "PAID", startOfMonth).
-		Select("COALESCE(SUM(amount), 0)").Scan(&monthRevenue)
+		Where("status IN ? AND dueDate <= ?", []string{"PENDING", "OVERDUE"}, sevenDaysFromNow).
+		Order("dueDate asc").Limit(20).
+		Find(&rawUpcoming)
+
+	type upcomingOut struct {
+		InvoiceNumber    string  `json:"invoiceNumber"`
+		CustomerName     string  `json:"customerName"`
+		CustomerUsername string  `json:"customerUsername"`
+		Amount           int     `json:"amount"`
+		DueDate          string  `json:"dueDate"`
+		Status           string  `json:"status"`
+		DaysUntilDue     int     `json:"daysUntilDue"`
+	}
+	upcomingInvoices := make([]upcomingOut, 0, len(rawUpcoming))
+	for _, inv := range rawUpcoming {
+		name := "-"
+		if inv.CustomerName != nil {
+			name = *inv.CustomerName
+		}
+		uname := "-"
+		if inv.CustomerUsername != nil {
+			uname = *inv.CustomerUsername
+		}
+		days := int(math.Ceil(inv.DueDate.Sub(now).Hours() / 24))
+		upcomingInvoices = append(upcomingInvoices, upcomingOut{
+			InvoiceNumber:    inv.InvoiceNumber,
+			CustomerName:     name,
+			CustomerUsername: uname,
+			Amount:           inv.Amount,
+			DueDate:          inv.DueDate.Format(time.RFC3339),
+			Status:           inv.Status,
+			DaysUntilDue:     days,
+		})
+	}
+
+	// ── Invoice revenue ────────────────────────────────────────────────────────
+	var invoiceRevenueToday, invoiceRevenue, totalAllTimeRevenue int64
+	var invoiceCountToday, invoiceCountMonth, unpaidInvoicesCount int64
+	h.db.Model(&models.Invoice{}).Where("status = ? AND paidAt >= ?", "PAID", startOfToday).
+		Select("COALESCE(SUM(amount),0)").Scan(&invoiceRevenueToday)
+	h.db.Model(&models.Invoice{}).Where("status = ? AND paidAt >= ?", "PAID", startOfToday).Count(&invoiceCountToday)
+	h.db.Model(&models.Invoice{}).Where("status = ? AND paidAt >= ? AND paidAt < ?", "PAID", startOfMonth, startOfNextMonth).
+		Select("COALESCE(SUM(amount),0)").Scan(&invoiceRevenue)
+	h.db.Model(&models.Invoice{}).Where("status = ? AND paidAt >= ? AND paidAt < ?", "PAID", startOfMonth, startOfNextMonth).Count(&invoiceCountMonth)
+	h.db.Model(&models.Invoice{}).Where("status IN ?", []string{"PENDING", "OVERDUE"}).Count(&unpaidInvoicesCount)
+	h.db.Model(&models.Invoice{}).Where("status = ?", "PAID").Select("COALESCE(SUM(amount),0)").Scan(&totalAllTimeRevenue)
+
+	// ── Voucher revenue (estimate from sold vouchers) ──────────────────────────
+	var voucherRevenue, voucherRevenueToday int64
+	h.db.Raw(`
+		SELECT COALESCE(SUM(hp.price),0)
+		FROM hotspot_vouchers hv
+		JOIN hotspot_profiles hp ON hp.id = hv.profileId
+		WHERE hv.status IN ('ACTIVE','EXPIRED','SOLD')
+		  AND hv.firstLoginAt >= ? AND hv.firstLoginAt < ?
+	`, startOfMonth, startOfNextMonth).Scan(&voucherRevenue)
+	h.db.Raw(`
+		SELECT COALESCE(SUM(hp.price),0)
+		FROM hotspot_vouchers hv
+		JOIN hotspot_profiles hp ON hp.id = hv.profileId
+		WHERE hv.status IN ('ACTIVE','EXPIRED','SOLD')
+		  AND hv.firstLoginAt >= ?
+	`, startOfToday).Scan(&voucherRevenueToday)
+
+	// ── Agent sales ────────────────────────────────────────────────────────────
+	type agentSaleRow struct {
+		AgentID   string `json:"agentId"`
+		AgentName string `json:"agentName"`
+		Sold      int64  `json:"sold"`
+		Revenue   int64  `json:"revenue"`
+	}
+	var agentSales []agentSaleRow
+	h.db.Raw(`
+		SELECT hv.agentId, ag.name AS agentName,
+		       COUNT(*) AS sold, COALESCE(SUM(hp.price),0) AS revenue
+		FROM hotspot_vouchers hv
+		JOIN agents ag ON ag.id = hv.agentId
+		JOIN hotspot_profiles hp ON hp.id = hv.profileId
+		WHERE hv.agentId IS NOT NULL
+		  AND hv.firstLoginAt >= ? AND hv.firstLoginAt < ?
+		GROUP BY hv.agentId, ag.name
+		ORDER BY sold DESC
+		LIMIT 5
+	`, startOfMonth, startOfNextMonth).Scan(&agentSales)
+	if agentSales == nil {
+		agentSales = []agentSaleRow{}
+	}
+	var agentSalesTotalCount, agentSalesTotalRevenue int64
+	for _, s := range agentSales {
+		agentSalesTotalCount += s.Sold
+		agentSalesTotalRevenue += s.Revenue
+	}
+
+	// ── RADIUS auth log ────────────────────────────────────────────────────────
+	type authRow struct {
+		Username string    `json:"username"`
+		Reply    string    `json:"reply"`
+		Authdate time.Time `json:"authdate"`
+	}
+	var radiusAuthLog []authRow
+	h.db.Raw(`SELECT username, reply, authdate FROM radpostauth ORDER BY authdate DESC LIMIT 15`).Scan(&radiusAuthLog)
+	if radiusAuthLog == nil {
+		radiusAuthLog = []authRow{}
+	}
+	var acceptToday, rejectToday int64
+	h.db.Raw(`SELECT COUNT(*) FROM radpostauth WHERE reply='Access-Accept' AND authdate >= ?`, startOfToday).Scan(&acceptToday)
+	h.db.Raw(`SELECT COUNT(*) FROM radpostauth WHERE reply='Access-Reject' AND authdate >= ?`, startOfToday).Scan(&rejectToday)
+
+	// ── System status ──────────────────────────────────────────────────────────
+	var recentRadacct int64
+	h.db.Model(&models.Radacct{}).
+		Where("acctstarttime >= ?", now.Add(-1*time.Hour)).
+		Count(&recentRadacct)
+	radiusOnline := recentRadacct > 0
+
+	// ── Recent activities ──────────────────────────────────────────────────────
+	var activities []models.ActivityLog
+	h.db.Order("createdAt DESC").Limit(10).Find(&activities)
+	if activities == nil {
+		activities = []models.ActivityLog{}
+	}
 
 	return c.JSON(fiber.Map{
-		"customers": fiber.Map{
-			"total":    totalCustomers,
-			"active":   activeCustomers,
-			"isolated": isolatedCustomers,
+		"success": true,
+		"stats": fiber.Map{
+			"totalPppoeUsers":             totalPppoeUsers,
+			"activePppoeUsers":            activePppoeUsers,
+			"activeSessionsPPPoE":         activeSessionsPPPoE,
+			"activeSessionsHotspot":       activeSessionsHotspot,
+			"unusedVouchers":              unusedVouchers,
+			"isolatedCount":               isolatedCount,
+			"suspendedCount":              suspendedCount,
+			"newRegistrations":            newRegistrations,
+			"upcomingInvoices":            upcomingInvoices,
+			"voucherRevenue":              voucherRevenue,
+			"voucherRevenueFormatted":     formatIDR(voucherRevenue),
+			"voucherRevenueToday":         voucherRevenueToday,
+			"voucherRevenueTodayFormatted": formatIDR(voucherRevenueToday),
+			"invoiceRevenue":              invoiceRevenue,
+			"invoiceRevenueFormatted":     formatIDR(invoiceRevenue),
+			"invoiceRevenueToday":         invoiceRevenueToday,
+			"invoiceRevenueTodayFormatted": formatIDR(invoiceRevenueToday),
+			"invoiceCountToday":           invoiceCountToday,
+			"invoiceCountMonth":           invoiceCountMonth,
+			"unpaidInvoicesCount":         unpaidInvoicesCount,
+			"totalAllTimeRevenue":         totalAllTimeRevenue,
+			"totalAllTimeRevenueFormatted": formatIDR(totalAllTimeRevenue),
 		},
-		"invoices": fiber.Map{
-			"pending":        pendingInvoices,
-			"paid":           paidInvoices,
-			"pendingRevenue": pendingRevenue,
-			"paidRevenue":    paidRevenue,
-			"monthRevenue":   monthRevenue,
+		"activities": activities,
+		"systemStatus": fiber.Map{
+			"radius":   radiusOnline,
+			"database": true,
+			"api":      true,
 		},
-		"onu": fiber.Map{
-			"total":   totalONU,
-			"online":  onlineONU,
-			"offline": offlineONU,
+		"agentSales": agentSales,
+		"agentSalesTotal": fiber.Map{
+			"count":   agentSalesTotalCount,
+			"revenue": agentSalesTotalRevenue,
 		},
+		"radiusAuthLog":  radiusAuthLog,
+		"radiusAuthStats": fiber.Map{
+			"acceptToday": acceptToday,
+			"rejectToday": rejectToday,
+		},
+		"periodLabel":    periodLabel,
+		"monthKey":       monthKey,
+		"isCurrentMonth": isCurrentMonth,
 	})
 }
 

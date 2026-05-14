@@ -151,8 +151,24 @@ func (h *SettingsGenieacsHandler) SystemRadius(c fiber.Ctx) error {
 	var activeSessions int64
 	h.db.Model(&models.Radacct{}).Where("acctstoptime IS NULL").Count(&activeSessions)
 
+	// Determine if RADIUS is "running" by checking recent accounting activity
+	var recentActivity int64
+	h.db.Model(&models.Radacct{}).
+		Where("acctstarttime >= ?", time.Now().Add(-1*time.Hour)).
+		Count(&recentActivity)
+
+	// Also check if there are any active sessions as a secondary indicator
+	status := "stopped"
+	uptime := ""
+	if activeSessions > 0 || recentActivity > 0 {
+		status = "running"
+		uptime = "Active"
+	}
+
 	return c.JSON(fiber.Map{
 		"success":        true,
+		"status":         status,
+		"uptime":         uptime,
 		"totalUsers":     totalUsers,
 		"activeUsers":    activeUsers,
 		"activeSessions": activeSessions,
