@@ -59,7 +59,7 @@ func (h *PublicHandler) GetStats(c fiber.Ctx) error {
 // GET /api/public/payment-gateways
 func (h *PublicHandler) GetPaymentGateways(c fiber.Ctx) error {
 	var gateways []models.PaymentGateway
-	h.db.Where("isActive = ?", true).Select("id,provider,is_active,is_production,client_key,merchant_code,base_url").Find(&gateways)
+	h.db.Where("isActive = ?", true).Select("id", "provider", "isActive").Find(&gateways)
 	return c.JSON(fiber.Map{"success": true, "gateways": gateways})
 }
 

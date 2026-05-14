@@ -50,7 +50,7 @@ func (h *AnalyticsHandler) GetAnalytics(c fiber.Ctx) error {
 		Value float64 `json:"value"`
 	}
 	revenueByType := []PieSlice{}
-	h.db.Raw(`SELECT type as label, SUM(amount) as value FROM invoices WHERE status='PAID' GROUP BY type`).Scan(&revenueByType)
+	h.db.Raw(`SELECT invoiceType as label, SUM(amount) as value FROM invoices WHERE status='PAID' GROUP BY invoiceType`).Scan(&revenueByType)
 
 	return c.JSON(fiber.Map{
 		"success": true,
