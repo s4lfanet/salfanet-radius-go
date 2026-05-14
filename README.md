@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.20 — 2026-05-15
+
+### Fixed
+- **`GET /api/company` 404 pada fresh install** — Go handler mengembalikan 404 saat tabel `companies` kosong (belum ada data). Frontend admin layout memanggil endpoint ini saat pertama buka, sehingga layout tidak bisa load data perusahaan. Fix: handler sekarang mengembalikan nilai default (name, timezone, base URL, dsb.) dengan status 200 jika belum ada record, bukan 404.
+### Files
+- `internal/api/handlers/company.go` — `GetCompany` mengembalikan default ketika DB kosong
+
 ### v2.47.19 — 2026-05-15
 
 ### Removed
@@ -500,21 +507,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Installer: `--domain` CLI flag diabaikan** — `init_installation()` melakukan `export VPS_DOMAIN=""` yang overwrite nilai yang sudah di-set via `--domain` CLI arg. Fix: ubah ke `export VPS_DOMAIN="${VPS_DOMAIN:-}"` agar CLI value dipertahankan.
 ### Files
 - `vps-install/vps-installer.sh` — preserve VPS_DOMAIN from CLI flag
-
-### v2.47.15 — 2026-05-15
-
-### Fixed
-- **Installer: `ReadWritePaths` missing `/uploads`** — `vps-install/install-go.sh` systemd service template hanya punya `/logs` di `ReadWritePaths`. Fresh install akan gagal saat upload logo (500). Fix: tambah `/uploads` ke `ReadWritePaths`.
-- **Updater: systemd patch untuk upgrade dari versi lama** — `vps-install/updater.sh` sekarang otomatis patch `salfanet-api.service` jika `/uploads` belum ada di `ReadWritePaths` (migrasi dari versi < 2.47.13).
-- **Installer nginx: Cloudflare Flexible SSL infinite redirect** — `vps-install/install-nginx.sh` sebelumnya selalu membuat Block 1 (HTTP → HTTPS redirect) ketika `VPS_DOMAIN` diset. Dengan Cloudflare Flexible SSL, ini menyebabkan infinite redirect loop. Fix: deteksi otomatis Cloudflare proxy via DNS/whois; jika terdeteksi Cloudflare, generate config Cloudflare-compatible (HTTP-only domain block, tanpa redirect, dengan `$http_x_forwarded_proto`).
-- **Installer nginx: `X-Forwarded-Proto` header** — Tambah `_proxy_locations_cloudflare()` helper yang menggunakan `$http_x_forwarded_proto` agar backend (NextAuth, Go) melihat protokol `https` yang benar saat diakses via Cloudflare Flexible.
-### Changed
-- **`production/nginx-salfanet-radius.conf`** — Update menjadi reference yang lebih akurat dengan header penjelasan Cloudflare dan placeholder `YOUR_DOMAIN` / `YOUR_VPS_IP`.
-### Files
-- `vps-install/install-go.sh` — `ReadWritePaths` ditambah `${APP_DIR}/uploads`
-- `vps-install/updater.sh` — Tambah step patch systemd sebelum Go build
-- `vps-install/install-nginx.sh` — Deteksi Cloudflare, `_proxy_locations_cloudflare()`, config Cloudflare-mode
-- `production/nginx-salfanet-radius.conf` — Header Cloudflare notes, placeholder cleanup
 
 <!-- AUTO-CHANGELOG:END -->
 
