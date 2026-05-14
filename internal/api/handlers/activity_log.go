@@ -17,20 +17,20 @@ func NewActivityLogHandler(db *gorm.DB) *ActivityLogHandler {
 
 // GET /api/admin/activity-logs
 func (h *ActivityLogHandler) List(c fiber.Ctx) error {
-	page := 1
-	limit := 50
-	if v, err := strconv.Atoi(c.Query("page")); err == nil && v > 0 {
-		page = v
-	}
+	limit := 20
+	offset := 0
 	if v, err := strconv.Atoi(c.Query("limit")); err == nil && v > 0 {
 		limit = v
+	}
+	if v, err := strconv.Atoi(c.Query("offset")); err == nil && v >= 0 {
+		offset = v
 	}
 	module := c.Query("module")
 	status := c.Query("status")
 	search := c.Query("search")
 
 	query := h.db.Model(&models.ActivityLog{}).Order("createdAt desc")
-	if module != "" {
+	if module != "" && module != "all" {
 		query = query.Where("module = ?", module)
 	}
 	if status != "" {
@@ -45,16 +45,12 @@ func (h *ActivityLogHandler) List(c fiber.Ctx) error {
 	query.Count(&total)
 
 	var logs []models.ActivityLog
-	query.Offset((page - 1) * limit).Limit(limit).Find(&logs)
+	query.Offset(offset).Limit(limit).Find(&logs)
 
 	return c.JSON(fiber.Map{
-		"success": true,
-		"logs":    logs,
-		"pagination": fiber.Map{
-			"page":       page,
-			"limit":      limit,
-			"total":      total,
-			"totalPages": (total + int64(limit) - 1) / int64(limit),
-		},
+		"success":    true,
+		"activities": logs,
+		"total":      total,
+		"hasMore":    int64(offset+limit) < total,
 	})
 }
