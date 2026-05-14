@@ -137,6 +137,9 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	app.Get("/api/public/payment-gateways", pubH.GetPaymentGateways)
 	app.Post("/api/public/upload-registration", pubH.UploadRegistration)
 
+	// Admin pre-login (public — must be before the api group to avoid auth middleware)
+	app.Post("/api/admin/auth/pre-login", adminMiscH.PreLogin)
+
 	// Technician auth (public — uses its own JWT, not admin JWT)
 	techAuth := app.Group("/api/technician/auth")
 	techAuth.Post("/request-otp", techPortalH.RequestOTP)
@@ -1106,8 +1109,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// Admin profile 2FA
 	api.Get("/admin/profile/2fa", adminMiscH.Get2FA)
 	api.Post("/admin/profile/2fa", adminMiscH.Update2FA)
-	// Admin auth pre-login
-	app.Post("/api/admin/auth/pre-login", adminMiscH.PreLogin)
 	// PPPoE admin
 	api.Post("/admin/pppoe/sync-all-radius", adminMiscH.SyncAllRadius)
 	api.Post("/admin/pppoe/users/:id/deposit", adminMiscH.PPPoEUserDeposit)

@@ -130,12 +130,36 @@ func (h *AdminUserHandler) Delete(c fiber.Ctx) error {
 // GET /api/admin/users/:id/permissions
 func (h *AdminUserHandler) GetPermissions(c fiber.Ctx) error {
 	id := c.Params("id")
+
+	// 1. Check for custom user permissions
 	var ups []models.UserPermission
 	h.db.Preload("Permission").Where("userId = ?", id).Find(&ups)
-	perms := make([]string, 0, len(ups))
+
+	activeCustom := make([]string, 0)
 	for _, up := range ups {
-		if up.Permission != nil {
-			perms = append(perms, up.Permission.Key)
+		if up.Permission != nil && up.Permission.IsActive {
+			activeCustom = append(activeCustom, up.Permission.Key)
+		}
+	}
+
+	// 2. If user has custom permissions, return those
+	if len(activeCustom) > 0 {
+		return c.JSON(fiber.Map{"success": true, "permissions": activeCustom})
+	}
+
+	// 3. Otherwise fall back to role-based permissions
+	var user models.AdminUser
+	if err := h.db.Select("id, role").Where("id = ?", id).First(&user).Error; err != nil {
+		return c.JSON(fiber.Map{"success": true, "permissions": []string{}})
+	}
+
+	var rps []models.RolePermission
+	h.db.Preload("Permission").Where("role = ?", user.Role).Find(&rps)
+
+	perms := make([]string, 0, len(rps))
+	for _, rp := range rps {
+		if rp.Permission != nil && rp.Permission.IsActive {
+			perms = append(perms, rp.Permission.Key)
 		}
 	}
 	return c.JSON(fiber.Map{"success": true, "permissions": perms})
