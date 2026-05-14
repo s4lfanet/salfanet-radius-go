@@ -469,6 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.19 — 2026-05-15
+
+### Removed
+- **Hapus fitur APK Builder** — `install-apk.sh` dihapus beserta semua referensinya. Mobile app (React Native/Expo) tidak bisa dibuild di VPS karena folder `mobile-app/` ada di `.gitignore` dan tidak ikut deploy. Java 17 + Android SDK yang terlanjur terinstall di VPS juga dihapus.
+### Files
+- `vps-install/install-apk.sh` — **DIHAPUS**
+- `vps-install/vps-installer.sh` — hapus `APK_BUILT`, blok CUSTOMER MOBILE APP, APK di next steps, APK di final summary
+- `vps-install/common.sh` — hapus baris "Step 8 Build Customer APK"
+- `vps-install/install-security.sh` — hapus cleanup APK build temp
+
 ### v2.47.18 — 2026-05-15
 
 ### Changed
@@ -505,16 +515,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `vps-install/updater.sh` — Tambah step patch systemd sebelum Go build
 - `vps-install/install-nginx.sh` — Deteksi Cloudflare, `_proxy_locations_cloudflare()`, config Cloudflare-mode
 - `production/nginx-salfanet-radius.conf` — Header Cloudflare notes, placeholder cleanup
-
-### v2.47.14 — 2026-05-15
-
-### Fixed
-- **PWA icon error "resource isn't a valid image"** — Handler `PwaIcon` mengembalikan 1×1 transparent PNG karena mencari `logo.png` yang tidak pernah ada (file upload dinamai `logo-{timestamp}.png`). Fix: handler sekarang mencari file logo terbaru di `uploads/logos/`, fallback ke `public/pwa/icon-192.png` / `icon-512.png` berdasarkan query `?size`.
-- **Subdomain `radius.hotspotapp.net`** — Tambah nginx server block khusus untuk subdomain (Cloudflare proxy, port 80). Update `.env` `NEXTAUTH_URL` dan `NEXT_PUBLIC_APP_URL` dari IP ke `https://radius.hotspotapp.net`. Rebuild Next.js dan restart PM2.
-### Files
-- `internal/api/handlers/upload.go` — `PwaIcon` handler baru dengan fallback ke icon publik
-- `production/nginx-radius.hotspotapp.net.conf` — nginx config untuk subdomain
-- `/var/www/salfanet-radius/.env` (VPS) — `NEXTAUTH_URL` dan `NEXT_PUBLIC_APP_URL` diupdate ke subdomain
 
 <!-- AUTO-CHANGELOG:END -->
 
