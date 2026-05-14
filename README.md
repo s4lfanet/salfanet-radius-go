@@ -469,6 +469,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.12 — 2026-05-15
+
+### Fixed
+- **`GET /api/admin/apk/trigger` → 405** — Frontend `fetchEnv` di halaman `/admin/download-apk` memanggil `GET /api/admin/apk/trigger` tapi hanya `POST` yang terdaftar. Fix: tambah handler `ApkEnv` baru yang mengecek ketersediaan Java dan Android SDK di server, daftarkan ke `GET /api/admin/apk/env`, dan update frontend untuk memanggil endpoint yang benar.
+- **`POST /api/upload/logo` → 500** — `c.SaveFile()` di Fiber v3 beta.4 gagal meskipun directory sudah ada. Fix: rewrite semua upload handler (`UploadLogo`, `UploadPaymentProof`, `UploadCustomerPhoto`) menggunakan `file.Open()` + `os.Create()` + `io.Copy()` secara manual.
+### Files
+- `internal/api/handlers/admin_misc_handler.go` — tambah `ApkEnv()` handler
+- `internal/api/handlers/upload.go` — rewrite pakai manual io.Copy (bukan c.SaveFile)
+- `internal/api/router.go` — tambah `GET /admin/apk/env`
+- `src/app/admin/download-apk/page.tsx` — ubah fetchEnv → `/api/admin/apk/env`
+
 ### v2.47.11 — 2026-05-15
 
 ### Fixed
@@ -519,14 +530,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `src/app/api/freeradius/status/route.ts` — hapus `getServerSession` check dari GET handler
 - `src/app/admin/freeradius/status/page.tsx` — tambah `fetchError` state, handle 401/error response, render error UI
-
-### v2.47.7 — 2026-05-15
-
-### Fixed
-- **RADIUS status dashboard selalu "Offline"** — deteksi status sebelumnya menggunakan heuristik radacct (ada sesi aktif atau aktivitas 1 jam terakhir). Jika belum ada koneksi PPPoE sama sekali, nilai menjadi 0 → status "stopped". Diganti dengan `systemctl is-active freeradius` via `exec.Command` yang langsung mengecek state systemd service yang sesungguhnya. Berlaku di endpoint `/api/system/radius` maupun di `systemStatus.radius` pada `/api/dashboard/stats`.
-### Files
-- `internal/api/handlers/settings_genieacs.go` — `checkFreeradiusRunning()` helper baru via systemctl; `SystemRadius()` diupdate
-- `internal/api/handlers/admin.go` — `Stats()` gunakan `checkFreeradiusRunning()` untuk `systemStatus.radius`
 
 <!-- AUTO-CHANGELOG:END -->
 
