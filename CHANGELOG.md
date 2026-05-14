@@ -6,6 +6,25 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.9] — 2026-05-15
+### Fixed
+- **Halaman FreeRADIUS Status menampilkan "Gagal memuat"** — root cause: nginx routing `/api/` ke Go port 8080, bukan Next.js. Handler Go lama `GetStatus` mengembalikan `{running, pid, uptime, version}` tanpa field `success` dan tanpa nested `status`, sehingga `data.success` undefined → `setStatus` tidak pernah dipanggil → halaman stuck di error.
+### Changed
+- **Migrasi semua endpoint `/api/freeradius/*` ke Go backend** — rewrite `freeradius.go` dengan format response yang sesuai frontend:
+  - `GetStatus`: `{success, status:{running, pid, uptime, cpu, memory, memoryMB, version, startTime, activeConnections, totalAuthRequests, totalAcctRequests, lastRestart}}`
+  - `Start/Stop/Restart`: `{success, message}` dengan verifikasi status post-action
+  - `GetLogs`: `{success, logs:[...]}`
+  - `GetRadcheck`: `{success, data:[...], total, page, limit}` — support pagination dan search
+  - `CreateRadcheck` (POST `/radcheck`): insert row baru ke radcheck
+  - `DeleteRadcheck` (DELETE `/radcheck?id=`): hapus row berdasarkan id
+  - `RunRadtest`: `{result:{success, responseCode, responseType, duration, attributes, rawOutput}}`
+  - `ListConfigs`: `{success, groups:[{id, name, files:[{name,path,type}]}]}`
+  - `ReadConfig` (POST, body `{filename}`): `{success, content}` — ubah dari GET+query param
+  - `SaveConfig` (POST, body `{filename, content}`): `{success, message}` — ubah field body dari `file` ke `filename`
+### Files
+- `internal/api/handlers/freeradius.go` — full rewrite dengan format response yang benar
+- `internal/api/router.go` — tambah POST/DELETE `/radcheck`, ubah `config/read` ke POST
+
 ## [2.47.8] — 2026-05-15
 ### Fixed
 - **Status FreeRADIUS halaman `/admin/freeradius/status` selalu "Berhenti"** — root cause: `JWT_SESSION_ERROR: Invalid Compact JWE` menyebabkan `getServerSession` return `null` → route GET `/api/freeradius/status` return 401 → `setStatus` di frontend tidak pernah dipanggil → `status = null` → `status?.running = undefined` (falsy) → menampilkan "Berhenti".
