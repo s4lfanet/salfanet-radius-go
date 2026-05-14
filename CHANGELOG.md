@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.13] — 2026-05-15
+### Fixed
+- **`POST /api/upload/logo` → 500 masih gagal** — root cause sebenarnya: systemd service menggunakan `ProtectSystem=strict` yang membuat seluruh filesystem read-only. Hanya `/var/www/salfanet-radius/logs` yang ada di `ReadWritePaths`, sehingga proses tidak bisa menulis ke `/uploads/`. Fix: tambah `/var/www/salfanet-radius/uploads` ke `ReadWritePaths` di `/etc/systemd/system/salfanet-api.service`.
+### Files
+- `/etc/systemd/system/salfanet-api.service` (VPS) — `ReadWritePaths` ditambah path `/uploads`
+
 ## [2.47.12] — 2026-05-15
 ### Fixed
 - **`GET /api/admin/apk/trigger` → 405** — Frontend `fetchEnv` di halaman `/admin/download-apk` memanggil `GET /api/admin/apk/trigger` tapi hanya `POST` yang terdaftar. Fix: tambah handler `ApkEnv` baru yang mengecek ketersediaan Java dan Android SDK di server, daftarkan ke `GET /api/admin/apk/env`, dan update frontend untuk memanggil endpoint yang benar.
