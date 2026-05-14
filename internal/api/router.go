@@ -170,8 +170,8 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	webhooks.Post("/duitku", billingH.WebhookDuitku)
 	webhooks.Post("/tripay", billingH.WebhookTripay)
 
-	// ─── Protected routes (JWT required) ─────────────────────────────────────
-	api := app.Group("/api", middleware.AuthMiddleware)
+	// ─── Protected routes (JWT or NextAuth session required) ─────────────────
+	api := app.Group("/api", middleware.CombinedAuthMiddleware)
 
 	// Session
 	api.Get("/auth/session", authH.Session)
