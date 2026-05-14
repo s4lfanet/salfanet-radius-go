@@ -469,6 +469,31 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.43.0 — 2026-05-14
+
+### Added
+- **Troubleshooting DB tables** — Created `troubleshooting_checklists`, `troubleshooting_jobs`, `troubleshooting_materials` tables in MySQL
+- **Payroll DB tables** — Created `payroll_templates`, `payroll_records`, `payroll_overtime` tables in MySQL
+- **Admin page: Troubleshooting Checklists** — `/admin/troubleshooting` — CRUD checklist panduan troubleshooting per kategori
+- **Admin page: Troubleshooting Jobs** — `/admin/troubleshooting/jobs` — Lacak pekerjaan troubleshooting aktif (stats: open/in-progress/resolved)
+- **Admin page: Absensi** — `/admin/attendance` — Manajemen kehadiran karyawan/teknisi dengan bulk delete
+- **Admin page: Kasbon** — `/admin/cash-advances` — Pengajuan & approval kasbon dengan tombol bayar
+- **Admin page: Komisi** — `/admin/commissions` — Manajemen komisi instalasi/sales/referral dengan approve/reject
+- **Admin page: Template Payroll** — `/admin/payroll-templates` — Template perhitungan gaji dengan preview langsung
+- **Admin page: Payroll** — `/admin/payroll` — Generate & manajemen slip gaji bulanan dengan tombol lunas
+### Fixed
+- **troubleshooting_handler.go** — `"job_id = ?"` → `"jobId = ?"` (camelCase consistency)
+### Files
+- `internal/api/handlers/troubleshooting_handler.go` — fixed jobId column reference
+- `scripts/create-missing-tables.sql` — SQL untuk 6 tabel baru (dieksekusi di VPS)
+- `src/app/admin/troubleshooting/page.tsx` — halaman baru
+- `src/app/admin/troubleshooting/jobs/page.tsx` — halaman baru
+- `src/app/admin/attendance/page.tsx` — halaman baru
+- `src/app/admin/cash-advances/page.tsx` — halaman baru
+- `src/app/admin/commissions/page.tsx` — halaman baru
+- `src/app/admin/payroll-templates/page.tsx` — halaman baru
+- `src/app/admin/payroll/page.tsx` — halaman baru
+
 ### v2.42.0 — 2026-05-14
 
 ### Fixed
@@ -540,17 +565,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/db/models/models.go` — ManualPayment model column tags corrected
 - `internal/api/handlers/manual_payments.go` — raw SQL WHERE/Updates column names corrected
 - `internal/api/handlers/*.go` (46 files) — camelCase DB column names in Order/Where/Updates/raw SQL
-
-### v2.38.0 — 2026-05-14
-
-### Added
-- **Go: OLT test-connection alias** — `POST /api/olt/test-connection` (non-admin alias to existing handler)
-- **Go: PPPoE customers bulk** — `GET /api/pppoe/customers/bulk` (template stub) + `POST /api/pppoe/customers/bulk` (alias to BulkCreateCustomers, path was `/bulk-create` before)
-- **Go: Admin suspend-requests PUT** — `PUT /api/admin/suspend-requests/:id` with `{action: "APPROVE"|"REJECT"}` body (unified approve/reject)
-### Files
-- `internal/api/handlers/admin.go` — added `SuspendRequestAction`
-- `internal/api/handlers/pppoe_ext.go` — added `BulkCustomersTemplate`
-- `internal/api/router.go` — batch 14 routes (+4 routes)
 
 <!-- AUTO-CHANGELOG:END -->
 
