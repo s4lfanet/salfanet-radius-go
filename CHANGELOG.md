@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.46.2] — 2026-05-14
+### Fixed
+- **Nginx smart API routing** — Routing `/api/` sebelumnya mengarahkan semua ke Go backend, menyebabkan `GET /api/company` dan `POST /api/admin/auth/pre-login` menghasilkan 401 "missing authorization header". Sekarang ada routing granular: Go JWT auth (`/api/auth/login`, `/api/auth/logout`, `/api/auth/refresh`, `/api/auth/customer/`, `/api/auth/agent/`), NextAuth (`/api/auth/callback/`, `/api/auth/session`, `/api/auth/csrf`, `/api/auth/signout`), portal API (`/api/customer/`, `/api/agent/`, `/api/technician/`) ke Go, dan catch-all `/api/` → Next.js untuk admin panel.
+- **Admin login 401 resolved** — `POST /api/admin/auth/pre-login` kini mengarah ke Next.js (handler Prisma+2FA yang sesungguhnya), bukan Go stub yang dilindungi AuthMiddleware
+
+### Files
+- `vps-install/install-nginx.sh` — Ganti 2 location block lama (`/api/auth/` + `/api/`) dengan routing granular komprehensif di kedua fungsi `_proxy_locations()` dan `_proxy_locations_https_domain()`
+
+---
+
 ## [2.46.1] — 2026-05-14
 ### Fixed
 - **NextAuth 401 error** — Nginx mengarahkan semua `/api/*` ke Go backend (port 8080), termasuk `/api/auth/*` yang dikelola Next.js. Tambah `location /api/auth/` → port 3000 **sebelum** block `location /api/` di kedua server block (HTTP + HTTPS). Sebelumnya semua `GET /api/auth/session` dan `POST /api/auth/_log` menghasilkan 401 dari Go backend.
