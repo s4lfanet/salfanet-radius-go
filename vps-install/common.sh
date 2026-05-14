@@ -473,7 +473,7 @@ export -f ensure_ufw_enabled
 # ============================================================================
 
 print_banner() {
-    clear
+    clear 2>/dev/null || true
     echo ""
     echo -e "${CYAN}=============================================${NC}"
     echo -e "${CYAN}  SALFANET RADIUS - Installer v2.10.9${NC}"
@@ -545,8 +545,13 @@ initialize_user_selection() {
     echo "  1) Use existing user: ${GREEN}$CURRENT_USER${NC} (recommended for single-user VPS)"
     echo "  2) Create dedicated user: ${YELLOW}salfanet${NC} (recommended for security/multi-user)"
     echo ""
-    
-    read -t 15 -p "Select option [1/2] (default: 1): " USER_CHOICE || USER_CHOICE="1"
+
+    if [ "${UNATTENDED:-false}" = "true" ]; then
+        USER_CHOICE="1"
+        echo "[unattended] Menggunakan user: ${CURRENT_USER}"
+    else
+        read -t 15 -p "Select option [1/2] (default: 1): " USER_CHOICE || USER_CHOICE="1"
+    fi
     echo ""
     
     if [[ "$USER_CHOICE" == "2" ]]; then

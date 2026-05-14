@@ -19,6 +19,9 @@
 set -e
 set -o pipefail
 
+# Set TERM default for non-interactive environments (prevents `clear` from failing)
+export TERM="${TERM:-xterm}"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Parse CLI args
