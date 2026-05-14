@@ -100,8 +100,8 @@ _proxy_locations() {
 
     # ==========================================================================
     # API ROUTING
-    # Go backend (port 8080): customer/agent/tech portals, public info, webhooks
-    # Next.js (port 3000): admin panel, NextAuth, company settings (session-based)
+    # Go backend (port 8080): ALL /api/* (CombinedAuthMiddleware: JWT or NextAuth cookie)
+    # Next.js (port 3000): frontend pages + NextAuth protocol endpoints only
     # ==========================================================================
 
     # NextAuth: callback, session, csrf, signout → Next.js (must be before Go auth)
@@ -279,9 +279,9 @@ _proxy_locations() {
         proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
     }
 
-    # All other /api/ routes → Next.js (admin panel, company, dashboard, etc.)
+    # All other /api/ routes → Go backend (CombinedAuthMiddleware: JWT Bearer or NextAuth cookie)
     location /api/ {
-        proxy_pass         http://127.0.0.1:3000;
+        proxy_pass         http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header   Host $host;
         proxy_set_header   X-Real-IP $remote_addr;
@@ -384,8 +384,8 @@ _proxy_locations_https_domain() {
 
     # ==========================================================================
     # API ROUTING
-    # Go backend (port 8080): customer/agent/tech portals, public info, webhooks
-    # Next.js (port 3000): admin panel, NextAuth, company settings (session-based)
+    # Go backend (port 8080): ALL /api/* (CombinedAuthMiddleware: JWT or NextAuth cookie)
+    # Next.js (port 3000): frontend pages + NextAuth protocol endpoints only
     # ==========================================================================
 
     # NextAuth: callback, session, csrf, signout → Next.js (must be before Go auth)
@@ -569,9 +569,9 @@ _proxy_locations_https_domain() {
         proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
     }
 
-    # All other /api/ routes → Next.js (admin panel, company, dashboard, etc.)
+    # All other /api/ routes → Go backend (CombinedAuthMiddleware: JWT Bearer or NextAuth cookie)
     location /api/ {
-        proxy_pass         http://127.0.0.1:3000;
+        proxy_pass         http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header   Host $host;
         proxy_set_header   X-Real-IP $remote_addr;
