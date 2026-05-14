@@ -201,8 +201,9 @@ export default function CronSettingsPage() {
       const schedulesData = await schedulesRes.json();
 
       if (statusData.success) {
-        setJobs(statusData.jobs || []);
-        const allHistory = statusData.jobs.flatMap((job: any) =>
+        const jobsList: CronJob[] = statusData.jobs || [];
+        setJobs(jobsList);
+        const allHistory = jobsList.flatMap((job: any) =>
           (job.recentHistory || []).map((h: any) => ({
             id: h.id, type: job.type,
             startedAt: h.startedAt, completedAt: h.completedAt,

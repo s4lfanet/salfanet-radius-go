@@ -351,6 +351,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// Company
 	api.Get("/company", companyH.GetCompany)
 	api.Put("/company", companyH.UpdateCompany)
+	api.Post("/company", companyH.UpdateCompany) // frontend uses POST
 
 	// Settings
 	settings := api.Group("/settings")
@@ -965,6 +966,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// ─── Batch 9: Cron info routes ───────────────────────────────────────────
 	api.Get("/cron", cronH.Info)
+	api.Get("/cron/status", cronH.Status)
 	api.Get("/cron/status", cronH.Status)
 
 	// ─── Batch 9: Invoice extras ─────────────────────────────────────────────

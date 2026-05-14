@@ -43,16 +43,76 @@ func (h *CronHandler) Info(c fiber.Ctx) error {
 	})
 }
 
-// GET /api/cron/status — detailed scheduler status
+// GET /api/cron/status — detailed scheduler status with jobs array
 func (h *CronHandler) Status(c fiber.Ctx) error {
-	var lastRun models.CronHistory
-	h.db.Order("startedAt desc").First(&lastRun)
-	return c.JSON(fiber.Map{
-		"success": true,
-		"running": true,
-		"jobs":    9,
-		"lastRun": lastRun,
-	})
+	type LastRun struct {
+		StartedAt   string  `json:"startedAt"`
+		CompletedAt *string `json:"completedAt,omitempty"`
+		Status      string  `json:"status"`
+		Duration    *int    `json:"duration,omitempty"`
+		Result      *string `json:"result,omitempty"`
+		Error       *string `json:"error,omitempty"`
+	}
+	type Job struct {
+		Type          string      `json:"type"`
+		Name          string      `json:"name"`
+		Description   string      `json:"description"`
+		ScheduleLabel string      `json:"scheduleLabel"`
+		Enabled       bool        `json:"enabled"`
+		Health        string      `json:"health"`
+		LastRun       interface{} `json:"lastRun"`
+		NextRun       string      `json:"nextRun"`
+		RecentHistory interface{} `json:"recentHistory"`
+	}
+
+	jobDefs := []struct{ typ, name, desc, sched string }{
+		{"invoice_generate", "Invoice Generator", "Generate monthly invoices", "Daily 00:01 WIB"},
+		{"send_reminders", "Send Reminders", "Send payment reminders", "Every hour"},
+		{"invoice_catchup", "Invoice Catch-up", "Invoice catch-up for isolated users", "Daily 00:10 WIB"},
+		{"pppoe_session_sync", "PPPoE Session Sync", "Sync PPPoE sessions from NAS", "Every minute"},
+		{"session_monitor", "Session Monitor", "Monitor and close isolated sessions", "Every 5 min"},
+		{"auto_isolate", "Auto Isolate", "Auto-isolate overdue users", "Daily 00:05 WIB"},
+		{"freeradius_health", "FreeRADIUS Health", "FreeRADIUS health check & NAS sync", "Every 5 min"},
+		{"voucher_expiry", "Voucher Expiry", "Sync voucher expiry status", "Every 5 min"},
+		{"agent_sales", "Agent Sales", "Agent sales recording", "Every hour"},
+	}
+
+	var jobs []Job
+	for _, def := range jobDefs {
+		var lastHist models.CronHistory
+		var lr interface{}
+		if err := h.db.Where("jobType = ?", def.typ).Order("startedAt desc").First(&lastHist).Error; err == nil {
+			var dur *int
+			if lastHist.Duration != nil {
+				d := int(*lastHist.Duration)
+				dur = &d
+			}
+			var completedAt *string
+			if lastHist.CompletedAt != nil {
+				s := lastHist.CompletedAt.Format("2006-01-02T15:04:05.000Z")
+				completedAt = &s
+			}
+			lr = LastRun{
+				StartedAt:   lastHist.StartedAt.Format("2006-01-02T15:04:05.000Z"),
+				CompletedAt: completedAt,
+				Status:      lastHist.Status,
+				Duration:    dur,
+				Result:      lastHist.Result,
+				Error:       lastHist.Error,
+			}
+		}
+		var recentHists []models.CronHistory
+		h.db.Where("jobType = ?", def.typ).Order("startedAt desc").Limit(5).Find(&recentHists)
+		jobs = append(jobs, Job{
+			Type: def.typ, Name: def.name, Description: def.desc,
+			ScheduleLabel: def.sched, Enabled: true, Health: "healthy",
+			LastRun: lr, NextRun: "", RecentHistory: recentHists,
+		})
+	}
+	if jobs == nil {
+		jobs = []Job{}
+	}
+	return c.JSON(fiber.Map{"success": true, "running": true, "jobs": jobs})
 }
 
 // GET /api/cron/schedules — list all registered cron job schedules
