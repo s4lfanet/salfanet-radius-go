@@ -169,7 +169,7 @@ func (h *PppoeExtHandler) ExtendUser(c fiber.Ctx) error {
 		base = *user.ExpiredAt
 	}
 	newExpiry := base.AddDate(0, body.Months, body.Days)
-	h.db.Model(&user).Update("expired_at", newExpiry)
+	h.db.Model(&user).Update("expiredAt", newExpiry)
 	return c.JSON(fiber.Map{"success": true, "expiredAt": newExpiry})
 }
 

@@ -170,7 +170,7 @@ func (h *InvoiceExtHandler) Generate(c fiber.Ctx) error {
 
 	// Get active postpaid users
 	var users []models.PppoeUser
-	h.db.Where("status = ? AND subscription_type = ?", "active", "POSTPAID").
+	h.db.Where("status = ? AND subscriptionType = ?", "active", "POSTPAID").
 		Preload("Profile").
 		Find(&users)
 
@@ -180,7 +180,7 @@ func (h *InvoiceExtHandler) Generate(c fiber.Ctx) error {
 		// Check if invoice already exists for this month
 		var count int64
 		h.db.Model(&models.Invoice{}).
-			Where("userId = ? AND invoice_type = ? AND DATE_FORMAT(createdAt, '%Y-%m') = ?", user.ID, "MONTHLY", month).
+			Where("userId = ? AND invoiceType = ? AND DATE_FORMAT(createdAt, '%Y-%m') = ?", user.ID, "MONTHLY", month).
 			Count(&count)
 		if count > 0 {
 			skipped++

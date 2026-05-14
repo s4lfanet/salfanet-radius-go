@@ -203,7 +203,6 @@ func (h *AuthHandler) CustomerVerifyOTP(c fiber.Ctx) error {
 		"verified":  true,
 		"token":     token,
 		"expiresAt": expiry,
-		"otp_code":  nil,
 	})
 
 	return c.JSON(fiber.Map{

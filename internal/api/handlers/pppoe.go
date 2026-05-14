@@ -387,7 +387,7 @@ func (h *PPPoEHandler) SyncToRadius(c fiber.Ctx) error {
 	if err := h.radius.UpsertUser(user.Username, user.Password, rateLimit, user.Profile.GroupName); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	h.db.Model(&user).Update("synced_to_radius", true)
+	h.db.Model(&user).Update("syncedToRadius", true)
 	return c.JSON(fiber.Map{"message": "synced"})
 }
 

@@ -82,10 +82,10 @@ func (h *TechnicianPortalHandler) VerifyOTP(c fiber.Ctx) error {
 
 	// Mark OTP as used
 	now := time.Now()
-	h.db.Model(&otpRecord).Update("used_at", now)
+	h.db.Model(&otpRecord).Update("isUsed", true)
 
 	// Update last login
-	h.db.Model(&tech).Update("last_login_at", now)
+	h.db.Model(&tech).Update("lastLoginAt", now)
 
 	// Generate JWT
 	token, err := technicianJWT(tech)
@@ -112,7 +112,7 @@ func (h *TechnicianPortalHandler) Login(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "OTP required", "requireOtp": true})
 	}
 	now := time.Now()
-	h.db.Model(&tech).Update("last_login_at", now)
+	h.db.Model(&tech).Update("lastLoginAt", now)
 	token, err := technicianJWT(tech)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "failed to generate token"})
