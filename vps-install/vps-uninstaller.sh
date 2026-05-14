@@ -3,10 +3,29 @@
 # SALFANET RADIUS VPS Uninstaller - Complete Removal
 # ============================================================================
 # DANGER: This will remove ALL installed components and data
+# Usage:
+#   ./vps-uninstaller.sh                    # interactive
+#   ./vps-uninstaller.sh --unattended       # skip all prompts, remove everything
+#   ./vps-uninstaller.sh --unattended --keep-nodejs --keep-mysql  # partial keep
 # ============================================================================
 
 # NOTE: No 'set -e' here — removal steps should continue even if individual
 # packages/services are already gone. Each function uses '|| true' to be safe.
+
+# Parse flags
+UNATTENDED=false
+KEEP_NODEJS=false
+KEEP_MYSQL=false
+KEEP_PM2=false
+
+for arg in "$@"; do
+    case "$arg" in
+        --unattended|--force|-y) UNATTENDED=true ;;
+        --keep-nodejs)           KEEP_NODEJS=true ;;
+        --keep-mysql)            KEEP_MYSQL=true ;;
+        --keep-pm2)              KEEP_PM2=true ;;
+    esac
+done
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -59,6 +78,9 @@ show_warning() {
 }
 
 ask_backup() {
+    if [ "$UNATTENDED" = "true" ]; then
+        return 1  # No backup in unattended mode
+    fi
     read -p "Do you want to backup database before removal? [Y/n]: " BACKUP_CONFIRM </dev/tty
     
     if [[ ! "$BACKUP_CONFIRM" =~ ^[Nn]$ ]]; then
@@ -69,6 +91,10 @@ ask_backup() {
 }
 
 ask_confirmation() {
+    if [ "$UNATTENDED" = "true" ]; then
+        print_info "[unattended] Melanjutkan penghapusan otomatis..."
+        return 0
+    fi
     echo -e "${YELLOW}Type 'REMOVE EVERYTHING' to confirm removal:${NC}"
     read -r CONFIRM_TEXT </dev/tty
     
@@ -155,7 +181,7 @@ kill_port_processes() {
     print_step "Killing processes on application ports"
     
     # Ports used by SALFANET RADIUS
-    local PORTS=(3000 1812 1813 3799 1814)
+    local PORTS=(3000 8080 1812 1813 3799 1814)
     
     for PORT in "${PORTS[@]}"; do
         print_info "Checking port $PORT..."
@@ -183,6 +209,11 @@ kill_port_processes() {
 stop_all_services() {
     print_step "Stopping all services"
     
+    # Stop Go backend (salfanet-api)
+    print_info "Stopping Go backend service..."
+    systemctl stop salfanet-api 2>/dev/null || true
+    systemctl disable salfanet-api 2>/dev/null || true
+
     # Stop PM2 processes (both root and salfanet user)
     print_info "Stopping PM2 processes..."
     pm2 delete all 2>/dev/null || true
@@ -219,6 +250,40 @@ remove_application() {
     fi
 }
 
+remove_go_backend() {
+    print_step "Removing Go backend (salfanet-api)"
+
+    # Remove systemd service file
+    if [ -f /etc/systemd/system/salfanet-api.service ]; then
+        print_info "Removing salfanet-api systemd service..."
+        rm -f /etc/systemd/system/salfanet-api.service
+        systemctl daemon-reload 2>/dev/null || true
+        print_success "Go systemd service removed"
+    else
+        print_info "salfanet-api service not found (already removed)"
+    fi
+
+    # Remove Go runtime (optional — only if nothing else uses it)
+    if [ "$UNATTENDED" = "true" ]; then
+        REMOVE_GO="y"
+    else
+        read -p "Remove Go runtime (/usr/local/go)? [y/N]: " REMOVE_GO </dev/tty
+    fi
+    if [[ "$REMOVE_GO" =~ ^[Yy]$ ]]; then
+        if [ -d /usr/local/go ]; then
+            print_info "Removing Go runtime..."
+            rm -rf /usr/local/go
+            # Clean up PATH additions
+            sed -i '/\/usr\/local\/go\/bin/d' /etc/profile.d/go.sh 2>/dev/null || true
+            rm -f /etc/profile.d/go.sh 2>/dev/null || true
+            hash -r 2>/dev/null || true
+            print_success "Go runtime removed"
+        else
+            print_info "Go runtime not found"
+        fi
+    fi
+}
+
 remove_database() {
     print_step "Removing MySQL database and user"
     
@@ -250,7 +315,11 @@ remove_freeradius() {
     systemctl disable freeradius 2>/dev/null || true
     
     # Remove packages (optional)
-    read -p "Remove FreeRADIUS packages? [y/N]: " REMOVE_FREERADIUS </dev/tty
+    if [ "$UNATTENDED" = "true" ]; then
+        REMOVE_FREERADIUS="y"
+    else
+        read -p "Remove FreeRADIUS packages? [y/N]: " REMOVE_FREERADIUS </dev/tty
+    fi
     if [[ "$REMOVE_FREERADIUS" =~ ^[Yy]$ ]]; then
         print_info "Removing FreeRADIUS packages..."
         apt-get purge -y freeradius freeradius-config freeradius-common freeradius-mysql freeradius-utils freeradius-rest 2>/dev/null || true
@@ -340,7 +409,11 @@ remove_pm2() {
     rm -f /etc/systemd/system/pm2-*.service 2>/dev/null || true
     systemctl daemon-reload 2>/dev/null || true
 
-    read -p "Remove PM2 globally? [y/N]: " REMOVE_PM2 </dev/tty
+    if [ "$UNATTENDED" = "true" ] && [ "$KEEP_PM2" != "true" ]; then
+        REMOVE_PM2="y"
+    else
+        read -p "Remove PM2 globally? [y/N]: " REMOVE_PM2 </dev/tty
+    fi
     if [[ "$REMOVE_PM2" =~ ^[Yy]$ ]]; then
         print_info "Removing PM2..."
         npm uninstall -g pm2 2>/dev/null || true
@@ -355,7 +428,11 @@ remove_pm2() {
 remove_nodejs() {
     print_step "Removing Node.js"
     
-    read -p "Remove Node.js? [y/N]: " REMOVE_NODEJS </dev/tty
+    if [ "$UNATTENDED" = "true" ] && [ "$KEEP_NODEJS" != "true" ]; then
+        REMOVE_NODEJS="y"
+    else
+        read -p "Remove Node.js? [y/N]: " REMOVE_NODEJS </dev/tty
+    fi
     if [[ "$REMOVE_NODEJS" =~ ^[Yy]$ ]]; then
         print_info "Removing Node.js..."
         apt-get purge -y nodejs 2>/dev/null || true
@@ -371,11 +448,17 @@ remove_nodejs() {
 remove_mysql() {
     print_step "Removing MySQL"
     
-    read -p "Remove MySQL completely? (DANGER: All databases will be lost) [y/N]: " REMOVE_MYSQL </dev/tty
+    if [ "$UNATTENDED" = "true" ] && [ "$KEEP_MYSQL" != "true" ]; then
+        REMOVE_MYSQL="y"
+        CONFIRM_MYSQL="YES"
+    else
+        read -p "Remove MySQL completely? (DANGER: All databases will be lost) [y/N]: " REMOVE_MYSQL </dev/tty
+    fi
     if [[ "$REMOVE_MYSQL" =~ ^[Yy]$ ]]; then
-        print_warning "This will remove ALL MySQL databases!"
-        read -p "Are you absolutely sure? Type 'YES' to confirm: " CONFIRM_MYSQL </dev/tty
-        
+        if [ "${CONFIRM_MYSQL:-}" != "YES" ]; then
+            print_warning "This will remove ALL MySQL databases!"
+            read -p "Are you absolutely sure? Type 'YES' to confirm: " CONFIRM_MYSQL </dev/tty
+        fi
         if [ "$CONFIRM_MYSQL" = "YES" ]; then
             print_info "Removing MySQL..."
             systemctl stop mysql 2>/dev/null || true
@@ -396,7 +479,11 @@ remove_mysql() {
 clean_firewall() {
     print_step "Cleaning firewall rules"
     
-    read -p "Remove all application firewall rules? [Y/n]: " CLEAN_FIREWALL </dev/tty
+    if [ "$UNATTENDED" = "true" ]; then
+        CLEAN_FIREWALL="y"
+    else
+        read -p "Remove all application firewall rules? [Y/n]: " CLEAN_FIREWALL </dev/tty
+    fi
     if [[ ! "$CLEAN_FIREWALL" =~ ^[Nn]$ ]]; then
         print_info "Removing UFW rules..."
         # RADIUS ports
@@ -418,9 +505,10 @@ clean_logs() {
     print_step "Cleaning logs"
     
     print_info "Removing application logs..."
-    rm -rf /var/log/salfanet-vps-install.log
-    rm -rf /var/log/freeradius
-    rm -rf /var/log/nginx/salfanet-radius-*
+    rm -f /var/log/salfanet-vps-install.log 2>/dev/null || true
+    rm -f /var/log/salfanet-install.log 2>/dev/null || true
+    rm -rf /var/log/freeradius 2>/dev/null || true
+    rm -f /var/log/nginx/salfanet-radius-* 2>/dev/null || true
     
     print_success "Logs cleaned"
 }
@@ -458,6 +546,7 @@ main() {
     # Execute removal steps
     stop_all_services
     remove_application
+    remove_go_backend
     remove_database
     remove_freeradius
     remove_nginx_config
