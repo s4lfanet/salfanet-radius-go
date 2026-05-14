@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"os/exec"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -142,6 +144,26 @@ func (h *SettingsGenieacsHandler) RealtimeSessions(c fiber.Ctx) error {
 	})
 }
 
+// checkFreeradiusRunning checks systemd service state via `systemctl is-active`.
+func checkFreeradiusRunning() (bool, string) {
+	out, err := exec.Command("systemctl", "is-active", "freeradius").Output()
+	state := strings.TrimSpace(string(out))
+	if err == nil && state == "active" {
+		// Get uptime from systemd
+		uptimeOut, _ := exec.Command("systemctl", "show", "freeradius",
+			"--property=ActiveEnterTimestamp", "--value").Output()
+		uptime := strings.TrimSpace(string(uptimeOut))
+		if uptime == "" || uptime == "n/a" {
+			uptime = "Active"
+		}
+		return true, uptime
+	}
+	if state == "" {
+		state = "stopped"
+	}
+	return false, state
+}
+
 // GET /api/system/radius — radius system info
 func (h *SettingsGenieacsHandler) SystemRadius(c fiber.Ctx) error {
 	var totalUsers, activeUsers int64
@@ -151,24 +173,17 @@ func (h *SettingsGenieacsHandler) SystemRadius(c fiber.Ctx) error {
 	var activeSessions int64
 	h.db.Model(&models.Radacct{}).Where("acctstoptime IS NULL").Count(&activeSessions)
 
-	// Determine if RADIUS is "running" by checking recent accounting activity
-	var recentActivity int64
-	h.db.Model(&models.Radacct{}).
-		Where("acctstarttime >= ?", time.Now().Add(-1*time.Hour)).
-		Count(&recentActivity)
-
-	// Also check if there are any active sessions as a secondary indicator
+	// Check actual systemd service state
+	isRunning, uptimeStr := checkFreeradiusRunning()
 	status := "stopped"
-	uptime := ""
-	if activeSessions > 0 || recentActivity > 0 {
+	if isRunning {
 		status = "running"
-		uptime = "Active"
 	}
 
 	return c.JSON(fiber.Map{
 		"success":        true,
 		"status":         status,
-		"uptime":         uptime,
+		"uptime":         uptimeStr,
 		"totalUsers":     totalUsers,
 		"activeUsers":    activeUsers,
 		"activeSessions": activeSessions,

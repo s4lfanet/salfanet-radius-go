@@ -105,13 +105,13 @@ func (h *AdminHandler) Stats(c fiber.Ctx) error {
 		Find(&rawUpcoming)
 
 	type upcomingOut struct {
-		InvoiceNumber    string  `json:"invoiceNumber"`
-		CustomerName     string  `json:"customerName"`
-		CustomerUsername string  `json:"customerUsername"`
-		Amount           int     `json:"amount"`
-		DueDate          string  `json:"dueDate"`
-		Status           string  `json:"status"`
-		DaysUntilDue     int     `json:"daysUntilDue"`
+		InvoiceNumber    string `json:"invoiceNumber"`
+		CustomerName     string `json:"customerName"`
+		CustomerUsername string `json:"customerUsername"`
+		Amount           int    `json:"amount"`
+		DueDate          string `json:"dueDate"`
+		Status           string `json:"status"`
+		DaysUntilDue     int    `json:"daysUntilDue"`
 	}
 	upcomingInvoices := make([]upcomingOut, 0, len(rawUpcoming))
 	for _, inv := range rawUpcoming {
@@ -209,11 +209,7 @@ func (h *AdminHandler) Stats(c fiber.Ctx) error {
 	h.db.Raw(`SELECT COUNT(*) FROM radpostauth WHERE reply='Access-Reject' AND authdate >= ?`, startOfToday).Scan(&rejectToday)
 
 	// ── System status ──────────────────────────────────────────────────────────
-	var recentRadacct int64
-	h.db.Model(&models.Radacct{}).
-		Where("acctstarttime >= ?", now.Add(-1*time.Hour)).
-		Count(&recentRadacct)
-	radiusOnline := recentRadacct > 0
+	radiusOnline, _ := checkFreeradiusRunning()
 
 	// ── Recent activities ──────────────────────────────────────────────────────
 	var activities []models.ActivityLog
@@ -225,27 +221,27 @@ func (h *AdminHandler) Stats(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"success": true,
 		"stats": fiber.Map{
-			"totalPppoeUsers":             totalPppoeUsers,
-			"activePppoeUsers":            activePppoeUsers,
-			"activeSessionsPPPoE":         activeSessionsPPPoE,
-			"activeSessionsHotspot":       activeSessionsHotspot,
-			"unusedVouchers":              unusedVouchers,
-			"isolatedCount":               isolatedCount,
-			"suspendedCount":              suspendedCount,
-			"newRegistrations":            newRegistrations,
-			"upcomingInvoices":            upcomingInvoices,
-			"voucherRevenue":              voucherRevenue,
-			"voucherRevenueFormatted":     formatIDR(voucherRevenue),
-			"voucherRevenueToday":         voucherRevenueToday,
+			"totalPppoeUsers":              totalPppoeUsers,
+			"activePppoeUsers":             activePppoeUsers,
+			"activeSessionsPPPoE":          activeSessionsPPPoE,
+			"activeSessionsHotspot":        activeSessionsHotspot,
+			"unusedVouchers":               unusedVouchers,
+			"isolatedCount":                isolatedCount,
+			"suspendedCount":               suspendedCount,
+			"newRegistrations":             newRegistrations,
+			"upcomingInvoices":             upcomingInvoices,
+			"voucherRevenue":               voucherRevenue,
+			"voucherRevenueFormatted":      formatIDR(voucherRevenue),
+			"voucherRevenueToday":          voucherRevenueToday,
 			"voucherRevenueTodayFormatted": formatIDR(voucherRevenueToday),
-			"invoiceRevenue":              invoiceRevenue,
-			"invoiceRevenueFormatted":     formatIDR(invoiceRevenue),
-			"invoiceRevenueToday":         invoiceRevenueToday,
+			"invoiceRevenue":               invoiceRevenue,
+			"invoiceRevenueFormatted":      formatIDR(invoiceRevenue),
+			"invoiceRevenueToday":          invoiceRevenueToday,
 			"invoiceRevenueTodayFormatted": formatIDR(invoiceRevenueToday),
-			"invoiceCountToday":           invoiceCountToday,
-			"invoiceCountMonth":           invoiceCountMonth,
-			"unpaidInvoicesCount":         unpaidInvoicesCount,
-			"totalAllTimeRevenue":         totalAllTimeRevenue,
+			"invoiceCountToday":            invoiceCountToday,
+			"invoiceCountMonth":            invoiceCountMonth,
+			"unpaidInvoicesCount":          unpaidInvoicesCount,
+			"totalAllTimeRevenue":          totalAllTimeRevenue,
 			"totalAllTimeRevenueFormatted": formatIDR(totalAllTimeRevenue),
 		},
 		"activities": activities,
@@ -259,7 +255,7 @@ func (h *AdminHandler) Stats(c fiber.Ctx) error {
 			"count":   agentSalesTotalCount,
 			"revenue": agentSalesTotalRevenue,
 		},
-		"radiusAuthLog":  radiusAuthLog,
+		"radiusAuthLog": radiusAuthLog,
 		"radiusAuthStats": fiber.Map{
 			"acceptToday": acceptToday,
 			"rejectToday": rejectToday,
