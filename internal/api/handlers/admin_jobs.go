@@ -57,7 +57,7 @@ func (h *AdminJobsHandler) ApproveRegistration(c fiber.Ctx) error {
 	}
 	now := time.Now()
 	h.db.Model(&reg).Updates(map[string]interface{}{
-		"status": "APPROVED", "processed_at": now,
+		"status": "APPROVED", "processedAt": now,
 	})
 	return c.JSON(fiber.Map{"success": true, "registration": reg})
 }
@@ -75,7 +75,7 @@ func (h *AdminJobsHandler) RejectRegistration(c fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{"error": "registration not found"})
 	}
 	now := time.Now()
-	updates := map[string]interface{}{"status": "REJECTED", "processed_at": now}
+	updates := map[string]interface{}{"status": "REJECTED", "processedAt": now}
 	if body.Notes != "" {
 		updates["notes"] = body.Notes
 	}
@@ -91,7 +91,7 @@ func (h *AdminJobsHandler) MarkInstalled(c fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{"error": "registration not found"})
 	}
 	now := time.Now()
-	h.db.Model(&reg).Updates(map[string]interface{}{"status": "INSTALLED", "processed_at": now})
+	h.db.Model(&reg).Updates(map[string]interface{}{"status": "INSTALLED", "processedAt": now})
 	return c.JSON(fiber.Map{"success": true, "registration": reg})
 }
 

@@ -200,10 +200,10 @@ func (h *AuthHandler) CustomerVerifyOTP(c fiber.Ctx) error {
 	token := uuid.NewString()
 	expiry := time.Now().Add(7 * 24 * time.Hour)
 	h.db.Model(&session).Updates(map[string]interface{}{
-		"verified":   true,
-		"token":      token,
+		"verified":  true,
+		"token":     token,
 		"expiresAt": expiry,
-		"otp_code":   nil,
+		"otp_code":  nil,
 	})
 
 	return c.JSON(fiber.Map{

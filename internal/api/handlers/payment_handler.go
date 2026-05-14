@@ -142,7 +142,7 @@ func (h *PaymentHandler) Webhook(c fiber.Ctx) error {
 	case "settlement", "capture", "paid", "PAID":
 		now := time.Now()
 		h.db.Model(&invoice).Updates(map[string]interface{}{
-			"status":  "PAID",
+			"status": "PAID",
 			"paidAt": now,
 		})
 	case "expire", "cancel", "EXPIRED":

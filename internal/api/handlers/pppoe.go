@@ -443,8 +443,8 @@ func (h *PPPoEHandler) ApproveRegistration(c fiber.Ctx) error {
 	id := c.Params("id")
 	now := time.Now()
 	result := h.db.Model(&models.RegistrationRequest{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"status":       "APPROVED",
-		"processed_at": now,
+		"status":      "APPROVED",
+		"processedAt": now,
 	})
 	if result.Error != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
@@ -456,8 +456,8 @@ func (h *PPPoEHandler) RejectRegistration(c fiber.Ctx) error {
 	id := c.Params("id")
 	now := time.Now()
 	result := h.db.Model(&models.RegistrationRequest{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"status":       "REJECTED",
-		"processed_at": now,
+		"status":      "REJECTED",
+		"processedAt": now,
 	})
 	if result.Error != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})

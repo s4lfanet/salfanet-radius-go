@@ -319,8 +319,8 @@ func (h *NetworkHandler) AssignCustomer(c fiber.Ctx) error {
 	h.db.Model(&existing).Updates(map[string]interface{}{
 		"odpId":      body.ODPID,
 		"portNumber": body.PortNumber,
-		"distance":    dist,
-		"notes":       notes,
+		"distance":   dist,
+		"notes":      notes,
 		"updatedAt":  time.Now(),
 	})
 	return c.JSON(fiber.Map{"success": true, "assignment": existing})

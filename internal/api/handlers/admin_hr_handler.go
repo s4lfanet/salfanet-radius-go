@@ -63,12 +63,12 @@ func (h *AdminHRHandler) ListAttendance(c fiber.Ctx) error {
 		q = q.Where("date = ?", date)
 	}
 	if employeeID != "" {
-		q = q.Where("employee_id = ?", employeeID)
+		q = q.Where("employeeId = ?", employeeID)
 	}
 	var total int64
 	q.Count(&total)
 	var records []attendanceRecord
-	q.Order("date desc, check_in desc").Offset((page - 1) * limit).Limit(limit).Find(&records)
+	q.Order("date desc, checkIn desc").Offset((page - 1) * limit).Limit(limit).Find(&records)
 	return c.JSON(fiber.Map{
 		"success": true, "attendance": records,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total},

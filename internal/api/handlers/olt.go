@@ -253,7 +253,7 @@ func (h *OLTHandler) RegisterONU(c fiber.Ctx) error {
 	}
 	h.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "oltId"}, {Name: "frame"}, {Name: "slot"}, {Name: "port"}, {Name: "onuId"}},
-			DoUpdates: clause.AssignmentColumns([]string{"serialNumber", "lastSeenAt", "updatedAt"}),
+		DoUpdates: clause.AssignmentColumns([]string{"serialNumber", "lastSeenAt", "updatedAt"}),
 	}).Create(&status)
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "ONU registered", "status": status})
