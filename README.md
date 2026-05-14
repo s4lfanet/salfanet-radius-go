@@ -469,6 +469,23 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.46.6 — 2026-05-15
+
+### Fixed
+- **404: `/api/admin/cash-advances/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus data
+- **404: `/api/admin/commissions/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus komisi
+- **404: `/api/admin/payroll/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus payroll
+
+### Added
+- **`/api/admin/attendance-locations`** — Dibuat Next.js route `GET/POST` untuk lokasi absen
+- **`companies` table seeded** — Insert default company record agar `/api/settings/isolation` tidak 404
+
+### Files
+- `src/app/api/admin/cash-advances/[id]/route.ts` — GET/PUT/DELETE by ID
+- `src/app/api/admin/commissions/[id]/route.ts` — GET/PUT/DELETE by ID
+- `src/app/api/admin/payroll/[id]/route.ts` — GET/PUT/DELETE by ID
+- `src/app/api/admin/attendance-locations/route.ts` — GET/POST lokasi absen
+
 ### v2.46.5 — 2026-05-15
 
 ### Fixed
@@ -539,54 +556,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `vps-install/install-nginx.sh` — Ganti 2 location block lama (`/api/auth/` + `/api/`) dengan routing granular komprehensif di kedua fungsi `_proxy_locations()` dan `_proxy_locations_https_domain()`
-
-### v2.46.1 — 2026-05-14
-
-### Fixed
-- **NextAuth 401 error** — Nginx mengarahkan semua `/api/*` ke Go backend (port 8080), termasuk `/api/auth/*` yang dikelola Next.js. Tambah `location /api/auth/` → port 3000 **sebelum** block `location /api/` di kedua server block (HTTP + HTTPS). Sebelumnya semua `GET /api/auth/session` dan `POST /api/auth/_log` menghasilkan 401 dari Go backend.
-
-### Files
-- `vps-install/install-nginx.sh` — Tambah `location /api/auth/` → Next.js (port 3000) sebelum `location /api/` di HTTP dan HTTPS server block
-
-
-### Added
-- **Uninstaller `--unattended` mode** — `vps-uninstaller.sh` kini mendukung `--unattended` (alias `--force`/`-y`) untuk menghapus semua komponen tanpa interaksi manual; flag tambahan `--keep-nodejs`, `--keep-mysql`, `--keep-pm2`
-- **Go backend removal** — Uninstaller sekarang menghentikan dan menghapus service `salfanet-api` (systemd unit), serta Go runtime (`/usr/local/go`) secara otomatis
-- **Port 8080 cleanup** — Tambah port 8080 ke daftar port yang dibersihkan oleh uninstaller
-
-### Fixed
-- **Semua `read` prompts interactive** — `remove_freeradius`, `remove_pm2`, `remove_nodejs`, `remove_mysql`, `clean_firewall` kini skip konfirmasi saat mode `--unattended`
-- **`clean_logs` error** — Ubah `rm -rf` yang salah ke `rm -f` untuk file (bukan direktori)
-- **Log cleanup** — Tambah `/var/log/salfanet-install.log` ke daftar file yang dihapus
-
-### Verified
-- **Uninstall → fresh install cycle tested** — Uninstaller `--unattended` berhasil menghapus semua komponen; fresh install berhasil kembali; semua services aktif: nginx, mysql, freeradius, salfanet-api, fail2ban, PM2 (3 apps)
-
-### Files
-- `vps-install/vps-uninstaller.sh` — `--unattended` mode, Go backend removal, port 8080, fix semua prompts interactive
-
-
-### Added
-- **`--unattended` flag** — `vps-installer.sh` mendukung flag `--unattended`, `--env`, `--ip`, `--domain`, `--db-pass` untuk instalasi otomatis tanpa interaksi manual (CI/CD, test fresh install)
-
-### Fixed
-- **TERM env crash** — `print_banner()` di `common.sh` menggunakan `clear 2>/dev/null || true`; tambah `export TERM="${TERM:-xterm}"` di `vps-installer.sh` agar tidak crash di sesi non-interactive
-- **dpkg interactive prompts** — Set `DEBIAN_FRONTEND=noninteractive` + `DEBCONF_NONINTERACTIVE_SEEN=true` secara global di `common.sh` dan apt-get upgrade/install di `install-system.sh` menggunakan `--force-confdef --force-confold` agar tidak ada prompt config file conflict
-- **`initialize_user_selection` read prompt** — Skip `read` prompt untuk pilihan user saat mode `--unattended`
-- **Go backend `connection_limit` crash** — `convertDSN()` di `internal/db/db.go` sekarang strip Prisma-specific URL params (`connection_limit`, `pool_timeout`, dll) sebelum build MySQL DSN. MySQL tidak mengenal params ini sebagai session variable.
-
-### Changed
-- **Repo cleanup** — Hapus file non-produksi dari GitHub: `oltc320_v2.1.1_linux/`, `baileys_whatsapp_patch/`, `bin/server.exe`, `nginx-frontend.conf`, `ZTE_OID_TABLE.md`, `.air.toml`, debug scripts; perbarui `.gitignore`
-
-### Verified
-- **Fresh install test passed** — Instalasi dari nol di Ubuntu 22.04 LTS berhasil: MySQL, Node.js v20, FreeRADIUS, nginx, PM2 (salfanet-radius + salfanet-cron + salfanet-wa), Go backend (port 8080, 820 handlers), 101 tabel Prisma schema, seed admin user — semua services `active`
-
-### Files
-- `vps-install/vps-installer.sh` — Tambah flag `--unattended`, `--env`, `--ip`, `--domain`, `--db-pass`; export TERM default
-- `vps-install/common.sh` — `DEBIAN_FRONTEND=noninteractive` global; `clear` toleran error; `--unattended` skip user selection prompt
-- `vps-install/install-system.sh` — apt-get upgrade + install dengan `--force-confdef --force-confold`
-- `internal/db/db.go` — Strip Prisma URL params sebelum build MySQL DSN
-- `.gitignore` — Tambah entri untuk file/folder non-produksi
 
 <!-- AUTO-CHANGELOG:END -->
 
