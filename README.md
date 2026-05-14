@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.10 — 2026-05-15
+
+### Fixed
+- **Halaman Log Langsung error "t.logs.split is not a function"** — Go backend mengembalikan `logs` sebagai `string[]` (sudah di-split per baris), tapi frontend memanggil `.split('\n')` langsung pada array. Fix: periksa apakah `data.logs` array atau string sebelum di-split.
+### Files
+- `src/app/admin/freeradius/logs/page.tsx` — handle `logs` sebagai array atau string
+
 ### v2.47.9 — 2026-05-15
 
 ### Fixed
@@ -516,17 +523,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/admin.go` — Complete rewrite of `Stats()`: correct response structure, all stat fields, systemStatus, agentSales, radiusAuthLog, activities
 - `internal/api/handlers/settings_genieacs.go` — `SystemRadius()`: added `status` and `uptime` fields
-
-### v2.47.5 — 2026-05-15
-
-### Fixed
-- **Email templates crash** (`TypeError: Cannot read properties of undefined (reading 'forEach')`) — Go returned `"templates"` key but frontend used `data.data.forEach`; fixed to `"data"`
-- **Email history crash** (`TypeError: Cannot read properties of undefined (reading 'length')`) — Go returned `"emails"` key but frontend used `data.history`; fixed to `"history"`
-- **WhatsApp notifications null crash** (`TypeError: Cannot read properties of null (reading 'success')`) — Go handler `GetReminderSettings` was querying the wrong model (`WhatsappReminderSetting` with mismatched columns), causing GORM to return nil slice → `c.JSON(nil)` → response body `null`. Added `WhatsappGlobalSettings` model matching the actual Prisma DB schema and rewrote GET/PUT handlers to use it correctly.
-### Files
-- `internal/api/handlers/settings_ext.go` — `ListEmailTemplates`: `"templates"` → `"data"`; `EmailHistory`: `"emails"` → `"history"`
-- `internal/db/models/extra.go` — Added `WhatsappGlobalSettings` struct matching actual `whatsapp_reminder_settings` table columns
-- `internal/api/handlers/whatsapp.go` — `GetReminderSettings`: uses new model, returns `{success, settings:{...}}`; `UpdateReminderSettings`: accepts flat object body matching frontend format
 
 <!-- AUTO-CHANGELOG:END -->
 
