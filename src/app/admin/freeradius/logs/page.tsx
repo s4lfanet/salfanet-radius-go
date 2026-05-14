@@ -21,7 +21,10 @@ export default function RadiusLogsPage() {
             const data = await response.json();
 
             if (response.ok && data.success) {
-                setLogs(data.logs.split('\n').filter(Boolean));
+                const logsArr = Array.isArray(data.logs)
+                    ? data.logs
+                    : (data.logs as string).split('\n');
+                setLogs(logsArr.filter(Boolean));
                 setLoading(false);
             }
         } catch (error) {
