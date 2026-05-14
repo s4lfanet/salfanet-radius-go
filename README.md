@@ -469,6 +469,23 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.42.0 — 2026-05-14
+
+### Fixed
+- **DB camelCase 100% complete** — Fixed final 8 remaining snake_case column references across 5 files
+- **TechnicianOtp** — `Update("used_at", now)` → `Update("isUsed", true)` (model uses `bool`, not `*time.Time`)
+- **Technician auth** — `Update("last_login_at", now)` → `Update("lastLoginAt", now)` in both login paths
+- **PPPoE sync** — `Update("synced_to_radius", true)` → `Update("syncedToRadius", true)`
+- **PPPoE expiry** — `Update("expired_at", newExpiry)` → `Update("expiredAt", newExpiry)`
+- **Invoice generator** — `"subscription_type = ?"` → `"subscriptionType = ?"` and `"invoice_type = ?"` → `"invoiceType = ?"`
+- **Auth 2FA** — removed dead `"otp_code": nil` key (column doesn't exist in `admin_two_factor_pending`)
+### Files
+- `internal/api/handlers/technician_portal.go` — isUsed, lastLoginAt
+- `internal/api/handlers/pppoe.go` — syncedToRadius
+- `internal/api/handlers/pppoe_ext.go` — expiredAt
+- `internal/api/handlers/invoices_ext.go` — subscriptionType, invoiceType
+- `internal/api/handlers/auth.go` — removed dead otp_code key
+
 ### v2.41.0 — 2026-05-14
 
 ### Fixed
@@ -534,16 +551,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/admin.go` — added `SuspendRequestAction`
 - `internal/api/handlers/pppoe_ext.go` — added `BulkCustomersTemplate`
 - `internal/api/router.go` — batch 14 routes (+4 routes)
-
-### v2.37.0 — 2026-05-14
-
-### Added
-- **Go: Auth path aliases** — `/api/customer/auth/login`, `/api/customer/auth/verify-otp`, `/api/customer/login`, `/api/agent/login` (alias to existing handlers)
-- **Go: Hotspot voucher singular** — `GET/POST /api/hotspot/voucher` (alias to `ListVouchers`/`GenerateVouchers`)
-- **Go: Network OLTs status** — `GET /api/network/olts/status` returns connectivity status of all OLTs
-### Files
-- `internal/api/handlers/misc_handler.go` — added `NetworkOLTStatus`
-- `internal/api/router.go` — batch 13 routes (+9 routes)
 
 <!-- AUTO-CHANGELOG:END -->
 
