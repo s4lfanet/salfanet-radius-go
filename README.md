@@ -469,7 +469,7 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
-### v2.47.3 — 2026-05-14
+### v2.47.3 — 2026-05-15
 
 ### Fixed
 - **Login page 401 on pre-login** — `POST /api/admin/auth/pre-login` was registered after the `api := app.Group("/api", CombinedAuthMiddleware)` group; in Fiber v3 this caused the auth middleware to intercept the request. Fixed by moving the route to before the protected api group.
