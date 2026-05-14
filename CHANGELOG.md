@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.21] — 2026-05-15
+### Fixed
+- **`POST /api/company` 400 Bad Request saat simpan pengaturan perusahaan** — Frontend mengirim `bankAccounts` sebagai JSON array (`[]`), tapi model Go menyimpannya sebagai `*string`. Fiber JSON binder gagal decode → 400. Fix: parse body sebagai `map[string]interface{}`, konversi `bankAccounts` array → JSON string sebelum bind ke struct. Juga: tambah UUID generation saat buat record company baru (fresh install).
+### Files
+- `internal/api/handlers/company.go` — `UpdateCompany` konversi bankAccounts + generate UUID
+
 ## [2.47.20] — 2026-05-15
 ### Fixed
 - **`GET /api/company` 404 pada fresh install** — Go handler mengembalikan 404 saat tabel `companies` kosong (belum ada data). Frontend admin layout memanggil endpoint ini saat pertama buka, sehingga layout tidak bisa load data perusahaan. Fix: handler sekarang mengembalikan nilai default (name, timezone, base URL, dsb.) dengan status 200 jika belum ada record, bukan 404.

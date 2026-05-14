@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
+
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
@@ -50,14 +53,39 @@ func (h *CompanyHandler) GetCompany(c fiber.Ctx) error {
 }
 
 func (h *CompanyHandler) UpdateCompany(c fiber.Ctx) error {
+	// Parse body as a generic map to handle type mismatches.
+	// The frontend sends bankAccounts as a JSON array, but the DB stores it as a JSON string.
+	var body map[string]interface{}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// Convert bankAccounts from array → JSON string if needed
+	if ba, ok := body["bankAccounts"]; ok {
+		switch v := ba.(type) {
+		case []interface{}:
+			baJSON, _ := json.Marshal(v)
+			body["bankAccounts"] = string(baJSON)
+		case nil:
+			body["bankAccounts"] = "[]"
+		}
+	}
+
+	// Load existing company record (if any)
 	var company models.Company
 	h.db.First(&company)
 
-	if err := c.Bind().JSON(&company); err != nil {
+	// Re-encode body with converted fields, then decode into company struct
+	bodyJSON, err := json.Marshal(body)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal error"})
+	}
+	if err := json.Unmarshal(bodyJSON, &company); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	if company.ID == "" {
+		company.ID = uuid.New().String()
 		h.db.Create(&company)
 	} else {
 		h.db.Save(&company)
