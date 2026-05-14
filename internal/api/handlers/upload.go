@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,6 +20,31 @@ func NewUploadHandler(db *gorm.DB) *UploadHandler {
 
 const uploadDir = "/var/www/salfanet-radius/uploads"
 
+// saveUploadedFile saves a multipart file to dest using manual io.Copy (Fiber v3 compatible)
+func saveUploadedFile(c fiber.Ctx, fieldName, dest string) error {
+	file, err := c.FormFile(fieldName)
+	if err != nil {
+		return err
+	}
+	src, err := file.Open()
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+
+	if err2 := os.MkdirAll(filepath.Dir(dest), 0755); err2 != nil {
+		return err2
+	}
+	dst, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	return err
+}
+
 // POST /api/upload/logo — upload company logo
 func (h *UploadHandler) UploadLogo(c fiber.Ctx) error {
 	file, err := c.FormFile("file")
@@ -34,10 +60,24 @@ func (h *UploadHandler) UploadLogo(c fiber.Ctx) error {
 
 	filename := fmt.Sprintf("logo-%d%s", time.Now().UnixMilli(), ext)
 	dest := filepath.Join(uploadDir, "logos", filename)
-	_ = os.MkdirAll(filepath.Dir(dest), 0755)
 
-	if err2 := c.SaveFile(file, dest); err2 != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "failed to save file"})
+	src, err := file.Open()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to open upload"})
+	}
+	defer src.Close()
+
+	if err2 := os.MkdirAll(filepath.Dir(dest), 0755); err2 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to create directory"})
+	}
+	dst, err := os.Create(dest)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to create file"})
+	}
+	defer dst.Close()
+
+	if _, err3 := io.Copy(dst, src); err3 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to write file"})
 	}
 
 	url := "/api/uploads/logos/" + filename
@@ -59,10 +99,24 @@ func (h *UploadHandler) UploadPaymentProof(c fiber.Ctx) error {
 
 	filename := fmt.Sprintf("payment-proof-%d%s", time.Now().UnixMilli(), ext)
 	dest := filepath.Join(uploadDir, "payment-proofs", filename)
-	_ = os.MkdirAll(filepath.Dir(dest), 0755)
 
-	if err2 := c.SaveFile(file, dest); err2 != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "failed to save file"})
+	src, err2 := file.Open()
+	if err2 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to open upload"})
+	}
+	defer src.Close()
+
+	if err3 := os.MkdirAll(filepath.Dir(dest), 0755); err3 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to create directory"})
+	}
+	dst, err4 := os.Create(dest)
+	if err4 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to create file"})
+	}
+	defer dst.Close()
+
+	if _, err5 := io.Copy(dst, src); err5 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to write file"})
 	}
 
 	url := "/api/uploads/payment-proofs/" + filename
@@ -84,10 +138,24 @@ func (h *UploadHandler) UploadCustomerPhoto(c fiber.Ctx) error {
 
 	filename := fmt.Sprintf("customer-%d%s", time.Now().UnixMilli(), ext)
 	dest := filepath.Join(uploadDir, "customers", filename)
-	_ = os.MkdirAll(filepath.Dir(dest), 0755)
 
-	if err2 := c.SaveFile(file, dest); err2 != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "failed to save file"})
+	src, err2 := file.Open()
+	if err2 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to open upload"})
+	}
+	defer src.Close()
+
+	if err3 := os.MkdirAll(filepath.Dir(dest), 0755); err3 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to create directory"})
+	}
+	dst, err4 := os.Create(dest)
+	if err4 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to create file"})
+	}
+	defer dst.Close()
+
+	if _, err5 := io.Copy(dst, src); err5 != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to write file"})
 	}
 
 	url := "/api/uploads/customers/" + filename

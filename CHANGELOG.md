@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.12] — 2026-05-15
+### Fixed
+- **`GET /api/admin/apk/trigger` → 405** — Frontend `fetchEnv` di halaman `/admin/download-apk` memanggil `GET /api/admin/apk/trigger` tapi hanya `POST` yang terdaftar. Fix: tambah handler `ApkEnv` baru yang mengecek ketersediaan Java dan Android SDK di server, daftarkan ke `GET /api/admin/apk/env`, dan update frontend untuk memanggil endpoint yang benar.
+- **`POST /api/upload/logo` → 500** — `c.SaveFile()` di Fiber v3 beta.4 gagal meskipun directory sudah ada. Fix: rewrite semua upload handler (`UploadLogo`, `UploadPaymentProof`, `UploadCustomerPhoto`) menggunakan `file.Open()` + `os.Create()` + `io.Copy()` secara manual.
+### Files
+- `internal/api/handlers/admin_misc_handler.go` — tambah `ApkEnv()` handler
+- `internal/api/handlers/upload.go` — rewrite pakai manual io.Copy (bukan c.SaveFile)
+- `internal/api/router.go` — tambah `GET /admin/apk/env`
+- `src/app/admin/download-apk/page.tsx` — ubah fetchEnv → `/api/admin/apk/env`
+
 ## [2.47.11] — 2026-05-15
 ### Fixed
 - **Halaman `/admin/settings/database` crash** — `GET /api/backup/history` mengembalikan key `backups` tapi frontend membaca `historyData.history` → undefined → `.length` crash. Fix: rename key ke `history` + nil guard.

@@ -281,7 +281,7 @@ export default function DownloadApkPage() {
   const [logoError, setLogoError] = useState('');
 
   const fetchEnv = useCallback(() => {
-    fetch('/api/admin/apk/trigger')
+    fetch('/api/admin/apk/env')
       .then(r => r.json())
       .then((data: EnvStatus & { defaultUrl?: string }) => {
         setEnv(data);

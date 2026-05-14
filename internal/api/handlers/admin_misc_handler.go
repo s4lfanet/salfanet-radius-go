@@ -6,7 +6,10 @@ package handlers
 // OLT model profiles & test, admin recurring-job endpoints.
 
 import (
+	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -35,6 +38,44 @@ type apkBuild struct {
 }
 
 func (apkBuild) TableName() string { return "apk_builds" }
+
+// GET /api/admin/apk/env — check build environment (Java, Android SDK)
+func (h *AdminMiscHandler) ApkEnv(c fiber.Ctx) error {
+	// Check Java
+	java := false
+	javaVersion := ""
+	if out, err := exec.Command("java", "-version").CombinedOutput(); err == nil {
+		java = true
+		line := strings.TrimSpace(strings.Split(string(out), "\n")[0])
+		javaVersion = line
+	}
+
+	// Check Android SDK via ANDROID_HOME
+	androidHome := os.Getenv("ANDROID_HOME")
+	androidSdk := false
+	if androidHome != "" {
+		sdkmanager := filepath.Join(androidHome, "cmdline-tools", "latest", "bin", "sdkmanager")
+		if _, err := os.Stat(sdkmanager); err == nil {
+			androidSdk = true
+		}
+	}
+
+	// Default URL from env
+	defaultUrl := os.Getenv("APP_URL")
+	if defaultUrl == "" {
+		defaultUrl = "https://radius.hotspotapp.net"
+	}
+
+	return c.JSON(fiber.Map{
+		"success":     true,
+		"ready":       java && androidSdk,
+		"java":        java,
+		"javaVersion": javaVersion,
+		"androidSdk":  androidSdk,
+		"androidHome": androidHome,
+		"defaultUrl":  defaultUrl,
+	})
+}
 
 // GET /api/admin/apk/status — latest build status
 func (h *AdminMiscHandler) ApkStatus(c fiber.Ctx) error {

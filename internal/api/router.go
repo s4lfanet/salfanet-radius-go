@@ -1094,6 +1094,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// ─── Batch 11: Admin misc ─────────────────────────────────────────────────
 	// APK
+	api.Get("/admin/apk/env", adminMiscH.ApkEnv)
 	api.Get("/admin/apk/status", adminMiscH.ApkStatus)
 	api.Post("/admin/apk/trigger", adminMiscH.ApkTrigger)
 	api.Post("/admin/apk/build", adminMiscH.ApkBuild)
