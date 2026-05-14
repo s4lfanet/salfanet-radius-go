@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.5] — 2026-05-15
+### Fixed
+- **Email templates crash** (`TypeError: Cannot read properties of undefined (reading 'forEach')`) — Go returned `"templates"` key but frontend used `data.data.forEach`; fixed to `"data"`
+- **Email history crash** (`TypeError: Cannot read properties of undefined (reading 'length')`) — Go returned `"emails"` key but frontend used `data.history`; fixed to `"history"`
+- **WhatsApp notifications null crash** (`TypeError: Cannot read properties of null (reading 'success')`) — Go handler `GetReminderSettings` was querying the wrong model (`WhatsappReminderSetting` with mismatched columns), causing GORM to return nil slice → `c.JSON(nil)` → response body `null`. Added `WhatsappGlobalSettings` model matching the actual Prisma DB schema and rewrote GET/PUT handlers to use it correctly.
+### Files
+- `internal/api/handlers/settings_ext.go` — `ListEmailTemplates`: `"templates"` → `"data"`; `EmailHistory`: `"emails"` → `"history"`
+- `internal/db/models/extra.go` — Added `WhatsappGlobalSettings` struct matching actual `whatsapp_reminder_settings` table columns
+- `internal/api/handlers/whatsapp.go` — `GetReminderSettings`: uses new model, returns `{success, settings:{...}}`; `UpdateReminderSettings`: accepts flat object body matching frontend format
+
 ## [2.47.4] — 2026-05-15
 ### Fixed
 - **Isolation templates crash** (`TypeError: Cannot read properties of undefined (reading 'map')`) — Go returned `{success, templates:[...]}` but frontend expected `data.data`; fixed key to `"data"`
