@@ -469,6 +469,21 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.15 — 2026-05-15
+
+### Fixed
+- **Installer: `ReadWritePaths` missing `/uploads`** — `vps-install/install-go.sh` systemd service template hanya punya `/logs` di `ReadWritePaths`. Fresh install akan gagal saat upload logo (500). Fix: tambah `/uploads` ke `ReadWritePaths`.
+- **Updater: systemd patch untuk upgrade dari versi lama** — `vps-install/updater.sh` sekarang otomatis patch `salfanet-api.service` jika `/uploads` belum ada di `ReadWritePaths` (migrasi dari versi < 2.47.13).
+- **Installer nginx: Cloudflare Flexible SSL infinite redirect** — `vps-install/install-nginx.sh` sebelumnya selalu membuat Block 1 (HTTP → HTTPS redirect) ketika `VPS_DOMAIN` diset. Dengan Cloudflare Flexible SSL, ini menyebabkan infinite redirect loop. Fix: deteksi otomatis Cloudflare proxy via DNS/whois; jika terdeteksi Cloudflare, generate config Cloudflare-compatible (HTTP-only domain block, tanpa redirect, dengan `$http_x_forwarded_proto`).
+- **Installer nginx: `X-Forwarded-Proto` header** — Tambah `_proxy_locations_cloudflare()` helper yang menggunakan `$http_x_forwarded_proto` agar backend (NextAuth, Go) melihat protokol `https` yang benar saat diakses via Cloudflare Flexible.
+### Changed
+- **`production/nginx-salfanet-radius.conf`** — Update menjadi reference yang lebih akurat dengan header penjelasan Cloudflare dan placeholder `YOUR_DOMAIN` / `YOUR_VPS_IP`.
+### Files
+- `vps-install/install-go.sh` — `ReadWritePaths` ditambah `${APP_DIR}/uploads`
+- `vps-install/updater.sh` — Tambah step patch systemd sebelum Go build
+- `vps-install/install-nginx.sh` — Deteksi Cloudflare, `_proxy_locations_cloudflare()`, config Cloudflare-mode
+- `production/nginx-salfanet-radius.conf` — Header Cloudflare notes, placeholder cleanup
+
 ### v2.47.14 — 2026-05-15
 
 ### Fixed
@@ -510,13 +525,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/cronhandler.go` — `Status()` rewrite: kembalikan jobs sebagai array CronJob dengan data dari DB
 - `internal/api/router.go` — tambah `POST /company` dan `GET /cron/status`
 - `src/app/admin/settings/cron/page.tsx` — safe flatMap dengan fallback array kosong
-
-### v2.47.10 — 2026-05-15
-
-### Fixed
-- **Halaman Log Langsung error "t.logs.split is not a function"** — Go backend mengembalikan `logs` sebagai `string[]` (sudah di-split per baris), tapi frontend memanggil `.split('\n')` langsung pada array. Fix: periksa apakah `data.logs` array atau string sebelum di-split.
-### Files
-- `src/app/admin/freeradius/logs/page.tsx` — handle `logs` sebagai array atau string
 
 <!-- AUTO-CHANGELOG:END -->
 
