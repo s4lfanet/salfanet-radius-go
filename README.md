@@ -469,7 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
-### v2.47.3 — 2026-05-15
+### v2.47.4 — 2026-05-15
+
+### Fixed
+- **Isolation templates crash** (`TypeError: Cannot read properties of undefined (reading 'map')`) — Go returned `{success, templates:[...]}` but frontend expected `data.data`; fixed key to `"data"`
+- **Isolation mikrotik crash** (`TypeError: Cannot read properties of undefined (reading 'isolationIpPool')`) — Go returned `{success, settings:{...}}` but frontend expected `data.data.isolationIpPool`; fixed key to `"data"`
+- **Isolation settings page** — same `data.data` mismatch (no crash due to fallbacks, but values were not loaded from server)
+### Files
+- `internal/api/handlers/settings.go` — `GetIsolationSettings`: `"settings"` → `"data"`
+- `internal/api/handlers/settings_genieacs.go` — `ListIsolationTemplates`: `"templates"` → `"data"`
+
 
 ### Fixed
 - **Login page 401 on pre-login** — `POST /api/admin/auth/pre-login` was registered after the `api := app.Group("/api", CombinedAuthMiddleware)` group; in Fiber v3 this caused the auth middleware to intercept the request. Fixed by moving the route to before the protected api group.
