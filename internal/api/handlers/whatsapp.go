@@ -185,14 +185,14 @@ func (h *WhatsappHandler) GetReminderSettings(c fiber.Ctx) error {
 
 func (h *WhatsappHandler) UpdateReminderSettings(c fiber.Ctx) error {
 	var body struct {
-		Enabled      bool    `json:"enabled"`
-		ReminderDays []int   `json:"reminderDays"`
-		ReminderTime string  `json:"reminderTime"`
-		OtpEnabled   bool    `json:"otpEnabled"`
-		OtpExpiry    int     `json:"otpExpiry"`
-		BatchSize    int     `json:"batchSize"`
-		BatchDelay   int     `json:"batchDelay"`
-		Randomize    bool    `json:"randomize"`
+		Enabled      bool   `json:"enabled"`
+		ReminderDays []int  `json:"reminderDays"`
+		ReminderTime string `json:"reminderTime"`
+		OtpEnabled   bool   `json:"otpEnabled"`
+		OtpExpiry    int    `json:"otpExpiry"`
+		BatchSize    int    `json:"batchSize"`
+		BatchDelay   int    `json:"batchDelay"`
+		Randomize    bool   `json:"randomize"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})

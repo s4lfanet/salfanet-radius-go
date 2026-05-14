@@ -325,15 +325,15 @@ func (WhatsappHistory) TableName() string { return "whatsapp_history" }
 // ─── WhatsApp Global Settings (single-row config, matches Prisma schema) ────
 
 type WhatsappGlobalSettings struct {
-	ID          string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Enabled     bool      `gorm:"column:enabled;default:true" json:"enabled"`
-	ReminderDays string   `gorm:"column:reminderDays;type:text" json:"reminderDays"` // JSON string e.g. "[-7,-5,-3,0]"
-	ReminderTime string   `gorm:"column:reminderTime;default:09:00" json:"reminderTime"`
-	OtpEnabled   bool     `gorm:"column:otpEnabled;default:true" json:"otpEnabled"`
-	OtpExpiry    int      `gorm:"column:otpExpiry;default:5" json:"otpExpiry"`
-	BatchSize    int      `gorm:"column:batchSize;default:10" json:"batchSize"`
-	BatchDelay   int      `gorm:"column:batchDelay;default:60" json:"batchDelay"`
-	Randomize    bool     `gorm:"column:randomize;default:true" json:"randomize"`
+	ID           string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Enabled      bool      `gorm:"column:enabled;default:true" json:"enabled"`
+	ReminderDays string    `gorm:"column:reminderDays;type:text" json:"reminderDays"` // JSON string e.g. "[-7,-5,-3,0]"
+	ReminderTime string    `gorm:"column:reminderTime;default:09:00" json:"reminderTime"`
+	OtpEnabled   bool      `gorm:"column:otpEnabled;default:true" json:"otpEnabled"`
+	OtpExpiry    int       `gorm:"column:otpExpiry;default:5" json:"otpExpiry"`
+	BatchSize    int       `gorm:"column:batchSize;default:10" json:"batchSize"`
+	BatchDelay   int       `gorm:"column:batchDelay;default:60" json:"batchDelay"`
+	Randomize    bool      `gorm:"column:randomize;default:true" json:"randomize"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
