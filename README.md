@@ -469,6 +469,20 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.11 — 2026-05-15
+
+### Fixed
+- **Halaman `/admin/settings/database` crash** — `GET /api/backup/history` mengembalikan key `backups` tapi frontend membaca `historyData.history` → undefined → `.length` crash. Fix: rename key ke `history` + nil guard.
+- **Halaman `/admin/settings/database` health kosong** — `GET /api/backup/health` mengembalikan flat object tapi frontend mengharapkan `{"health": {status, size, tables, connections, lastBackup, uptime}}`. Fix: rewrite handler dengan nested health object + query DB untuk size & table count.
+- **Halaman `/admin/settings/cron` crash** — tiga root cause: (1) `GET /api/cron/status` tidak terdaftar di router → 404; (2) handler lama mengembalikan `"jobs": 9` (integer) bukan array; (3) frontend `statusData.jobs.flatMap()` tidak aman. Fix: daftarkan route, rewrite `Status()` dengan array CronJob, fix frontend dengan fallback `|| []`.
+- **`POST /api/company` → 405 Method Not Allowed** — router hanya punya `PUT /api/company` tapi frontend menggunakan `method: 'POST'`. Fix: tambah alias `POST /api/company`.
+- **`POST /api/upload/logo` → 500** — directory `/var/www/salfanet-radius/uploads/logos` tidak ada di VPS. Fix: buat directory dengan chmod 755.
+### Files
+- `internal/api/handlers/backup_handler.go` — fix `History()` key + rewrite `Health()` dengan nested object
+- `internal/api/handlers/cronhandler.go` — `Status()` rewrite: kembalikan jobs sebagai array CronJob dengan data dari DB
+- `internal/api/router.go` — tambah `POST /company` dan `GET /cron/status`
+- `src/app/admin/settings/cron/page.tsx` — safe flatMap dengan fallback array kosong
+
 ### v2.47.10 — 2026-05-15
 
 ### Fixed
@@ -513,16 +527,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/settings_genieacs.go` — `checkFreeradiusRunning()` helper baru via systemctl; `SystemRadius()` diupdate
 - `internal/api/handlers/admin.go` — `Stats()` gunakan `checkFreeradiusRunning()` untuk `systemStatus.radius`
-
-### v2.47.6 — 2026-05-15
-
-### Fixed
-- **Dashboard stat cards tidak muncul** — Go handler `adminH.Stats` di `/api/dashboard/stats` mengembalikan format salah (`{customers, invoices, onu}` tanpa key `success`). Frontend mengecek `if (data.success)` sehingga semua data diabaikan. Handler ditulis ulang lengkap sesuai format yang diharapkan: `{success, stats:{totalPppoeUsers, activePppoeUsers, activeSessionsPPPoE, ...}, systemStatus:{radius, database, api}, activities, agentSales, radiusAuthLog, radiusAuthStats, periodLabel, monthKey, isCurrentMonth}`
-- **Status RADIUS/Database/API selalu Offline** — `systemStatus` tidak dikembalikan oleh handler lama (undefined → semua false). Sekarang dikembalikan dengan: `database: true`, `api: true`, `radius:` berdasarkan pengecekan radacct aktif 1 jam terakhir
-- **`/api/system/radius` tidak punya field `status`** — Frontend menggunakan `radiusStatus?.status === 'running'` tapi handler tidak mengembalikan field itu. Ditambahkan `status: "running"|"stopped"` dan `uptime` berdasarkan sesi aktif dan aktivitas radacct terbaru
-### Files
-- `internal/api/handlers/admin.go` — Complete rewrite of `Stats()`: correct response structure, all stat fields, systemStatus, agentSales, radiusAuthLog, activities
-- `internal/api/handlers/settings_genieacs.go` — `SystemRadius()`: added `status` and `uptime` fields
 
 <!-- AUTO-CHANGELOG:END -->
 
