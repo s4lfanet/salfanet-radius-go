@@ -469,6 +469,23 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.0 — 2026-05-14
+
+### Added (Architecture)
+- **Full routing ke Go backend** — Semua `/api/` request sekarang dihandle Go (sebelumnya hanya customer/agent/technician portal)
+- **NextAuth session bridge** — Go middleware `CombinedAuthMiddleware`: validasi JWT Bearer token (mobile/API) ATAU NextAuth session cookie (admin panel browser) — tanpa perlu ubah frontend
+- **`validateNextAuthSession`** — fungsi internal di Go yang memanggil `http://127.0.0.1:3000/api/auth/session` untuk memverifikasi admin browser session
+- **Nginx catch-all update** — `location /api/ { proxy_pass → 8080 }` (sebelumnya 3000). NextAuth protocol endpoints (`/api/auth/callback`, `/api/auth/session`, `/api/auth/csrf`, `/api/auth/signout`) tetap ke Next.js:3000
+
+### Impact
+- Semua admin API routes (`/api/admin/*`, `/api/pppoe/*`, `/api/settings/*`, `/api/network/*`, `/api/invoices/*`, dll.) sekarang dihandle Go Fiber — tidak ada lagi Prisma ORM overhead + NextAuth session check per request
+- Next.js:3000 sekarang hanya handle: halaman frontend, NextAuth protocol endpoints
+
+### Files
+- `internal/api/middleware/auth.go` — tambah `CombinedAuthMiddleware` + `validateNextAuthSession`
+- `internal/api/router.go` — ganti `AuthMiddleware` → `CombinedAuthMiddleware` untuk protected routes
+- `/etc/nginx/sites-available/salfanet-radius` (VPS) — catch-all `/api/` → Go:8080
+
 ### v2.46.7 — 2026-05-15
 
 ### Performance
@@ -536,29 +553,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/api/payroll-templates/[id]/route.ts` — Baru: GET, PUT, DELETE
 - `src/app/api/payroll-templates/[id]/default/route.ts` — Baru: POST set-default
 - `scripts/migrate-fiber-payroll-tables.sql` — Baru: SQL migration fiber + payroll
-
-### v2.46.3 — 2026-05-14
-
-### Fixed
-- **404: `/admin/invoice-templates`** — Halaman frontend tidak ada; dibuat `src/app/admin/invoice-templates/page.tsx` lengkap dengan tabel, modal create/edit, preview HTML, set-default
-- **404: `/admin/logs/activity`** — File `page.tsx` ada di lokal tapi belum di-commit ke git; sekarang sudah dicommit
-- **404: `/api/troubleshooting/checklists`** — Endpoint hanya ada di Go (butuh Bearer token), sedangkan admin panel tidak mengirim token. Dibuat Next.js API route (`src/app/api/troubleshooting/checklists/route.ts` dan `[id]/route.ts`) menggunakan Prisma `$queryRaw` langsung ke tabel MySQL
-- **404: `/api/invoice-templates`** — Sama dengan troubleshooting; dibuat Next.js API route lengkap (GET/POST list, GET/PUT/DELETE per-id, POST set-default)
-
-### Added
-- **14 missing nav translation keys** — Ditambahkan ke `src/locales/id.json`: `invoiceTemplates`, `troubleshooting`, `troubleshootingChecklists`, `troubleshootingJobs`, `hrManagement`, `attendance`, `cashAdvances`, `commissions`, `payroll`, `payrollTemplates`, `vpnManagement`, `vpnClients`, `vpnSites`, `vpnSettings`
-- **DB migration SQL** — `scripts/migrate-missing-tables.sql` membuat tabel `troubleshooting_checklists`, `troubleshooting_jobs`, `troubleshooting_materials`, `invoice_templates`
-
-### Files
-- `src/app/admin/invoice-templates/page.tsx` — Halaman baru (dibuat)
-- `src/app/admin/logs/activity/page.tsx` — Commit ke git (sebelumnya untracked)
-- `src/app/api/troubleshooting/checklists/route.ts` — GET + POST
-- `src/app/api/troubleshooting/checklists/[id]/route.ts` — PUT + DELETE
-- `src/app/api/invoice-templates/route.ts` — GET + POST
-- `src/app/api/invoice-templates/[id]/route.ts` — GET + PUT + DELETE
-- `src/app/api/invoice-templates/[id]/default/route.ts` — POST (set default)
-- `src/locales/id.json` — Tambah 14 nav keys
-- `scripts/migrate-missing-tables.sql` — SQL migration baru
 
 <!-- AUTO-CHANGELOG:END -->
 
