@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/server/db/client';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
+import { authOptions } from '@/server/auth/config';
 
 // GET /api/admin/payroll
 export async function GET(req: NextRequest) {
