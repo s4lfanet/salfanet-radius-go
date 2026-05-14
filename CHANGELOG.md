@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.19] — 2026-05-15
+### Removed
+- **Hapus fitur APK Builder** — `install-apk.sh` dihapus beserta semua referensinya. Mobile app (React Native/Expo) tidak bisa dibuild di VPS karena folder `mobile-app/` ada di `.gitignore` dan tidak ikut deploy. Java 17 + Android SDK yang terlanjur terinstall di VPS juga dihapus.
+### Files
+- `vps-install/install-apk.sh` — **DIHAPUS**
+- `vps-install/vps-installer.sh` — hapus `APK_BUILT`, blok CUSTOMER MOBILE APP, APK di next steps, APK di final summary
+- `vps-install/common.sh` — hapus baris "Step 8 Build Customer APK"
+- `vps-install/install-security.sh` — hapus cleanup APK build temp
+
 ## [2.47.18] — 2026-05-15
 ### Changed
 - **Hapus referensi Redis dari installer** — Redis sudah tidak digunakan sejak v2.11.3 (`ioredis` dihapus). Referensi `REDIS_URL` di `.env` template dan pesan "install Redis" di `vps-installer.sh` dihapus agar installer lebih bersih.
