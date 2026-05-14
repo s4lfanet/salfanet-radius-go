@@ -105,7 +105,7 @@ func (h *AdminHRHandler) BulkDeleteAttendance(c fiber.Ctx) error {
 // GET /api/admin/attendance-locations
 func (h *AdminHRHandler) ListLocations(c fiber.Ctx) error {
 	var locations []attendanceLocation
-	h.db.Where("is_active = ?", true).Order("name").Find(&locations)
+	h.db.Where("isActive = ?", true).Order("name").Find(&locations)
 	return c.JSON(fiber.Map{"success": true, "locations": locations})
 }
 
@@ -152,7 +152,7 @@ func (h *AdminHRHandler) ListCashAdvances(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var advances []cashAdvance
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&advances)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&advances)
 	return c.JSON(fiber.Map{
 		"success": true, "advances": advances,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total},
@@ -190,7 +190,7 @@ func (h *AdminHRHandler) UpdateCashAdvance(c fiber.Ctx) error {
 	}
 	var body map[string]interface{}
 	c.Bind().JSON(&body)
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&adv).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "advance": adv})
 }
@@ -205,7 +205,7 @@ func (h *AdminHRHandler) DeleteCashAdvance(c fiber.Ctx) error {
 func (h *AdminHRHandler) PayCashAdvance(c fiber.Ctx) error {
 	now := time.Now()
 	h.db.Model(&cashAdvance{}).Where("id = ?", c.Params("id")).
-		Updates(map[string]interface{}{"status": "PAID", "paid_at": now, "updated_at": now})
+		Updates(map[string]interface{}{"status": "PAID", "paidAt": now, "updatedAt": now})
 	return c.JSON(fiber.Map{"success": true, "message": "Cash advance marked as paid"})
 }
 
@@ -238,7 +238,7 @@ func (h *AdminHRHandler) ListCommissions(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var commissions []commission
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&commissions)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&commissions)
 	return c.JSON(fiber.Map{
 		"success": true, "commissions": commissions,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total},
@@ -276,7 +276,7 @@ func (h *AdminHRHandler) UpdateCommission(c fiber.Ctx) error {
 	}
 	var body map[string]interface{}
 	c.Bind().JSON(&body)
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&comm).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "commission": comm})
 }
@@ -291,13 +291,13 @@ func (h *AdminHRHandler) DeleteCommission(c fiber.Ctx) error {
 func (h *AdminHRHandler) ApproveCommission(c fiber.Ctx) error {
 	now := time.Now()
 	h.db.Model(&commission{}).Where("id = ?", c.Params("id")).
-		Updates(map[string]interface{}{"status": "APPROVED", "approved_at": now, "updated_at": now})
+		Updates(map[string]interface{}{"status": "APPROVED", "approvedAt": now, "updatedAt": now})
 	return c.JSON(fiber.Map{"success": true, "message": "Commission approved"})
 }
 
 // POST /api/admin/commissions/:id/reject
 func (h *AdminHRHandler) RejectCommission(c fiber.Ctx) error {
 	h.db.Model(&commission{}).Where("id = ?", c.Params("id")).
-		Updates(map[string]interface{}{"status": "REJECTED", "updated_at": time.Now()})
+		Updates(map[string]interface{}{"status": "REJECTED", "updatedAt": time.Now()})
 	return c.JSON(fiber.Map{"success": true, "message": "Commission rejected"})
 }

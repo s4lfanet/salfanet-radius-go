@@ -253,7 +253,7 @@ func (h *OLTHandler) RegisterONU(c fiber.Ctx) error {
 	}
 	h.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "olt_id"}, {Name: "frame"}, {Name: "slot"}, {Name: "port"}, {Name: "onu_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"serial_number", "last_seen_at", "updated_at"}),
+		DoUpdates: clause.AssignmentColumns([]string{"serial_number", "last_seen_at", "updatedAt"}),
 	}).Create(&status)
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "ONU registered", "status": status})
@@ -363,10 +363,10 @@ func (h *OLTHandler) ListAlerts(c fiber.Ctx) error {
 
 	query := h.db.Where("olt_id = ?", id)
 	if resolved := c.Query("resolved"); resolved == "false" {
-		query = query.Where("is_resolved = ?", false)
+		query = query.Where("isResolved = ?", false)
 	}
 
-	if err := query.Order("created_at DESC").Limit(100).Find(&alerts).Error; err != nil {
+	if err := query.Order("createdAt DESC").Limit(100).Find(&alerts).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(alerts)

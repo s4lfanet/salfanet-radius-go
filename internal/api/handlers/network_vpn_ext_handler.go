@@ -90,7 +90,7 @@ func (h *NetworkVPNHandler) GetVPNServer(c fiber.Ctx) error {
 	var config vpnServerConfig
 	q := h.db
 	if routerID != "" {
-		q = q.Where("router_id = ?", routerID)
+		q = q.Where("routerId = ?", routerID)
 	}
 	q.First(&config)
 	return c.JSON(fiber.Map{"success": true, "config": config})
@@ -103,7 +103,7 @@ func (h *NetworkVPNHandler) UpdateVPNServer(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	var existing vpnServerConfig
-	if err := h.db.Where("router_id = ?", body.RouterID).First(&existing).Error; err != nil {
+	if err := h.db.Where("routerId = ?", body.RouterID).First(&existing).Error; err != nil {
 		body.ID = uuid.New().String()
 		body.UpdatedAt = time.Now()
 		h.db.Create(&body)
@@ -176,9 +176,9 @@ func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
 	var clients []vpnClientConfig
 	q := h.db
 	if routerID != "" {
-		q = q.Where("router_id = ?", routerID)
+		q = q.Where("routerId = ?", routerID)
 	}
-	q.Order("created_at desc").Find(&clients)
+	q.Order("createdAt desc").Find(&clients)
 	return c.JSON(fiber.Map{"success": true, "clients": clients})
 }
 
@@ -200,7 +200,7 @@ func (h *NetworkVPNHandler) CreateVPNClient(c fiber.Ctx) error {
 // GET /api/network/vpn-routing — list VPN routes
 func (h *NetworkVPNHandler) ListVPNRouting(c fiber.Ctx) error {
 	var routes []vpnRouting
-	h.db.Order("created_at desc").Find(&routes)
+	h.db.Order("createdAt desc").Find(&routes)
 	return c.JSON(fiber.Map{"success": true, "routes": routes})
 }
 
@@ -250,7 +250,7 @@ func (h *NetworkVPNHandler) GetVPSL2TPInfo(c fiber.Ctx) error {
 // GET /api/network/vps-l2tp-peer — list L2TP peers
 func (h *NetworkVPNHandler) ListL2TPPeers(c fiber.Ctx) error {
 	var peers []vpsPeer
-	h.db.Where("type = ?", "l2tp").Order("created_at desc").Find(&peers)
+	h.db.Where("type = ?", "l2tp").Order("createdAt desc").Find(&peers)
 	return c.JSON(fiber.Map{"success": true, "peers": peers})
 }
 
@@ -271,7 +271,7 @@ func (h *NetworkVPNHandler) CreateL2TPPeer(c fiber.Ctx) error {
 // GET /api/network/vps-wg-peer — list WireGuard peers on VPS
 func (h *NetworkVPNHandler) ListWGPeers(c fiber.Ctx) error {
 	var peers []vpsPeer
-	h.db.Where("type = ?", "wireguard").Order("created_at desc").Find(&peers)
+	h.db.Where("type = ?", "wireguard").Order("createdAt desc").Find(&peers)
 	return c.JSON(fiber.Map{"success": true, "peers": peers})
 }
 

@@ -25,7 +25,7 @@ func NewEvoucherHandler(db *gorm.DB) *EvoucherHandler {
 // GET /api/evoucher/profiles — list active hotspot profiles for public purchase
 func (h *EvoucherHandler) ListProfiles(c fiber.Ctx) error {
 	var profiles []models.HotspotProfile
-	h.db.Where("is_active = ?", true).Order("price").Find(&profiles)
+	h.db.Where("isActive = ?", true).Order("price").Find(&profiles)
 	return c.JSON(fiber.Map{"success": true, "profiles": profiles})
 }
 
@@ -93,7 +93,7 @@ func (h *EvoucherHandler) AdminListOrders(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var orders []models.VoucherOrder
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&orders)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&orders)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"orders":  orders,

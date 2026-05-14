@@ -21,7 +21,7 @@ func NewWhatsappCrudHandler(db *gorm.DB) *WhatsappCrudHandler {
 // GET /api/whatsapp/providers
 func (h *WhatsappCrudHandler) ListProviders(c fiber.Ctx) error {
 	var providers []models.WhatsappProvider
-	h.db.Order("priority asc, created_at asc").Find(&providers)
+	h.db.Order("priority asc, createdAt asc").Find(&providers)
 	return c.JSON(fiber.Map{"success": true, "providers": providers})
 }
 
@@ -62,7 +62,7 @@ func (h *WhatsappCrudHandler) UpdateProvider(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	delete(body, "id")
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&provider).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "provider": provider})
 }
@@ -201,7 +201,7 @@ func (h *WhatsappCrudHandler) UpdateTemplate(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	delete(body, "id")
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&tmpl).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "template": tmpl})
 }

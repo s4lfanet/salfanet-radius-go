@@ -15,7 +15,7 @@ func NewAdminUserHandler(db *gorm.DB) *AdminUserHandler { return &AdminUserHandl
 // GET /api/admin/users
 func (h *AdminUserHandler) List(c fiber.Ctx) error {
 	var users []models.AdminUser
-	h.db.Order("created_at desc").Find(&users)
+	h.db.Order("createdAt desc").Find(&users)
 
 	type UserOut struct {
 		models.AdminUser
@@ -24,7 +24,7 @@ func (h *AdminUserHandler) List(c fiber.Ctx) error {
 	out := make([]UserOut, 0, len(users))
 	for _, u := range users {
 		var ups []models.UserPermission
-		h.db.Preload("Permission").Where("user_id = ?", u.ID).Find(&ups)
+		h.db.Preload("Permission").Where("userId = ?", u.ID).Find(&ups)
 		perms := make([]string, 0, len(ups))
 		for _, up := range ups {
 			if up.Permission != nil {
@@ -89,7 +89,7 @@ func (h *AdminUserHandler) Get(c fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{"error": "user not found"})
 	}
 	var ups []models.UserPermission
-	h.db.Preload("Permission").Where("user_id = ?", id).Find(&ups)
+	h.db.Preload("Permission").Where("userId = ?", id).Find(&ups)
 	perms := make([]string, 0, len(ups))
 	for _, up := range ups {
 		if up.Permission != nil {
@@ -122,7 +122,7 @@ func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 // DELETE /api/admin/users/:id
 func (h *AdminUserHandler) Delete(c fiber.Ctx) error {
 	id := c.Params("id")
-	h.db.Where("user_id = ?", id).Delete(&models.UserPermission{})
+	h.db.Where("userId = ?", id).Delete(&models.UserPermission{})
 	h.db.Delete(&models.AdminUser{}, "id = ?", id)
 	return c.JSON(fiber.Map{"success": true})
 }
@@ -131,7 +131,7 @@ func (h *AdminUserHandler) Delete(c fiber.Ctx) error {
 func (h *AdminUserHandler) GetPermissions(c fiber.Ctx) error {
 	id := c.Params("id")
 	var ups []models.UserPermission
-	h.db.Preload("Permission").Where("user_id = ?", id).Find(&ups)
+	h.db.Preload("Permission").Where("userId = ?", id).Find(&ups)
 	perms := make([]string, 0, len(ups))
 	for _, up := range ups {
 		if up.Permission != nil {
@@ -151,7 +151,7 @@ func (h *AdminUserHandler) SetPermissions(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	// Delete existing
-	h.db.Where("user_id = ?", id).Delete(&models.UserPermission{})
+	h.db.Where("userId = ?", id).Delete(&models.UserPermission{})
 	// Re-add
 	for _, permKey := range body.Permissions {
 		var perm models.Permission

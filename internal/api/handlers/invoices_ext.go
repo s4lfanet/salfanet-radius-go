@@ -30,11 +30,11 @@ func (h *InvoiceExtHandler) List(c fiber.Ctx) error {
 
 	query := h.db.Model(&models.Invoice{}).
 		Preload("User").
-		Order("created_at desc").
+		Order("createdAt desc").
 		Limit(limit)
 
 	if userID != "" {
-		query = query.Where("user_id = ?", userID)
+		query = query.Where("userId = ?", userID)
 	}
 	if status != "" && status != "all" {
 		switch status {
@@ -52,9 +52,9 @@ func (h *InvoiceExtHandler) List(c fiber.Ctx) error {
 			start := time.Date(y, time.Month(m), 1, 0, 0, 0, 0, time.UTC)
 			end := start.AddDate(0, 1, 0)
 			if status == "PAID" {
-				query = query.Where("paid_at >= ? AND paid_at < ?", start, end)
+				query = query.Where("paidAt >= ? AND paidAt < ?", start, end)
 			} else {
-				query = query.Where("created_at >= ? AND created_at < ?", start, end)
+				query = query.Where("createdAt >= ? AND createdAt < ?", start, end)
 			}
 		}
 	}
@@ -143,7 +143,7 @@ func (h *InvoiceExtHandler) Counts(c fiber.Ctx) error {
 		Count  int
 	}
 	var results []Result
-	h.db.Raw(`SELECT user_id AS user_id, COUNT(id) AS count FROM invoices WHERE user_id IN ? AND status IN ('PENDING','OVERDUE') GROUP BY user_id`, userIDs).Scan(&results)
+	h.db.Raw(`SELECT userId AS user_id, COUNT(id) AS count FROM invoices WHERE userId IN ? AND status IN ('PENDING','OVERDUE') GROUP BY userId`, userIDs).Scan(&results)
 
 	countsMap := make(map[string]int)
 	for _, r := range results {
@@ -180,7 +180,7 @@ func (h *InvoiceExtHandler) Generate(c fiber.Ctx) error {
 		// Check if invoice already exists for this month
 		var count int64
 		h.db.Model(&models.Invoice{}).
-			Where("user_id = ? AND invoice_type = ? AND DATE_FORMAT(created_at, '%Y-%m') = ?", user.ID, "MONTHLY", month).
+			Where("userId = ? AND invoice_type = ? AND DATE_FORMAT(createdAt, '%Y-%m') = ?", user.ID, "MONTHLY", month).
 			Count(&count)
 		if count > 0 {
 			skipped++
@@ -230,7 +230,7 @@ func (h *InvoiceExtHandler) SendRemindersBulk(c fiber.Ctx) error {
 // GET /api/invoices/export
 func (h *InvoiceExtHandler) Export(c fiber.Ctx) error {
 	var invoices []models.Invoice
-	h.db.Preload("User").Order("created_at desc").Limit(1000).Find(&invoices)
+	h.db.Preload("User").Order("createdAt desc").Limit(1000).Find(&invoices)
 	return c.JSON(fiber.Map{"success": true, "invoices": invoices, "count": len(invoices)})
 }
 

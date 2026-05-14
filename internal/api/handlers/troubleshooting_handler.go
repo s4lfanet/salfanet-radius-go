@@ -59,7 +59,7 @@ func (troubleshootingMaterial) TableName() string { return "troubleshooting_mate
 // GET /api/troubleshooting/checklists
 func (h *TroubleshootingHandler) ListChecklists(c fiber.Ctx) error {
 	var rows []troubleshootingChecklist
-	h.db.Where("is_active = ?", true).Order("title").Find(&rows)
+	h.db.Where("isActive = ?", true).Order("title").Find(&rows)
 	return c.JSON(fiber.Map{"success": true, "checklists": rows})
 }
 
@@ -87,7 +87,7 @@ func (h *TroubleshootingHandler) ListJobs(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var jobs []troubleshootingJob
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&jobs)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&jobs)
 	return c.JSON(fiber.Map{
 		"success": true, "jobs": jobs,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total},

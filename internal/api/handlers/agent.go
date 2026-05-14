@@ -64,14 +64,14 @@ func (h *AgentHandler) DeleteAgent(c fiber.Ctx) error {
 func (h *AgentHandler) GetAgentSales(c fiber.Ctx) error {
 	id := c.Params("id")
 	var sales []models.AgentSale
-	h.db.Preload("Voucher.Profile").Where("agent_id = ?", id).Order("created_at DESC").Limit(200).Find(&sales)
+	h.db.Preload("Voucher.Profile").Where("agentId = ?", id).Order("createdAt DESC").Limit(200).Find(&sales)
 	return c.JSON(sales)
 }
 
 func (h *AgentHandler) GetAgentDeposits(c fiber.Ctx) error {
 	id := c.Params("id")
 	var deposits []models.AgentDeposit
-	h.db.Where("agent_id = ?", id).Order("created_at DESC").Limit(200).Find(&deposits)
+	h.db.Where("agentId = ?", id).Order("createdAt DESC").Limit(200).Find(&deposits)
 	return c.JSON(deposits)
 }
 
@@ -105,7 +105,7 @@ func (h *AgentHandler) TopupBalance(c fiber.Ctx) error {
 func (h *AgentHandler) ListAgentVouchers(c fiber.Ctx) error {
 	id := c.Params("id")
 	var vouchers []models.HotspotVoucher
-	h.db.Preload("Profile").Where("agent_id = ?", id).Order("created_at DESC").Find(&vouchers)
+	h.db.Preload("Profile").Where("agentId = ?", id).Order("createdAt DESC").Find(&vouchers)
 	return c.JSON(vouchers)
 }
 
@@ -117,9 +117,9 @@ func (h *AgentHandler) Dashboard(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	var salesCount int64
-	h.db.Model(&models.AgentSale{}).Where("agent_id = ?", agentID).Count(&salesCount)
+	h.db.Model(&models.AgentSale{}).Where("agentId = ?", agentID).Count(&salesCount)
 	var depositCount int64
-	h.db.Model(&models.AgentDeposit{}).Where("agent_id = ?", agentID).Count(&depositCount)
+	h.db.Model(&models.AgentDeposit{}).Where("agentId = ?", agentID).Count(&depositCount)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"agent":   agent,
@@ -194,7 +194,7 @@ func (h *AgentHandler) RecordSales(c fiber.Ctx) error {
 func (h *AgentHandler) DepositCheck(c fiber.Ctx) error {
 	agentID, _ := c.Locals("agentID").(string)
 	var deposit models.AgentDeposit
-	h.db.Where("agent_id = ?", agentID).Order("created_at desc").First(&deposit)
+	h.db.Where("agentId = ?", agentID).Order("createdAt desc").First(&deposit)
 	return c.JSON(fiber.Map{"success": true, "deposit": deposit})
 }
 
@@ -237,7 +237,7 @@ func (h *AgentHandler) ListDepositPaymentMethods(c fiber.Ctx) error {
 func (h *AgentHandler) GetAgentNotifications(c fiber.Ctx) error {
 	agentID, _ := c.Locals("agentID").(string)
 	var notifications []models.Notification
-	h.db.Where("user_id = ?", agentID).Order("created_at desc").Limit(50).Find(&notifications)
+	h.db.Where("userId = ?", agentID).Order("createdAt desc").Limit(50).Find(&notifications)
 	return c.JSON(fiber.Map{"success": true, "notifications": notifications})
 }
 
@@ -268,10 +268,10 @@ func (h *AgentHandler) GetAgentTickets(c fiber.Ctx) error {
 	page, limit := pageParams(c)
 	var tickets []map[string]interface{}
 	h.db.Raw(`
-		SELECT t.id, t.subject, t.status, t.priority, t.created_at
+		SELECT t.id, t.subject, t.status, t.priority, t.createdAt
 		FROM tickets t
 		WHERE t.created_by = ? OR t.agent_id = ?
-		ORDER BY t.created_at DESC
+		ORDER BY t.createdAt DESC
 		LIMIT ? OFFSET ?
 	`, agentID, agentID, limit, (page-1)*limit).Scan(&tickets)
 	return c.JSON(fiber.Map{"success": true, "tickets": tickets})

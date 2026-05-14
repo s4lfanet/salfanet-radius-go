@@ -18,13 +18,13 @@ func (h *TechnicianAdminHandler) List(c fiber.Ctx) error {
 	search := c.Query("search")
 	isActiveQ := c.Query("isActive")
 
-	query := h.db.Model(&models.Technician{}).Order("created_at desc")
+	query := h.db.Model(&models.Technician{}).Order("createdAt desc")
 	if search != "" {
 		query = query.Where("name LIKE ? OR phone_number LIKE ? OR email LIKE ?",
 			"%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 	if isActiveQ != "" {
-		query = query.Where("is_active = ?", isActiveQ == "true")
+		query = query.Where("isActive = ?", isActiveQ == "true")
 	}
 
 	var technicians []models.Technician

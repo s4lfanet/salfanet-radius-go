@@ -42,7 +42,7 @@ func (h *TechnicianPortalHandler) RequestOTP(c fiber.Ctx) error {
 	expiry := time.Now().Add(10 * time.Minute)
 
 	// Delete old OTPs for this technician
-	h.db.Where("technician_id = ?", tech.ID).Delete(&models.TechnicianOtp{})
+	h.db.Where("technicianId = ?", tech.ID).Delete(&models.TechnicianOtp{})
 
 	// Create new OTP
 	otpRecord := models.TechnicianOtp{
@@ -151,14 +151,14 @@ func (h *TechnicianPortalHandler) ListWorkOrders(c fiber.Ctx) error {
 	page, limit := pageParams(c)
 	status := c.Query("status")
 
-	q := h.db.Model(&models.WorkOrder{}).Where("technician_id = ?", tech.ID)
+	q := h.db.Model(&models.WorkOrder{}).Where("technicianId = ?", tech.ID)
 	if status != "" {
 		q = q.Where("status = ?", status)
 	}
 	var total int64
 	q.Count(&total)
 	var orders []models.WorkOrder
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&orders)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&orders)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"orders":  orders,
@@ -176,8 +176,8 @@ func (h *TechnicianPortalHandler) ListTasks(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	var orders []models.WorkOrder
-	h.db.Where("technician_id = ? AND status IN ?", tech.ID, []string{"OPEN", "ASSIGNED", "IN_PROGRESS"}).
-		Order("priority desc, created_at asc").Find(&orders)
+	h.db.Where("technicianId = ? AND status IN ?", tech.ID, []string{"OPEN", "ASSIGNED", "IN_PROGRESS"}).
+		Order("priority desc, createdAt asc").Find(&orders)
 	return c.JSON(fiber.Map{"success": true, "tasks": orders})
 }
 
@@ -235,8 +235,8 @@ func (h *TechnicianPortalHandler) FormData(c fiber.Ctx) error {
 	}
 	var areas []models.PppoeArea
 	var profiles []models.PppoeProfile
-	h.db.Where("is_active = ?", true).Find(&areas)
-	h.db.Where("is_active = ?", true).Find(&profiles)
+	h.db.Where("isActive = ?", true).Find(&areas)
+	h.db.Where("isActive = ?", true).Find(&profiles)
 	return c.JSON(fiber.Map{"success": true, "areas": areas, "profiles": profiles})
 }
 
@@ -281,9 +281,9 @@ func (h *TechnicianPortalHandler) ListTickets(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	var tickets []models.Ticket
-	h.db.Where("assigned_to_id = ? OR assigned_to_id IS NULL", tech.ID).
+	h.db.Where("assignedToId = ? OR assignedToId IS NULL", tech.ID).
 		Preload("Customer").Preload("Category").
-		Order("created_at desc").Limit(50).Find(&tickets)
+		Order("createdAt desc").Limit(50).Find(&tickets)
 	return c.JSON(fiber.Map{"success": true, "tickets": tickets})
 }
 

@@ -98,7 +98,7 @@ func (feederCable) TableName() string { return "feeder_cables" }
 // GET /api/network/cables
 func (h *NetworkInfraHandler) ListCables(c fiber.Ctx) error {
 	var cables []networkCable
-	h.db.Order("created_at desc").Find(&cables)
+	h.db.Order("createdAt desc").Find(&cables)
 	return c.JSON(fiber.Map{"success": true, "cables": cables})
 }
 
@@ -130,7 +130,7 @@ func (h *NetworkInfraHandler) UpdateCable(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&networkCable{}).Where("id = ?", c.Params("id")).Updates(body)
 	return c.JSON(fiber.Map{"success": true})
 }
@@ -146,7 +146,7 @@ func (h *NetworkInfraHandler) DeleteCable(c fiber.Ctx) error {
 // GET /api/network/connections
 func (h *NetworkInfraHandler) ListConnections(c fiber.Ctx) error {
 	var conns []networkConnection
-	h.db.Order("created_at desc").Find(&conns)
+	h.db.Order("createdAt desc").Find(&conns)
 	return c.JSON(fiber.Map{"success": true, "connections": conns})
 }
 
@@ -246,7 +246,7 @@ func (h *NetworkInfraHandler) ListSplices(c fiber.Ctx) error {
 	if jointID != "" {
 		q = q.Where("joint_closure_id = ?", jointID)
 	}
-	q.Order("created_at desc").Find(&splices)
+	q.Order("createdAt desc").Find(&splices)
 	return c.JSON(fiber.Map{"success": true, "splices": splices})
 }
 
@@ -291,7 +291,7 @@ func (h *NetworkInfraHandler) DeleteSplice(c fiber.Ctx) error {
 func (h *NetworkInfraHandler) ListJointClosureSplices(c fiber.Ctx) error {
 	id := c.Params("id")
 	var splices []networkSplice
-	h.db.Where("joint_closure_id = ?", id).Order("created_at asc").Find(&splices)
+	h.db.Where("joint_closure_id = ?", id).Order("createdAt asc").Find(&splices)
 	return c.JSON(fiber.Map{"success": true, "splices": splices})
 }
 

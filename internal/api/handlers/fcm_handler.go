@@ -44,9 +44,9 @@ func (h *FCMHandler) RegisterToken(c fiber.Ctx) error {
 	var existing fcmToken
 	if h.db.Where("token = ?", body.Token).First(&existing).Error == nil {
 		h.db.Model(&existing).Updates(map[string]interface{}{
-			"user_id":    body.UserID,
+			"userId":    body.UserID,
 			"platform":   body.Platform,
-			"updated_at": now,
+			"updatedAt": now,
 		})
 		return c.JSON(fiber.Map{"success": true, "message": "FCM token updated"})
 	}

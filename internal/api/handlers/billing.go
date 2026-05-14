@@ -29,7 +29,7 @@ func (h *BillingHandler) ListInvoices(c fiber.Ctx) error {
 		query = query.Where("status = ?", status)
 	}
 	if userID := c.Query("userId"); userID != "" {
-		query = query.Where("user_id = ?", userID)
+		query = query.Where("userId = ?", userID)
 	}
 	if search := c.Query("search"); search != "" {
 		query = query.Where("invoice_number LIKE ? OR customer_name LIKE ?",
@@ -39,7 +39,7 @@ func (h *BillingHandler) ListInvoices(c fiber.Ctx) error {
 	var total int64
 	query.Model(&models.Invoice{}).Count(&total)
 	page, pageSize := pageParams(c)
-	query.Order("created_at DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&invoices)
+	query.Order("createdAt DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&invoices)
 
 	return c.JSON(fiber.Map{"data": invoices, "total": total, "page": page, "pageSize": pageSize})
 }
@@ -165,7 +165,7 @@ func (h *BillingHandler) GenerateMonthlyInvoices(c fiber.Ctx) error {
 
 func (h *BillingHandler) ListManualPayments(c fiber.Ctx) error {
 	var payments []models.ManualPayment
-	h.db.Order("created_at DESC").Limit(200).Find(&payments)
+	h.db.Order("createdAt DESC").Limit(200).Find(&payments)
 	return c.JSON(payments)
 }
 

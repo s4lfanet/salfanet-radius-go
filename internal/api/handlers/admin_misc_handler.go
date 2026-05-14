@@ -39,7 +39,7 @@ func (apkBuild) TableName() string { return "apk_builds" }
 // GET /api/admin/apk/status — latest build status
 func (h *AdminMiscHandler) ApkStatus(c fiber.Ctx) error {
 	var build apkBuild
-	h.db.Order("created_at desc").First(&build)
+	h.db.Order("createdAt desc").First(&build)
 	return c.JSON(fiber.Map{"success": true, "build": build})
 }
 
@@ -103,7 +103,7 @@ func (h *AdminMiscHandler) UpdateCloudflareTunnel(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	var settings cloudflareSettings
 	h.db.FirstOrCreate(&settings, cloudflareSettings{ID: "default"})
 	h.db.Model(&settings).Updates(body)
@@ -140,7 +140,7 @@ func (freeradiusBackup) TableName() string { return "freeradius_backups" }
 // GET /api/admin/system/freeradius-backup
 func (h *AdminMiscHandler) ListFreeradiusBackups(c fiber.Ctx) error {
 	var backups []freeradiusBackup
-	h.db.Order("created_at desc").Limit(50).Find(&backups)
+	h.db.Order("createdAt desc").Limit(50).Find(&backups)
 	return c.JSON(fiber.Map{"success": true, "backups": backups})
 }
 
@@ -164,7 +164,7 @@ func (h *AdminMiscHandler) DownloadFreeradiusBackup(c fiber.Ctx) error {
 	if id != "" {
 		h.db.First(&backup, "id = ?", id)
 	} else {
-		h.db.Order("created_at desc").First(&backup)
+		h.db.Order("createdAt desc").First(&backup)
 	}
 	if backup.ID == "" {
 		return c.Status(404).JSON(fiber.Map{"error": "backup not found"})
@@ -276,8 +276,8 @@ func (h *AdminMiscHandler) Laporan(c fiber.Ctx) error {
 
 	var totalInvoices int64
 	var totalPaid int64
-	h.db.Raw("SELECT COUNT(*) FROM invoices WHERE MONTH(created_at) = ? AND YEAR(created_at) = ?", month, year).Scan(&totalInvoices)
-	h.db.Raw("SELECT COUNT(*) FROM invoices WHERE status = 'PAID' AND MONTH(created_at) = ? AND YEAR(created_at) = ?", month, year).Scan(&totalPaid)
+	h.db.Raw("SELECT COUNT(*) FROM invoices WHERE MONTH(createdAt) = ? AND YEAR(createdAt) = ?", month, year).Scan(&totalInvoices)
+	h.db.Raw("SELECT COUNT(*) FROM invoices WHERE status = 'PAID' AND MONTH(createdAt) = ? AND YEAR(createdAt) = ?", month, year).Scan(&totalPaid)
 
 	return c.JSON(fiber.Map{
 		"success": true,
@@ -368,7 +368,7 @@ func (h *AdminMiscHandler) UpdateMapSettings(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	var settings mapSettings
 	h.db.FirstOrCreate(&settings, mapSettings{ID: "default"})
 	h.db.Model(&settings).Updates(body)

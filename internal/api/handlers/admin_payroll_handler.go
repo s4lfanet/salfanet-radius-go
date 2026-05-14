@@ -69,7 +69,7 @@ func (h *AdminPayrollHandler) List(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var records []payrollRecord
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&records)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&records)
 	return c.JSON(fiber.Map{
 		"success": true, "payroll": records,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total},
@@ -96,7 +96,7 @@ func (h *AdminPayrollHandler) Update(c fiber.Ctx) error {
 	}
 	var body map[string]interface{}
 	c.Bind().JSON(&body)
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&rec).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "payroll": rec})
 }
@@ -174,8 +174,8 @@ func (h *AdminPayrollHandler) Pay(c fiber.Ctx) error {
 	now := time.Now()
 	h.db.Model(&rec).Updates(map[string]interface{}{
 		"status":     "PAID",
-		"paid_at":    now,
-		"updated_at": now,
+		"paidAt":    now,
+		"updatedAt": now,
 	})
 	return c.JSON(fiber.Map{"success": true, "message": "Payroll marked as paid"})
 }

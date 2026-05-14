@@ -25,7 +25,7 @@ func (h *ManualPaymentHandler) List(c fiber.Ctx) error {
 	query := h.db.Preload("Invoice").Preload("PppoeUser")
 
 	if userID := c.Query("userId"); userID != "" {
-		query = query.Where("pppoeUserId = ?", userID)
+		query = query.Where("userId = ?", userID)
 	}
 	if status := c.Query("status"); status != "" {
 		query = query.Where("status = ?", status)
@@ -162,11 +162,11 @@ func (h *ManualPaymentHandler) Review(c fiber.Ctx) error {
 	if err := h.db.Transaction(func(tx *gorm.DB) error {
 		// Update payment status
 		if err := tx.Model(&payment).Updates(map[string]interface{}{
-			"status":      newStatus,
-			"reviewedBy":  reviewer,
-			"reviewedAt":  now,
-			"reviewNotes": body.ReviewNotes,
-			"updatedAt":   now,
+			"status":          newStatus,
+			"approvedBy":      reviewer,
+			"approvedAt":      now,
+			"rejectionReason": body.ReviewNotes,
+			"updatedAt":       now,
 		}).Error; err != nil {
 			return err
 		}

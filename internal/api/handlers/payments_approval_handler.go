@@ -32,7 +32,7 @@ func (h *PaymentsApprovalHandler) List(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var payments []models.Payment
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&payments)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&payments)
 	return c.JSON(fiber.Map{
 		"success":  true,
 		"payments": payments,
@@ -53,12 +53,12 @@ func (h *PaymentsApprovalHandler) Approve(c fiber.Ctx) error {
 	now := time.Now()
 	h.db.Model(&payment).Updates(map[string]interface{}{
 		"status":  "APPROVED",
-		"paid_at": now,
+		"paidAt": now,
 	})
 	// Also mark invoice as paid
 	if payment.InvoiceID != "" {
 		h.db.Model(&models.Invoice{}).Where("id = ?", payment.InvoiceID).
-			Updates(map[string]interface{}{"status": "PAID", "paid_at": now})
+			Updates(map[string]interface{}{"status": "PAID", "paidAt": now})
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "Payment approved"})
 }
@@ -85,7 +85,7 @@ func (h *PaymentsApprovalHandler) ListManual(c fiber.Ctx) error {
 	h.db.Model(&models.ManualPayment{}).Count(&total)
 	var payments []models.ManualPayment
 	h.db.Preload("Invoice").Preload("PppoeUser").
-		Order("created_at desc").
+		Order("createdAt desc").
 		Offset((page-1)*limit).Limit(limit).
 		Find(&payments)
 	return c.JSON(fiber.Map{

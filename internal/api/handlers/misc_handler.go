@@ -163,7 +163,7 @@ func (h *MiscHandler) PppoeUploadPhoto(c fiber.Ctx) error {
 // GET /api/pppoe/users/:id/available-profiles
 func (h *MiscHandler) PppoeAvailableProfiles(c fiber.Ctx) error {
 	var profiles []models.PppoeProfile
-	h.db.Where("is_active = ?", true).Find(&profiles)
+	h.db.Where("isActive = ?", true).Find(&profiles)
 	return c.JSON(fiber.Map{"success": true, "profiles": profiles})
 }
 
@@ -320,7 +320,7 @@ func (h *MiscHandler) CoordinatorStats(c fiber.Ctx) error {
 // GET /api/coordinator/tasks
 func (h *MiscHandler) CoordinatorTasks(c fiber.Ctx) error {
 	var jobs []models.JobAssignment
-	h.db.Where("status != ?", "COMPLETED").Order("priority desc, created_at asc").Limit(100).Find(&jobs)
+	h.db.Where("status != ?", "COMPLETED").Order("priority desc, createdAt asc").Limit(100).Find(&jobs)
 	return c.JSON(fiber.Map{"success": true, "tasks": jobs})
 }
 
@@ -387,7 +387,7 @@ func (h *MiscHandler) UpdateEmailSettings(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	delete(body, "id")
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&settings).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "settings": settings})
 }
@@ -408,7 +408,7 @@ func (h *MiscHandler) UpdateGenieacsSettings(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	delete(body, "id")
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&settings).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "settings": settings})
 }
@@ -498,7 +498,7 @@ func (h *MiscHandler) PaymentGatewayWebhookLogs(c fiber.Ctx) error {
 // GET /api/inventory/variance — low-stock report
 func (h *MiscHandler) InventoryVariance(c fiber.Ctx) error {
 	var items []models.InventoryItem
-	h.db.Where("current_stock <= minimum_stock AND is_active = ?", true).Find(&items)
+	h.db.Where("currentStock <= minimumStock AND isActive = ?", true).Find(&items)
 	return c.JSON(fiber.Map{"success": true, "lowStockItems": items, "count": len(items)})
 }
 
@@ -535,7 +535,7 @@ func (h *MiscHandler) AdminAgentDeposits(c fiber.Ctx) error {
 		q = q.Where("status = ?", status)
 	}
 	var deposits []map[string]interface{}
-	q.Order("created_at desc").Limit(limit).Offset((page - 1) * limit).Scan(&deposits)
+	q.Order("createdAt desc").Limit(limit).Offset((page - 1) * limit).Scan(&deposits)
 	var total int64
 	q.Count(&total)
 	return c.JSON(fiber.Map{"success": true, "deposits": deposits, "total": total})

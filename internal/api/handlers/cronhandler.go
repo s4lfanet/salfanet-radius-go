@@ -21,7 +21,7 @@ func NewCronHandler(db *gorm.DB, scheduler *cron.Scheduler) *CronHandler {
 func (h *CronHandler) ListHistory(c fiber.Ctx) error {
 	var history []models.CronHistory
 	page, pageSize := pageParams(c)
-	h.db.Order("started_at DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&history)
+	h.db.Order("startedAt DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&history)
 	return c.JSON(history)
 }
 
@@ -46,7 +46,7 @@ func (h *CronHandler) Info(c fiber.Ctx) error {
 // GET /api/cron/status — detailed scheduler status
 func (h *CronHandler) Status(c fiber.Ctx) error {
 	var lastRun models.CronHistory
-	h.db.Order("started_at desc").First(&lastRun)
+	h.db.Order("startedAt desc").First(&lastRun)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"running": true,

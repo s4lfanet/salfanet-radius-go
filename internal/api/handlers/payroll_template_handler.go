@@ -35,7 +35,7 @@ func (payrollTemplateRow) TableName() string { return "payroll_templates" }
 // GET /api/payroll-templates
 func (h *PayrollTemplateHandler) List(c fiber.Ctx) error {
 	var rows []payrollTemplateRow
-	h.db.Order("created_at desc").Find(&rows)
+	h.db.Order("createdAt desc").Find(&rows)
 	return c.JSON(fiber.Map{"success": true, "templates": rows})
 }
 
@@ -73,7 +73,7 @@ func (h *PayrollTemplateHandler) Update(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&row).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "template": row})
 }
@@ -91,7 +91,7 @@ func (h *PayrollTemplateHandler) Delete(c fiber.Ctx) error {
 // POST /api/payroll-templates/:id/default
 func (h *PayrollTemplateHandler) SetDefault(c fiber.Ctx) error {
 	id := c.Params("id")
-	h.db.Model(&payrollTemplateRow{}).Where("is_default = ?", true).Update("is_default", false)
-	h.db.Model(&payrollTemplateRow{}).Where("id = ?", id).Update("is_default", true)
+	h.db.Model(&payrollTemplateRow{}).Where("isDefault = ?", true).Update("isDefault", false)
+	h.db.Model(&payrollTemplateRow{}).Where("id = ?", id).Update("isDefault", true)
 	return c.JSON(fiber.Map{"success": true, "message": "Default payroll template updated"})
 }

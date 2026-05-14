@@ -33,14 +33,14 @@ func (h *PublicHandler) GetCompany(c fiber.Ctx) error {
 // GET /api/public/areas
 func (h *PublicHandler) GetAreas(c fiber.Ctx) error {
 	var areas []models.PppoeArea
-	h.db.Where("is_active = ?", true).Find(&areas)
+	h.db.Where("isActive = ?", true).Find(&areas)
 	return c.JSON(fiber.Map{"success": true, "areas": areas})
 }
 
 // GET /api/public/profiles
 func (h *PublicHandler) GetProfiles(c fiber.Ctx) error {
 	var profiles []models.PppoeProfile
-	h.db.Where("is_active = ?", true).Find(&profiles)
+	h.db.Where("isActive = ?", true).Find(&profiles)
 	return c.JSON(fiber.Map{"success": true, "profiles": profiles})
 }
 
@@ -59,7 +59,7 @@ func (h *PublicHandler) GetStats(c fiber.Ctx) error {
 // GET /api/public/payment-gateways
 func (h *PublicHandler) GetPaymentGateways(c fiber.Ctx) error {
 	var gateways []models.PaymentGateway
-	h.db.Where("is_active = ?", true).Select("id,provider,is_active,is_production,client_key,merchant_code,base_url").Find(&gateways)
+	h.db.Where("isActive = ?", true).Select("id,provider,is_active,is_production,client_key,merchant_code,base_url").Find(&gateways)
 	return c.JSON(fiber.Map{"success": true, "gateways": gateways})
 }
 

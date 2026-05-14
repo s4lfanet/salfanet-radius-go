@@ -20,7 +20,7 @@ func (h *PushHandler) ListBroadcasts(c fiber.Ctx) error {
 		limit = v
 	}
 	var notifs []models.Notification
-	h.db.Where("type = ?", "BROADCAST").Order("created_at desc").Limit(limit).Find(&notifs)
+	h.db.Where("type = ?", "BROADCAST").Order("createdAt desc").Limit(limit).Find(&notifs)
 	return c.JSON(fiber.Map{"success": true, "broadcasts": notifs})
 }
 
@@ -41,7 +41,7 @@ func (h *PushHandler) Send(c fiber.Ctx) error {
 
 	query := h.db.Model(&models.PushSubscription{})
 	if len(body.UserIDs) > 0 {
-		query = query.Where("user_id IN ?", body.UserIDs)
+		query = query.Where("userId IN ?", body.UserIDs)
 	}
 	var subs []models.PushSubscription
 	query.Find(&subs)

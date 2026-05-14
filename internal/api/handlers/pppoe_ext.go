@@ -144,7 +144,7 @@ func (h *PppoeExtHandler) SyncMikrotik(c fiber.Ctx) error {
 func (h *PppoeExtHandler) UserActivity(c fiber.Ctx) error {
 	id := c.Params("id")
 	var logs []models.ActivityLog
-	h.db.Where("user_id = ?", id).Order("created_at desc").Limit(50).Find(&logs)
+	h.db.Where("userId = ?", id).Order("createdAt desc").Limit(50).Find(&logs)
 	return c.JSON(fiber.Map{"success": true, "logs": logs})
 }
 
@@ -186,7 +186,7 @@ func (h *PppoeExtHandler) MarkPaid(c fiber.Ctx) error {
 	now := time.Now()
 	result := h.db.Model(&models.Invoice{}).
 		Where("id = ? AND user_id = ?", body.InvoiceID, id).
-		Updates(map[string]interface{}{"status": "PAID", "paid_at": now})
+		Updates(map[string]interface{}{"status": "PAID", "paidAt": now})
 	if result.RowsAffected == 0 {
 		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
 	}
@@ -243,7 +243,7 @@ func (h *PppoeExtHandler) SyncProfilesMikrotik(c fiber.Ctx) error {
 // POST /api/pppoe/profiles/sync-radius — sync profiles to RADIUS
 func (h *PppoeExtHandler) SyncProfilesRadius(c fiber.Ctx) error {
 	var profiles []models.PppoeProfile
-	h.db.Where("is_active = ?", true).Find(&profiles)
+	h.db.Where("isActive = ?", true).Find(&profiles)
 	synced := len(profiles)
 	return c.JSON(fiber.Map{"success": true, "synced": synced, "message": fmt.Sprintf("synced %d profiles", synced)})
 }
@@ -282,10 +282,10 @@ func (h *PppoeExtHandler) ListUsersWithFilters(c fiber.Ctx) error {
 		q = q.Where("status = ?", status)
 	}
 	if areaID != "" {
-		q = q.Where("area_id = ?", areaID)
+		q = q.Where("areaId = ?", areaID)
 	}
 	if profileID != "" {
-		q = q.Where("profile_id = ?", profileID)
+		q = q.Where("profileId = ?", profileID)
 	}
 	if subscriptionType != "" {
 		q = q.Where("subscription_type = ?", subscriptionType)
@@ -299,7 +299,7 @@ func (h *PppoeExtHandler) ListUsersWithFilters(c fiber.Ctx) error {
 	q.Count(&total)
 
 	var users []models.PppoeUser
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&users)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&users)
 
 	return c.JSON(fiber.Map{
 		"success": true,

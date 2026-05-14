@@ -31,7 +31,7 @@ func (h *PushExtHandler) AgentSubscribe(c fiber.Ctx) error {
 	}
 
 	// Delete existing subscription for this agent
-	h.db.Where("agent_id = ? AND endpoint = ?", body.AgentID, body.Endpoint).
+	h.db.Where("agentId = ? AND endpoint = ?", body.AgentID, body.Endpoint).
 		Delete(&models.AgentPushSubscription{})
 
 	sub := models.AgentPushSubscription{
@@ -75,7 +75,7 @@ func (h *PushExtHandler) TechnicianSubscribe(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "technicianId and endpoint required"})
 	}
 
-	h.db.Where("technician_id = ? AND endpoint = ?", body.TechnicianID, body.Endpoint).
+	h.db.Where("technicianId = ? AND endpoint = ?", body.TechnicianID, body.Endpoint).
 		Delete(&models.TechnicianPushSubscription{})
 
 	sub := models.TechnicianPushSubscription{

@@ -153,7 +153,7 @@ func (h *PPPoEHandler) ListUsers(c fiber.Ctx) error {
 		query = query.Where("status = ?", status)
 	}
 	if areaID := c.Query("areaId"); areaID != "" {
-		query = query.Where("area_id = ?", areaID)
+		query = query.Where("areaId = ?", areaID)
 	}
 	if search := c.Query("search"); search != "" {
 		query = query.Where("username LIKE ? OR name LIKE ? OR phone LIKE ?",
@@ -284,7 +284,7 @@ func (h *PPPoEHandler) GetUserSessions(c fiber.Ctx) error {
 func (h *PPPoEHandler) GetUserInvoices(c fiber.Ctx) error {
 	id := c.Params("id")
 	var invoices []models.Invoice
-	h.db.Where("user_id = ?", id).Order("created_at DESC").Find(&invoices)
+	h.db.Where("userId = ?", id).Order("createdAt DESC").Find(&invoices)
 	return c.JSON(invoices)
 }
 
@@ -395,7 +395,7 @@ func (h *PPPoEHandler) SyncToRadius(c fiber.Ctx) error {
 
 func (h *PPPoEHandler) ListRegistrations(c fiber.Ctx) error {
 	status := c.Query("status")
-	q := h.db.Preload("Area").Preload("Profile").Order("created_at DESC")
+	q := h.db.Preload("Area").Preload("Profile").Order("createdAt DESC")
 	if status != "" && status != "all" {
 		q = q.Where("status = ?", status)
 	}

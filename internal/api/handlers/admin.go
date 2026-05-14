@@ -44,7 +44,7 @@ func (h *AdminHandler) Stats(c fiber.Ctx) error {
 	startOfMonth := time.Now().Truncate(24*time.Hour).AddDate(0, 0, -time.Now().Day()+1)
 	var monthRevenue int64
 	h.db.Model(&models.Invoice{}).
-		Where("status = ? AND paid_at >= ?", "PAID", startOfMonth).
+		Where("status = ? AND paidAt >= ?", "PAID", startOfMonth).
 		Select("COALESCE(SUM(amount), 0)").Scan(&monthRevenue)
 
 	return c.JSON(fiber.Map{
@@ -84,13 +84,13 @@ func (h *AdminHandler) RevenueChart(c fiber.Ctx) error {
 
 	var rows []monthRevenue
 	h.db.Raw(`
-		SELECT DATE_FORMAT(paid_at, '%Y-%m') as month,
+		SELECT DATE_FORMAT(paidAt, '%Y-%m') as month,
 		       SUM(amount) as revenue,
 		       COUNT(*) as count
 		FROM invoices
 		WHERE status = 'PAID'
-		  AND paid_at >= DATE_SUB(NOW(), INTERVAL ? MONTH)
-		GROUP BY DATE_FORMAT(paid_at, '%Y-%m')
+		  AND paidAt >= DATE_SUB(NOW(), INTERVAL ? MONTH)
+		GROUP BY DATE_FORMAT(paidAt, '%Y-%m')
 		ORDER BY month ASC
 	`, months).Scan(&rows)
 
@@ -101,7 +101,7 @@ func (h *AdminHandler) RevenueChart(c fiber.Ctx) error {
 // GET /api/admin/activity
 func (h *AdminHandler) Activity(c fiber.Ctx) error {
 	var cronHistory []models.CronHistory
-	h.db.Order("started_at DESC").Limit(20).Find(&cronHistory)
+	h.db.Order("startedAt DESC").Limit(20).Find(&cronHistory)
 
 	return c.JSON(fiber.Map{
 		"cronJobs": cronHistory,

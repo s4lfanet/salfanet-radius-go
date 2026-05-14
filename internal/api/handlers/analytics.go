@@ -22,18 +22,18 @@ func (h *AnalyticsHandler) GetAnalytics(c fiber.Ctx) error {
 	}
 
 	var revenue []MonthlyRevenue
-	h.db.Raw(`SELECT DATE_FORMAT(paid_at, '%Y-%m') as month, SUM(amount) as revenue
-		FROM invoices WHERE status = 'PAID' AND paid_at IS NOT NULL
-		AND paid_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-		GROUP BY DATE_FORMAT(paid_at, '%Y-%m')
+	h.db.Raw(`SELECT DATE_FORMAT(paidAt, '%Y-%m') as month, SUM(amount) as revenue
+		FROM invoices WHERE status = 'PAID' AND paidAt IS NOT NULL
+		AND paidAt >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+		GROUP BY DATE_FORMAT(paidAt, '%Y-%m')
 		ORDER BY month`).Scan(&revenue)
 
 	var growth []CustomerGrowth
-	h.db.Raw(`SELECT DATE_FORMAT(created_at, '%Y-%m') as month,
+	h.db.Raw(`SELECT DATE_FORMAT(createdAt, '%Y-%m') as month,
 		COUNT(id) as total
 		FROM pppoe_users
-		WHERE created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
-		GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+		WHERE createdAt >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+		GROUP BY DATE_FORMAT(createdAt, '%Y-%m')
 		ORDER BY month`).Scan(&growth)
 
 	var totalRevenue, paidCount, pendingCount, overdueCount struct{ Val float64 }

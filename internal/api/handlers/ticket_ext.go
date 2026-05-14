@@ -79,7 +79,7 @@ func (h *TicketExtHandler) ListMessages(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "ticketId required"})
 	}
 	var replies []models.TicketReply
-	h.db.Where("ticket_id = ?", ticketID).Order("created_at asc").Find(&replies)
+	h.db.Where("ticket_id = ?", ticketID).Order("createdAt asc").Find(&replies)
 	return c.JSON(fiber.Map{"success": true, "messages": replies})
 }
 
@@ -95,10 +95,10 @@ func (h *TicketExtHandler) ListDispatch(c fiber.Ctx) error {
 	}
 	var tickets []models.Ticket
 	var total int64
-	h.db.Model(&models.Ticket{}).Where("assigned_to_id IS NULL AND status = ?", "OPEN").Count(&total)
+	h.db.Model(&models.Ticket{}).Where("assignedToId IS NULL AND status = ?", "OPEN").Count(&total)
 	h.db.Preload("Category").Preload("Customer").
-		Where("assigned_to_id IS NULL AND status = ?", "OPEN").
-		Order("created_at desc").
+		Where("assignedToId IS NULL AND status = ?", "OPEN").
+		Order("createdAt desc").
 		Offset((page - 1) * limit).Limit(limit).
 		Find(&tickets)
 	return c.JSON(fiber.Map{
@@ -126,7 +126,7 @@ func (h *TicketExtHandler) Dispatch(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "ticketId required"})
 	}
 	h.db.Model(&models.Ticket{}).Where("id = ?", body.TicketID).
-		Updates(map[string]interface{}{"assigned_to_id": body.TechnicianID})
+		Updates(map[string]interface{}{"assignedToId": body.TechnicianID})
 	return c.JSON(fiber.Map{"success": true, "message": "ticket dispatched"})
 }
 

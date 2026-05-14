@@ -16,7 +16,7 @@ func NewVoucherTemplateHandler(db *gorm.DB) *VoucherTemplateHandler {
 // GET /api/voucher-templates
 func (h *VoucherTemplateHandler) List(c fiber.Ctx) error {
 	var templates []models.VoucherTemplate
-	h.db.Order("created_at desc").Find(&templates)
+	h.db.Order("createdAt desc").Find(&templates)
 	return c.JSON(fiber.Map{"success": true, "templates": templates})
 }
 
@@ -43,7 +43,7 @@ func (h *VoucherTemplateHandler) Create(c fiber.Ctx) error {
 		isActive = *body.IsActive
 	}
 	if isDefault {
-		h.db.Model(&models.VoucherTemplate{}).Where("is_default = ?", true).Update("is_default", false)
+		h.db.Model(&models.VoucherTemplate{}).Where("isDefault = ?", true).Update("isDefault", false)
 	}
 	tpl := models.VoucherTemplate{
 		ID:           generateID(),
@@ -76,7 +76,7 @@ func (h *VoucherTemplateHandler) Update(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	if isDefault, ok := body["isDefault"].(bool); ok && isDefault {
-		h.db.Model(&models.VoucherTemplate{}).Where("is_default = ? AND id != ?", true, id).Update("is_default", false)
+		h.db.Model(&models.VoucherTemplate{}).Where("is_default = ? AND id != ?", true, id).Update("isDefault", false)
 	}
 	delete(body, "id")
 	h.db.Model(&models.VoucherTemplate{}).Where("id = ?", id).Updates(body)

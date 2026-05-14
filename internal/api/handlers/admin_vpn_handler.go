@@ -82,7 +82,7 @@ func (h *AdminVPNHandler) ListClients(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var clients []vpnClient
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&clients)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&clients)
 	return c.JSON(fiber.Map{
 		"success": true, "clients": clients,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total},
@@ -124,7 +124,7 @@ func (h *AdminVPNHandler) UpdateClient(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&client).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "client": client})
 }
@@ -143,14 +143,14 @@ func (h *AdminVPNHandler) DeleteClient(c fiber.Ctx) error {
 func (h *AdminVPNHandler) ApproveClient(c fiber.Ctx) error {
 	now := time.Now()
 	h.db.Model(&vpnClient{}).Where("id = ?", c.Params("id")).
-		Updates(map[string]interface{}{"status": "ACTIVE", "approved_at": now, "updated_at": now})
+		Updates(map[string]interface{}{"status": "ACTIVE", "approvedAt": now, "updatedAt": now})
 	return c.JSON(fiber.Map{"success": true, "message": "VPN client approved"})
 }
 
 // POST /api/admin/vpn/clients/:id/reject
 func (h *AdminVPNHandler) RejectClient(c fiber.Ctx) error {
 	h.db.Model(&vpnClient{}).Where("id = ?", c.Params("id")).
-		Updates(map[string]interface{}{"status": "REJECTED", "updated_at": time.Now()})
+		Updates(map[string]interface{}{"status": "REJECTED", "updatedAt": time.Now()})
 	return c.JSON(fiber.Map{"success": true, "message": "VPN client rejected"})
 }
 
@@ -214,7 +214,7 @@ func (h *AdminVPNHandler) UpdateSettings(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	var settings vpnSettings
 	h.db.FirstOrCreate(&settings)
 	h.db.Model(&settings).Updates(body)
@@ -224,7 +224,7 @@ func (h *AdminVPNHandler) UpdateSettings(c fiber.Ctx) error {
 // GET /api/admin/vpn/sites
 func (h *AdminVPNHandler) ListSites(c fiber.Ctx) error {
 	var sites []vpnSite
-	h.db.Order("created_at desc").Find(&sites)
+	h.db.Order("createdAt desc").Find(&sites)
 	return c.JSON(fiber.Map{"success": true, "sites": sites})
 }
 
@@ -260,7 +260,7 @@ func (h *AdminVPNHandler) UpdateSite(c fiber.Ctx) error {
 	}
 	var body map[string]interface{}
 	c.Bind().JSON(&body)
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&site).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "site": site})
 }

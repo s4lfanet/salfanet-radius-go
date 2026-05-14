@@ -27,7 +27,7 @@ func (h *BackupHandler) History(c fiber.Ctx) error {
 		limit = v
 	}
 	var histories []models.BackupHistory
-	h.db.Order("created_at desc").Limit(limit).Find(&histories)
+	h.db.Order("createdAt desc").Limit(limit).Find(&histories)
 	return c.JSON(fiber.Map{"success": true, "backups": histories})
 }
 

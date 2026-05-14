@@ -50,14 +50,14 @@ func (h *CustomerExtHandler) GetInvoices(c fiber.Ctx) error {
 	status := c.Query("status")
 	page, limit := pageParams(c)
 
-	q := h.db.Model(&models.Invoice{}).Where("user_id = ?", userID)
+	q := h.db.Model(&models.Invoice{}).Where("userId = ?", userID)
 	if status != "" {
 		q = q.Where("status = ?", strings.ToUpper(status))
 	}
 	var total int64
 	q.Count(&total)
 	var invoices []models.Invoice
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&invoices)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&invoices)
 	return c.JSON(fiber.Map{
 		"success":  true,
 		"invoices": invoices,
@@ -149,14 +149,14 @@ func (h *CustomerExtHandler) GetNotifications(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	var notifs []models.Notification
-	h.db.Order("created_at desc").Limit(50).Find(&notifs)
+	h.db.Order("createdAt desc").Limit(50).Find(&notifs)
 	return c.JSON(fiber.Map{"success": true, "notifications": notifs})
 }
 
 // GET /api/customer/products — available packages/profiles
 func (h *CustomerExtHandler) GetProducts(c fiber.Ctx) error {
 	var profiles []models.PppoeProfile
-	h.db.Where("is_active = ?", true).Find(&profiles)
+	h.db.Where("isActive = ?", true).Find(&profiles)
 	return c.JSON(fiber.Map{"success": true, "products": profiles})
 }
 
@@ -222,8 +222,8 @@ func (h *CustomerExtHandler) Renewal(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	var invoice models.Invoice
-	err := h.db.Where("user_id = ? AND status = ?", userID, "PENDING").
-		Order("due_date asc").First(&invoice).Error
+	err := h.db.Where("userId = ? AND status = ?", userID, "PENDING").
+		Order("dueDate asc").First(&invoice).Error
 	if err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "no pending invoice found"})
 	}
@@ -257,8 +257,8 @@ func (h *CustomerExtHandler) ListTickets(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	var tickets []models.Ticket
-	h.db.Where("customer_id = ?", userID).
-		Preload("Category").Order("created_at desc").Find(&tickets)
+	h.db.Where("customerId = ?", userID).
+		Preload("Category").Order("createdAt desc").Find(&tickets)
 	return c.JSON(fiber.Map{"success": true, "tickets": tickets})
 }
 
@@ -322,7 +322,7 @@ func (h *CustomerExtHandler) GetTicket(c fiber.Ctx) error {
 		return c.Status(404).JSON(fiber.Map{"error": "ticket not found"})
 	}
 	var replies []models.TicketReply
-	h.db.Where("ticket_id = ?", id).Order("created_at asc").Find(&replies)
+	h.db.Where("ticket_id = ?", id).Order("createdAt asc").Find(&replies)
 	return c.JSON(fiber.Map{"success": true, "ticket": ticket, "replies": replies})
 }
 

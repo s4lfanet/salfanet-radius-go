@@ -36,10 +36,10 @@ func (h *CustomerPortalExt2Handler) GetPayments(c fiber.Ctx) error {
 	}
 	page, limit := pageParams(c)
 	var total int64
-	h.db.Model(&models.Invoice{}).Where("user_id = ?", userID).Count(&total)
+	h.db.Model(&models.Invoice{}).Where("userId = ?", userID).Count(&total)
 	var invoices []models.Invoice
-	h.db.Where("user_id = ?", userID).
-		Order("created_at desc").
+	h.db.Where("userId = ?", userID).
+		Order("createdAt desc").
 		Offset((page - 1) * limit).Limit(limit).
 		Find(&invoices)
 	return c.JSON(fiber.Map{
@@ -107,7 +107,7 @@ func (h *CustomerPortalExt2Handler) UploadPaymentProof(c fiber.Ctx) error {
 // GET /api/customer/payment-methods — list active payment gateways
 func (h *CustomerPortalExt2Handler) GetPaymentMethods(c fiber.Ctx) error {
 	var gateways []models.PaymentGateway
-	h.db.Where("is_active = ?", true).Find(&gateways)
+	h.db.Where("isActive = ?", true).Find(&gateways)
 	// Sanitize: strip server keys
 	type SafeGateway struct {
 		ID           string  `json:"id"`
@@ -135,7 +135,7 @@ func (h *CustomerPortalExt2Handler) MarkNotificationRead(c fiber.Ctx) error {
 	notifID := c.Params("id")
 	if err := h.db.Model(&models.Notification{}).
 		Where("id = ?", notifID).
-		Update("is_read", true).Error; err != nil {
+		Update("isRead", true).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "failed to update"})
 	}
 	return c.JSON(fiber.Map{"success": true})
@@ -234,7 +234,7 @@ func (h *CustomerPortalExt2Handler) CreateReferral(c fiber.Ctx) error {
 	}
 	// Check no existing reward
 	var existing models.ReferralReward
-	if err := h.db.Where("referred_id = ?", userID).First(&existing).Error; err == nil {
+	if err := h.db.Where("referredId = ?", userID).First(&existing).Error; err == nil {
 		return c.Status(409).JSON(fiber.Map{"error": "referral already registered"})
 	}
 	reward := models.ReferralReward{
@@ -260,9 +260,9 @@ func (h *CustomerPortalExt2Handler) GetReferralRewards(c fiber.Ctx) error {
 		return c.Status(401).JSON(fiber.Map{"error": "unauthorized"})
 	}
 	var rewards []models.ReferralReward
-	h.db.Where("referrer_id = ?", userID).
+	h.db.Where("referrerId = ?", userID).
 		Preload("Referred").
-		Order("created_at desc").
+		Order("createdAt desc").
 		Find(&rewards)
 	return c.JSON(fiber.Map{"success": true, "rewards": rewards})
 }

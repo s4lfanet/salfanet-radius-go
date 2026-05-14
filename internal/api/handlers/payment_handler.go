@@ -46,7 +46,7 @@ func (h *PaymentHandler) CreatePayment(c fiber.Ctx) error {
 
 	// Look up active gateway
 	var gateway models.PaymentGateway
-	q := h.db.Where("is_active = ?", true)
+	q := h.db.Where("isActive = ?", true)
 	if body.Method != "" {
 		q = q.Where("provider = ?", body.Method)
 	}
@@ -143,7 +143,7 @@ func (h *PaymentHandler) Webhook(c fiber.Ctx) error {
 		now := time.Now()
 		h.db.Model(&invoice).Updates(map[string]interface{}{
 			"status":  "PAID",
-			"paid_at": now,
+			"paidAt": now,
 		})
 	case "expire", "cancel", "EXPIRED":
 		h.db.Model(&invoice).Update("status", "EXPIRED")
@@ -155,6 +155,6 @@ func (h *PaymentHandler) Webhook(c fiber.Ctx) error {
 // GET /api/payment/gateways — list all payment gateways (public, for checkout UI)
 func (h *PaymentHandler) ListGateways(c fiber.Ctx) error {
 	var gateways []models.PaymentGateway
-	h.db.Where("is_active = ?", true).Order("created_at").Find(&gateways)
+	h.db.Where("isActive = ?", true).Order("createdAt").Find(&gateways)
 	return c.JSON(fiber.Map{"success": true, "gateways": gateways})
 }

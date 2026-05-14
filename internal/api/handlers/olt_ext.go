@@ -17,7 +17,7 @@ func (h *OltExtHandler) ListAlerts(c fiber.Ctx) error {
 	severity := c.Query("severity")
 	isResolved := c.Query("isResolved")
 
-	query := h.db.Model(&models.OLTAlert{}).Order("created_at desc").Limit(200)
+	query := h.db.Model(&models.OLTAlert{}).Order("createdAt desc").Limit(200)
 	if oltID != "" {
 		query = query.Where("olt_id = ?", oltID)
 	}
@@ -25,7 +25,7 @@ func (h *OltExtHandler) ListAlerts(c fiber.Ctx) error {
 		query = query.Where("severity = ?", severity)
 	}
 	if isResolved != "" {
-		query = query.Where("is_resolved = ?", isResolved == "true")
+		query = query.Where("isResolved = ?", isResolved == "true")
 	}
 
 	var alerts []models.OLTAlert
@@ -56,7 +56,7 @@ func (h *OltExtHandler) ResolveAlert(c fiber.Ctx) error {
 // GET /api/olt/monitoring
 func (h *OltExtHandler) Monitoring(c fiber.Ctx) error {
 	var unresolved int64
-	h.db.Model(&models.OLTAlert{}).Where("is_resolved = ?", false).Count(&unresolved)
+	h.db.Model(&models.OLTAlert{}).Where("isResolved = ?", false).Count(&unresolved)
 
 	var olts []models.NetworkOLT
 	h.db.Select("id,name,ip_address,status,is_online,total_onu,online_onu,offline_onu").Find(&olts)

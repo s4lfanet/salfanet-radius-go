@@ -34,7 +34,7 @@ func (h *NetworkHandler) UpdateRouter(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	delete(body, "id")
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&router).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "router": router})
 }
@@ -321,7 +321,7 @@ func (h *NetworkHandler) AssignCustomer(c fiber.Ctx) error {
 		"port_number": body.PortNumber,
 		"distance":    dist,
 		"notes":       notes,
-		"updated_at":  time.Now(),
+		"updatedAt":  time.Now(),
 	})
 	return c.JSON(fiber.Map{"success": true, "assignment": existing})
 }

@@ -29,14 +29,14 @@ func (h *ReferralHandler) List(c fiber.Ctx) error {
 	query := h.db.Model(&models.ReferralReward{}).
 		Preload("Referrer").
 		Preload("Referred").
-		Order("created_at desc")
+		Order("createdAt desc")
 
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}
 	if search != "" {
-		query = query.Joins("LEFT JOIN pppoe_users r1 ON r1.id = referral_rewards.referrer_id").
-			Joins("LEFT JOIN pppoe_users r2 ON r2.id = referral_rewards.referred_id").
+		query = query.Joins("LEFT JOIN pppoe_users r1 ON r1.id = referral_rewards.referrerId").
+			Joins("LEFT JOIN pppoe_users r2 ON r2.id = referral_rewards.referredId").
 			Where("r1.name LIKE ? OR r1.username LIKE ? OR r2.name LIKE ? OR r2.username LIKE ?",
 				"%"+search+"%", "%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}

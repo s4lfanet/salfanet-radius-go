@@ -377,23 +377,26 @@ type WhatsappTemplate struct {
 func (WhatsappTemplate) TableName() string { return "whatsapp_templates" }
 
 // ─── ManualPayment ────────────────────────────────────────────────────────────
+// NOTE: DB columns use original Prisma camelCase names; explicit tags needed where
+// the Go field name would otherwise map to the wrong column name.
 
 type ManualPayment struct {
-	ID           string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	InvoiceID    string     `gorm:"index" json:"invoiceId"`
-	PppoeUserID  string     `gorm:"index" json:"pppoeUserId"`
-	Amount       float64    `json:"amount"`
-	BankName     string     `json:"bankName"`
-	AccountName  string     `json:"accountName"`
-	TransferDate time.Time  `json:"transferDate"`
-	ProofImage   *string    `json:"proofImage"`
-	Notes        *string    `gorm:"type:text" json:"notes"`
-	Status       string     `gorm:"default:PENDING;index" json:"status"`
-	ReviewedBy   *string    `json:"reviewedBy"`
-	ReviewedAt   *time.Time `json:"reviewedAt"`
-	ReviewNotes  *string    `gorm:"type:text" json:"reviewNotes"`
-	CreatedAt    time.Time  `json:"createdAt"`
-	UpdatedAt    time.Time  `json:"updatedAt"`
+	ID            string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	InvoiceID     string     `gorm:"column:invoiceId;index" json:"invoiceId"`
+	PppoeUserID   string     `gorm:"column:userId;index" json:"pppoeUserId"` // DB column: userId
+	Amount        float64    `json:"amount"`
+	BankName      string     `gorm:"column:bankName" json:"bankName"`
+	AccountName   string     `gorm:"column:accountName" json:"accountName"`
+	AccountNumber *string    `gorm:"column:accountNumber" json:"accountNumber"`
+	TransferDate  time.Time  `gorm:"column:paymentDate" json:"transferDate"` // DB column: paymentDate
+	ProofImage    *string    `gorm:"column:receiptImage" json:"proofImage"`  // DB column: receiptImage
+	Notes         *string    `gorm:"type:text" json:"notes"`
+	Status        string     `gorm:"default:PENDING;index" json:"status"`
+	ReviewedBy    *string    `gorm:"column:approvedBy" json:"reviewedBy"`                 // DB column: approvedBy
+	ReviewedAt    *time.Time `gorm:"column:approvedAt" json:"reviewedAt"`                 // DB column: approvedAt
+	ReviewNotes   *string    `gorm:"column:rejectionReason;type:text" json:"reviewNotes"` // DB column: rejectionReason
+	CreatedAt     time.Time  `json:"createdAt"`
+	UpdatedAt     time.Time  `json:"updatedAt"`
 
 	Invoice   *Invoice   `gorm:"foreignKey:InvoiceID" json:"invoice,omitempty"`
 	PppoeUser *PppoeUser `gorm:"foreignKey:PppoeUserID" json:"pppoeUser,omitempty"`

@@ -29,7 +29,7 @@ func (h *ActivityLogHandler) List(c fiber.Ctx) error {
 	status := c.Query("status")
 	search := c.Query("search")
 
-	query := h.db.Model(&models.ActivityLog{}).Order("created_at desc")
+	query := h.db.Model(&models.ActivityLog{}).Order("createdAt desc")
 	if module != "" {
 		query = query.Where("module = ?", module)
 	}

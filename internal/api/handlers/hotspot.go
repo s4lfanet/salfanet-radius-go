@@ -67,13 +67,13 @@ func (h *HotspotHandler) ListVouchers(c fiber.Ctx) error {
 		query = query.Where("status = ?", status)
 	}
 	if batchID := c.Query("batchId"); batchID != "" {
-		query = query.Where("batch_id = ?", batchID)
+		query = query.Where("batchCode = ?", batchID)
 	}
 
 	var total int64
 	query.Model(&models.HotspotVoucher{}).Count(&total)
 	page, pageSize := pageParams(c)
-	query.Order("created_at DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&vouchers)
+	query.Order("createdAt DESC").Limit(pageSize).Offset((page - 1) * pageSize).Find(&vouchers)
 
 	return c.JSON(fiber.Map{"data": vouchers, "total": total})
 }

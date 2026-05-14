@@ -86,9 +86,9 @@ func (h *HotspotExtHandler) DeleteExpired(c fiber.Ctx) error {
 // GET /api/hotspot/voucher/export
 func (h *HotspotExtHandler) Export(c fiber.Ctx) error {
 	profileID := c.Query("profileId")
-	query := h.db.Model(&models.HotspotVoucher{}).Preload("Profile").Order("created_at desc").Limit(2000)
+	query := h.db.Model(&models.HotspotVoucher{}).Preload("Profile").Order("createdAt desc").Limit(2000)
 	if profileID != "" {
-		query = query.Where("profile_id = ?", profileID)
+		query = query.Where("profileId = ?", profileID)
 	}
 	var vouchers []models.HotspotVoucher
 	query.Find(&vouchers)
@@ -147,7 +147,7 @@ func (h *HotspotExtHandler) SendWhatsapp(c fiber.Ctx) error {
 // GET /api/hotspot/agents
 func (h *HotspotExtHandler) ListAgents(c fiber.Ctx) error {
 	var agents []models.Agent
-	h.db.Order("created_at desc").Find(&agents)
+	h.db.Order("createdAt desc").Find(&agents)
 	return c.JSON(fiber.Map{"success": true, "agents": agents})
 }
 
@@ -172,9 +172,9 @@ func (h *HotspotExtHandler) AgentHistory(c fiber.Ctx) error {
 		limit = v
 	}
 	var sales []models.AgentSale
-	h.db.Where("agent_id = ?", id).Preload("Voucher").Order("created_at desc").Limit(limit).Find(&sales)
+	h.db.Where("agentId = ?", id).Preload("Voucher").Order("createdAt desc").Limit(limit).Find(&sales)
 	var deposits []models.AgentDeposit
-	h.db.Where("agent_id = ?", id).Order("created_at desc").Limit(limit).Find(&deposits)
+	h.db.Where("agentId = ?", id).Order("createdAt desc").Limit(limit).Find(&deposits)
 	return c.JSON(fiber.Map{"success": true, "sales": sales, "deposits": deposits})
 }
 

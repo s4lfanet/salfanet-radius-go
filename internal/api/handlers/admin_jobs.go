@@ -30,7 +30,7 @@ func (h *AdminJobsHandler) ListRegistrations(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var regs []models.RegistrationRequest
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&regs)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&regs)
 	return c.JSON(fiber.Map{
 		"success": true, "registrations": regs,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total,
@@ -129,7 +129,7 @@ func (h *AdminJobsHandler) ListCustomerRegistrations(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var regs []models.RegistrationRequest
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&regs)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&regs)
 	return c.JSON(fiber.Map{"success": true, "registrations": regs,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total}})
 }
@@ -194,7 +194,7 @@ func (h *AdminJobsHandler) ListJobs(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var jobs []models.JobAssignment
-	q.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&jobs)
+	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&jobs)
 	return c.JSON(fiber.Map{
 		"success": true, "jobs": jobs,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total,
@@ -239,7 +239,7 @@ func (h *AdminJobsHandler) UpdateJob(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	delete(body, "id")
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&job).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "job": job})
 }
@@ -250,10 +250,10 @@ func (h *AdminJobsHandler) ApproveJob(c fiber.Ctx) error {
 	now := time.Now()
 	approvedBy := "admin"
 	h.db.Model(&models.JobAssignment{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"approval_status": "APPROVED",
-		"approved_at":     now,
-		"approved_by":     approvedBy,
-		"updated_at":      now,
+		"approvalStatus": "APPROVED",
+		"approvedAt":     now,
+		"approvedBy":     approvedBy,
+		"updatedAt":      now,
 	})
 	return c.JSON(fiber.Map{"success": true})
 }
@@ -262,7 +262,7 @@ func (h *AdminJobsHandler) ApproveJob(c fiber.Ctx) error {
 func (h *AdminJobsHandler) RejectJob(c fiber.Ctx) error {
 	id := c.Params("id")
 	h.db.Model(&models.JobAssignment{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"approval_status": "REJECTED", "updated_at": time.Now(),
+		"approvalStatus": "REJECTED", "updatedAt": time.Now(),
 	})
 	return c.JSON(fiber.Map{"success": true})
 }
@@ -271,7 +271,7 @@ func (h *AdminJobsHandler) RejectJob(c fiber.Ctx) error {
 func (h *AdminJobsHandler) EscalateJob(c fiber.Ctx) error {
 	id := c.Params("id")
 	h.db.Model(&models.JobAssignment{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"priority": "URGENT", "updated_at": time.Now(),
+		"priority": "URGENT", "updatedAt": time.Now(),
 	})
 	return c.JSON(fiber.Map{"success": true, "message": "job escalated to urgent"})
 }
@@ -280,7 +280,7 @@ func (h *AdminJobsHandler) EscalateJob(c fiber.Ctx) error {
 func (h *AdminJobsHandler) SubmitApproval(c fiber.Ctx) error {
 	id := c.Params("id")
 	h.db.Model(&models.JobAssignment{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"requires_approval": true, "approval_status": "PENDING", "updated_at": time.Now(),
+		"requiresApproval": true, "approvalStatus": "PENDING", "updatedAt": time.Now(),
 	})
 	return c.JSON(fiber.Map{"success": true, "message": "submitted for approval"})
 }
@@ -298,8 +298,8 @@ func (h *AdminJobsHandler) ApprovalHistory(c fiber.Ctx) error {
 // GET /api/admin/jobs/approvals — jobs pending approval
 func (h *AdminJobsHandler) ListApprovals(c fiber.Ctx) error {
 	var jobs []models.JobAssignment
-	h.db.Where("requires_approval = ? AND approval_status = ?", true, "PENDING").
-		Order("created_at desc").Find(&jobs)
+	h.db.Where("requiresApproval = ? AND approvalStatus = ?", true, "PENDING").
+		Order("createdAt desc").Find(&jobs)
 	return c.JSON(fiber.Map{"success": true, "approvals": jobs})
 }
 
@@ -331,7 +331,7 @@ func (h *AdminJobsHandler) TechListJobs(c fiber.Ctx) error {
 	var total int64
 	h.db.Model(&models.JobAssignment{}).Count(&total)
 	var jobs []models.JobAssignment
-	h.db.Order("created_at desc").Offset((page - 1) * limit).Limit(limit).Find(&jobs)
+	h.db.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&jobs)
 	return c.JSON(fiber.Map{"success": true, "jobs": jobs,
 		"pagination": fiber.Map{"page": page, "limit": limit, "total": total}})
 }
@@ -355,8 +355,8 @@ func (h *AdminJobsHandler) TechCompleteJob(c fiber.Ctx) error {
 	c.Bind().JSON(&body)
 	now := time.Now()
 	h.db.Model(&models.JobAssignment{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"status": "COMPLETED", "completed_date": now,
-		"technician_notes": body.Notes, "check_out_time": now, "updated_at": now,
+		"status": "COMPLETED", "completedAt": now,
+		"technicianNotes": body.Notes, "checkOutTime": now, "updatedAt": now,
 	})
 	return c.JSON(fiber.Map{"success": true, "message": "job marked as completed"})
 }
@@ -392,6 +392,6 @@ func (h *AdminJobsHandler) TechGenCredentials(c fiber.Ctx) error {
 // GET /api/jobs/team — jobs for current team
 func (h *AdminJobsHandler) TeamJobs(c fiber.Ctx) error {
 	var jobs []models.JobAssignment
-	h.db.Where("status != ?", "COMPLETED").Order("priority desc, created_at asc").Limit(100).Find(&jobs)
+	h.db.Where("status != ?", "COMPLETED").Order("priority desc, createdAt asc").Limit(100).Find(&jobs)
 	return c.JSON(fiber.Map{"success": true, "jobs": jobs})
 }

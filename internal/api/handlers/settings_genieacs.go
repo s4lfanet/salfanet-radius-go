@@ -86,7 +86,7 @@ func (h *SettingsGenieacsHandler) GetVirtualParameter(c fiber.Ctx) error {
 // GET /api/settings/isolation/templates
 func (h *SettingsGenieacsHandler) ListIsolationTemplates(c fiber.Ctx) error {
 	var templates []models.IsolationTemplate
-	h.db.Where("is_active = ?", true).Find(&templates)
+	h.db.Where("isActive = ?", true).Find(&templates)
 	return c.JSON(fiber.Map{"success": true, "templates": templates})
 }
 

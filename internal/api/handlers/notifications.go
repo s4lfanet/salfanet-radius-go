@@ -25,22 +25,22 @@ func (h *NotificationHandler) List(c fiber.Ctx) error {
 	}
 	sinceParam := c.Query("since")
 
-	query := h.db.Model(&models.Notification{}).Order("created_at desc")
+	query := h.db.Model(&models.Notification{}).Order("createdAt desc")
 	if unreadOnly {
-		query = query.Where("is_read = ?", false)
+		query = query.Where("isRead = ?", false)
 	}
 	if notifType != "" {
 		query = query.Where("type = ?", notifType)
 	}
 	if sinceParam != "" {
-		query = query.Where("created_at >= ?", sinceParam)
+		query = query.Where("createdAt >= ?", sinceParam)
 	}
 
 	var notifications []models.Notification
 	query.Limit(limit).Find(&notifications)
 
 	var unreadCount int64
-	h.db.Model(&models.Notification{}).Where("is_read = ?", false).Count(&unreadCount)
+	h.db.Model(&models.Notification{}).Where("isRead = ?", false).Count(&unreadCount)
 
 	return c.JSON(fiber.Map{
 		"success":       true,
@@ -59,9 +59,9 @@ func (h *NotificationHandler) MarkRead(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	if body.MarkAll {
-		h.db.Model(&models.Notification{}).Where("is_read = ?", false).Update("is_read", true)
+		h.db.Model(&models.Notification{}).Where("isRead = ?", false).Update("isRead", true)
 	} else if len(body.NotificationIDs) > 0 {
-		h.db.Model(&models.Notification{}).Where("id IN ?", body.NotificationIDs).Update("is_read", true)
+		h.db.Model(&models.Notification{}).Where("id IN ?", body.NotificationIDs).Update("isRead", true)
 	}
 	return c.JSON(fiber.Map{"success": true})
 }

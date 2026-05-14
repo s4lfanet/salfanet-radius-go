@@ -36,7 +36,7 @@ func (invoiceTemplateRow) TableName() string { return "invoice_templates" }
 // GET /api/invoice-templates
 func (h *InvoiceTemplateHandler) List(c fiber.Ctx) error {
 	var rows []invoiceTemplateRow
-	h.db.Order("created_at desc").Find(&rows)
+	h.db.Order("createdAt desc").Find(&rows)
 	return c.JSON(fiber.Map{"success": true, "templates": rows})
 }
 
@@ -77,7 +77,7 @@ func (h *InvoiceTemplateHandler) Update(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body["updated_at"] = time.Now()
+	body["updatedAt"] = time.Now()
 	h.db.Model(&row).Updates(body)
 	return c.JSON(fiber.Map{"success": true, "template": row})
 }
@@ -96,8 +96,8 @@ func (h *InvoiceTemplateHandler) Delete(c fiber.Ctx) error {
 func (h *InvoiceTemplateHandler) SetDefault(c fiber.Ctx) error {
 	id := c.Params("id")
 	// Unset all defaults
-	h.db.Model(&invoiceTemplateRow{}).Where("is_default = ?", true).Update("is_default", false)
+	h.db.Model(&invoiceTemplateRow{}).Where("isDefault = ?", true).Update("isDefault", false)
 	// Set this one as default
-	h.db.Model(&invoiceTemplateRow{}).Where("id = ?", id).Update("is_default", true)
+	h.db.Model(&invoiceTemplateRow{}).Where("id = ?", id).Update("isDefault", true)
 	return c.JSON(fiber.Map{"success": true, "message": "Default template updated"})
 }
