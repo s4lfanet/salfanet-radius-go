@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.18] — 2026-05-15
+### Changed
+- **Hapus referensi Redis dari installer** — Redis sudah tidak digunakan sejak v2.11.3 (`ioredis` dihapus). Referensi `REDIS_URL` di `.env` template dan pesan "install Redis" di `vps-installer.sh` dihapus agar installer lebih bersih.
+### Files
+- `vps-install/install-app.sh` — hapus baris `# REDIS_URL=redis://127.0.0.1:6379`
+- `vps-install/vps-installer.sh` — hapus Redis status line + Redis next steps hint + Redis final summary block
+
 ## [2.47.17] — 2026-05-15
 ### Fixed
 - **Fresh install: folder `uploads/` tidak dibuat** — `install-go.sh` hanya membuat `bin/` dan `logs/`, tidak membuat `uploads/logos`, `uploads/payment-proofs`, `uploads/customer-photos`. Meskipun `ReadWritePaths` sudah include `/uploads`, foldernya belum ada → Go server akan error saat pertama kali upload. Fix: tambah `mkdir -p` untuk ketiga subfolder uploads di kedua tempat dalam script.
