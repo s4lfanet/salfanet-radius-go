@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.16] — 2026-05-15
+### Fixed
+- **Installer: `--domain` CLI flag diabaikan** — `init_installation()` melakukan `export VPS_DOMAIN=""` yang overwrite nilai yang sudah di-set via `--domain` CLI arg. Fix: ubah ke `export VPS_DOMAIN="${VPS_DOMAIN:-}"` agar CLI value dipertahankan.
+### Files
+- `vps-install/vps-installer.sh` — preserve VPS_DOMAIN from CLI flag
+
 ## [2.47.15] — 2026-05-15
 ### Fixed
 - **Installer: `ReadWritePaths` missing `/uploads`** — `vps-install/install-go.sh` systemd service template hanya punya `/logs` di `ReadWritePaths`. Fresh install akan gagal saat upload logo (500). Fix: tambah `/uploads` ke `ReadWritePaths`.
@@ -2675,3 +2681,4 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 - CoA service (real-time disconnect via radclient + MikroTik API).
 - Auto-disconnect cronjob.
+

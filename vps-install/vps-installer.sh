@@ -194,7 +194,8 @@ initialize_installer() {
     echo ""
 
     # ---- Domain & SSL (hanya untuk VPS publik) ----
-    export VPS_DOMAIN=""
+    # Preserve VPS_DOMAIN if already set via --domain CLI flag
+    export VPS_DOMAIN="${VPS_DOMAIN:-}"
     export VPS_USE_SSL="false"
     if [ "${DEPLOY_ENV}" = "vps" ]; then
         echo -e "${CYAN}[Domain & SSL]${NC}"
