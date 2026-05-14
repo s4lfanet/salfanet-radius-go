@@ -469,6 +469,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.3 — 2026-05-14
+
+### Fixed
+- **Login page 401 on pre-login** — `POST /api/admin/auth/pre-login` was registered after the `api := app.Group("/api", CombinedAuthMiddleware)` group; in Fiber v3 this caused the auth middleware to intercept the request. Fixed by moving the route to before the protected api group.
+- **Sidebar shows only Dashboard** — `GET /api/admin/users/:id/permissions` only queried `UserPermission` table; if empty (no custom overrides), all menu items requiring permissions were hidden. Fixed by falling back to `RolePermission` for the user's role, matching original Next.js logic.
+### Files
+- `internal/api/router.go` — moved pre-login route to public section (before `api` group)
+- `internal/api/handlers/admin_users.go` — `GetPermissions`: added role fallback when no custom permissions found
+
 ### v2.47.2 — 2026-05-14
 
 ### Fixed
@@ -514,23 +523,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `production/ecosystem.config.js` — PM2 config fix: fork mode, heap 512M, no cron_restart
-
-### v2.46.6 — 2026-05-15
-
-### Fixed
-- **404: `/api/admin/cash-advances/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus data
-- **404: `/api/admin/commissions/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus komisi
-- **404: `/api/admin/payroll/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus payroll
-
-### Added
-- **`/api/admin/attendance-locations`** — Dibuat Next.js route `GET/POST` untuk lokasi absen
-- **`companies` table seeded** — Insert default company record agar `/api/settings/isolation` tidak 404
-
-### Files
-- `src/app/api/admin/cash-advances/[id]/route.ts` — GET/PUT/DELETE by ID
-- `src/app/api/admin/commissions/[id]/route.ts` — GET/PUT/DELETE by ID
-- `src/app/api/admin/payroll/[id]/route.ts` — GET/PUT/DELETE by ID
-- `src/app/api/admin/attendance-locations/route.ts` — GET/POST lokasi absen
 
 <!-- AUTO-CHANGELOG:END -->
 
