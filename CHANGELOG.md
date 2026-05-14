@@ -21,6 +21,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `internal/api/middleware/auth.go` — tambah `CombinedAuthMiddleware` + `validateNextAuthSession`
 - `internal/api/router.go` — ganti `AuthMiddleware` → `CombinedAuthMiddleware` untuk protected routes
 - `/etc/nginx/sites-available/salfanet-radius` (VPS) — catch-all `/api/` → Go:8080
+- `vps-install/install-nginx.sh` — fix fresh installer: catch-all `/api/` → Go:8080 (sebelumnya 3000)
 
 ---
 
