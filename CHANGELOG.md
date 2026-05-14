@@ -6,7 +6,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.45.0] — 2026-05-15
+## [2.46.0] — 2026-05-15
+### Added
+- **Uninstaller `--unattended` mode** — `vps-uninstaller.sh` kini mendukung `--unattended` (alias `--force`/`-y`) untuk menghapus semua komponen tanpa interaksi manual; flag tambahan `--keep-nodejs`, `--keep-mysql`, `--keep-pm2`
+- **Go backend removal** — Uninstaller sekarang menghentikan dan menghapus service `salfanet-api` (systemd unit), serta Go runtime (`/usr/local/go`) secara otomatis
+- **Port 8080 cleanup** — Tambah port 8080 ke daftar port yang dibersihkan oleh uninstaller
+
+### Fixed
+- **Semua `read` prompts interactive** — `remove_freeradius`, `remove_pm2`, `remove_nodejs`, `remove_mysql`, `clean_firewall` kini skip konfirmasi saat mode `--unattended`
+- **`clean_logs` error** — Ubah `rm -rf` yang salah ke `rm -f` untuk file (bukan direktori)
+- **Log cleanup** — Tambah `/var/log/salfanet-install.log` ke daftar file yang dihapus
+
+### Verified
+- **Uninstall → fresh install cycle tested** — Uninstaller `--unattended` berhasil menghapus semua komponen; fresh install berhasil kembali; semua services aktif: nginx, mysql, freeradius, salfanet-api, fail2ban, PM2 (3 apps)
+
+### Files
+- `vps-install/vps-uninstaller.sh` — `--unattended` mode, Go backend removal, port 8080, fix semua prompts interactive
+
+
 ### Added
 - **`--unattended` flag** — `vps-installer.sh` mendukung flag `--unattended`, `--env`, `--ip`, `--domain`, `--db-pass` untuk instalasi otomatis tanpa interaksi manual (CI/CD, test fresh install)
 
