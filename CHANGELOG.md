@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.10] — 2026-05-15
+### Fixed
+- **Halaman Log Langsung error "t.logs.split is not a function"** — Go backend mengembalikan `logs` sebagai `string[]` (sudah di-split per baris), tapi frontend memanggil `.split('\n')` langsung pada array. Fix: periksa apakah `data.logs` array atau string sebelum di-split.
+### Files
+- `src/app/admin/freeradius/logs/page.tsx` — handle `logs` sebagai array atau string
+
 ## [2.47.9] — 2026-05-15
 ### Fixed
 - **Halaman FreeRADIUS Status menampilkan "Gagal memuat"** — root cause: nginx routing `/api/` ke Go port 8080, bukan Next.js. Handler Go lama `GetStatus` mengembalikan `{running, pid, uptime, version}` tanpa field `success` dan tanpa nested `status`, sehingga `data.success` undefined → `setStatus` tidak pernah dipanggil → halaman stuck di error.
