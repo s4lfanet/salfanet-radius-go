@@ -469,6 +469,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.1 — 2026-05-14
+
+### Fixed
+- **Admin dashboard crash** — `TypeError: Cannot read properties of undefined (reading 'length')` akibat `Unknown column 'type'` di query analytics; fix ke `invoiceType`
+- **Payment gateways public API** — SELECT clause menggunakan kolom `is_active`, `is_production` yang tidak ada di DB; fix ke `isActive` saja
+### Files
+- `internal/api/handlers/analytics.go` — `SELECT type` → `SELECT invoiceType`, `GROUP BY type` → `GROUP BY invoiceType`
+- `internal/api/handlers/public.go` — SELECT clause fix ke kolom yang valid (`id`, `provider`, `isActive`)
+
 ### v2.47.0 — 2026-05-14
 
 ### Added (Architecture)
@@ -535,25 +544,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/api/admin/commissions/route.ts` — BARU: GET/POST commissions
 - `src/app/api/admin/payroll/route.ts` — BARU: GET/POST payroll records
 - `scripts/migrate-hr-tables.sql` — BARU: SQL migration HR tables
-
-### v2.46.4 — 2026-05-14
-
-### Fixed
-- **Sidebar: Hapus menu "Manajemen VPN"** — Submenu duplikat (Klien VPN, Site VPN, Pengaturan VPN) dihapus dari sidebar karena VPN Client sudah ada di menu Router
-- **CSP: Leaflet CSS dari cdnjs diblokir** — Ditambahkan `https://cdnjs.cloudflare.com`, `https://fonts.googleapis.com`, `https://cdn.jsdelivr.net` ke `style-src` di `next.config.ts`
-- **404: `/api/payroll-templates`** — Endpoint hanya ada di Go (butuh Bearer token); dibuat Next.js API route `GET/POST` + `[id]` `GET/PUT/DELETE` + `[id]/default POST` menggunakan `prisma.$queryRaw`
-- **500: `/api/network/cables`** — Tabel `fiber_cables` beserta relasi tidak ada di DB VPS; dibuat SQL migration `scripts/migrate-fiber-payroll-tables.sql`
-
-### Added
-- **DB migration SQL** — `scripts/migrate-fiber-payroll-tables.sql` membuat tabel: `payroll_templates`, `fiber_cables`, `fiber_tubes`, `fiber_cores`, `splice_points`, `cable_segments`, `core_assignment_history`
-
-### Files
-- `src/app/admin/AdminClientLayout.tsx` — Hapus blok `vpnManagement` dari sidebar
-- `next.config.ts` — Tambah CDN ke `style-src` CSP
-- `src/app/api/payroll-templates/route.ts` — Baru: GET list, POST create
-- `src/app/api/payroll-templates/[id]/route.ts` — Baru: GET, PUT, DELETE
-- `src/app/api/payroll-templates/[id]/default/route.ts` — Baru: POST set-default
-- `scripts/migrate-fiber-payroll-tables.sql` — Baru: SQL migration fiber + payroll
 
 <!-- AUTO-CHANGELOG:END -->
 
