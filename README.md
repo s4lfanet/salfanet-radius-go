@@ -469,6 +469,33 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.40.0 — 2026-05-15
+
+### Fixed
+- **DB camelCase — round 2 complete** — Fixed remaining snake_case column references across all handler files and models; DB naming now 100% consistent with Prisma camelCase convention
+- **TechnicianOtp model** — Corrected `TableName()` to `technician_otps` (plural); fixed field mappings: `Token` → `otpCode`, `UsedAt *time.Time` → `IsUsed bool`, added `PhoneNumber` field
+- **OLT handlers** — Fixed `olt_id` → `oltId`, `onu_id` → `onuId`, `serial_number` → `serialNumber`, `recorded_at` → `recordedAt` in WHERE, ORDER BY, and OnConflict clause columns
+- **Technician portal** — Fixed OTP query WHERE clause to use `technicianId`, `otpCode`, `isUsed`; fixed OTP creation to populate `PhoneNumber`
+- **Network** — Fixed `odp_id` → `odpId`, `port_number` → `portNumber` in ODP assignment updates
+- **Invoices** — Fixed `payment_token` → `paymentToken`, `payment_link` → `paymentLink` in invoice payment Updates
+- **Auth** — Fixed `expires_at` → `expiresAt` in two-factor session update
+- **Tickets** — Fixed raw SQL `t.category_id` → `t.categoryId` in analytics query
+- **WhatsApp** — Fixed `sent_at` → `sentAt`, `days_before` → `daysBefore` in history and settings
+- **Push notifications** — Fixed `technician_id` → `technicianId`, `user_id` → `userId` in subscription WHERE clauses
+- **Referrals** — Fixed `referrer_id`/`referred_id` → `referrerId`/`referredId` in WHERE and JOIN
+- **Admin** — Fixed `is_active`/`is_default`/`is_resolved`, `approval_status`, `approved_at`, `approved_by`, `requires_approval`, `assigned_to_id` across handlers
+- **Misc** — Fixed raw SQL `is_active = 1` → `isActive = 1` in technician dispatch query
+### Files
+- `internal/db/models/extra.go` — TechnicianOtp model corrected (TableName, field names, added PhoneNumber)
+- `internal/api/handlers/olt.go`, `olt_ext.go` — oltId, onuId, serialNumber, recordedAt fixes
+- `internal/api/handlers/technician_portal.go` — OTP auth WHERE clause and creation corrected
+- `internal/api/handlers/network_ext.go` — odpId, portNumber in assignment updates
+- `internal/api/handlers/payment_handler.go` — paymentToken, paymentLink in invoice Updates
+- `internal/api/handlers/auth.go` — expiresAt in two-factor session
+- `internal/api/handlers/ticket_ext.go` — categoryId in raw SQL analytics
+- `internal/api/handlers/misc_handler.go` — isActive in raw SQL technician query
+- `internal/api/handlers/*.go` (30+ more files) — isActive, isDefault, isResolved, approvalStatus, assignedToId, technicianId, referrerId, referredId, sentAt, daysBefore, paymentToken etc.
+
 ### v2.39.0 — 2026-05-15
 
 ### Fixed
@@ -519,68 +546,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/customer_portal_ext2.go` — added GetWifi, UpdateWifiSettings, RebootONT, RegeneratePayment, InvoicePayment
 - `internal/api/handlers/hotspot_ext.go` — added DeleteMultiple
 - `internal/api/router.go` — ~50 new routes registered (batch 12)
-
-### v2.35.0 — 2026-05-16
-
-### Added
-- **Go: AdminMiscHandler** — APK build management (`/api/admin/apk/*`), Cloudflare tunnel settings (`/api/admin/cloudflare-tunnel`), system info (`/api/admin/system/info`), FreeRADIUS backup CRUD + download/restore/upload (`/api/admin/system/freeradius-backup/*`), admin profile 2FA (`/api/admin/profile/2fa`), admin auth pre-login (`/api/admin/auth/pre-login`), PPPoE sync-all + user deposit, invoice import (`/api/admin/invoices/import`), laporan/reports (`/api/admin/laporan`), OLT model-profiles CRUD + test-connection, APK download
-- **Go: NetworkVPNHandler** — VPN server get/update/setup/test + L2TP/PPTP/SSTP control (`/api/network/vpn-server/*`), VPN client list/create (`/api/network/vpn-client`), VPN routing list/create (`/api/network/vpn-routing`), VPS info/L2TP-info/L2TP-peer/WG-peer (`/api/network/vps-*`)
-- **Go: Agent portal extras** — deposit check, manual deposit request, payment methods list, agent notifications, agent sessions (hotspot), agent tickets list + detail
-### Files
-- `internal/api/handlers/admin_misc_handler.go` — NEW: ~20 methods for misc admin endpoints
-- `internal/api/handlers/network_vpn_ext_handler.go` — NEW: ~17 methods for VPN server/client/VPS
-- `internal/api/handlers/agent.go` — added DepositCheck, DepositManualRequest, ListDepositPaymentMethods, GetAgentNotifications, GetAgentSessions, GetAgentTickets, GetAgentTicket
-- `internal/api/router.go` — ~37 new routes registered (batch 11)
-
-
-### Added
-- **Go: AdminVPNHandler** — WireGuard VPN management: clients CRUD, approve/reject, config download, QR, generate-keys, service control, settings, sites CRUD + config (`/api/admin/vpn/*`)
-- **Go: AdminPayrollHandler** — payroll records list/get/update/delete, generate by month, overtime CRUD, pay action (`/api/admin/payroll*`)
-- **Go: AdminHRHandler** — attendance records CRUD + bulk-delete, attendance locations, cash advances CRUD + pay, commissions CRUD + approve/reject (`/api/admin/attendance*`, `/api/admin/cash-advances*`, `/api/admin/commissions*`)
-- **Go: FCMHandler** — FCM device token registration + test notification (`/api/fcm/token`, `/api/fcm/test`)
-- **Admin sidebar** — added VPN Management (under Network), Invoice Templates (under Billing), Troubleshooting, Payroll Templates, HR Management (under Management)
-- **Agent sidebar** — added Deposit menu item (`/agent/deposit`)
-### Files
-- `internal/api/handlers/admin_vpn_handler.go` — NEW: 20 methods for VPN management
-- `internal/api/handlers/admin_payroll_handler.go` — NEW: 7 methods for payroll
-- `internal/api/handlers/admin_hr_handler.go` — NEW: 13 methods for HR (attendance/cash/commissions)
-- `internal/api/handlers/fcm_handler.go` — NEW: RegisterToken, Test
-- `internal/api/router.go` — ~55 new routes registered (batch 10)
-- `src/app/admin/AdminClientLayout.tsx` — added VPN, Invoice Templates, Troubleshooting, Payroll Templates, HR Management sidebar items
-- `src/app/agent/AgentLayoutClient.tsx` — added Deposit sidebar item
-
-
-### Added
-- **Go: Backup info routes** — `GET /api/backup` (list history), `GET /api/backup/health` (DB ping + count), `POST /api/backup/telegram/test`
-- **Go: Cron info routes** — `GET /api/cron` (service info), `GET /api/cron/status` (last run + job count)
-- **Go: Invoice extras** — `POST /api/invoices/:id/void`, `POST /api/invoices/bulk-delete`
-- **Go: Manual payments bulk-delete** — `POST /api/manual-payments/bulk-delete`
-- **Go: Tickets create-job** — `POST /api/tickets/:id/create-job`
-- **Go: Jobs photos** — `GET /api/jobs/:id/photos`
-- **Go: Agent self-service portal** — `GET /api/agent/dashboard`, `POST /api/agent/deposit/create`, `POST /api/agent/deposit/webhook` (public), `POST /api/agent/generate-voucher`, `POST /api/agent/record-sales`
-- **Go: PaymentsApprovalHandler** — `GET /api/payments`, `POST /api/payments/:id/approve`, `POST /api/payments/:id/reject`, `GET/POST /api/payments/manual`
-- **Go: Payment gateways list** — `GET /api/payment/gateways` (public)
-- **Go: InvoiceTemplateHandler** — full CRUD + set-default (`/api/invoice-templates`)
-- **Go: PayrollTemplateHandler** — full CRUD + set-default (`/api/payroll-templates`)
-- **Go: TroubleshootingHandler** — checklists CRUD, jobs list/get/materials (`/api/troubleshooting`)
-- **Go: EvoucherHandler** — public portal (profiles, purchase, order-by-token) + admin (list/cancel/resend/bulk-delete)
-- **Go: Payment model** — added `Payment` struct to models.go (table: `payments`)
-### Files
-- `internal/api/handlers/backup_handler.go` — added ListBackups, Health, TelegramTest
-- `internal/api/handlers/agent.go` — added Dashboard, CreateDeposit, DepositWebhook, GenerateVoucher, RecordSales
-- `internal/api/handlers/cronhandler.go` — added Info, Status
-- `internal/api/handlers/invoices_ext.go` — added Void, BulkDelete
-- `internal/api/handlers/manual_payments.go` — added BulkDelete
-- `internal/api/handlers/ticket_ext.go` — added CreateJob
-- `internal/api/handlers/jobs.go` — added ListPhotos
-- `internal/api/handlers/payment_handler.go` — added ListGateways
-- `internal/api/handlers/payments_approval_handler.go` — new file
-- `internal/api/handlers/invoice_template_handler.go` — new file
-- `internal/api/handlers/payroll_template_handler.go` — new file
-- `internal/api/handlers/troubleshooting_handler.go` — new file
-- `internal/api/handlers/evoucher_handler.go` — new file
-- `internal/db/models/models.go` — added Payment struct
-- `internal/api/router.go` — registered all batch 9 routes (~50 new routes)
 
 <!-- AUTO-CHANGELOG:END -->
 
