@@ -202,16 +202,6 @@ const menuGroups: MenuGroup[] = [
         ],
       },
       {
-        titleKey: 'nav.vpnManagement',
-        icon: <Shield className="w-4 h-4" />,
-        requiredPermission: 'routers.view',
-        children: [
-          { titleKey: 'nav.vpnClients', href: '/admin/vpn/clients', requiredPermission: 'routers.view' },
-          { titleKey: 'nav.vpnSites', href: '/admin/vpn/sites', requiredPermission: 'routers.view' },
-          { titleKey: 'nav.vpnSettings', href: '/admin/vpn/settings', requiredPermission: 'settings.view' },
-        ],
-      },
-      {
         titleKey: 'nav.oltAndOnu',
         icon: <Server className="w-4 h-4" />,
         requiredPermission: 'network.view',
