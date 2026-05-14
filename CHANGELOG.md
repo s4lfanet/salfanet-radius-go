@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.47.3] — 2026-05-14
+### Fixed
+- **Login page 401 on pre-login** — `POST /api/admin/auth/pre-login` was registered after the `api := app.Group("/api", CombinedAuthMiddleware)` group; in Fiber v3 this caused the auth middleware to intercept the request. Fixed by moving the route to before the protected api group.
+- **Sidebar shows only Dashboard** — `GET /api/admin/users/:id/permissions` only queried `UserPermission` table; if empty (no custom overrides), all menu items requiring permissions were hidden. Fixed by falling back to `RolePermission` for the user's role, matching original Next.js logic.
+### Files
+- `internal/api/router.go` — moved pre-login route to public section (before `api` group)
+- `internal/api/handlers/admin_users.go` — `GetPermissions`: added role fallback when no custom permissions found
+
 ## [2.47.2] — 2026-05-14
 ### Fixed
 - **Admin dashboard crash** (`TypeError: Cannot read properties of undefined (reading 'length')`) — Go `/api/admin/activity-logs` mengembalikan `logs` + nested `pagination`, tapi frontend expect `activities` + flat `total`/`hasMore`/`offset`
