@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.46.7] — 2026-05-15
+### Performance
+- **PM2 `fork` mode** — Ganti dari `cluster` mode (instances:1) ke `fork` mode; eliminasi overhead master process + IPC routing; ~30MB RAM lebih hemat
+- **Hapus `cron_restart`** — Dihapus jadwal restart paksa tiap 6 jam (`0 */6 * * *`) yang menyebabkan downtime ~10 detik sebanyak 4x sehari
+- **Heap Node.js 400MB → 512MB** — Kurangi GC pressure; `--optimize-for-size` dihapus (menukar speed demi size, tidak cocok untuk production server)
+- **`max_memory_restart` 450M → 600M** — Toleransi memory lebih besar sebelum auto-restart
+- **Clear VPS swap** — Cleared 672MB swap residual dari proses `npm run build`; menghilangkan disk I/O latency
+
+### Files
+- `production/ecosystem.config.js` — PM2 config fix: fork mode, heap 512M, no cron_restart
+
+---
+
 ## [2.46.6] — 2026-05-15
 ### Fixed
 - **404: `/api/admin/cash-advances/:id`** — Dibuat Next.js route `GET/PUT/DELETE` untuk detail/update/hapus data
