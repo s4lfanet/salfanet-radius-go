@@ -19,7 +19,7 @@ func NewSettingsExtHandler(db *gorm.DB) *SettingsExtHandler {
 func (h *SettingsExtHandler) ListEmailTemplates(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{
 		"success": true,
-		"templates": []fiber.Map{
+		"data": []fiber.Map{
 			{"type": "INVOICE", "subject": "Invoice #{invoiceNumber}", "body": "Dear {customerName},..."},
 			{"type": "PAYMENT_CONFIRM", "subject": "Payment Confirmed", "body": "Dear {customerName},..."},
 			{"type": "ISOLATION_NOTICE", "subject": "Service Suspended", "body": "Dear {customerName},..."},
@@ -90,7 +90,7 @@ func (h *SettingsExtHandler) EmailHistory(c fiber.Ctx) error {
 	query.Offset((page - 1) * limit).Limit(limit).Find(&emails)
 	return c.JSON(fiber.Map{
 		"success": true,
-		"emails":  emails,
+		"history": emails,
 		"pagination": fiber.Map{
 			"page":       page,
 			"limit":      limit,

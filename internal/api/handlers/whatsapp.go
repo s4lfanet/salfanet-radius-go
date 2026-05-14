@@ -148,23 +148,81 @@ func (h *WhatsappHandler) ListHistory(c fiber.Ctx) error {
 // ─── Reminder Settings ───────────────────────────────────────────────────────
 
 func (h *WhatsappHandler) GetReminderSettings(c fiber.Ctx) error {
-	var settings []models.WhatsappReminderSetting
-	h.db.Order("daysBefore").Find(&settings)
-	return c.JSON(settings)
+	var gs models.WhatsappGlobalSettings
+	if err := h.db.First(&gs).Error; err != nil {
+		// No row yet — return defaults
+		return c.JSON(fiber.Map{
+			"success": true,
+			"settings": fiber.Map{
+				"enabled":      true,
+				"reminderDays": []int{-7, -5, -3, 0},
+				"reminderTime": "09:00",
+				"otpEnabled":   true,
+				"otpExpiry":    5,
+				"batchSize":    10,
+				"batchDelay":   60,
+				"randomize":    true,
+			},
+		})
+	}
+	var days []int
+	_ = json.Unmarshal([]byte(gs.ReminderDays), &days)
+	return c.JSON(fiber.Map{
+		"success": true,
+		"settings": fiber.Map{
+			"id":           gs.ID,
+			"enabled":      gs.Enabled,
+			"reminderDays": days,
+			"reminderTime": gs.ReminderTime,
+			"otpEnabled":   gs.OtpEnabled,
+			"otpExpiry":    gs.OtpExpiry,
+			"batchSize":    gs.BatchSize,
+			"batchDelay":   gs.BatchDelay,
+			"randomize":    gs.Randomize,
+		},
+	})
 }
 
 func (h *WhatsappHandler) UpdateReminderSettings(c fiber.Ctx) error {
-	var body []models.WhatsappReminderSetting
+	var body struct {
+		Enabled      bool    `json:"enabled"`
+		ReminderDays []int   `json:"reminderDays"`
+		ReminderTime string  `json:"reminderTime"`
+		OtpEnabled   bool    `json:"otpEnabled"`
+		OtpExpiry    int     `json:"otpExpiry"`
+		BatchSize    int     `json:"batchSize"`
+		BatchDelay   int     `json:"batchDelay"`
+		Randomize    bool    `json:"randomize"`
+	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	for _, s := range body {
-		if s.ID == "" {
-			s.ID = uuid.New().String()
-			h.db.Create(&s)
-		} else {
-			h.db.Save(&s)
+	daysJSON, _ := json.Marshal(body.ReminderDays)
+	var gs models.WhatsappGlobalSettings
+	if err := h.db.First(&gs).Error; err != nil {
+		// Create new record
+		gs = models.WhatsappGlobalSettings{
+			ID:           uuid.New().String(),
+			Enabled:      body.Enabled,
+			ReminderDays: string(daysJSON),
+			ReminderTime: body.ReminderTime,
+			OtpEnabled:   body.OtpEnabled,
+			OtpExpiry:    body.OtpExpiry,
+			BatchSize:    body.BatchSize,
+			BatchDelay:   body.BatchDelay,
+			Randomize:    body.Randomize,
 		}
+		h.db.Create(&gs)
+	} else {
+		gs.Enabled = body.Enabled
+		gs.ReminderDays = string(daysJSON)
+		gs.ReminderTime = body.ReminderTime
+		gs.OtpEnabled = body.OtpEnabled
+		gs.OtpExpiry = body.OtpExpiry
+		gs.BatchSize = body.BatchSize
+		gs.BatchDelay = body.BatchDelay
+		gs.Randomize = body.Randomize
+		h.db.Save(&gs)
 	}
-	return c.JSON(fiber.Map{"message": "saved"})
+	return c.JSON(fiber.Map{"success": true, "message": "saved"})
 }
