@@ -185,7 +185,7 @@ func (h *PppoeExtHandler) MarkPaid(c fiber.Ctx) error {
 	}
 	now := time.Now()
 	result := h.db.Model(&models.Invoice{}).
-		Where("id = ? AND user_id = ?", body.InvoiceID, id).
+		Where("id = ? AND userId = ?", body.InvoiceID, id).
 		Updates(map[string]interface{}{"status": "PAID", "paidAt": now})
 	if result.RowsAffected == 0 {
 		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
@@ -288,7 +288,7 @@ func (h *PppoeExtHandler) ListUsersWithFilters(c fiber.Ctx) error {
 		q = q.Where("profileId = ?", profileID)
 	}
 	if subscriptionType != "" {
-		q = q.Where("subscription_type = ?", subscriptionType)
+		q = q.Where("subscriptionType = ?", subscriptionType)
 	}
 	if search != "" {
 		q = q.Where("username LIKE ? OR name LIKE ? OR phone LIKE ?",

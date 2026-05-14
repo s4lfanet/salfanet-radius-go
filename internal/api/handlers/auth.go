@@ -202,7 +202,7 @@ func (h *AuthHandler) CustomerVerifyOTP(c fiber.Ctx) error {
 	h.db.Model(&session).Updates(map[string]interface{}{
 		"verified":   true,
 		"token":      token,
-		"expires_at": expiry,
+		"expiresAt": expiry,
 		"otp_code":   nil,
 	})
 

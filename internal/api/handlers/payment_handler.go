@@ -60,8 +60,8 @@ func (h *PaymentHandler) CreatePayment(c fiber.Ctx) error {
 
 	// Update invoice with payment token
 	if err := h.db.Model(&invoice).Updates(map[string]interface{}{
-		"payment_token": orderID,
-		"payment_link":  paymentLink,
+		"paymentToken": orderID,
+		"paymentLink":  paymentLink,
 	}).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "failed to update invoice"})
 	}
@@ -86,7 +86,7 @@ func (h *PaymentHandler) CheckOrder(c fiber.Ctx) error {
 	var invoice models.Invoice
 	var err error
 	if orderID != "" {
-		err = h.db.First(&invoice, "payment_token = ?", orderID).Error
+		err = h.db.First(&invoice, "paymentToken = ?", orderID).Error
 	} else {
 		err = h.db.First(&invoice, "id = ?", invoiceID).Error
 	}
@@ -133,7 +133,7 @@ func (h *PaymentHandler) Webhook(c fiber.Ctx) error {
 	}
 
 	var invoice models.Invoice
-	if err := h.db.First(&invoice, "payment_token = ?", orderID).Error; err != nil {
+	if err := h.db.First(&invoice, "paymentToken = ?", orderID).Error; err != nil {
 		// Not found — return 200 so gateway doesn't retry endlessly
 		return c.JSON(fiber.Map{"received": true})
 	}

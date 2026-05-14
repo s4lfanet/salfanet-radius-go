@@ -475,7 +475,7 @@ func (h *MiscHandler) NotifySupportResolved(c fiber.Ctx) error {
 func (h *MiscHandler) PayByToken(c fiber.Ctx) error {
 	token := c.Params("token")
 	var invoice models.Invoice
-	if err := h.db.First(&invoice, "payment_token = ?", token).Error; err != nil {
+	if err := h.db.First(&invoice, "paymentToken = ?", token).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "payment not found"})
 	}
 	return c.JSON(fiber.Map{"success": true, "invoice": invoice})
@@ -656,7 +656,7 @@ func (h *MiscHandler) RadiusAccounting(c fiber.Ctx) error {
 // GET /api/tickets/dispatch-data — data for ticket dispatch (technicians, areas)
 func (h *MiscHandler) TicketDispatchData(c fiber.Ctx) error {
 	var technicians []map[string]interface{}
-	h.db.Raw("SELECT id, name, phone FROM technicians WHERE is_active = 1").Scan(&technicians)
+	h.db.Raw("SELECT id, name, phone FROM technicians WHERE isActive = 1").Scan(&technicians)
 	var areas []map[string]interface{}
 	h.db.Raw("SELECT id, name FROM areas ORDER BY name").Scan(&areas)
 	return c.JSON(fiber.Map{

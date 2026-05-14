@@ -722,17 +722,18 @@ func (WorkOrder) TableName() string { return "work_orders" }
 // ─── TechnicianOtp ────────────────────────────────────────────────────────────
 
 type TechnicianOtp struct {
-	ID           string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	TechnicianID string     `gorm:"index" json:"technicianId"`
-	Token        string     `gorm:"uniqueIndex;type:varchar(10)" json:"token"`
-	ExpiresAt    time.Time  `json:"expiresAt"`
-	UsedAt       *time.Time `json:"usedAt"`
-	CreatedAt    time.Time  `json:"createdAt"`
+	ID           string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	TechnicianID string    `gorm:"column:technicianId;index" json:"technicianId"`
+	PhoneNumber  string    `gorm:"column:phoneNumber" json:"phoneNumber"`
+	Token        string    `gorm:"column:otpCode;uniqueIndex" json:"token"` // DB column: otpCode
+	IsUsed       bool      `gorm:"column:isUsed;default:false" json:"isUsed"` // DB column: isUsed
+	ExpiresAt    time.Time `gorm:"column:expiresAt" json:"expiresAt"`
+	CreatedAt    time.Time `json:"createdAt"`
 
 	Technician *Technician `gorm:"foreignKey:TechnicianID" json:"technician,omitempty"`
 }
 
-func (TechnicianOtp) TableName() string { return "technician_otp" }
+func (TechnicianOtp) TableName() string { return "technician_otps" }
 
 // ─── PushBroadcast ────────────────────────────────────────────────────────────
 

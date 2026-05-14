@@ -133,14 +133,14 @@ func (h *OLTHandler) ListONUs(c fiber.Ctx) error {
 	id := c.Params("id")
 
 	var onuStatuses []models.OLTONUStatus
-	query := h.db.Where("olt_id = ?", id)
+	query := h.db.Where("oltId = ?", id)
 
 	// Optional filters
 	if status := c.Query("status"); status != "" {
 		query = query.Where("status = ?", status)
 	}
 	if search := c.Query("search"); search != "" {
-		query = query.Where("serial_number LIKE ? OR description LIKE ?", "%"+search+"%", "%"+search+"%")
+		query = query.Where("serialNumber LIKE ? OR description LIKE ?", "%"+search+"%", "%"+search+"%")
 	}
 
 	page := 1
@@ -160,7 +160,7 @@ func (h *OLTHandler) ListONUs(c fiber.Ctx) error {
 	query.Model(&models.OLTONUStatus{}).Count(&total)
 
 	if err := query.Preload("Customer").
-		Order("frame, slot, port, onu_id").
+		Order("frame, slot, port, onuId").
 		Limit(pageSize).Offset(offset).
 		Find(&onuStatuses).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -182,7 +182,7 @@ func (h *OLTHandler) GetONU(c fiber.Ctx) error {
 
 	var status models.OLTONUStatus
 	if err := h.db.Preload("Customer").
-		Where("olt_id = ? AND id = ?", oltID, onuID).
+		Where("oltId = ? AND id = ?", oltID, onuID).
 		First(&status).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "ONU not found"})
 	}
@@ -252,8 +252,8 @@ func (h *OLTHandler) RegisterONU(c fiber.Ctx) error {
 		UpdatedAt:    now,
 	}
 	h.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "olt_id"}, {Name: "frame"}, {Name: "slot"}, {Name: "port"}, {Name: "onu_id"}},
-		DoUpdates: clause.AssignmentColumns([]string{"serial_number", "last_seen_at", "updatedAt"}),
+		Columns:   []clause.Column{{Name: "oltId"}, {Name: "frame"}, {Name: "slot"}, {Name: "port"}, {Name: "onuId"}},
+			DoUpdates: clause.AssignmentColumns([]string{"serialNumber", "lastSeenAt", "updatedAt"}),
 	}).Create(&status)
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "ONU registered", "status": status})
@@ -266,7 +266,7 @@ func (h *OLTHandler) DeregisterONU(c fiber.Ctx) error {
 	onuID := c.Params("onuId")
 
 	var status models.OLTONUStatus
-	if err := h.db.Where("olt_id = ? AND id = ?", oltID, onuID).First(&status).Error; err != nil {
+	if err := h.db.Where("oltId = ? AND id = ?", oltID, onuID).First(&status).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "ONU not found"})
 	}
 
@@ -303,8 +303,8 @@ func (h *OLTHandler) AssignONU(c fiber.Ctx) error {
 	}
 
 	if err := h.db.Model(&models.OLTONUStatus{}).
-		Where("olt_id = ? AND id = ?", oltID, onuID).
-		Update("customer_id", body.CustomerID).Error; err != nil {
+		Where("oltId = ? AND id = ?", oltID, onuID).
+		Update("customerId", body.CustomerID).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -361,7 +361,7 @@ func (h *OLTHandler) ListAlerts(c fiber.Ctx) error {
 	id := c.Params("id")
 	var alerts []models.OLTAlert
 
-	query := h.db.Where("olt_id = ?", id)
+	query := h.db.Where("oltId = ?", id)
 	if resolved := c.Query("resolved"); resolved == "false" {
 		query = query.Where("isResolved = ?", false)
 	}
@@ -384,8 +384,8 @@ func (h *OLTHandler) ListPerformance(c fiber.Ctx) error {
 	}
 	since := time.Now().Add(-time.Duration(hours) * time.Hour)
 
-	if err := h.db.Where("olt_id = ? AND recorded_at >= ?", id, since).
-		Order("recorded_at ASC").
+	if err := h.db.Where("oltId = ? AND recordedAt >= ?", id, since).
+		Order("recordedAt ASC").
 		Find(&metrics).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -413,7 +413,7 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 		       SUM(CASE WHEN status = 'online' THEN 1 ELSE 0 END) as online,
 		       SUM(CASE WHEN status != 'online' THEN 1 ELSE 0 END) as offline
 		FROM olt_onu_status
-		WHERE olt_id = ?
+		WHERE oltId = ?
 		GROUP BY frame, slot, port
 		ORDER BY frame, slot, port
 	`, id).Scan(&rows)

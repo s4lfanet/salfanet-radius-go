@@ -58,9 +58,9 @@ func (h *TicketExtHandler) Stats(c fiber.Ctx) error {
 		Count        int64   `json:"count"`
 	}
 	var byCategory []CategoryCount
-	h.db.Raw(`SELECT t.category_id, c.name as category_name, COUNT(t.id) as count
-		FROM tickets t LEFT JOIN ticket_categories c ON c.id = t.category_id
-		GROUP BY t.category_id, c.name ORDER BY count DESC`).Scan(&byCategory)
+	h.db.Raw(`SELECT t.categoryId, c.name as category_name, COUNT(t.id) as count
+		FROM tickets t LEFT JOIN ticket_categories c ON c.id = t.categoryId
+		GROUP BY t.categoryId, c.name ORDER BY count DESC`).Scan(&byCategory)
 
 	return c.JSON(fiber.Map{
 		"success":    true,
@@ -79,7 +79,7 @@ func (h *TicketExtHandler) ListMessages(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "ticketId required"})
 	}
 	var replies []models.TicketReply
-	h.db.Where("ticket_id = ?", ticketID).Order("createdAt asc").Find(&replies)
+	h.db.Where("ticketId = ?", ticketID).Order("createdAt asc").Find(&replies)
 	return c.JSON(fiber.Map{"success": true, "messages": replies})
 }
 

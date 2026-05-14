@@ -33,7 +33,7 @@ func (h *TechnicianPortalHandler) RequestOTP(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "phone required"})
 	}
 	var tech models.Technician
-	if err := h.db.First(&tech, "phone_number = ? AND is_active = ?", body.Phone, true).Error; err != nil {
+	if err := h.db.First(&tech, "phoneNumber = ? AND isActive = ?", body.Phone, true).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "technician not found"})
 	}
 
@@ -48,6 +48,7 @@ func (h *TechnicianPortalHandler) RequestOTP(c fiber.Ctx) error {
 	otpRecord := models.TechnicianOtp{
 		ID:           generateID(),
 		TechnicianID: tech.ID,
+		PhoneNumber:  body.Phone,
 		Token:        otp,
 		ExpiresAt:    expiry,
 	}
@@ -67,12 +68,12 @@ func (h *TechnicianPortalHandler) VerifyOTP(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	var tech models.Technician
-	if err := h.db.First(&tech, "phone_number = ? AND is_active = ?", body.Phone, true).Error; err != nil {
+	if err := h.db.First(&tech, "phoneNumber = ? AND isActive = ?", body.Phone, true).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "technician not found"})
 	}
 
 	var otpRecord models.TechnicianOtp
-	if err := h.db.First(&otpRecord, "technician_id = ? AND token = ? AND used_at IS NULL", tech.ID, body.OTP).Error; err != nil {
+	if err := h.db.First(&otpRecord, "technicianId = ? AND token = ? AND usedAt IS NULL", tech.ID, body.OTP).Error; err != nil {
 		return c.Status(401).JSON(fiber.Map{"error": "invalid or expired OTP"})
 	}
 	if time.Now().After(otpRecord.ExpiresAt) {
@@ -104,7 +105,7 @@ func (h *TechnicianPortalHandler) Login(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	var tech models.Technician
-	if err := h.db.First(&tech, "phone_number = ? AND is_active = ?", body.Phone, true).Error; err != nil {
+	if err := h.db.First(&tech, "phoneNumber = ? AND isActive = ?", body.Phone, true).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "technician not found"})
 	}
 	if tech.RequireOtp {

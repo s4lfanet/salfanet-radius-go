@@ -76,7 +76,7 @@ func (h *VoucherTemplateHandler) Update(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	if isDefault, ok := body["isDefault"].(bool); ok && isDefault {
-		h.db.Model(&models.VoucherTemplate{}).Where("is_default = ? AND id != ?", true, id).Update("isDefault", false)
+		h.db.Model(&models.VoucherTemplate{}).Where("isDefault = ? AND id != ?", true, id).Update("isDefault", false)
 	}
 	delete(body, "id")
 	h.db.Model(&models.VoucherTemplate{}).Where("id = ?", id).Updates(body)

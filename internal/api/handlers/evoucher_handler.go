@@ -76,7 +76,7 @@ func (h *EvoucherHandler) Purchase(c fiber.Ctx) error {
 func (h *EvoucherHandler) GetOrder(c fiber.Ctx) error {
 	token := c.Params("token")
 	var order models.VoucherOrder
-	if err := h.db.Preload("Profile").First(&order, "payment_token = ?", token).Error; err != nil {
+	if err := h.db.Preload("Profile").First(&order, "paymentToken = ?", token).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "order not found"})
 	}
 	return c.JSON(fiber.Map{"success": true, "order": order})

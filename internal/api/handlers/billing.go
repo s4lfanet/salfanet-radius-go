@@ -294,7 +294,7 @@ func (h *BillingHandler) WebhookTripay(c fiber.Ctx) error {
 
 func (h *BillingHandler) markInvoicePaidByToken(token string) {
 	var inv models.Invoice
-	if err := h.db.Where("payment_token = ? OR invoice_number = ?", token, token).First(&inv).Error; err != nil {
+	if err := h.db.Where("paymentToken = ? OR invoiceNumber = ?", token, token).First(&inv).Error; err != nil {
 		return
 	}
 	if inv.Status == models.InvoicePaid {

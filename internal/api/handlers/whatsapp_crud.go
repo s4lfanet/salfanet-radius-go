@@ -95,7 +95,7 @@ func (h *WhatsappCrudHandler) ListHistory(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 	var history []models.WhatsappHistory
-	q.Order("sent_at desc").Offset((page - 1) * limit).Limit(limit).Find(&history)
+	q.Order("sentAt desc").Offset((page - 1) * limit).Limit(limit).Find(&history)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"history": history,
@@ -120,7 +120,7 @@ func (h *WhatsappCrudHandler) DeleteHistory(c fiber.Ctx) error {
 	} else if body.BeforeAt != "" {
 		t, err := time.Parse("2006-01-02", body.BeforeAt)
 		if err == nil {
-			h.db.Where("sent_at < ?", t).Delete(&models.WhatsappHistory{})
+			h.db.Where("sentAt < ?", t).Delete(&models.WhatsappHistory{})
 		}
 	}
 	return c.JSON(fiber.Map{"success": true})
@@ -220,7 +220,7 @@ func (h *WhatsappCrudHandler) DeleteTemplate(c fiber.Ctx) error {
 // GET /api/whatsapp/reminder-settings
 func (h *WhatsappCrudHandler) GetReminderSettings(c fiber.Ctx) error {
 	var settings []models.WhatsappReminderSetting
-	h.db.Order("days_before desc").Find(&settings)
+	h.db.Order("daysBefore desc").Find(&settings)
 	return c.JSON(fiber.Map{"success": true, "settings": settings})
 }
 
@@ -246,6 +246,6 @@ func (h *WhatsappCrudHandler) UpdateReminderSettings(c fiber.Ctx) error {
 		}
 	}
 	var settings []models.WhatsappReminderSetting
-	h.db.Order("days_before desc").Find(&settings)
+	h.db.Order("daysBefore desc").Find(&settings)
 	return c.JSON(fiber.Map{"success": true, "settings": settings})
 }

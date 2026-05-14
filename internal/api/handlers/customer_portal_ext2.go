@@ -66,7 +66,7 @@ func (h *CustomerPortalExt2Handler) CreatePayment(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invoiceId required"})
 	}
 	var invoice models.Invoice
-	if err := h.db.First(&invoice, "id = ? AND user_id = ?", body.InvoiceID, userID).Error; err != nil {
+	if err := h.db.First(&invoice, "id = ? AND userId = ?", body.InvoiceID, userID).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
 	}
 	if invoice.Status == "PAID" {
@@ -88,7 +88,7 @@ func (h *CustomerPortalExt2Handler) UploadPaymentProof(c fiber.Ctx) error {
 	}
 	invoiceID := c.Params("id")
 	var invoice models.Invoice
-	if err := h.db.First(&invoice, "id = ? AND user_id = ?", invoiceID, userID).Error; err != nil {
+	if err := h.db.First(&invoice, "id = ? AND userId = ?", invoiceID, userID).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
 	}
 	proofURL := c.FormValue("proofUrl")
@@ -302,7 +302,7 @@ func (h *CustomerPortalExt2Handler) PayInvoiceManual(c fiber.Ctx) error {
 	}
 	invoiceID := c.Params("id")
 	var invoice models.Invoice
-	if err := h.db.First(&invoice, "id = ? AND user_id = ?", invoiceID, userID).Error; err != nil {
+	if err := h.db.First(&invoice, "id = ? AND userId = ?", invoiceID, userID).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
 	}
 	if invoice.Status == "PAID" {

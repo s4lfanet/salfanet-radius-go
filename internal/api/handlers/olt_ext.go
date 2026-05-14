@@ -19,7 +19,7 @@ func (h *OltExtHandler) ListAlerts(c fiber.Ctx) error {
 
 	query := h.db.Model(&models.OLTAlert{}).Order("createdAt desc").Limit(200)
 	if oltID != "" {
-		query = query.Where("olt_id = ?", oltID)
+		query = query.Where("oltId = ?", oltID)
 	}
 	if severity != "" {
 		query = query.Where("severity = ?", severity)
@@ -47,8 +47,8 @@ func (h *OltExtHandler) GetAlert(c fiber.Ctx) error {
 func (h *OltExtHandler) ResolveAlert(c fiber.Ctx) error {
 	id := c.Params("id")
 	h.db.Model(&models.OLTAlert{}).Where("id = ?", id).Updates(map[string]interface{}{
-		"is_resolved": true,
-		"resolved_at": gorm.Expr("NOW()"),
+		"isResolved": true,
+		"resolvedAt": gorm.Expr("NOW()"),
 	})
 	return c.JSON(fiber.Map{"success": true})
 }
@@ -71,6 +71,6 @@ func (h *OltExtHandler) Monitoring(c fiber.Ctx) error {
 // GET /api/olt/metrics
 func (h *OltExtHandler) Metrics(c fiber.Ctx) error {
 	var metrics []models.OLTPerformanceMetric
-	h.db.Order("recorded_at desc").Limit(100).Find(&metrics)
+	h.db.Order("recordedAt desc").Limit(100).Find(&metrics)
 	return c.JSON(fiber.Map{"success": true, "metrics": metrics})
 }

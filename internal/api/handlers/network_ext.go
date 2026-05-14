@@ -290,7 +290,7 @@ func (h *NetworkHandler) AssignCustomer(c fiber.Ctx) error {
 	}
 
 	var existing models.OdpCustomerAssignment
-	h.db.First(&existing, "customer_id = ?", body.CustomerID)
+	h.db.First(&existing, "customerId = ?", body.CustomerID)
 
 	notes := func() *string {
 		if body.Notes != "" {
@@ -317,8 +317,8 @@ func (h *NetworkHandler) AssignCustomer(c fiber.Ctx) error {
 	}
 
 	h.db.Model(&existing).Updates(map[string]interface{}{
-		"odp_id":      body.ODPID,
-		"port_number": body.PortNumber,
+		"odpId":      body.ODPID,
+		"portNumber": body.PortNumber,
 		"distance":    dist,
 		"notes":       notes,
 		"updatedAt":  time.Now(),

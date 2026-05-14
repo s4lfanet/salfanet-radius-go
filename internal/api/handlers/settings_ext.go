@@ -80,7 +80,7 @@ func (h *SettingsExtHandler) EmailHistory(c fiber.Ctx) error {
 		limit = v
 	}
 	status := c.Query("status")
-	query := h.db.Model(&models.EmailHistory{}).Order("sent_at desc")
+	query := h.db.Model(&models.EmailHistory{}).Order("sentAt desc")
 	if status != "" {
 		query = query.Where("status = ?", status)
 	}

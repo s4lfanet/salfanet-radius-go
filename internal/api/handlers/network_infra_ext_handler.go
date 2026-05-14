@@ -170,9 +170,9 @@ func (h *NetworkInfraHandler) ListCores(c fiber.Ctx) error {
 	var cores []networkCore
 	q := h.db
 	if cableID != "" {
-		q = q.Where("cable_id = ?", cableID)
+		q = q.Where("cableId = ?", cableID)
 	}
-	q.Order("core_index asc").Find(&cores)
+	q.Order("coreIndex asc").Find(&cores)
 	return c.JSON(fiber.Map{"success": true, "cores": cores})
 }
 
@@ -194,7 +194,7 @@ func (h *NetworkInfraHandler) CreateCore(c fiber.Ctx) error {
 func (h *NetworkInfraHandler) ListJointClosureSegments(c fiber.Ctx) error {
 	id := c.Params("id")
 	var segments []networkSegment
-	h.db.Where("parent_type = ? AND parent_id = ?", "joint_closure", id).Find(&segments)
+	h.db.Where("parentType = ? AND parentId = ?", "joint_closure", id).Find(&segments)
 	return c.JSON(fiber.Map{"success": true, "segments": segments})
 }
 
@@ -217,7 +217,7 @@ func (h *NetworkInfraHandler) CreateJointClosureSegment(c fiber.Ctx) error {
 func (h *NetworkInfraHandler) ListOTBSegments(c fiber.Ctx) error {
 	id := c.Params("id")
 	var segments []networkSegment
-	h.db.Where("parent_type = ? AND parent_id = ?", "otb", id).Find(&segments)
+	h.db.Where("parentType = ? AND parentId = ?", "otb", id).Find(&segments)
 	return c.JSON(fiber.Map{"success": true, "segments": segments})
 }
 
@@ -244,7 +244,7 @@ func (h *NetworkInfraHandler) ListSplices(c fiber.Ctx) error {
 	var splices []networkSplice
 	q := h.db
 	if jointID != "" {
-		q = q.Where("joint_closure_id = ?", jointID)
+		q = q.Where("jointClosureId = ?", jointID)
 	}
 	q.Order("createdAt desc").Find(&splices)
 	return c.JSON(fiber.Map{"success": true, "splices": splices})
@@ -291,7 +291,7 @@ func (h *NetworkInfraHandler) DeleteSplice(c fiber.Ctx) error {
 func (h *NetworkInfraHandler) ListJointClosureSplices(c fiber.Ctx) error {
 	id := c.Params("id")
 	var splices []networkSplice
-	h.db.Where("joint_closure_id = ?", id).Order("createdAt asc").Find(&splices)
+	h.db.Where("jointClosureId = ?", id).Order("createdAt asc").Find(&splices)
 	return c.JSON(fiber.Map{"success": true, "splices": splices})
 }
 
@@ -315,7 +315,7 @@ func (h *NetworkInfraHandler) CreateJointClosureSplice(c fiber.Ctx) error {
 func (h *NetworkInfraHandler) ListFeederCables(c fiber.Ctx) error {
 	otbID := c.Params("id")
 	var fc []feederCable
-	h.db.Where("otb_id = ?", otbID).Find(&fc)
+	h.db.Where("otbId = ?", otbID).Find(&fc)
 	return c.JSON(fiber.Map{"success": true, "feederCables": fc})
 }
 

@@ -101,7 +101,7 @@ func (h *CustomerExtHandler) ManualPayment(c fiber.Ctx) error {
 
 	// Verify invoice belongs to this user
 	var invoice models.Invoice
-	if err := h.db.First(&invoice, "id = ? AND user_id = ?", body.InvoiceID, userID).Error; err != nil {
+	if err := h.db.First(&invoice, "id = ? AND userId = ?", body.InvoiceID, userID).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
 	}
 
@@ -318,11 +318,11 @@ func (h *CustomerExtHandler) GetTicket(c fiber.Ctx) error {
 	}
 	id := c.Params("id")
 	var ticket models.Ticket
-	if err := h.db.Preload("Category").First(&ticket, "id = ? AND customer_id = ?", id, userID).Error; err != nil {
+	if err := h.db.Preload("Category").First(&ticket, "id = ? AND customerId = ?", id, userID).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "ticket not found"})
 	}
 	var replies []models.TicketReply
-	h.db.Where("ticket_id = ?", id).Order("createdAt asc").Find(&replies)
+	h.db.Where("ticketId = ?", id).Order("createdAt asc").Find(&replies)
 	return c.JSON(fiber.Map{"success": true, "ticket": ticket, "replies": replies})
 }
 

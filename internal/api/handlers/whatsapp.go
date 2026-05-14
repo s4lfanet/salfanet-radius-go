@@ -141,7 +141,7 @@ func (h *WhatsappHandler) SendMessage(c fiber.Ctx) error {
 
 func (h *WhatsappHandler) ListHistory(c fiber.Ctx) error {
 	var history []models.WhatsappHistory
-	h.db.Order("sent_at DESC").Limit(200).Find(&history)
+	h.db.Order("sentAt DESC").Limit(200).Find(&history)
 	return c.JSON(history)
 }
 
@@ -149,7 +149,7 @@ func (h *WhatsappHandler) ListHistory(c fiber.Ctx) error {
 
 func (h *WhatsappHandler) GetReminderSettings(c fiber.Ctx) error {
 	var settings []models.WhatsappReminderSetting
-	h.db.Order("days_before").Find(&settings)
+	h.db.Order("daysBefore").Find(&settings)
 	return c.JSON(settings)
 }
 

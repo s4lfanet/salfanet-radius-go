@@ -20,7 +20,7 @@ func (h *TechnicianAdminHandler) List(c fiber.Ctx) error {
 
 	query := h.db.Model(&models.Technician{}).Order("createdAt desc")
 	if search != "" {
-		query = query.Where("name LIKE ? OR phone_number LIKE ? OR email LIKE ?",
+		query = query.Where("name LIKE ? OR phoneNumber LIKE ? OR email LIKE ?",
 			"%"+search+"%", "%"+search+"%", "%"+search+"%")
 	}
 	if isActiveQ != "" {

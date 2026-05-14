@@ -238,7 +238,7 @@ func (h *InvoiceExtHandler) Export(c fiber.Ctx) error {
 func (h *InvoiceExtHandler) GetByToken(c fiber.Ctx) error {
 	token := c.Params("token")
 	var inv models.Invoice
-	if err := h.db.Where("payment_token = ?", token).Preload("User").First(&inv).Error; err != nil {
+	if err := h.db.Where("paymentToken = ?", token).Preload("User").First(&inv).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
 	}
 	return c.JSON(fiber.Map{"success": true, "invoice": inv})
