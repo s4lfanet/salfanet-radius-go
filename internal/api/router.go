@@ -497,9 +497,11 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	freeradius.Post("/restart", frH.Restart)
 	freeradius.Get("/logs", frH.GetLogs)
 	freeradius.Get("/radcheck", frH.GetRadcheck)
+	freeradius.Post("/radcheck", frH.CreateRadcheck)
+	freeradius.Delete("/radcheck", frH.DeleteRadcheck)
 	freeradius.Post("/radtest", frH.RunRadtest)
 	freeradius.Get("/config/list", frH.ListConfigs)
-	freeradius.Get("/config/read", frH.ReadConfig)
+	freeradius.Post("/config/read", frH.ReadConfig)
 	freeradius.Post("/config/save", frH.SaveConfig)
 
 	// Root-level invoices (separate from /billing/invoices)
