@@ -469,6 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.6 — 2026-05-15
+
+### Fixed
+- **Dashboard stat cards tidak muncul** — Go handler `adminH.Stats` di `/api/dashboard/stats` mengembalikan format salah (`{customers, invoices, onu}` tanpa key `success`). Frontend mengecek `if (data.success)` sehingga semua data diabaikan. Handler ditulis ulang lengkap sesuai format yang diharapkan: `{success, stats:{totalPppoeUsers, activePppoeUsers, activeSessionsPPPoE, ...}, systemStatus:{radius, database, api}, activities, agentSales, radiusAuthLog, radiusAuthStats, periodLabel, monthKey, isCurrentMonth}`
+- **Status RADIUS/Database/API selalu Offline** — `systemStatus` tidak dikembalikan oleh handler lama (undefined → semua false). Sekarang dikembalikan dengan: `database: true`, `api: true`, `radius:` berdasarkan pengecekan radacct aktif 1 jam terakhir
+- **`/api/system/radius` tidak punya field `status`** — Frontend menggunakan `radiusStatus?.status === 'running'` tapi handler tidak mengembalikan field itu. Ditambahkan `status: "running"|"stopped"` dan `uptime` berdasarkan sesi aktif dan aktivitas radacct terbaru
+### Files
+- `internal/api/handlers/admin.go` — Complete rewrite of `Stats()`: correct response structure, all stat fields, systemStatus, agentSales, radiusAuthLog, activities
+- `internal/api/handlers/settings_genieacs.go` — `SystemRadius()`: added `status` and `uptime` fields
+
 ### v2.47.5 — 2026-05-15
 
 ### Fixed
@@ -513,24 +523,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/analytics.go` — `SELECT type` → `SELECT invoiceType`, `GROUP BY type` → `GROUP BY invoiceType`
 - `internal/api/handlers/public.go` — SELECT clause fix ke kolom yang valid (`id`, `provider`, `isActive`)
-
-### v2.47.0 — 2026-05-14
-
-### Added (Architecture)
-- **Full routing ke Go backend** — Semua `/api/` request sekarang dihandle Go (sebelumnya hanya customer/agent/technician portal)
-- **NextAuth session bridge** — Go middleware `CombinedAuthMiddleware`: validasi JWT Bearer token (mobile/API) ATAU NextAuth session cookie (admin panel browser) — tanpa perlu ubah frontend
-- **`validateNextAuthSession`** — fungsi internal di Go yang memanggil `http://127.0.0.1:3000/api/auth/session` untuk memverifikasi admin browser session
-- **Nginx catch-all update** — `location /api/ { proxy_pass → 8080 }` (sebelumnya 3000). NextAuth protocol endpoints (`/api/auth/callback`, `/api/auth/session`, `/api/auth/csrf`, `/api/auth/signout`) tetap ke Next.js:3000
-
-### Impact
-- Semua admin API routes (`/api/admin/*`, `/api/pppoe/*`, `/api/settings/*`, `/api/network/*`, `/api/invoices/*`, dll.) sekarang dihandle Go Fiber — tidak ada lagi Prisma ORM overhead + NextAuth session check per request
-- Next.js:3000 sekarang hanya handle: halaman frontend, NextAuth protocol endpoints
-
-### Files
-- `internal/api/middleware/auth.go` — tambah `CombinedAuthMiddleware` + `validateNextAuthSession`
-- `internal/api/router.go` — ganti `AuthMiddleware` → `CombinedAuthMiddleware` untuk protected routes
-- `/etc/nginx/sites-available/salfanet-radius` (VPS) — catch-all `/api/` → Go:8080
-- `vps-install/install-nginx.sh` — fix fresh installer: catch-all `/api/` → Go:8080 (sebelumnya 3000)
 
 <!-- AUTO-CHANGELOG:END -->
 
