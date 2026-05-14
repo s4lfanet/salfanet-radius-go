@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.21 — 2026-05-15
+
+### Fixed
+- **`POST /api/company` 400 Bad Request saat simpan pengaturan perusahaan** — Frontend mengirim `bankAccounts` sebagai JSON array (`[]`), tapi model Go menyimpannya sebagai `*string`. Fiber JSON binder gagal decode → 400. Fix: parse body sebagai `map[string]interface{}`, konversi `bankAccounts` array → JSON string sebelum bind ke struct. Juga: tambah UUID generation saat buat record company baru (fresh install).
+### Files
+- `internal/api/handlers/company.go` — `UpdateCompany` konversi bankAccounts + generate UUID
+
 ### v2.47.20 — 2026-05-15
 
 ### Fixed
@@ -500,13 +507,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Fresh install: folder `uploads/` tidak dibuat** — `install-go.sh` hanya membuat `bin/` dan `logs/`, tidak membuat `uploads/logos`, `uploads/payment-proofs`, `uploads/customer-photos`. Meskipun `ReadWritePaths` sudah include `/uploads`, foldernya belum ada → Go server akan error saat pertama kali upload. Fix: tambah `mkdir -p` untuk ketiga subfolder uploads di kedua tempat dalam script.
 ### Files
 - `vps-install/install-go.sh` — tambah `mkdir -p uploads/logos uploads/payment-proofs uploads/customer-photos`
-
-### v2.47.16 — 2026-05-15
-
-### Fixed
-- **Installer: `--domain` CLI flag diabaikan** — `init_installation()` melakukan `export VPS_DOMAIN=""` yang overwrite nilai yang sudah di-set via `--domain` CLI arg. Fix: ubah ke `export VPS_DOMAIN="${VPS_DOMAIN:-}"` agar CLI value dipertahankan.
-### Files
-- `vps-install/vps-installer.sh` — preserve VPS_DOMAIN from CLI flag
 
 <!-- AUTO-CHANGELOG:END -->
 
