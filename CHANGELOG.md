@@ -6,6 +6,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.42.0] — 2026-05-14
+### Fixed
+- **DB camelCase 100% complete** — Fixed final 8 remaining snake_case column references across 5 files
+- **TechnicianOtp** — `Update("used_at", now)` → `Update("isUsed", true)` (model uses `bool`, not `*time.Time`)
+- **Technician auth** — `Update("last_login_at", now)` → `Update("lastLoginAt", now)` in both login paths
+- **PPPoE sync** — `Update("synced_to_radius", true)` → `Update("syncedToRadius", true)`
+- **PPPoE expiry** — `Update("expired_at", newExpiry)` → `Update("expiredAt", newExpiry)`
+- **Invoice generator** — `"subscription_type = ?"` → `"subscriptionType = ?"` and `"invoice_type = ?"` → `"invoiceType = ?"`
+- **Auth 2FA** — removed dead `"otp_code": nil` key (column doesn't exist in `admin_two_factor_pending`)
+### Files
+- `internal/api/handlers/technician_portal.go` — isUsed, lastLoginAt
+- `internal/api/handlers/pppoe.go` — syncedToRadius
+- `internal/api/handlers/pppoe_ext.go` — expiredAt
+- `internal/api/handlers/invoices_ext.go` — subscriptionType, invoiceType
+- `internal/api/handlers/auth.go` — removed dead otp_code key
+
 ## [2.41.0] — 2026-05-14
 ### Fixed
 - **HR tables migration** — Created missing DB tables: `attendance_records`, `attendance_locations`, `cash_advances`, `commissions` with correct camelCase column names
