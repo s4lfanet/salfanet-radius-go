@@ -469,6 +469,25 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.46.4 — 2026-05-14
+
+### Fixed
+- **Sidebar: Hapus menu "Manajemen VPN"** — Submenu duplikat (Klien VPN, Site VPN, Pengaturan VPN) dihapus dari sidebar karena VPN Client sudah ada di menu Router
+- **CSP: Leaflet CSS dari cdnjs diblokir** — Ditambahkan `https://cdnjs.cloudflare.com`, `https://fonts.googleapis.com`, `https://cdn.jsdelivr.net` ke `style-src` di `next.config.ts`
+- **404: `/api/payroll-templates`** — Endpoint hanya ada di Go (butuh Bearer token); dibuat Next.js API route `GET/POST` + `[id]` `GET/PUT/DELETE` + `[id]/default POST` menggunakan `prisma.$queryRaw`
+- **500: `/api/network/cables`** — Tabel `fiber_cables` beserta relasi tidak ada di DB VPS; dibuat SQL migration `scripts/migrate-fiber-payroll-tables.sql`
+
+### Added
+- **DB migration SQL** — `scripts/migrate-fiber-payroll-tables.sql` membuat tabel: `payroll_templates`, `fiber_cables`, `fiber_tubes`, `fiber_cores`, `splice_points`, `cable_segments`, `core_assignment_history`
+
+### Files
+- `src/app/admin/AdminClientLayout.tsx` — Hapus blok `vpnManagement` dari sidebar
+- `next.config.ts` — Tambah CDN ke `style-src` CSP
+- `src/app/api/payroll-templates/route.ts` — Baru: GET list, POST create
+- `src/app/api/payroll-templates/[id]/route.ts` — Baru: GET, PUT, DELETE
+- `src/app/api/payroll-templates/[id]/default/route.ts` — Baru: POST set-default
+- `scripts/migrate-fiber-payroll-tables.sql` — Baru: SQL migration fiber + payroll
+
 ### v2.46.3 — 2026-05-14
 
 ### Fixed
@@ -569,31 +588,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `vps-install/install-app.sh` — Go env vars in .env template
 - `production/ecosystem.config.js` — cron API_URL → 8080
 - `production/nginx-salfanet-radius.conf` — /api/ → Go:8080 + LE cert paths
-
-### v2.43.0 — 2026-05-14
-
-### Added
-- **Troubleshooting DB tables** — Created `troubleshooting_checklists`, `troubleshooting_jobs`, `troubleshooting_materials` tables in MySQL
-- **Payroll DB tables** — Created `payroll_templates`, `payroll_records`, `payroll_overtime` tables in MySQL
-- **Admin page: Troubleshooting Checklists** — `/admin/troubleshooting` — CRUD checklist panduan troubleshooting per kategori
-- **Admin page: Troubleshooting Jobs** — `/admin/troubleshooting/jobs` — Lacak pekerjaan troubleshooting aktif (stats: open/in-progress/resolved)
-- **Admin page: Absensi** — `/admin/attendance` — Manajemen kehadiran karyawan/teknisi dengan bulk delete
-- **Admin page: Kasbon** — `/admin/cash-advances` — Pengajuan & approval kasbon dengan tombol bayar
-- **Admin page: Komisi** — `/admin/commissions` — Manajemen komisi instalasi/sales/referral dengan approve/reject
-- **Admin page: Template Payroll** — `/admin/payroll-templates` — Template perhitungan gaji dengan preview langsung
-- **Admin page: Payroll** — `/admin/payroll` — Generate & manajemen slip gaji bulanan dengan tombol lunas
-### Fixed
-- **troubleshooting_handler.go** — `"job_id = ?"` → `"jobId = ?"` (camelCase consistency)
-### Files
-- `internal/api/handlers/troubleshooting_handler.go` — fixed jobId column reference
-- `scripts/create-missing-tables.sql` — SQL untuk 6 tabel baru (dieksekusi di VPS)
-- `src/app/admin/troubleshooting/page.tsx` — halaman baru
-- `src/app/admin/troubleshooting/jobs/page.tsx` — halaman baru
-- `src/app/admin/attendance/page.tsx` — halaman baru
-- `src/app/admin/cash-advances/page.tsx` — halaman baru
-- `src/app/admin/commissions/page.tsx` — halaman baru
-- `src/app/admin/payroll-templates/page.tsx` — halaman baru
-- `src/app/admin/payroll/page.tsx` — halaman baru
 
 <!-- AUTO-CHANGELOG:END -->
 
