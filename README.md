@@ -469,6 +469,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.47.18 — 2026-05-15
+
+### Changed
+- **Hapus referensi Redis dari installer** — Redis sudah tidak digunakan sejak v2.11.3 (`ioredis` dihapus). Referensi `REDIS_URL` di `.env` template dan pesan "install Redis" di `vps-installer.sh` dihapus agar installer lebih bersih.
+### Files
+- `vps-install/install-app.sh` — hapus baris `# REDIS_URL=redis://127.0.0.1:6379`
+- `vps-install/vps-installer.sh` — hapus Redis status line + Redis next steps hint + Redis final summary block
+
 ### v2.47.17 — 2026-05-15
 
 ### Fixed
@@ -507,13 +515,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/upload.go` — `PwaIcon` handler baru dengan fallback ke icon publik
 - `production/nginx-radius.hotspotapp.net.conf` — nginx config untuk subdomain
 - `/var/www/salfanet-radius/.env` (VPS) — `NEXTAUTH_URL` dan `NEXT_PUBLIC_APP_URL` diupdate ke subdomain
-
-### v2.47.13 — 2026-05-15
-
-### Fixed
-- **`POST /api/upload/logo` → 500 masih gagal** — root cause sebenarnya: systemd service menggunakan `ProtectSystem=strict` yang membuat seluruh filesystem read-only. Hanya `/var/www/salfanet-radius/logs` yang ada di `ReadWritePaths`, sehingga proses tidak bisa menulis ke `/uploads/`. Fix: tambah `/var/www/salfanet-radius/uploads` ke `ReadWritePaths` di `/etc/systemd/system/salfanet-api.service`.
-### Files
-- `/etc/systemd/system/salfanet-api.service` (VPS) — `ReadWritePaths` ditambah path `/uploads`
 
 <!-- AUTO-CHANGELOG:END -->
 
