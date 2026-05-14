@@ -6,6 +6,32 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.40.0] — 2026-05-15
+### Fixed
+- **DB camelCase — round 2 complete** — Fixed remaining snake_case column references across all handler files and models; DB naming now 100% consistent with Prisma camelCase convention
+- **TechnicianOtp model** — Corrected `TableName()` to `technician_otps` (plural); fixed field mappings: `Token` → `otpCode`, `UsedAt *time.Time` → `IsUsed bool`, added `PhoneNumber` field
+- **OLT handlers** — Fixed `olt_id` → `oltId`, `onu_id` → `onuId`, `serial_number` → `serialNumber`, `recorded_at` → `recordedAt` in WHERE, ORDER BY, and OnConflict clause columns
+- **Technician portal** — Fixed OTP query WHERE clause to use `technicianId`, `otpCode`, `isUsed`; fixed OTP creation to populate `PhoneNumber`
+- **Network** — Fixed `odp_id` → `odpId`, `port_number` → `portNumber` in ODP assignment updates
+- **Invoices** — Fixed `payment_token` → `paymentToken`, `payment_link` → `paymentLink` in invoice payment Updates
+- **Auth** — Fixed `expires_at` → `expiresAt` in two-factor session update
+- **Tickets** — Fixed raw SQL `t.category_id` → `t.categoryId` in analytics query
+- **WhatsApp** — Fixed `sent_at` → `sentAt`, `days_before` → `daysBefore` in history and settings
+- **Push notifications** — Fixed `technician_id` → `technicianId`, `user_id` → `userId` in subscription WHERE clauses
+- **Referrals** — Fixed `referrer_id`/`referred_id` → `referrerId`/`referredId` in WHERE and JOIN
+- **Admin** — Fixed `is_active`/`is_default`/`is_resolved`, `approval_status`, `approved_at`, `approved_by`, `requires_approval`, `assigned_to_id` across handlers
+- **Misc** — Fixed raw SQL `is_active = 1` → `isActive = 1` in technician dispatch query
+### Files
+- `internal/db/models/extra.go` — TechnicianOtp model corrected (TableName, field names, added PhoneNumber)
+- `internal/api/handlers/olt.go`, `olt_ext.go` — oltId, onuId, serialNumber, recordedAt fixes
+- `internal/api/handlers/technician_portal.go` — OTP auth WHERE clause and creation corrected
+- `internal/api/handlers/network_ext.go` — odpId, portNumber in assignment updates
+- `internal/api/handlers/payment_handler.go` — paymentToken, paymentLink in invoice Updates
+- `internal/api/handlers/auth.go` — expiresAt in two-factor session
+- `internal/api/handlers/ticket_ext.go` — categoryId in raw SQL analytics
+- `internal/api/handlers/misc_handler.go` — isActive in raw SQL technician query
+- `internal/api/handlers/*.go` (30+ more files) — isActive, isDefault, isResolved, approvalStatus, assignedToId, technicianId, referrerId, referredId, sentAt, daysBefore, paymentToken etc.
+
 ## [2.39.0] — 2026-05-15
 ### Fixed
 - **DB column naming — camelCase consistency** — Fixed 70+ `ORDER BY created_at` errors across all handler files; DB uses Prisma camelCase convention (`createdAt`, `updatedAt`, `paidAt`, `isActive`, `isResolved`, `userId`, `agentId`, `profileId`, `technicianId`, `assignedToId`, `startedAt`, etc.)
