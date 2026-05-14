@@ -515,7 +515,6 @@ show_installation_info() {
     echo "    5. Install & Configure FreeRADIUS  (2 menit)"
     echo "    6. Configure Nginx Reverse Proxy   (1 menit)"
     echo "    7. Build & Start App (PM2)         (5-10 menit)"
-    echo "    8. [Opsional] Build Customer APK   (20-40 menit)"
     if [ "${SKIP_UFW:-false}" = "true" ]; then
         echo ""
         echo -e "  ${YELLOW}[!] UFW firewall dilewati (Proxmox LXC).${NC}"

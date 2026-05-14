@@ -184,10 +184,7 @@ find /root/.pm2/logs -name "*.log" -size +20M -exec truncate -s 10M {} \; 2>/dev
 find /var/data/salfanet/gradle-cache -type f -atime +30 -delete 2>/dev/null
 find /var/data/salfanet/gradle-cache -type d -empty -delete 2>/dev/null
 
-# 8. APK build temp > 1 hari
-find /tmp -maxdepth 1 -name "salfanet-apk-*" -type d -mtime +1 -exec rm -rf {} + 2>/dev/null
-
-# 9. FreeRADIUS old logs
+# 8. FreeRADIUS old logs
 find /var/log/freeradius -name "*.log.*" -mtime +30 -delete 2>/dev/null
 
 # 10. Prune old update backups — keep only 2 most recent

@@ -356,7 +356,6 @@ run_installation() {
         }
     fi
 
-    export APK_BUILT="false"
     export VPN_CLIENT_INSTALLED="false"
 
     print_success "All installation steps completed successfully!"
@@ -414,14 +413,6 @@ Application URL : $([ -n "${VPS_DOMAIN:-}" ] && echo "https://${VPS_DOMAIN}" || 
 Admin Panel     : $([ -n "${VPS_DOMAIN:-}" ] && echo "https://${VPS_DOMAIN}/admin" || echo "http://${VPS_IP}/admin")
 Default Login   : Lihat database seeders
 Firewall (UFW)  : $([ "${SKIP_UFW}" = "true" ] && echo "DILEWATI - konfigurasi di Proxmox host" || echo "$(ufw status 2>/dev/null | head -1 | sed 's/^Status: //')")
-
-[>] CUSTOMER MOBILE APP
------------------------
-APK Status      : $([ "${APK_BUILT:-false}" = "true" ] && echo "Sudah dibuild" || echo "Belum dibuild")
-APK Download URL: $([ -n "${VPS_DOMAIN:-}" ] && echo "https://${VPS_DOMAIN}/downloads/salfanet-radius.apk" || echo "http://${VPS_IP}/downloads/salfanet-radius.apk")
-Build APK       : bash ${APP_DIR}/vps-install/install-apk.sh
-Rebuild APK     : bash ${APP_DIR}/vps-install/install-apk.sh --rebuild
-APK Status Cek  : bash ${APP_DIR}/vps-install/install-apk.sh --status
 
 [>] SSTP VPN CLIENT (koneksi ke MikroTik CHR)
 --------------------------------------------
@@ -486,7 +477,6 @@ tail -f /var/log/freeradius/radius.log  # Logs
 1. Akses aplikasi : $([ -n "${VPS_DOMAIN:-}" ] && echo "https://${VPS_DOMAIN}" || echo "http://${VPS_IP}")
 2. Login admin, ganti password
 3. Tambahkan NAS/router di pengaturan RADIUS
-4. Bagikan link APK ke customer: $([ -n "${VPS_DOMAIN:-}" ] && echo "https://${VPS_DOMAIN}/downloads/salfanet-radius.apk" || echo "http://${VPS_IP}/downloads/salfanet-radius.apk")
 $([ "${DEPLOY_ENV}" = "vps" ] && [ -z "${VPS_DOMAIN:-}" ] && echo "6. Setup SSL: certbot --nginx -d yourdomain.com" || \
   echo "6. [Opsional] Setup Cloudflare Tunnel untuk akses dari internet")
 
@@ -518,16 +508,7 @@ show_final_summary() {
     echo -e "  Web App : ${WHITE}http://${VPS_IP}${NC}"
     echo -e "  Admin   : ${WHITE}http://${VPS_IP}/admin${NC}"
     fi
-    if [ "${APK_BUILT:-false}" = "true" ]; then
-        if [ -n "${VPS_DOMAIN:-}" ]; then
-        echo -e "  APK DL  : ${WHITE}https://${VPS_DOMAIN}/downloads/salfanet-radius.apk${NC}"
-        else
-        echo -e "  APK DL  : ${WHITE}http://${VPS_IP}/downloads/salfanet-radius.apk${NC}"
-        fi
-    else
-        echo -e "  ${YELLOW}APK belum dibuild. Jalankan: bash ${APP_DIR}/vps-install/install-apk.sh${NC}"
-    fi
-    echo ""
+
 
     if [ "${DEPLOY_ENV}" = "lxc" ]; then
         echo -e "${YELLOW}Info Proxmox LXC:${NC}"
