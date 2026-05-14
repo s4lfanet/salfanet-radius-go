@@ -86,6 +86,21 @@ prisma/*.db-journal
 # Reference folder — not part of production
 billing-radius/
 
+# OLT management tool — standalone CLI, not part of this repo
+oltc320_v2.1.1_linux/
+
+# Old Baileys WhatsApp patch — superseded by wa-service.js at root
+baileys_whatsapp_patch/
+
+# Duplicate / dev-only nginx config
+nginx-frontend.conf
+
+# OLT SNMP OID reference table — not needed in repo
+ZTE_OID_TABLE.md
+
+# Air live reload config (Go dev tool, not production)
+.air.toml
+
 # Manual debug artifacts
 capture-result.txt
 chr-nat-result.txt
