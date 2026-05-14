@@ -6,6 +6,32 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.43.0] — 2026-05-14
+### Added
+- **Troubleshooting DB tables** — Created `troubleshooting_checklists`, `troubleshooting_jobs`, `troubleshooting_materials` tables in MySQL
+- **Payroll DB tables** — Created `payroll_templates`, `payroll_records`, `payroll_overtime` tables in MySQL
+- **Admin page: Troubleshooting Checklists** — `/admin/troubleshooting` — CRUD checklist panduan troubleshooting per kategori
+- **Admin page: Troubleshooting Jobs** — `/admin/troubleshooting/jobs` — Lacak pekerjaan troubleshooting aktif (stats: open/in-progress/resolved)
+- **Admin page: Absensi** — `/admin/attendance` — Manajemen kehadiran karyawan/teknisi dengan bulk delete
+- **Admin page: Kasbon** — `/admin/cash-advances` — Pengajuan & approval kasbon dengan tombol bayar
+- **Admin page: Komisi** — `/admin/commissions` — Manajemen komisi instalasi/sales/referral dengan approve/reject
+- **Admin page: Template Payroll** — `/admin/payroll-templates` — Template perhitungan gaji dengan preview langsung
+- **Admin page: Payroll** — `/admin/payroll` — Generate & manajemen slip gaji bulanan dengan tombol lunas
+### Fixed
+- **troubleshooting_handler.go** — `"job_id = ?"` → `"jobId = ?"` (camelCase consistency)
+### Files
+- `internal/api/handlers/troubleshooting_handler.go` — fixed jobId column reference
+- `scripts/create-missing-tables.sql` — SQL untuk 6 tabel baru (dieksekusi di VPS)
+- `src/app/admin/troubleshooting/page.tsx` — halaman baru
+- `src/app/admin/troubleshooting/jobs/page.tsx` — halaman baru
+- `src/app/admin/attendance/page.tsx` — halaman baru
+- `src/app/admin/cash-advances/page.tsx` — halaman baru
+- `src/app/admin/commissions/page.tsx` — halaman baru
+- `src/app/admin/payroll-templates/page.tsx` — halaman baru
+- `src/app/admin/payroll/page.tsx` — halaman baru
+
+---
+
 ## [2.42.0] — 2026-05-14
 ### Fixed
 - **DB camelCase 100% complete** — Fixed final 8 remaining snake_case column references across 5 files
