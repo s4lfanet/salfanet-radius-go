@@ -485,6 +485,7 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/middleware/auth.go` — tambah `CombinedAuthMiddleware` + `validateNextAuthSession`
 - `internal/api/router.go` — ganti `AuthMiddleware` → `CombinedAuthMiddleware` untuk protected routes
 - `/etc/nginx/sites-available/salfanet-radius` (VPS) — catch-all `/api/` → Go:8080
+- `vps-install/install-nginx.sh` — fix fresh installer: catch-all `/api/` → Go:8080 (sebelumnya 3000)
 
 ### v2.46.7 — 2026-05-15
 
