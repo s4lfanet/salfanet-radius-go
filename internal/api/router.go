@@ -854,6 +854,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/notifications/support-resolved", miscH.NotifySupportResolved)
 	app.Get("/api/pay/:token", miscH.PayByToken)
 	api.Get("/payment-gateway/config", miscH.PaymentGatewayConfig)
+	api.Post("/payment-gateway/config", miscH.PaymentGatewaySaveConfig)
 	api.Get("/payment-gateway/webhook-logs", miscH.PaymentGatewayWebhookLogs)
 	api.Get("/inventory/items/available", inventoryH.ListItems)
 	api.Post("/inventory/stock-in", inventoryH.CreateMovement)

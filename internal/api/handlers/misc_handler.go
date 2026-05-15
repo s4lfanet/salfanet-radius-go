@@ -8,10 +8,18 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 )
+
+func capitalize(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}
 
 // MiscHandler covers misc missing routes: sessions ext, radius auth, health ext, coordinator, pppoe misc.
 type MiscHandler struct{ db *gorm.DB }
@@ -483,16 +491,144 @@ func (h *MiscHandler) PayByToken(c fiber.Ctx) error {
 
 // ─── Payment Gateway Config ───────────────────────────────────────────────────
 
-// GET /api/payment-gateway/config
+// GET /api/payment-gateway/config — return array of gateway configs
 func (h *MiscHandler) PaymentGatewayConfig(c fiber.Ctx) error {
 	var gateways []models.PaymentGateway
 	h.db.Find(&gateways)
-	return c.JSON(fiber.Map{"success": true, "gateways": gateways})
+	if gateways == nil {
+		gateways = []models.PaymentGateway{}
+	}
+	return c.JSON(gateways)
 }
 
-// GET /api/payment-gateway/webhook-logs
+// POST /api/payment-gateway/config — upsert a gateway config
+func (h *MiscHandler) PaymentGatewaySaveConfig(c fiber.Ctx) error {
+	var body map[string]interface{}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	provider, _ := body["provider"].(string)
+	if provider == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "provider required"})
+	}
+
+	var gw models.PaymentGateway
+	result := h.db.Where("provider = ?", provider).First(&gw)
+	if result.Error != nil {
+		// Create new
+		gw.ID = uuid.New().String()
+		gw.Provider = provider
+		gw.Name = capitalize(provider)
+	}
+
+	// Apply fields from body
+	if v, ok := body["isActive"].(bool); ok {
+		gw.IsActive = v
+	}
+	// Midtrans
+	if v, ok := body["midtransClientKey"].(string); ok {
+		gw.MidtransClientKey = &v
+	}
+	if v, ok := body["midtransServerKey"].(string); ok {
+		gw.MidtransServerKey = &v
+	}
+	if v, ok := body["midtransEnvironment"].(string); ok {
+		gw.MidtransEnvironment = v
+	}
+	// Xendit
+	if v, ok := body["xenditApiKey"].(string); ok {
+		gw.XenditApiKey = &v
+	}
+	if v, ok := body["xenditWebhookToken"].(string); ok {
+		gw.XenditWebhookToken = &v
+	}
+	if v, ok := body["xenditEnvironment"].(string); ok {
+		gw.XenditEnvironment = v
+	}
+	// Duitku
+	if v, ok := body["duitkuMerchantCode"].(string); ok {
+		gw.DuitkuMerchantCode = &v
+	}
+	if v, ok := body["duitkuApiKey"].(string); ok {
+		gw.DuitkuApiKey = &v
+	}
+	if v, ok := body["duitkuEnvironment"].(string); ok {
+		gw.DuitkuEnvironment = v
+	}
+	// Tripay
+	if v, ok := body["tripayMerchantCode"].(string); ok {
+		gw.TripayMerchantCode = &v
+	}
+	if v, ok := body["tripayApiKey"].(string); ok {
+		gw.TripayApiKey = &v
+	}
+	if v, ok := body["tripayPrivateKey"].(string); ok {
+		gw.TripayPrivateKey = &v
+	}
+	if v, ok := body["tripayEnvironment"].(string); ok {
+		gw.TripayEnvironment = v
+	}
+
+	if result.Error != nil {
+		h.db.Create(&gw)
+	} else {
+		h.db.Save(&gw)
+	}
+	return c.JSON(gw)
+}
+
+// GET /api/payment-gateway/webhook-logs — paginated webhook logs
 func (h *MiscHandler) PaymentGatewayWebhookLogs(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "logs": []fiber.Map{}})
+	page := 1
+	limit := 20
+	if pStr := c.Query("page"); pStr != "" {
+		var p int
+		if _, err := fmt.Sscanf(pStr, "%d", &p); err == nil && p > 0 {
+			page = p
+		}
+	}
+	if lStr := c.Query("limit"); lStr != "" {
+		var l int
+		if _, err := fmt.Sscanf(lStr, "%d", &l); err == nil && l > 0 && l <= 100 {
+			limit = l
+		}
+	}
+	skip := (page - 1) * limit
+
+	q := h.db.Model(&models.WebhookLog{})
+	if gw := c.Query("gateway"); gw != "" {
+		q = q.Where("gateway = ?", gw)
+	}
+	if oid := c.Query("orderId"); oid != "" {
+		q = q.Where("orderId LIKE ?", "%"+oid+"%")
+	}
+	if s := c.Query("success"); s != "" {
+		q = q.Where("success = ?", s == "true")
+	}
+
+	var total int64
+	q.Count(&total)
+
+	var logs []models.WebhookLog
+	q.Order("createdAt DESC").Limit(limit).Offset(skip).Find(&logs)
+	if logs == nil {
+		logs = []models.WebhookLog{}
+	}
+
+	totalPages := int(total) / limit
+	if int(total)%limit != 0 {
+		totalPages++
+	}
+
+	return c.JSON(fiber.Map{
+		"logs": logs,
+		"pagination": fiber.Map{
+			"page":       page,
+			"limit":      limit,
+			"total":      total,
+			"totalPages": totalPages,
+		},
+	})
 }
 
 // GET /api/inventory/variance — low-stock report

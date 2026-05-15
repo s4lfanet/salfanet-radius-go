@@ -108,21 +108,27 @@ func (h *CustomerPortalExt2Handler) UploadPaymentProof(c fiber.Ctx) error {
 func (h *CustomerPortalExt2Handler) GetPaymentMethods(c fiber.Ctx) error {
 	var gateways []models.PaymentGateway
 	h.db.Where("isActive = ?", true).Find(&gateways)
-	// Sanitize: strip server keys
+	// Sanitize: only expose public info
 	type SafeGateway struct {
-		ID           string  `json:"id"`
-		Provider     string  `json:"provider"`
-		ClientKey    *string `json:"clientKey"`
-		MerchantCode *string `json:"merchantCode"`
-		BaseURL      *string `json:"baseUrl"`
-		IsProduction bool    `json:"isProduction"`
+		ID          string `json:"id"`
+		Provider    string `json:"provider"`
+		Environment string `json:"environment"`
+		IsActive    bool   `json:"isActive"`
 	}
 	safe := make([]SafeGateway, len(gateways))
 	for i, g := range gateways {
+		env := g.MidtransEnvironment // default fallback
+		switch g.Provider {
+		case "xendit":
+			env = g.XenditEnvironment
+		case "duitku":
+			env = g.DuitkuEnvironment
+		case "tripay":
+			env = g.TripayEnvironment
+		}
 		safe[i] = SafeGateway{
 			ID: g.ID, Provider: g.Provider,
-			ClientKey: g.ClientKey, MerchantCode: g.MerchantCode,
-			BaseURL: g.BaseURL, IsProduction: g.IsProduction,
+			Environment: env, IsActive: g.IsActive,
 		}
 	}
 	return c.JSON(fiber.Map{"success": true, "methods": safe})

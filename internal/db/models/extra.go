@@ -159,19 +159,57 @@ func (NetworkOTB) TableName() string { return "network_otbs" }
 // ─── Payment Gateway ──────────────────────────────────────────────────────────
 
 type PaymentGateway struct {
-	ID           string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Provider     string    `gorm:"uniqueIndex" json:"provider"` // midtrans/xendit/duitku/tripay
-	IsActive     bool      `gorm:"default:false" json:"isActive"`
-	ServerKey    string    `json:"-"`
-	ClientKey    *string   `json:"clientKey"`
-	MerchantCode *string   `json:"merchantCode"`
-	BaseURL      *string   `json:"baseUrl"`
-	IsProduction bool      `gorm:"default:false" json:"isProduction"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
+	ID   string `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Name string `json:"name"`
+
+	Provider string `gorm:"uniqueIndex;type:varchar(191)" json:"provider"` // midtrans/xendit/duitku/tripay
+	IsActive bool   `gorm:"default:false" json:"isActive"`
+
+	// Midtrans
+	MidtransClientKey   *string `json:"midtransClientKey"`
+	MidtransServerKey   *string `json:"midtransServerKey"`
+	MidtransEnvironment string  `gorm:"default:sandbox" json:"midtransEnvironment"`
+
+	// Xendit
+	XenditApiKey        *string `json:"xenditApiKey"`
+	XenditWebhookToken  *string `json:"xenditWebhookToken"`
+	XenditEnvironment   string  `gorm:"default:sandbox" json:"xenditEnvironment"`
+
+	// Duitku
+	DuitkuMerchantCode *string `json:"duitkuMerchantCode"`
+	DuitkuApiKey       *string `json:"duitkuApiKey"`
+	DuitkuEnvironment  string  `gorm:"default:sandbox" json:"duitkuEnvironment"`
+
+	// Tripay
+	TripayMerchantCode *string `json:"tripayMerchantCode"`
+	TripayApiKey       *string `json:"tripayApiKey"`
+	TripayPrivateKey   *string `json:"tripayPrivateKey"`
+	TripayEnvironment  string  `gorm:"default:sandbox" json:"tripayEnvironment"`
+
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 func (PaymentGateway) TableName() string { return "payment_gateways" }
+
+// ─── Webhook Log ──────────────────────────────────────────────────────────────
+
+type WebhookLog struct {
+	ID            string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Gateway       string    `gorm:"index" json:"gateway"`
+	GatewayID     *string   `gorm:"index" json:"gatewayId"`
+	OrderID       string    `gorm:"index" json:"orderId"`
+	Status        string    `json:"status"`
+	TransactionID *string   `json:"transactionId"`
+	Amount        *int      `json:"amount"`
+	Payload       *string   `gorm:"type:text" json:"payload"`
+	Response      *string   `gorm:"type:text" json:"response"`
+	Success       bool      `gorm:"default:true" json:"success"`
+	ErrorMessage  *string   `gorm:"type:text" json:"errorMessage"`
+	CreatedAt     time.Time `gorm:"index" json:"createdAt"`
+}
+
+func (WebhookLog) TableName() string { return "webhook_logs" }
 
 // ─── Registration Request ─────────────────────────────────────────────────────
 

@@ -17,6 +17,22 @@ type CompanyHandler struct {
 
 func NewCompanyHandler(db *gorm.DB) *CompanyHandler { return &CompanyHandler{db: db} }
 
+// companyResp embeds Company but overrides bankAccounts with parsed JSON.
+type companyResp struct {
+	models.Company
+	BankAccounts json.RawMessage `json:"bankAccounts"`
+}
+
+func buildCompanyResp(company models.Company) companyResp {
+	resp := companyResp{Company: company}
+	if company.BankAccounts != nil && *company.BankAccounts != "" {
+		resp.BankAccounts = json.RawMessage(*company.BankAccounts)
+	} else {
+		resp.BankAccounts = json.RawMessage("[]")
+	}
+	return resp
+}
+
 func (h *CompanyHandler) GetCompany(c fiber.Ctx) error {
 	var company models.Company
 	if err := h.db.First(&company).Error; err != nil {
@@ -33,23 +49,26 @@ func (h *CompanyHandler) GetCompany(c fiber.Ctx) error {
 		defaultNotifyEmail := false
 		defaultReferral := false
 		defaultReferralAmount := 10000
-		return c.JSON(models.Company{
-			Name:                    "SALFANET RADIUS",
-			BaseURL:                 &defaultBaseURL,
-			Timezone:                &defaultTimezone,
-			PoweredBy:               &defaultPoweredBy,
-			InvoiceGenerateDays:     &defaultInvoiceDays,
-			GracePeriodDays:         &defaultGracePeriod,
-			IsolationEnabled:        &defaultIsolation,
-			IsolationAllowDns:       &defaultAllowDns,
-			IsolationAllowPayment:   &defaultAllowPayment,
-			IsolationNotifyWhatsapp: &defaultNotifyWA,
-			IsolationNotifyEmail:    &defaultNotifyEmail,
-			ReferralEnabled:         &defaultReferral,
-			ReferralRewardAmount:    &defaultReferralAmount,
+		return c.JSON(companyResp{
+			Company: models.Company{
+				Name:                    "SALFANET RADIUS",
+				BaseURL:                 &defaultBaseURL,
+				Timezone:                &defaultTimezone,
+				PoweredBy:               &defaultPoweredBy,
+				InvoiceGenerateDays:     &defaultInvoiceDays,
+				GracePeriodDays:         &defaultGracePeriod,
+				IsolationEnabled:        &defaultIsolation,
+				IsolationAllowDns:       &defaultAllowDns,
+				IsolationAllowPayment:   &defaultAllowPayment,
+				IsolationNotifyWhatsapp: &defaultNotifyWA,
+				IsolationNotifyEmail:    &defaultNotifyEmail,
+				ReferralEnabled:         &defaultReferral,
+				ReferralRewardAmount:    &defaultReferralAmount,
+			},
+			BankAccounts: json.RawMessage("[]"),
 		})
 	}
-	return c.JSON(company)
+	return c.JSON(buildCompanyResp(company))
 }
 
 func (h *CompanyHandler) UpdateCompany(c fiber.Ctx) error {
@@ -90,5 +109,5 @@ func (h *CompanyHandler) UpdateCompany(c fiber.Ctx) error {
 	} else {
 		h.db.Save(&company)
 	}
-	return c.JSON(company)
+	return c.JSON(buildCompanyResp(company))
 }
