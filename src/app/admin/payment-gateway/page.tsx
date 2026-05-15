@@ -80,6 +80,8 @@ export default function PaymentGatewayPage() {
     try {
       const res = await fetch('/api/payment-gateway/config');
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to load configs');
+      if (!Array.isArray(data)) throw new Error('Invalid response from server');
       setConfigs(data);
       
       const midtrans = data.find((c: PaymentGateway) => c.provider === 'midtrans');
@@ -179,8 +181,8 @@ export default function PaymentGatewayPage() {
       const data = await res.json();
       
       if (res.ok) {
-        setWebhookLogs(data.logs);
-        setLogsTotalPages(data.pagination.totalPages);
+        setWebhookLogs(data.logs ?? []);
+        setLogsTotalPages(data.pagination?.totalPages ?? 1);
       }
     } catch (error) {
       console.error('Failed to fetch webhook logs:', error);

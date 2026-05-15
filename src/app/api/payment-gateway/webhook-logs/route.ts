@@ -69,9 +69,9 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Failed to fetch webhook logs:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch webhook logs' },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      logs: [],
+      pagination: { page: 1, limit: 50, total: 0, totalPages: 0 }
+    });
   }
 }

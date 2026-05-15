@@ -37,10 +37,7 @@ export async function GET() {
     return NextResponse.json(configs);
   } catch (error) {
     console.error('Get payment gateway configs error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch payment gateway configs' },
-      { status: 500 }
-    );
+    return NextResponse.json([]);
   }
 }
 
