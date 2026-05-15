@@ -6,6 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.48.2] — 2026-05-16
+### Fixed
+- **`admin/payment-gateway` — "Fetch configs error: Invalid response from server"** — Go handler `PaymentGatewayConfig` return `{ success: true, gateways: [...] }` (bukan raw array). Frontend butuh raw array. Fix: rewrite handler return `[]PaymentGateway` langsung.
+- **`admin/payment/bank-accounts` crash `TypeError: u.map is not a function`** — Go `GetCompany` return `bankAccounts` sebagai JSON string `"[]"` (disimpan TEXT di DB). Frontend `setBankAccounts(data.bankAccounts || [])` → dapat string `"[]"` → `"[]".map()` → TypeError. Fix: tambah `companyResp` struct yang parse JSON string ke `json.RawMessage` sebelum return.
+- **`POST /api/payment-gateway/config` — endpoint tidak ada** — Go router hanya punya GET. Fix: tambah `PaymentGatewaySaveConfig` handler dan route POST.
+- **`GET /api/payment-gateway/webhook-logs` — tabel tidak diquery** — handler lama query table yang salah/belum ada. Fix: rewrite dengan real pagination, filter `gateway/orderId/success`.
+### Changed
+- **`PaymentGateway` model** — Rewrite dengan field per-provider lengkap (Midtrans, Xendit, Duitku, Tripay) menggantikan generic `ClientKey/MerchantCode/BaseURL/IsProduction`.
+- **`WebhookLog` model** — Tambah struct baru untuk table `webhook_logs`.
+- **`GetPaymentMethods` (customer portal)** — Sesuaikan dengan model baru; return `environment` & `isActive` saja (sanitized).
+### Files
+- `internal/db/models/extra.go` — Rewrite PaymentGateway, tambah WebhookLog
+- `internal/api/handlers/misc_handler.go` — Fix PaymentGatewayConfig GET, tambah POST + WebhookLogs
+- `internal/api/handlers/company.go` — Fix GetCompany + UpdateCompany dengan bankAccounts parsing
+- `internal/api/handlers/customer_portal_ext2.go` — Fix GetPaymentMethods sesuai model baru
+- `internal/api/router.go` — Tambah `api.Post("/payment-gateway/config", ...)`
+
 ## [2.48.1] — 2026-05-15
 ### Fixed
 - **`admin/payment-gateway` crash "Terjadi Kesalahan"** — `fetchConfigs` tidak memvalidasi respons API; jika API return error object (bukan array), `setConfigs(errorObj)` lalu render memanggil `configs.find()` → TypeError → crash page. Fix: tambah `if (!res.ok) throw` dan `if (!Array.isArray(data)) throw` sebelum `setConfigs()`.
