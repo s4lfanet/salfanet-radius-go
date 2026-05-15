@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.48.1] — 2026-05-15
+### Fixed
+- **`admin/payment-gateway` crash "Terjadi Kesalahan"** — `fetchConfigs` tidak memvalidasi respons API; jika API return error object (bukan array), `setConfigs(errorObj)` lalu render memanggil `configs.find()` → TypeError → crash page. Fix: tambah `if (!res.ok) throw` dan `if (!Array.isArray(data)) throw` sebelum `setConfigs()`.
+- **`fetchWebhookLogs` crash saat pagination undefined** — `data.pagination.totalPages` tanpa optional chaining; jika API error, `pagination` undefined → TypeError. Fix: `data.pagination?.totalPages ?? 1`.
+- **`/api/payment-gateway/config` GET error response** — Catch block return `{ error: '...' }` (object) → frontend menerima object bukan array. Fix: return `[]` (empty array) agar frontend tetap aman.
+- **`/api/payment-gateway/webhook-logs` GET error response** — Catch block return `{ error: '...' }` tanpa `pagination`. Fix: return `{ logs: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }`.
+### Files
+- `src/app/admin/payment-gateway/page.tsx` — Guard array check dan optional chaining
+- `src/app/api/payment-gateway/config/route.ts` — Return `[]` on catch
+- `src/app/api/payment-gateway/webhook-logs/route.ts` — Return safe empty pagination on catch
+
 ## [2.48.0] — 2026-05-15
 ### Added
 - **One-click update dari GitHub di `admin/system`** — Tombol "Update Sekarang" muncul otomatis bila ada commit terbaru di GitHub. Klik tombol → `updater.sh` berjalan di background → live log tampil langsung di halaman.
