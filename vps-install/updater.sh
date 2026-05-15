@@ -27,7 +27,9 @@ print_error()   { echo -e "${RED}✗ $1${NC}" >&2; }
 
 # ─── Config ────────────────────────────────────────────────────────────────
 APP_DIR="${APP_DIR:-/var/www/salfanet-radius}"
-GITHUB_REPO="s4lfanet/salfanet-radius"
+GITHUB_REPO="s4lfanet/salfanet-radius-go"
+SOURCE_DIR="${SOURCE_DIR:-/root/salfanet-radius-go}"
+GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 PM2_APP_NAME="salfanet-radius"
 PM2_CRON_NAME="salfanet-cron"
 BACKUP_BASE="/root/salfanet-backups"
@@ -142,12 +144,15 @@ fi
 # ─── Parse args ────────────────────────────────────────────────────────────
 while [[ "$#" -gt 0 ]]; do
     case $1 in
-        --version)     TARGET_VERSION="$2"; shift ;;
-        --branch)      USE_BRANCH="$2"; shift ;;
-        --skip-backup) SKIP_BACKUP=true ;;
-        --app-dir)     APP_DIR="$2"; shift ;;
+        --version)       TARGET_VERSION="$2"; shift ;;
+        --branch)        USE_BRANCH="$2"; shift ;;
+        --skip-backup)   SKIP_BACKUP=true ;;
+        --app-dir)       APP_DIR="$2"; shift ;;
+        --source-dir)    SOURCE_DIR="$2"; shift ;;
+        --github-token)  GITHUB_TOKEN="$2"; shift ;;
         --help|-h)
             echo "Usage: bash updater.sh [--version vX.Y.Z] [--branch master] [--skip-backup]"
+            echo "       [--github-token TOKEN] [--source-dir /root/salfanet-radius-go]"
             exit 0 ;;
     esac
     shift
@@ -193,9 +198,45 @@ echo ""
 if [ -n "$USE_BRANCH" ]; then
     print_step "Updating via git branch: $USE_BRANCH"
 
-    if [ ! -d "$APP_DIR/.git" ]; then
-        print_error "Not a git repo at $APP_DIR. Use release mode instead."
-        exit 1
+    # ─── Resolve git source directory ────────────────────────────────────────
+    # Priority: SOURCE_DIR (.git) → APP_DIR (.git) → git clone SOURCE_DIR
+    GIT_DIR=""
+    if [ -d "$SOURCE_DIR/.git" ]; then
+        GIT_DIR="$SOURCE_DIR"
+        print_info "Git repo: $GIT_DIR"
+    elif [ -d "$APP_DIR/.git" ]; then
+        GIT_DIR="$APP_DIR"
+        print_info "Git repo: $GIT_DIR"
+    else
+        # No local git repo — try to clone from GitHub
+        print_info "Tidak ada git repo lokal — mencoba clone dari GitHub..."
+        # Load token from secrets file if not already set in env
+        if [ -z "$GITHUB_TOKEN" ] && [ -f "/etc/salfanet-secrets" ]; then
+            GITHUB_TOKEN=$(grep '^GITHUB_TOKEN=' /etc/salfanet-secrets 2>/dev/null \
+                | cut -d= -f2- | tr -d '"' | head -1 || echo "")
+        fi
+        if [ -n "$GITHUB_TOKEN" ]; then
+            CLONE_URL="https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
+        else
+            CLONE_URL="https://github.com/${GITHUB_REPO}.git"
+        fi
+        print_info "Cloning https://github.com/${GITHUB_REPO}.git → $SOURCE_DIR"
+        rm -rf "$SOURCE_DIR"
+        if git clone --depth=1 --branch "$USE_BRANCH" "$CLONE_URL" "$SOURCE_DIR" 2>/tmp/git-clone.log; then
+            GIT_DIR="$SOURCE_DIR"
+            print_success "Clone berhasil ke $SOURCE_DIR"
+        else
+            # Filter token from error output before printing
+            if [ -n "$GITHUB_TOKEN" ]; then
+                sed "s/${GITHUB_TOKEN}/[TOKEN]/g" /tmp/git-clone.log >&2 2>/dev/null || cat /tmp/git-clone.log >&2
+            else
+                cat /tmp/git-clone.log >&2
+            fi
+            print_error "Git clone gagal. Pastikan GITHUB_TOKEN diset untuk repo private."
+            print_error "Contoh: GITHUB_TOKEN=ghp_xxx bash updater.sh --branch master"
+            print_error "Atau simpan token di /etc/salfanet-secrets: GITHUB_TOKEN=ghp_xxx"
+            exit 1
+        fi
     fi
 
     cd "$APP_DIR"
@@ -248,15 +289,51 @@ if [ -n "$USE_BRANCH" ]; then
         print_success "Uploads migrated to $UPLOAD_DIR (safe from rebuilds)"
     fi
 
-    git fetch origin
+    # ─── Git pull ───────────────────────────────────────────────────────────
+    cd "$GIT_DIR"
+    # Inject token into remote URL jika perlu (untuk private repo)
+    if [ -n "$GITHUB_TOKEN" ]; then
+        REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
+        if [[ "$REMOTE_URL" == https://github.com/* ]] && [[ "$REMOTE_URL" != *"@github.com"* ]]; then
+            git remote set-url origin "https://${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git"
+        fi
+    fi
+    git fetch origin "$USE_BRANCH" --quiet
     git reset --hard "origin/$USE_BRANCH"
-    # -e: exclude file/direktori penting yang mungkin ada secara lokal (tidak di-gitignore)
-    # File .env dan yang ada di .gitignore sudah aman (git clean tanpa -x tidak menyentuhnya)
     git clean -fd \
         -e 'ecosystem.config.js' \
         -e 'freeradius-config/' \
         -e '*.local' \
-        -e '.env.production'
+        -e '.env.production' 2>/dev/null || true
+
+    # ─── Tulis commit info ke APP_DIR (dibaca oleh /api/admin/system/info) ─
+    PULLED_COMMIT=$(git rev-parse HEAD 2>/dev/null || echo "")
+    PULLED_DATE=$(git log -1 --format="%ci" 2>/dev/null || echo "")
+    PULLED_MSG=$(git log -1 --format="%s" 2>/dev/null || echo "")
+    if [ -n "$PULLED_COMMIT" ]; then
+        echo "$PULLED_COMMIT" > "$APP_DIR/COMMIT_HASH"
+        echo "$PULLED_DATE"   > "$APP_DIR/COMMIT_DATE"
+        echo "$PULLED_MSG"    > "$APP_DIR/COMMIT_MSG"
+        print_success "Commit: ${PULLED_COMMIT:0:7} — $PULLED_MSG"
+    fi
+
+    # ─── Sync source → APP_DIR jika berbeda ────────────────────────────────
+    if [ "$(realpath "$GIT_DIR" 2>/dev/null)" != "$(realpath "$APP_DIR" 2>/dev/null)" ]; then
+        print_step "Sync source files ke $APP_DIR ..."
+        rsync -a --delete \
+            --exclude='.git/' \
+            --exclude='node_modules/' \
+            --exclude='.next/' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='ecosystem.config.js' \
+            --exclude='COMMIT_HASH' \
+            --exclude='COMMIT_DATE' \
+            --exclude='COMMIT_MSG' \
+            "$GIT_DIR/" "$APP_DIR/"
+        print_success "Source ter-sync ke $APP_DIR"
+    fi
+    cd "$APP_DIR"
 
     # ── Update ecosystem.config.js (untracked by git) ─────────────────────
     # ecosystem.config.js is untracked — git clean removes it, must be restored.
