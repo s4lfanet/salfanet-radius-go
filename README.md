@@ -469,6 +469,24 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.48.2 — 2026-05-16
+
+### Fixed
+- **`admin/payment-gateway` — "Fetch configs error: Invalid response from server"** — Go handler `PaymentGatewayConfig` return `{ success: true, gateways: [...] }` (bukan raw array). Frontend butuh raw array. Fix: rewrite handler return `[]PaymentGateway` langsung.
+- **`admin/payment/bank-accounts` crash `TypeError: u.map is not a function`** — Go `GetCompany` return `bankAccounts` sebagai JSON string `"[]"` (disimpan TEXT di DB). Frontend `setBankAccounts(data.bankAccounts || [])` → dapat string `"[]"` → `"[]".map()` → TypeError. Fix: tambah `companyResp` struct yang parse JSON string ke `json.RawMessage` sebelum return.
+- **`POST /api/payment-gateway/config` — endpoint tidak ada** — Go router hanya punya GET. Fix: tambah `PaymentGatewaySaveConfig` handler dan route POST.
+- **`GET /api/payment-gateway/webhook-logs` — tabel tidak diquery** — handler lama query table yang salah/belum ada. Fix: rewrite dengan real pagination, filter `gateway/orderId/success`.
+### Changed
+- **`PaymentGateway` model** — Rewrite dengan field per-provider lengkap (Midtrans, Xendit, Duitku, Tripay) menggantikan generic `ClientKey/MerchantCode/BaseURL/IsProduction`.
+- **`WebhookLog` model** — Tambah struct baru untuk table `webhook_logs`.
+- **`GetPaymentMethods` (customer portal)** — Sesuaikan dengan model baru; return `environment` & `isActive` saja (sanitized).
+### Files
+- `internal/db/models/extra.go` — Rewrite PaymentGateway, tambah WebhookLog
+- `internal/api/handlers/misc_handler.go` — Fix PaymentGatewayConfig GET, tambah POST + WebhookLogs
+- `internal/api/handlers/company.go` — Fix GetCompany + UpdateCompany dengan bankAccounts parsing
+- `internal/api/handlers/customer_portal_ext2.go` — Fix GetPaymentMethods sesuai model baru
+- `internal/api/router.go` — Tambah `api.Post("/payment-gateway/config", ...)`
+
 ### v2.48.1 — 2026-05-15
 
 ### Fixed
@@ -513,16 +531,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **`GET /api/company` 404 pada fresh install** — Go handler mengembalikan 404 saat tabel `companies` kosong (belum ada data). Frontend admin layout memanggil endpoint ini saat pertama buka, sehingga layout tidak bisa load data perusahaan. Fix: handler sekarang mengembalikan nilai default (name, timezone, base URL, dsb.) dengan status 200 jika belum ada record, bukan 404.
 ### Files
 - `internal/api/handlers/company.go` — `GetCompany` mengembalikan default ketika DB kosong
-
-### v2.47.19 — 2026-05-15
-
-### Removed
-- **Hapus fitur APK Builder** — `install-apk.sh` dihapus beserta semua referensinya. Mobile app (React Native/Expo) tidak bisa dibuild di VPS karena folder `mobile-app/` ada di `.gitignore` dan tidak ikut deploy. Java 17 + Android SDK yang terlanjur terinstall di VPS juga dihapus.
-### Files
-- `vps-install/install-apk.sh` — **DIHAPUS**
-- `vps-install/vps-installer.sh` — hapus `APK_BUILT`, blok CUSTOMER MOBILE APP, APK di next steps, APK di final summary
-- `vps-install/common.sh` — hapus baris "Step 8 Build Customer APK"
-- `vps-install/install-security.sh` — hapus cleanup APK build temp
 
 <!-- AUTO-CHANGELOG:END -->
 
