@@ -469,6 +469,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.48.1 — 2026-05-15
+
+### Fixed
+- **`admin/payment-gateway` crash "Terjadi Kesalahan"** — `fetchConfigs` tidak memvalidasi respons API; jika API return error object (bukan array), `setConfigs(errorObj)` lalu render memanggil `configs.find()` → TypeError → crash page. Fix: tambah `if (!res.ok) throw` dan `if (!Array.isArray(data)) throw` sebelum `setConfigs()`.
+- **`fetchWebhookLogs` crash saat pagination undefined** — `data.pagination.totalPages` tanpa optional chaining; jika API error, `pagination` undefined → TypeError. Fix: `data.pagination?.totalPages ?? 1`.
+- **`/api/payment-gateway/config` GET error response** — Catch block return `{ error: '...' }` (object) → frontend menerima object bukan array. Fix: return `[]` (empty array) agar frontend tetap aman.
+- **`/api/payment-gateway/webhook-logs` GET error response** — Catch block return `{ error: '...' }` tanpa `pagination`. Fix: return `{ logs: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }`.
+### Files
+- `src/app/admin/payment-gateway/page.tsx` — Guard array check dan optional chaining
+- `src/app/api/payment-gateway/config/route.ts` — Return `[]` on catch
+- `src/app/api/payment-gateway/webhook-logs/route.ts` — Return safe empty pagination on catch
+
 ### v2.48.0 — 2026-05-15
 
 ### Added
@@ -511,14 +523,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `vps-install/vps-installer.sh` — hapus `APK_BUILT`, blok CUSTOMER MOBILE APP, APK di next steps, APK di final summary
 - `vps-install/common.sh` — hapus baris "Step 8 Build Customer APK"
 - `vps-install/install-security.sh` — hapus cleanup APK build temp
-
-### v2.47.18 — 2026-05-15
-
-### Changed
-- **Hapus referensi Redis dari installer** — Redis sudah tidak digunakan sejak v2.11.3 (`ioredis` dihapus). Referensi `REDIS_URL` di `.env` template dan pesan "install Redis" di `vps-installer.sh` dihapus agar installer lebih bersih.
-### Files
-- `vps-install/install-app.sh` — hapus baris `# REDIS_URL=redis://127.0.0.1:6379`
-- `vps-install/vps-installer.sh` — hapus Redis status line + Redis next steps hint + Redis final summary block
 
 <!-- AUTO-CHANGELOG:END -->
 
