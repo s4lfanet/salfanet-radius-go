@@ -200,6 +200,11 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	olt := api.Group("/olt")
 	olt.Get("/", oltH.ListOLTs)
 	olt.Post("/", oltH.CreateOLT)
+	// Monitoring dashboard & global alerts (must be before /:id)
+	olt.Get("/monitoring", oltH.MonitoringList)
+	olt.Post("/monitoring", oltH.MonitoringPoll)
+	olt.Get("/alerts", oltH.ListAllAlerts)
+	olt.Put("/alerts/:id", oltH.ResolveAlert)
 	olt.Get("/:id/onus/register", oltH.GetRegisterMetadata) // before /:id
 	olt.Get("/:id", oltH.GetOLT)
 	olt.Put("/:id", oltH.UpdateOLT)

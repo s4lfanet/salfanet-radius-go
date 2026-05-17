@@ -461,3 +461,183 @@ func (h *OLTHandler) CreateUplink(c fiber.Ctx) error {
 		"config":  body,
 	})
 }
+
+// ─── OLT Monitoring Dashboard ─────────────────────────────────────────────────
+
+// MonitoringList godoc
+// GET /api/olt/monitoring?search=&status=online|offline|all
+func (h *OLTHandler) MonitoringList(c fiber.Ctx) error {
+	type oltWithAlerts struct {
+		models.NetworkOLT
+		UnresolvedAlerts int64 `json:"unresolvedAlerts"`
+	}
+
+	query := h.db.Model(&models.NetworkOLT{})
+	if search := c.Query("search"); search != "" {
+		like := "%" + search + "%"
+		query = query.Where("name LIKE ? OR ipAddress LIKE ?", like, like)
+	}
+	switch c.Query("status") {
+	case "online":
+		query = query.Where("isOnline = ?", true)
+	case "offline":
+		query = query.Where("isOnline = ?", false)
+	}
+
+	var olts []models.NetworkOLT
+	if err := query.Order("name").Find(&olts).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	result := make([]oltWithAlerts, len(olts))
+	for i, o := range olts {
+		var count int64
+		h.db.Model(&models.OLTAlert{}).Where("oltId = ? AND isResolved = ?", o.ID, false).Count(&count)
+		result[i] = oltWithAlerts{NetworkOLT: o, UnresolvedAlerts: count}
+	}
+	return c.JSON(fiber.Map{"olts": result})
+}
+
+// MonitoringPoll godoc
+// POST /api/olt/monitoring — trigger immediate poll for a given OLT
+func (h *OLTHandler) MonitoringPoll(c fiber.Ctx) error {
+	var body struct {
+		OltID string `json:"oltId"`
+	}
+	_ = c.Bind().JSON(&body)
+	if body.OltID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "oltId is required"})
+	}
+	if err := h.poller.TriggerPoll(body.OltID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"success": true})
+}
+
+// ─── OLT Alerts (global) ─────────────────────────────────────────────────────
+
+// ListAllAlerts godoc
+// GET /api/olt/alerts?resolved=false&severity=&type=&limit=100
+func (h *OLTHandler) ListAllAlerts(c fiber.Ctx) error {
+	query := h.db.Model(&models.OLTAlert{})
+	switch c.Query("resolved") {
+	case "true":
+		query = query.Where("isResolved = ?", true)
+	case "false":
+		query = query.Where("isResolved = ?", false)
+	}
+	if sev := c.Query("severity"); sev != "" && sev != "all" {
+		query = query.Where("severity = ?", sev)
+	}
+	if typ := c.Query("type"); typ != "" && typ != "all" {
+		query = query.Where("alertType = ?", typ)
+	}
+	limit := 100
+	if l, err := strconv.Atoi(c.Query("limit")); err == nil && l > 0 {
+		limit = l
+	}
+
+	var alerts []models.OLTAlert
+	if err := query.Order("createdAt DESC").Limit(limit).Find(&alerts).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	// Collect IDs for batch preload
+	oltIDs := make([]string, 0)
+	onuIDs := make([]string, 0)
+	for _, a := range alerts {
+		if a.OltID != nil {
+			oltIDs = append(oltIDs, *a.OltID)
+		}
+		if a.OnuID != nil {
+			onuIDs = append(onuIDs, *a.OnuID)
+		}
+	}
+
+	oltMap := map[string]models.NetworkOLT{}
+	if len(oltIDs) > 0 {
+		var olts []models.NetworkOLT
+		h.db.Where("id IN ?", oltIDs).Find(&olts)
+		for _, o := range olts {
+			oltMap[o.ID] = o
+		}
+	}
+
+	onuMap := map[string]models.OLTONUStatus{}
+	if len(onuIDs) > 0 {
+		var onus []models.OLTONUStatus
+		h.db.Where("id IN ?", onuIDs).Preload("Customer").Find(&onus)
+		for _, o := range onus {
+			onuMap[o.ID] = o
+		}
+	}
+
+	type oltInfo struct {
+		ID        string `json:"id"`
+		Name      string `json:"name"`
+		IPAddress string `json:"ipAddress"`
+	}
+	type customerInfo struct {
+		Username string `json:"username"`
+		Name     string `json:"name"`
+		Phone    string `json:"phone"`
+	}
+	type onuInfo struct {
+		ID           string        `json:"id"`
+		SerialNumber *string       `json:"serialNumber"`
+		MACAddress   *string       `json:"macAddress"`
+		Frame        int           `json:"frame"`
+		Slot         int           `json:"slot"`
+		Port         int           `json:"port"`
+		OnuID        int           `json:"onuId"`
+		Customer     *customerInfo `json:"customer"`
+	}
+	type alertResp struct {
+		models.OLTAlert
+		ResolvedBy interface{} `json:"resolvedBy"`
+		OLT        *oltInfo    `json:"olt"`
+		ONU        *onuInfo    `json:"onu"`
+	}
+
+	result := make([]alertResp, len(alerts))
+	for i, a := range alerts {
+		r := alertResp{OLTAlert: a, ResolvedBy: nil}
+		if a.OltID != nil {
+			if olt, ok := oltMap[*a.OltID]; ok {
+				r.OLT = &oltInfo{ID: olt.ID, Name: olt.Name, IPAddress: olt.IPAddress}
+			}
+		}
+		if a.OnuID != nil {
+			if onu, ok := onuMap[*a.OnuID]; ok {
+				o := &onuInfo{
+					ID: onu.ID, SerialNumber: onu.SerialNumber, MACAddress: onu.MACAddress,
+					Frame: onu.Frame, Slot: onu.Slot, Port: onu.Port, OnuID: onu.OnuID,
+				}
+				if onu.Customer != nil {
+					o.Customer = &customerInfo{
+						Username: onu.Customer.Username,
+						Name:     onu.Customer.Name,
+						Phone:    onu.Customer.Phone,
+					}
+				}
+				r.ONU = o
+			}
+		}
+		result[i] = r
+	}
+	return c.JSON(fiber.Map{"alerts": result})
+}
+
+// ResolveAlert godoc
+// PUT /api/olt/alerts/:id — mark alert as resolved
+func (h *OLTHandler) ResolveAlert(c fiber.Ctx) error {
+	id := c.Params("id")
+	now := time.Now()
+	if err := h.db.Model(&models.OLTAlert{}).Where("id = ?", id).Updates(map[string]interface{}{
+		"isResolved": true,
+		"resolvedAt": now,
+	}).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"success": true})
+}
