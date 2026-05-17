@@ -302,7 +302,8 @@ func (h *MiscHandler) CheckIsolationGlobal(c fiber.Ctx) error {
 		if company.QrisMerchantName != nil && *company.QrisMerchantName != "" {
 			merchantName = *company.QrisMerchantName
 		}
-		qrisOwn = fiber.Map{"enabled": true, "merchantName": merchantName}
+		hasDeviceKey := company.QrisDeviceKey != nil && *company.QrisDeviceKey != ""
+		qrisOwn = fiber.Map{"enabled": true, "merchantName": merchantName, "hasListener": hasDeviceKey}
 	}
 
 	profileName := ""

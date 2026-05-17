@@ -48,7 +48,7 @@ export default function PaymentPage() {
   const [loadingDuitkuMethods, setLoadingDuitkuMethods] = useState(false);
 
   // QRIS Dynamic States
-  const [qrisData, setQrisData] = useState<{ qrString: string; paymentUrl: string; orderId: string; gateway: string; isQrisOwn?: boolean } | null>(null);
+  const [qrisData, setQrisData] = useState<{ qrString: string; paymentUrl: string; orderId: string; gateway: string; isQrisOwn?: boolean; uniqueAmount?: number; hasListener?: boolean } | null>(null);
   const [qrisStatus, setQrisStatus] = useState<'pending' | 'paid' | 'expired' | 'failed'>('pending');
   const [qrisCountdown, setQrisCountdown] = useState(1440); // 24 min default (seconds)
   const qrisPollingRef = useRef<NodeJS.Timeout | null>(null);
@@ -107,25 +107,31 @@ export default function PaymentPage() {
   }, []);
 
   // Start QRIS polling
-  const startQrisPolling = useCallback((orderId: string) => {
+  const startQrisPolling = useCallback((orderId: string, isQrisOwn = false) => {
     cleanupQrisPolling();
     setQrisStatus('pending');
-    setQrisCountdown(1440);
+    // 15 min for qris_own (pending expires), 24 min for third-party gateways
+    setQrisCountdown(isQrisOwn ? 900 : 1440);
 
     // Poll every 5 seconds
     qrisPollingRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/payment/check-order?orderId=${encodeURIComponent(orderId)}`);
+        // Gunakan qris-status untuk qris_own (lebih akurat), check-order untuk gateway lain
+        const url = isQrisOwn
+          ? `/api/payment/qris-status?orderId=${encodeURIComponent(orderId)}`
+          : `/api/payment/check-order?orderId=${encodeURIComponent(orderId)}`;
+        const res = await fetch(url);
         const data = await res.json();
-        if (data.status === 'settlement' || data.status === 'paid') {
+        const status = data.status || '';
+        if (status === 'settlement' || status === 'paid' || status === 'PAID') {
           setQrisStatus('paid');
           cleanupQrisPolling();
           // Reload invoice after 3 seconds
           setTimeout(() => { setQrisData(null); loadInvoice(); }, 3000);
-        } else if (data.status === 'expired' || data.status === 'expire') {
+        } else if (status === 'expired' || status === 'expire') {
           setQrisStatus('expired');
           cleanupQrisPolling();
-        } else if (data.status === 'failed' || data.status === 'cancel') {
+        } else if (status === 'failed' || status === 'cancel') {
           setQrisStatus('failed');
           cleanupQrisPolling();
         }
@@ -156,15 +162,20 @@ export default function PaymentPage() {
 
       // If QR string available, show QRIS inline instead of redirect
       if (data.qrString) {
+        const isOwn = data.isQrisOwn || false;
+        const hasListener = !!(qrisOwn?.hasListener);
         setQrisData({
           qrString: data.qrString,
           paymentUrl: data.paymentUrl || '',
           orderId: data.orderId,
           gateway,
-          isQrisOwn: data.isQrisOwn || false,
+          isQrisOwn: isOwn,
+          uniqueAmount: data.uniqueAmount,
+          hasListener,
         });
-        if (!data.isQrisOwn) {
-          startQrisPolling(data.orderId);
+        // Polling: untuk gateway pihak ke-3, atau qris_own dengan Android listener
+        if (!isOwn || hasListener) {
+          startQrisPolling(data.orderId, isOwn);
         }
         return;
       }
@@ -606,17 +617,41 @@ export default function PaymentPage() {
 
                   {qrisData.isQrisOwn ? (
                     <>
-                      <div className="bg-[#00ff88]/10 border border-[#00ff88]/30 rounded-xl p-3">
-                        <p className="text-[11px] font-bold text-[#00ff88] mb-1 flex items-center gap-1.5">
-                          <CheckCircle className="w-3.5 h-3.5" /> Setelah bayar:
-                        </p>
-                        <p className="text-[10px] text-[#00ff88]/80 leading-relaxed">
-                          Hubungi admin via WhatsApp untuk konfirmasi pembayaran. Layanan akan otomatis aktif setelah admin memproses tagihan Anda.
-                        </p>
-                      </div>
-                      {company?.phone && (
+                      {/* Unique amount warning — KRITIS untuk matching otomatis */}
+                      {qrisData.uniqueAmount && qrisData.uniqueAmount !== invoice?.amount && (
+                        <div className="bg-[#ff4466]/10 border border-[#ff4466]/40 rounded-xl p-3">
+                          <p className="text-[11px] font-bold text-[#ff4466] mb-1">⚠️ Transfer TEPAT nominal berikut:</p>
+                          <p className="text-lg font-bold text-white text-center py-1">{formatCurrency(qrisData.uniqueAmount)}</p>
+                          <p className="text-[10px] text-[#e0d0ff]/70 leading-relaxed">
+                            Nominal ini berbeda tipis dari tagihan Anda agar sistem dapat mencocokkan pembayaran secara otomatis. <strong>Jangan dibulatkan.</strong>
+                          </p>
+                        </div>
+                      )}
+
+                      {qrisData.hasListener ? (
+                        /* Android listener aktif — polling otomatis */
+                        <div className="bg-[#00ff88]/10 border border-[#00ff88]/30 rounded-xl p-3">
+                          <p className="text-[11px] font-bold text-[#00ff88] mb-1 flex items-center gap-1.5">
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Menunggu konfirmasi otomatis...
+                          </p>
+                          <p className="text-[10px] text-[#00ff88]/80 leading-relaxed">
+                            Setelah Anda transfer, sistem akan mendeteksi pembayaran secara otomatis dalam beberapa detik. Halaman ini akan otomatis diperbarui.
+                          </p>
+                        </div>
+                      ) : (
+                        /* Tidak ada listener — konfirmasi manual */
+                        <div className="bg-[#00ff88]/10 border border-[#00ff88]/30 rounded-xl p-3">
+                          <p className="text-[11px] font-bold text-[#00ff88] mb-1 flex items-center gap-1.5">
+                            <CheckCircle className="w-3.5 h-3.5" /> Setelah bayar:
+                          </p>
+                          <p className="text-[10px] text-[#00ff88]/80 leading-relaxed">
+                            Hubungi admin via WhatsApp untuk konfirmasi pembayaran. Layanan akan aktif setelah admin memproses tagihan Anda.
+                          </p>
+                        </div>
+                      )}
+                      {!qrisData.hasListener && company?.phone && (
                         <a
-                          href={`https://wa.me/${company.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo Admin, saya sudah bayar tagihan internet.\n\nUsername: ${invoice?.user?.username || '-'}\nNomor Invoice: ${invoice?.invoiceNumber || '-'}\nNominal: ${formatCurrency(invoice?.amount || 0)}\n\nMohon konfirmasi pembayarannya. Terima kasih.`)}`}
+                          href={`https://wa.me/${company.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo Admin, saya sudah bayar tagihan internet.\n\nUsername: ${invoice?.user?.username || '-'}\nNomor Invoice: ${invoice?.invoiceNumber || '-'}\nNominal: ${formatCurrency(qrisData.uniqueAmount || invoice?.amount || 0)}\n\nMohon konfirmasi pembayarannya. Terima kasih.`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center gap-2 w-full py-3 bg-[#25D366] text-white text-xs font-bold rounded-xl hover:bg-[#128C7E] transition-all shadow-[0_0_20px_rgba(37,211,102,0.3)]"

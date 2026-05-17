@@ -6,6 +6,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.0] — 2026-05-19
+### Added
+- **Android QRIS Listener — Deteksi pembayaran otomatis** — Integrasi dengan app Android `QrisListener` (NotificationListenerService) yang menangkap notifikasi e-wallet (DANA, GoPay, BRImo, ShopeePay, BCA, Mandiri) dan mengirim jumlah ke server via webhook.
+- **Unique amount trick** — Setiap QRIS invoice mendapat nominal unik (base + suffix 1-999 dari MD5 invoiceId) sehingga server bisa mencocokkan pembayaran masuk ke invoice yang tepat.
+- **Model `QrisPending`** — Tabel `qris_pendings` menyimpan state transaksi QRIS mandiri: `uniqueAmount`, `status` (pending/paid/expired), `expiresAt` (15 menit).
+- **Field `QrisDeviceKey` di Company** — Kunci otentikasi untuk Android listener; jika diisi, QRIS berfungsi auto-konfirmasi.
+- **`POST /api/payment/qris-notify`** — Endpoint publik (auth via device_key) yang menerima notifikasi dari Android, mencocokkan `uniqueAmount`, dan otomatis menandai invoice PAID + extend subscription.
+- **`GET /api/payment/qris-status?orderId=`** — Polling endpoint publik untuk frontend mengetahui status pembayaran QRIS own (pending/paid/expired).
+- **Payment Gateway UI** — Tambah section "Device Key — Android Listener" di tab QRIS Mandiri dengan input key + tombol Generate; tampilkan status listener (hijau = aktif, kuning = manual).
+- **Pay page UI** — Tampilkan nominal unik dengan peringatan "Transfer TEPAT Rp X.XXX (jangan dibulatkan)"; auto-polling `qris-status` jika listener aktif; pesan berbeda untuk listener aktif vs manual; countdown 15 menit untuk QRIS own.
+### Files
+- `internal/db/models/models.go` — Tambah `QrisDeviceKey` di Company; struct `QrisPending`
+- `internal/lib/qris/qris.go` — Tambah `GenerateUniqueAmount(baseAmount, invoiceId)`
+- `internal/api/handlers/payment_handler.go` — Update `CreatePayment` (unique amount + QrisPending); tambah `QrisNotify`, `QrisStatus`, helper `addMonths`, `formatAmount`
+- `internal/api/handlers/invoices_ext.go` — `GetByToken` return `hasListener` di qrisOwn
+- `internal/api/handlers/misc_handler.go` — `CheckIsolationGlobal` return `hasListener` di qrisOwn
+- `internal/api/router.go` — Route baru: `POST /api/payment/qris-notify`, `GET /api/payment/qris-status`
+- `src/app/admin/payment-gateway/page.tsx` — Tambah Device Key UI + Generate button
+- `src/app/pay/[token]/page.tsx` — Unique amount display + polling qris-status + UI listener vs manual
+
 ## [2.49.0] — 2026-05-18
 ### Added
 - **QRIS Mandiri (self-hosted QRIS)** — Dukungan pembayaran QRIS tanpa pihak ketiga menggunakan QRIS statis dari bank/merchant yang dikonversi ke QRIS dinamis (EMVCo TLV + CRC-16/CCITT-FALSE).

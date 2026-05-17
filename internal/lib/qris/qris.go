@@ -17,7 +17,10 @@
 package qris
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strconv"
 )
 
@@ -159,4 +162,21 @@ func ValidateQris(qris string) bool {
 		}
 	}
 	return crc16ccitt(data) == existing
+}
+
+// GenerateUniqueAmount menambahkan suffix unik 1-999 ke nominal dasar
+// menggunakan invoiceId sebagai seed agar deterministic tapi unik per invoice.
+//
+// Tujuan: agar Android Notification Listener bisa matching notifikasi pembayaran
+// dari e-wallet (DANA, GoPay, dll) dengan invoice yang tepat berdasarkan nominal persis.
+//
+// Contoh: baseAmount=150000, invoiceId="INV-2026-001" → uniqueAmount=150083
+func GenerateUniqueAmount(baseAmount int, invoiceId string) int {
+	// Gunakan MD5(invoiceId) sebagai seed deterministik
+	h := md5.Sum([]byte(invoiceId))
+	hexStr := hex.EncodeToString(h[:4]) // ambil 4 byte pertama
+	n := new(big.Int)
+	n.SetString(hexStr, 16)
+	suffix := int(n.Int64()%999) + 1 // range 1-999
+	return baseAmount + suffix
 }

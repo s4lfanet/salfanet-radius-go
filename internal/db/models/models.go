@@ -250,14 +250,38 @@ type Company struct {
 	ReferralEnabled         *bool   `gorm:"default:false" json:"referralEnabled"`
 	ReferralRewardAmount    *int    `gorm:"default:10000" json:"referralRewardAmount"`
 	// QRIS Mandiri — konversi QRIS statis dari bank ke dinamis
-	QrisStaticCode   *string   `gorm:"type:longtext" json:"qrisStaticCode"`
-	QrisMerchantName *string   `gorm:"type:varchar(191)" json:"qrisMerchantName"`
-	QrisEnabled      *bool     `gorm:"default:false" json:"qrisEnabled"`
-	CreatedAt        time.Time `json:"createdAt"`
-	UpdatedAt        time.Time `json:"updatedAt"`
+	QrisStaticCode   *string `gorm:"type:longtext" json:"qrisStaticCode"`
+	QrisMerchantName *string `gorm:"type:varchar(191)" json:"qrisMerchantName"`
+	QrisEnabled      *bool   `gorm:"default:false" json:"qrisEnabled"`
+	// Device key untuk autentikasi Android QrisListener app
+	QrisDeviceKey *string   `gorm:"type:varchar(100)" json:"qrisDeviceKey"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
 func (Company) TableName() string { return "companies" }
+
+// ─── QrisPending ─────────────────────────────────────────────────────────────
+
+// QrisPending menyimpan QRIS transaksi yang sedang menunggu pembayaran.
+// Sistem pencocokan: Android app mengirim nominal → cocok dengan uniqueAmount.
+type QrisPending struct {
+	ID           string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	InvoiceID    string     `gorm:"index;type:varchar(191)" json:"invoiceId"`
+	UserID       *string    `gorm:"index;type:varchar(191)" json:"userId"`
+	OrderID      string     `gorm:"uniqueIndex;type:varchar(191)" json:"orderId"`
+	BaseAmount   int        `json:"baseAmount"`
+	UniqueAmount int        `gorm:"index" json:"uniqueAmount"` // BaseAmount + random 1-999 (untuk pencocokan notif)
+	QrString     string     `gorm:"type:longtext" json:"qrString"`
+	Status       string     `gorm:"default:pending;index" json:"status"` // pending | paid | expired
+	SourceApp    string     `gorm:"type:varchar(100)" json:"sourceApp"`  // id.dana, com.gojek.app, dll
+	ExpiresAt    time.Time  `gorm:"index" json:"expiresAt"`
+	PaidAt       *time.Time `json:"paidAt"`
+	CreatedAt    time.Time  `json:"createdAt"`
+	UpdatedAt    time.Time  `json:"updatedAt"`
+}
+
+func (QrisPending) TableName() string { return "qris_pendings" }
 
 // ─── CronHistory ─────────────────────────────────────────────────────────────
 

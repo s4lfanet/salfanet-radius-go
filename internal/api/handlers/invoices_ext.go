@@ -256,7 +256,14 @@ func (h *InvoiceExtHandler) GetByToken(c fiber.Ctx) error {
 		if company.QrisMerchantName != nil && *company.QrisMerchantName != "" {
 			merchantName = *company.QrisMerchantName
 		}
-		qrisOwn = fiber.Map{"enabled": true, "merchantName": merchantName}
+		// hasDeviceKey: true = Android listener sudah dikonfigurasi (otomatis)
+		// false = perlu konfirmasi manual
+		hasDeviceKey := company.QrisDeviceKey != nil && *company.QrisDeviceKey != ""
+		qrisOwn = fiber.Map{
+			"enabled":      true,
+			"merchantName": merchantName,
+			"hasListener":  hasDeviceKey, // apakah Android listener aktif
+		}
 	}
 
 	return c.JSON(fiber.Map{

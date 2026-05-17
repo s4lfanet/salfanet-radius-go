@@ -885,6 +885,9 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 8: Payment routes ──────────────────────────────────────────────
 	// Webhook is public (no admin auth, verified by signature)
 	app.Post("/api/payment/webhook", paymentH.Webhook)
+	// QRIS Mandiri: Android app notify + frontend polling (public, auth by device_key)
+	app.Post("/api/payment/qris-notify", paymentH.QrisNotify)
+	app.Get("/api/payment/qris-status", paymentH.QrisStatus)
 	api.Post("/payment/create", paymentH.CreatePayment)
 	api.Get("/payment/check-order", paymentH.CheckOrder)
 

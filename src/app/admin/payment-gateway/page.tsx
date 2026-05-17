@@ -64,7 +64,7 @@ export default function PaymentGatewayPage() {
   const [xenditForm, setXenditForm] = useState({ apiKey: '', webhookToken: '', environment: 'sandbox', isActive: false });
   const [duitkuForm, setDuitkuForm] = useState({ merchantCode: '', apiKey: '', environment: 'sandbox', isActive: false });
   const [tripayForm, setTripayForm] = useState({ merchantCode: '', apiKey: '', privateKey: '', environment: 'sandbox', isActive: false });
-  const [qrisForm, setQrisForm] = useState({ staticCode: '', merchantName: '', enabled: false });
+  const [qrisForm, setQrisForm] = useState({ staticCode: '', merchantName: '', enabled: false, deviceKey: '' });
 
   useEffect(() => {
     fetchConfigs();
@@ -133,6 +133,7 @@ export default function PaymentGatewayPage() {
             staticCode: companyData.qrisStaticCode || '',
             merchantName: companyData.qrisMerchantName || '',
             enabled: companyData.qrisEnabled || false,
+            deviceKey: companyData.qrisDeviceKey || '',
           });
         }
       } catch (e) {
@@ -181,6 +182,7 @@ export default function PaymentGatewayPage() {
           qrisStaticCode: qrisForm.staticCode,
           qrisMerchantName: qrisForm.merchantName,
           qrisEnabled: qrisForm.enabled,
+          qrisDeviceKey: qrisForm.deviceKey,
         })
       });
       if (res.ok) {
@@ -684,9 +686,46 @@ export default function PaymentGatewayPage() {
                 <p className="mt-1 text-[9px] text-muted-foreground">Nama yang tampil di halaman pembayaran pelanggan.</p>
               </div>
 
-              <div className="p-2 bg-warning/10 border border-warning/20 rounded-lg">
-                <p className="text-[10px] text-warning">⚠️ QRIS Mandiri tidak memiliki webhook otomatis. Pelanggan harus konfirmasi pembayaran via WhatsApp, dan admin harus verifikasi manual.</p>
+              {/* Device Key untuk Android QrisListener */}
+              <div className="p-2.5 bg-muted rounded-lg space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] font-semibold">Device Key — Android Listener (Opsional)</p>
+                    <p className="text-[10px] text-muted-foreground">Jika diisi, pembayaran QRIS otomatis terdeteksi via aplikasi Android QrisListener.</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={qrisForm.deviceKey}
+                    onChange={(e) => setQrisForm({ ...qrisForm, deviceKey: e.target.value })}
+                    className="flex-1 px-2.5 py-1.5 text-xs font-mono border border-border rounded-lg bg-card focus:ring-1 focus:ring-ring"
+                    placeholder="Kosongkan jika tidak pakai Android listener"
+                    maxLength={100}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const key = crypto.randomUUID().replace(/-/g, '').substring(0, 32);
+                      setQrisForm({ ...qrisForm, deviceKey: key });
+                    }}
+                    className="px-2.5 py-1.5 text-xs bg-muted-foreground/20 hover:bg-muted-foreground/30 rounded-lg whitespace-nowrap"
+                  >
+                    Generate
+                  </button>
+                </div>
               </div>
+
+              {qrisForm.deviceKey ? (
+                <div className="p-2.5 bg-success/10 border border-success/20 rounded-lg">
+                  <p className="text-[10px] text-success">✅ Android Listener aktif. Pembayaran QRIS akan terdeteksi otomatis saat notifikasi e-wallet (DANA, GoPay, BRImo, dll) masuk ke HP listener.</p>
+                  <p className="text-[9px] text-muted-foreground mt-1">Webhook URL Android: <code className="bg-muted px-1 rounded">{typeof window !== 'undefined' ? window.location.origin : ''}/api/payment/qris-notify</code></p>
+                </div>
+              ) : (
+                <div className="p-2 bg-warning/10 border border-warning/20 rounded-lg">
+                  <p className="text-[10px] text-warning">⚠️ Tanpa Device Key, konfirmasi pembayaran QRIS dilakukan manual oleh admin. Isi Device Key di atas lalu install app Android QrisListener untuk deteksi otomatis.</p>
+                </div>
+              )}
 
               <button
                 onClick={saveQris}
