@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.48.3] — 2026-05-17
+### Fixed
+- **Admin logo 404 setelah login** — Logo URL lama (e.g. `logo-1778801007479.png`) tersimpan di Zustand `persist` (localStorage). Saat halaman load berikutnya, store di-hydrate dari localStorage dengan URL lama → browser request file yang sudah tidak ada → 404 error di F12. Fix: exclude field `logo` dari Zustand persist menggunakan `partialize` — logo selalu di-fetch fresh dari `/api/company` saat halaman load. Tambah `onError` handler di `<Image>` sebagai defense kedua (hide image jika file tidak ada).
+### Files
+- `src/lib/store.ts` — tambah `partialize` untuk exclude `logo` dari persist
+- `src/app/admin/AdminClientLayout.tsx` — tambah `onError` pada `<Image>` logo
+
 ## [2.48.2] — 2026-05-16
 ### Fixed
 - **`admin/payment-gateway` — "Fetch configs error: Invalid response from server"** — Go handler `PaymentGatewayConfig` return `{ success: true, gateways: [...] }` (bukan raw array). Frontend butuh raw array. Fix: rewrite handler return `[]PaymentGateway` langsung.
