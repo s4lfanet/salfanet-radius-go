@@ -469,6 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.48.5 — 2026-05-17
+
+### Fixed
+- **`admin/pppoe/profiles` & `admin/pppoe/registrations` — `GET /api/pppoe/profiles/sync-mikrotik` 405 Method Not Allowed** — Frontend memanggil GET ke endpoint yang hanya tersedia sebagai POST (untuk sync, bukan list). Fix: ganti URL ke `GET /api/network/routers` yang sudah ada dan return raw array Router.
+- **`[SSE] Connection error` loop di konsol** — Handler `SSEVoucherUpdates` langsung menutup koneksi setelah kirim 1 pesan → browser EventSource trigger `onerror` → reconnect setiap 3s → infinite error loop. Fix: ubah handler jadi long-lived SSE stream menggunakan `fasthttp.StreamWriter`, kirim `event: connected` + `event: voucher-stats` lalu heartbeat `: heartbeat` setiap 30s. Tambah header `X-Accel-Buffering: no` agar nginx tidak buffer SSE.
+### Files
+- `internal/api/handlers/settings_genieacs.go` — SSEVoucherUpdates jadi proper long-lived SSE stream
+- `src/app/admin/pppoe/profiles/page.tsx` — loadRouterList & handleSyncMikrotik modal gunakan `/api/network/routers`
+- `src/app/admin/pppoe/registrations/page.tsx` — useEffect gunakan `/api/network/routers`
+
 ### v2.48.4 — 2026-05-17
 
 ### Fixed
@@ -516,25 +526,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/admin/payment-gateway/page.tsx` — Guard array check dan optional chaining
 - `src/app/api/payment-gateway/config/route.ts` — Return `[]` on catch
 - `src/app/api/payment-gateway/webhook-logs/route.ts` — Return safe empty pagination on catch
-
-### v2.48.0 — 2026-05-15
-
-### Added
-- **One-click update dari GitHub di `admin/system`** — Tombol "Update Sekarang" muncul otomatis bila ada commit terbaru di GitHub. Klik tombol → `updater.sh` berjalan di background → live log tampil langsung di halaman.
-- **`POST /api/admin/system/update`** — Endpoint baru untuk trigger `updater.sh --branch master` dari web UI. Menulis PID ke `/tmp/salfanet-update.pid` dan log ke `/tmp/salfanet-update.log`.
-- **`GET /api/admin/system/update`** — Endpoint untuk polling log update yang sedang berjalan.
-### Fixed
-- **`updater.sh` gagal jika tidak ada `.git` di `APP_DIR`** — Sebelumnya langsung exit error. Sekarang: cek `SOURCE_DIR=/root/salfanet-radius-go` → jika ada `.git` gunakan itu; jika tidak, `git clone` dari GitHub (perlu `GITHUB_TOKEN` untuk private repo).
-- **`/api/admin/system/info` selalu tampil "unknown"** — Setelah fresh install dari ZIP tidak ada `.git`. Fix: cek git di `/root/salfanet-radius-go` sebagai alternatif; fallback baca file `COMMIT_HASH`, `COMMIT_DATE`, `COMMIT_MSG` yang ditulis updater.sh setelah git pull. Cek update via GitHub API (pakai `GITHUB_TOKEN` env jika tersedia).
-- **`GITHUB_REPO` salah di `updater.sh`** — Diubah dari `s4lfanet/salfanet-radius` ke `s4lfanet/salfanet-radius-go`.
-### Changed
-- **`updater.sh`** — Tambah flag `--github-token TOKEN` dan `--source-dir PATH`. Setelah pull: tulis `COMMIT_HASH`, `COMMIT_DATE`, `COMMIT_MSG` ke `APP_DIR`; sync source → APP_DIR via rsync jika lokasi berbeda.
-- **`admin/system` page** — Tambah tombol "Update Sekarang" (hanya muncul bila `hasUpdate`), live log viewer dengan auto-scroll, banner sukses setelah update selesai, info tanggal commit.
-### Files
-- `vps-install/updater.sh` — GITHUB_REPO fix, SOURCE_DIR git clone/pull, COMMIT_* file writing, rsync sync
-- `src/app/api/admin/system/info/route.ts` — multi-source git dir, file fallback, GitHub API check
-- `src/app/api/admin/system/update/route.ts` — **BARU** — trigger + log endpoint
-- `src/app/admin/system/page.tsx` — update button, live log, commit date display
 
 <!-- AUTO-CHANGELOG:END -->
 
