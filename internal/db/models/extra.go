@@ -171,9 +171,9 @@ type PaymentGateway struct {
 	MidtransEnvironment string  `gorm:"default:sandbox" json:"midtransEnvironment"`
 
 	// Xendit
-	XenditApiKey        *string `json:"xenditApiKey"`
-	XenditWebhookToken  *string `json:"xenditWebhookToken"`
-	XenditEnvironment   string  `gorm:"default:sandbox" json:"xenditEnvironment"`
+	XenditApiKey       *string `json:"xenditApiKey"`
+	XenditWebhookToken *string `json:"xenditWebhookToken"`
+	XenditEnvironment  string  `gorm:"default:sandbox" json:"xenditEnvironment"`
 
 	// Duitku
 	DuitkuMerchantCode *string `json:"duitkuMerchantCode"`
