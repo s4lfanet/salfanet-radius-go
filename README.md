@@ -469,6 +469,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.48.3 — 2026-05-17
+
+### Fixed
+- **Admin logo 404 setelah login** — Logo URL lama (e.g. `logo-1778801007479.png`) tersimpan di Zustand `persist` (localStorage). Saat halaman load berikutnya, store di-hydrate dari localStorage dengan URL lama → browser request file yang sudah tidak ada → 404 error di F12. Fix: exclude field `logo` dari Zustand persist menggunakan `partialize` — logo selalu di-fetch fresh dari `/api/company` saat halaman load. Tambah `onError` handler di `<Image>` sebagai defense kedua (hide image jika file tidak ada).
+### Files
+- `src/lib/store.ts` — tambah `partialize` untuk exclude `logo` dari persist
+- `src/app/admin/AdminClientLayout.tsx` — tambah `onError` pada `<Image>` logo
+
 ### v2.48.2 — 2026-05-16
 
 ### Fixed
@@ -524,13 +532,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **`POST /api/company` 400 Bad Request saat simpan pengaturan perusahaan** — Frontend mengirim `bankAccounts` sebagai JSON array (`[]`), tapi model Go menyimpannya sebagai `*string`. Fiber JSON binder gagal decode → 400. Fix: parse body sebagai `map[string]interface{}`, konversi `bankAccounts` array → JSON string sebelum bind ke struct. Juga: tambah UUID generation saat buat record company baru (fresh install).
 ### Files
 - `internal/api/handlers/company.go` — `UpdateCompany` konversi bankAccounts + generate UUID
-
-### v2.47.20 — 2026-05-15
-
-### Fixed
-- **`GET /api/company` 404 pada fresh install** — Go handler mengembalikan 404 saat tabel `companies` kosong (belum ada data). Frontend admin layout memanggil endpoint ini saat pertama buka, sehingga layout tidak bisa load data perusahaan. Fix: handler sekarang mengembalikan nilai default (name, timezone, base URL, dsb.) dengan status 200 jika belum ada record, bukan 404.
-### Files
-- `internal/api/handlers/company.go` — `GetCompany` mengembalikan default ketika DB kosong
 
 <!-- AUTO-CHANGELOG:END -->
 
