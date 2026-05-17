@@ -469,6 +469,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.48.6 — 2026-05-17
+
+### Fixed
+- **`admin/hotspot/voucher` crash `Cannot read properties of undefined (reading 'total')` & `(reading 'activated')`** — SSE handler kirim `{"count":N}` tapi frontend ekspek `{"stats":{total,waiting,active,expired,totalValue},"changes":{activated,expired}}`. `setStats(data.stats)` → `setStats(undefined)` → render crash. Fix: Go SSE handler kirim format lengkap dengan count per status (UNUSED→waiting, ACTIVE→active, EXPIRED/USED→expired). Fix frontend: tambah null check `data?.stats` dan `data?.changes` sebagai guard.
+### Files
+- `internal/api/handlers/settings_genieacs.go` — SSEVoucherUpdates kirim format stats yang benar
+- `src/app/admin/hotspot/voucher/page.tsx` — handleSSEMessage pakai optional chaining untuk null safety
+
 ### v2.48.5 — 2026-05-17
 
 ### Fixed
@@ -514,18 +522,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/company.go` — Fix GetCompany + UpdateCompany dengan bankAccounts parsing
 - `internal/api/handlers/customer_portal_ext2.go` — Fix GetPaymentMethods sesuai model baru
 - `internal/api/router.go` — Tambah `api.Post("/payment-gateway/config", ...)`
-
-### v2.48.1 — 2026-05-15
-
-### Fixed
-- **`admin/payment-gateway` crash "Terjadi Kesalahan"** — `fetchConfigs` tidak memvalidasi respons API; jika API return error object (bukan array), `setConfigs(errorObj)` lalu render memanggil `configs.find()` → TypeError → crash page. Fix: tambah `if (!res.ok) throw` dan `if (!Array.isArray(data)) throw` sebelum `setConfigs()`.
-- **`fetchWebhookLogs` crash saat pagination undefined** — `data.pagination.totalPages` tanpa optional chaining; jika API error, `pagination` undefined → TypeError. Fix: `data.pagination?.totalPages ?? 1`.
-- **`/api/payment-gateway/config` GET error response** — Catch block return `{ error: '...' }` (object) → frontend menerima object bukan array. Fix: return `[]` (empty array) agar frontend tetap aman.
-- **`/api/payment-gateway/webhook-logs` GET error response** — Catch block return `{ error: '...' }` tanpa `pagination`. Fix: return `{ logs: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }`.
-### Files
-- `src/app/admin/payment-gateway/page.tsx` — Guard array check dan optional chaining
-- `src/app/api/payment-gateway/config/route.ts` — Return `[]` on catch
-- `src/app/api/payment-gateway/webhook-logs/route.ts` — Return safe empty pagination on catch
 
 <!-- AUTO-CHANGELOG:END -->
 
