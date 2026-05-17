@@ -727,6 +727,31 @@ export default function PaymentGatewayPage() {
                 </div>
               )}
 
+              {/* Download & Install Android APK */}
+              <div className="p-2.5 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
+                <p className="text-[11px] font-semibold text-primary">📱 Download & Install Aplikasi Android</p>
+                <p className="text-[10px] text-muted-foreground">Pasang di HP Android yang selalu online. Aktifkan permission <strong>Notification Access</strong>, lalu isi Server URL dan Device Key di atas.</p>
+                <div className="flex gap-2 flex-wrap">
+                  <a
+                    href="/downloads/qris-listener.apk"
+                    download
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-lg hover:bg-primary/90"
+                  >
+                    ⬇️ Download APK
+                  </a>
+                </div>
+                <div className="space-y-1 pt-1">
+                  <p className="text-[9px] font-medium text-foreground/70">Cara install:</p>
+                  {['Izinkan "Install dari sumber tidak dikenal" di Pengaturan HP', 'Buka file APK yang sudah didownload → Install', 'Buka app → Izinkan "Notification Access" di pengaturan HP', 'Isi Server URL dan Device Key (dari atas) → Aktifkan toggle', 'Notifikasi suara + TTS akan berbunyi setiap ada transaksi masuk'].map((step, i) => (
+                    <div key={i} className="flex items-start gap-1.5">
+                      <span className="text-[9px] font-bold text-primary mt-0.5">{i + 1}.</span>
+                      <p className="text-[9px] text-muted-foreground">{step}</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[9px] text-muted-foreground pt-0.5">Mendukung: DANA, GoPay, ShopeePay, BRImo, BCA Mobile, Mandiri. Suara notifikasi: alarm + pengumuman suara (TTS).</p>
+              </div>
+
               <button
                 onClick={saveQris}
                 disabled={saving || (qrisForm.enabled && !qrisForm.staticCode)}
