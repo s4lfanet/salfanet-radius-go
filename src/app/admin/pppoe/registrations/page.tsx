@@ -120,7 +120,7 @@ export default function RegistrationsPage() {
   useEffect(() => {
     fetchRegistrations();
     fetch('/api/pppoe/areas').then(r => r.json()).then(d => setAreas(d.areas || [])).catch(() => {});
-    fetch('/api/pppoe/profiles/sync-mikrotik').then(r => r.json()).then(d => setRouters(d.routers || [])).catch(() => {});
+    fetch('/api/network/routers').then(r => r.json()).then((d: unknown) => setRouters(Array.isArray(d) ? d : [])).catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, searchFilter]);
 

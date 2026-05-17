@@ -94,9 +94,9 @@ export default function PPPoEProfilesPage() {
 
   const loadRouterList = async () => {
     try {
-      const res = await fetch('/api/pppoe/profiles/sync-mikrotik');
+      const res = await fetch('/api/network/routers');
       const data = await res.json();
-      setRouters(data.routers || []);
+      setRouters(Array.isArray(data) ? data : []);
     } catch { setRouters([]); }
   };
 
@@ -274,9 +274,9 @@ export default function PPPoEProfilesPage() {
     // Always reload router list fresh when opening the modal
     setLoadingRouters(true);
     try {
-      const res = await fetch('/api/pppoe/profiles/sync-mikrotik');
+      const res = await fetch('/api/network/routers');
       const data = await res.json();
-      const freshRouters: RouterOption[] = data.routers || [];
+      const freshRouters: RouterOption[] = Array.isArray(data) ? data : [];
       setRouters(freshRouters);
       setSelectedRouterIds(freshRouters.map(r => r.id));
     } catch {

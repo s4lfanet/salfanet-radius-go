@@ -1,12 +1,15 @@
 package handlers
 
 import (
+	"bufio"
+	"fmt"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/valyala/fasthttp"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
@@ -195,12 +198,49 @@ func (h *SettingsGenieacsHandler) SSEVoucherUpdates(c fiber.Ctx) error {
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
+	c.Set("X-Accel-Buffering", "no") // disable nginx buffering for SSE
 
-	var count int64
-	h.db.Model(&models.HotspotVoucher{}).Where("status = ?", "AVAILABLE").Count(&count)
+	type rawFasthttpCtx interface {
+		RequestCtx() *fasthttp.RequestCtx
+	}
+	rc, ok := c.(rawFasthttpCtx)
+	if !ok {
+		return c.Status(500).SendString("SSE not supported")
+	}
 
-	data := `data: {"type":"voucher-count","count":` + strconv.FormatInt(count, 10) + `}` + "\n\n"
-	return c.SendString(data)
+	db := h.db
+	rc.RequestCtx().SetBodyStreamWriter(func(w *bufio.Writer) {
+		// Notify client that SSE is ready
+		if _, err := fmt.Fprintf(w, "event: connected\ndata: {}\n\n"); err != nil {
+			return
+		}
+		if err := w.Flush(); err != nil {
+			return
+		}
+
+		// Send initial voucher stats
+		var count int64
+		db.Model(&models.HotspotVoucher{}).Where("status = ?", "AVAILABLE").Count(&count)
+		if _, err := fmt.Fprintf(w, "event: voucher-stats\ndata: {\"count\":%d}\n\n", count); err != nil {
+			return
+		}
+		if err := w.Flush(); err != nil {
+			return
+		}
+
+		// Keep connection alive with heartbeat; exit when client disconnects
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			if _, err := fmt.Fprintf(w, ": heartbeat\n\n"); err != nil {
+				return
+			}
+			if err := w.Flush(); err != nil {
+				return
+			}
+		}
+	})
+	return nil
 }
 
 // suppress unused import
