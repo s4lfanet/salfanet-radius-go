@@ -223,34 +223,38 @@ func (Router) TableName() string { return "nas" }
 // ─── Company ─────────────────────────────────────────────────────────────────
 
 type Company struct {
-	ID                      string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Name                    string    `json:"name"`
-	Address                 *string   `json:"address"`
-	Phone                   *string   `json:"phone"`
-	Email                   *string   `json:"email"`
-	Logo                    *string   `json:"logo"`
-	AdminPhone              *string   `json:"adminPhone"`
-	BaseURL                 *string   `gorm:"default:http://localhost:3000" json:"baseUrl"`
-	Timezone                *string   `gorm:"default:Asia/Jakarta" json:"timezone"`
-	PoweredBy               *string   `gorm:"default:SALFANET RADIUS" json:"poweredBy"`
-	CustomerIDPrefix        *string   `gorm:"type:varchar(10)" json:"customerIdPrefix"`
-	InvoiceGenerateDays     *int      `gorm:"default:7" json:"invoiceGenerateDays"`
-	GracePeriodDays         *int      `gorm:"default:0" json:"gracePeriodDays"`
-	IsolationEnabled        *bool     `gorm:"default:true" json:"isolationEnabled"`
-	IsolationIpPool         *string   `json:"isolationIpPool"`
-	IsolationServerIp       *string   `json:"isolationServerIp"`
-	IsolationRateLimit      *string   `json:"isolationRateLimit"`
-	IsolationRedirectUrl    *string   `json:"isolationRedirectUrl"`
-	IsolationMessage        *string   `gorm:"type:text" json:"isolationMessage"`
-	IsolationAllowDns       *bool     `gorm:"default:true" json:"isolationAllowDns"`
-	IsolationAllowPayment   *bool     `gorm:"default:true" json:"isolationAllowPayment"`
-	IsolationNotifyWhatsapp *bool     `gorm:"default:false" json:"isolationNotifyWhatsapp"`
-	IsolationNotifyEmail    *bool     `gorm:"default:false" json:"isolationNotifyEmail"`
-	BankAccounts            *string   `gorm:"type:text" json:"bankAccounts"`
-	ReferralEnabled         *bool     `gorm:"default:false" json:"referralEnabled"`
-	ReferralRewardAmount    *int      `gorm:"default:10000" json:"referralRewardAmount"`
-	CreatedAt               time.Time `json:"createdAt"`
-	UpdatedAt               time.Time `json:"updatedAt"`
+	ID                      string  `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Name                    string  `json:"name"`
+	Address                 *string `json:"address"`
+	Phone                   *string `json:"phone"`
+	Email                   *string `json:"email"`
+	Logo                    *string `json:"logo"`
+	AdminPhone              *string `json:"adminPhone"`
+	BaseURL                 *string `gorm:"default:http://localhost:3000" json:"baseUrl"`
+	Timezone                *string `gorm:"default:Asia/Jakarta" json:"timezone"`
+	PoweredBy               *string `gorm:"default:SALFANET RADIUS" json:"poweredBy"`
+	CustomerIDPrefix        *string `gorm:"type:varchar(10)" json:"customerIdPrefix"`
+	InvoiceGenerateDays     *int    `gorm:"default:7" json:"invoiceGenerateDays"`
+	GracePeriodDays         *int    `gorm:"default:0" json:"gracePeriodDays"`
+	IsolationEnabled        *bool   `gorm:"default:true" json:"isolationEnabled"`
+	IsolationIpPool         *string `json:"isolationIpPool"`
+	IsolationServerIp       *string `json:"isolationServerIp"`
+	IsolationRateLimit      *string `json:"isolationRateLimit"`
+	IsolationRedirectUrl    *string `json:"isolationRedirectUrl"`
+	IsolationMessage        *string `gorm:"type:text" json:"isolationMessage"`
+	IsolationAllowDns       *bool   `gorm:"default:true" json:"isolationAllowDns"`
+	IsolationAllowPayment   *bool   `gorm:"default:true" json:"isolationAllowPayment"`
+	IsolationNotifyWhatsapp *bool   `gorm:"default:false" json:"isolationNotifyWhatsapp"`
+	IsolationNotifyEmail    *bool   `gorm:"default:false" json:"isolationNotifyEmail"`
+	BankAccounts            *string `gorm:"type:text" json:"bankAccounts"`
+	ReferralEnabled         *bool   `gorm:"default:false" json:"referralEnabled"`
+	ReferralRewardAmount    *int    `gorm:"default:10000" json:"referralRewardAmount"`
+	// QRIS Mandiri — konversi QRIS statis dari bank ke dinamis
+	QrisStaticCode   *string   `gorm:"type:longtext" json:"qrisStaticCode"`
+	QrisMerchantName *string   `gorm:"type:varchar(191)" json:"qrisMerchantName"`
+	QrisEnabled      *bool     `gorm:"default:false" json:"qrisEnabled"`
+	CreatedAt        time.Time `json:"createdAt"`
+	UpdatedAt        time.Time `json:"updatedAt"`
 }
 
 func (Company) TableName() string { return "companies" }

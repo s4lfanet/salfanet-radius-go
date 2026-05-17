@@ -238,10 +238,38 @@ func (h *InvoiceExtHandler) Export(c fiber.Ctx) error {
 func (h *InvoiceExtHandler) GetByToken(c fiber.Ctx) error {
 	token := c.Params("token")
 	var inv models.Invoice
-	if err := h.db.Where("paymentToken = ?", token).Preload("User").First(&inv).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
+	if err := h.db.Where("paymentToken = ?", token).Preload("User.Profile").Preload("User.Area").Preload("User.Router").First(&inv).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "invoice not found or invalid payment link"})
 	}
-	return c.JSON(fiber.Map{"success": true, "invoice": inv})
+
+	// Active payment gateways
+	var gateways []models.PaymentGateway
+	h.db.Where("isActive = ?", true).Select("id", "name", "provider", "isActive").Find(&gateways)
+
+	// Company info for QRIS and display
+	var company models.Company
+	h.db.First(&company)
+
+	var qrisOwn interface{} = nil
+	if company.QrisEnabled != nil && *company.QrisEnabled {
+		merchantName := company.Name
+		if company.QrisMerchantName != nil && *company.QrisMerchantName != "" {
+			merchantName = *company.QrisMerchantName
+		}
+		qrisOwn = fiber.Map{"enabled": true, "merchantName": merchantName}
+	}
+
+	return c.JSON(fiber.Map{
+		"invoice":         inv,
+		"paymentGateways": gateways,
+		"qrisOwn":         qrisOwn,
+		"company": fiber.Map{
+			"name":    company.Name,
+			"address": company.Address,
+			"phone":   company.Phone,
+			"email":   company.Email,
+		},
+	})
 }
 
 // GET /api/invoices/:id/pdf

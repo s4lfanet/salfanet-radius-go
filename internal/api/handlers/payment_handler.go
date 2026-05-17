@@ -11,6 +11,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/lib/qris"
 )
 
 // PaymentHandler handles payment gateway routes.
@@ -23,14 +24,20 @@ func NewPaymentHandler(db *gorm.DB) *PaymentHandler {
 // POST /api/payment/create — initiate a payment order via active gateway
 func (h *PaymentHandler) CreatePayment(c fiber.Ctx) error {
 	var body struct {
-		InvoiceID string `json:"invoiceId"`
-		Method    string `json:"method"` // e.g. "midtrans", "xendit", "tripay"
-		Amount    int    `json:"amount"`
-		Phone     string `json:"phone"`
-		Name      string `json:"name"`
+		InvoiceID     string `json:"invoiceId"`
+		Gateway       string `json:"gateway"`       // e.g. "midtrans", "xendit", "tripay", "qris_own"
+		Method        string `json:"method"`        // legacy field alias for gateway
+		PaymentMethod string `json:"paymentMethod"` // Duitku channel code
+		Amount        int    `json:"amount"`
+		Phone         string `json:"phone"`
+		Name          string `json:"name"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	// Support both "gateway" and "method" field names for backwards compat
+	if body.Gateway == "" {
+		body.Gateway = body.Method
 	}
 	if body.InvoiceID == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "invoiceId required"})
@@ -44,34 +51,68 @@ func (h *PaymentHandler) CreatePayment(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invoice already paid"})
 	}
 
-	// Look up active gateway
+	if invoice.PaymentToken == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invoice payment token not found"})
+	}
+
+	orderId := invoice.InvoiceNumber + "-" + uuid.New().String()[:8]
+
+	// ── QRIS Mandiri ──────────────────────────────────────────────────────────
+	if body.Gateway == "qris_own" {
+		var company models.Company
+		if err := h.db.First(&company).Error; err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "company not found"})
+		}
+		if company.QrisEnabled == nil || !*company.QrisEnabled || company.QrisStaticCode == nil || *company.QrisStaticCode == "" {
+			return c.Status(400).JSON(fiber.Map{"error": "QRIS Mandiri belum dikonfigurasi. Buka Admin → Settings → Company."})
+		}
+
+		qrString, err := qris.StaticToDynamic(*company.QrisStaticCode, invoice.Amount)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Gagal generate QRIS: " + err.Error()})
+		}
+
+		return c.JSON(fiber.Map{
+			"success":    true,
+			"orderId":    orderId,
+			"qrString":   qrString,
+			"paymentUrl": "",
+			"gateway":    "qris_own",
+			"isQrisOwn":  true,
+			"amount":     invoice.Amount,
+		})
+	}
+
+	// ── Third-party gateway ───────────────────────────────────────────────────
 	var gateway models.PaymentGateway
 	q := h.db.Where("isActive = ?", true)
-	if body.Method != "" {
-		q = q.Where("provider = ?", body.Method)
+	if body.Gateway != "" {
+		q = q.Where("provider = ?", body.Gateway)
 	}
 	if err := q.First(&gateway).Error; err != nil {
 		return c.Status(503).JSON(fiber.Map{"error": "no active payment gateway configured"})
 	}
 
-	// Generate order token
-	orderID := uuid.New().String()
-	paymentLink := "https://pay.example.com/order/" + orderID // placeholder
+	// Generate order token (placeholder; real integration calls gateway API)
+	paymentLink := "https://pay.example.com/order/" + orderId
 
 	// Update invoice with payment token
 	if err := h.db.Model(&invoice).Updates(map[string]interface{}{
-		"paymentToken": orderID,
+		"paymentToken": orderId,
 		"paymentLink":  paymentLink,
 	}).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "failed to update invoice"})
 	}
 
 	return c.JSON(fiber.Map{
-		"success":     true,
-		"orderId":     orderID,
-		"paymentLink": paymentLink,
-		"gateway":     gateway.Provider,
-		"amount":      invoice.Amount,
+		"success":    true,
+		"orderId":    orderId,
+		"paymentUrl": paymentLink,
+		"snapToken":  nil,
+		"qrString":   nil,
+		"gateway":    gateway.Provider,
+		"isQrisOwn":  false,
+		"amount":     invoice.Amount,
 	})
 }
 

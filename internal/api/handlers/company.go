@@ -49,6 +49,7 @@ func (h *CompanyHandler) GetCompany(c fiber.Ctx) error {
 		defaultNotifyEmail := false
 		defaultReferral := false
 		defaultReferralAmount := 10000
+		defaultQrisEnabled := false
 		return c.JSON(companyResp{
 			Company: models.Company{
 				Name:                    "SALFANET RADIUS",
@@ -64,6 +65,7 @@ func (h *CompanyHandler) GetCompany(c fiber.Ctx) error {
 				IsolationNotifyEmail:    &defaultNotifyEmail,
 				ReferralEnabled:         &defaultReferral,
 				ReferralRewardAmount:    &defaultReferralAmount,
+				QrisEnabled:             &defaultQrisEnabled,
 			},
 			BankAccounts: json.RawMessage("[]"),
 		})

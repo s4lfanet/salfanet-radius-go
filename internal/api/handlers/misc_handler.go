@@ -235,9 +235,107 @@ func (h *MiscHandler) PppoeBulk(c fiber.Ctx) error {
 
 // GET /api/pppoe/users/check-isolation — check isolation status (global)
 func (h *MiscHandler) CheckIsolationGlobal(c fiber.Ctx) error {
-	var isolated int64
-	h.db.Model(&models.PppoeUser{}).Where("status = ?", "isolated").Count(&isolated)
-	return c.JSON(fiber.Map{"success": true, "isolatedCount": isolated})
+	username := c.Query("username")
+	ip := c.Query("ip")
+
+	// If no query params, return global isolated count (admin use)
+	if username == "" && ip == "" {
+		var isolated int64
+		h.db.Model(&models.PppoeUser{}).Where("status = ?", "isolated").Count(&isolated)
+		return c.JSON(fiber.Map{"success": true, "isolatedCount": isolated})
+	}
+
+	// Look up user by username or IP from RADIUS accounting
+	var user models.PppoeUser
+	found := false
+
+	if username != "" {
+		if err := h.db.Where("username = ?", username).
+			Preload("Profile").Preload("Area").
+			First(&user).Error; err == nil {
+			found = true
+		}
+	}
+
+	if !found && ip != "" {
+		// Look up via radacct
+		var acct models.Radacct
+		if err := h.db.Where("framedipaddress = ?", ip).
+			Order("acctstarttime DESC").First(&acct).Error; err == nil && acct.Username != "" {
+			if err2 := h.db.Where("username = ?", acct.Username).
+				Preload("Profile").Preload("Area").
+				First(&user).Error; err2 == nil {
+				found = true
+			}
+		}
+	}
+
+	if !found {
+		return c.Status(404).JSON(fiber.Map{"success": false, "error": "User not found"})
+	}
+
+	if user.Status != "isolated" {
+		return c.JSON(fiber.Map{"success": true, "isolated": false, "message": "User is not isolated"})
+	}
+
+	// Unpaid invoices
+	var invoices []models.Invoice
+	h.db.Where("userId = ? AND status IN ?", user.ID, []string{"PENDING", "OVERDUE"}).
+		Order("dueDate asc").
+		Select("id", "invoiceNumber", "amount", "dueDate", "paymentLink").
+		Find(&invoices)
+
+	// Active payment gateways
+	var gateways []fiber.Map
+	var pgList []models.PaymentGateway
+	h.db.Where("isActive = ?", true).Select("provider", "name").Find(&pgList)
+	for _, g := range pgList {
+		gateways = append(gateways, fiber.Map{"provider": g.Provider, "name": g.Name})
+	}
+
+	// QRIS Mandiri config
+	var company models.Company
+	h.db.First(&company)
+	var qrisOwn interface{} = nil
+	if company.QrisEnabled != nil && *company.QrisEnabled {
+		merchantName := company.Name
+		if company.QrisMerchantName != nil && *company.QrisMerchantName != "" {
+			merchantName = *company.QrisMerchantName
+		}
+		qrisOwn = fiber.Map{"enabled": true, "merchantName": merchantName}
+	}
+
+	profileName := ""
+	var profilePrice *int
+	if user.Profile.Name != "" {
+		profileName = user.Profile.Name
+		profilePrice = &user.Profile.Price
+	}
+
+	areaName := ""
+	if user.Area != nil {
+		areaName = user.Area.Name
+	}
+
+	return c.JSON(fiber.Map{
+		"success":           true,
+		"isolated":          true,
+		"availableGateways": gateways,
+		"qrisOwn":           qrisOwn,
+		"data": fiber.Map{
+			"username":       user.Username,
+			"name":           user.Name,
+			"phone":          user.Phone,
+			"email":          user.Email,
+			"address":        user.Address,
+			"customerId":     user.CustomerID,
+			"area":           areaName,
+			"expiredAt":      user.ExpiredAt,
+			"profileName":    profileName,
+			"profilePrice":   profilePrice,
+			"unpaidInvoices": invoices,
+		},
+	})
 }
 
 // POST /api/pppoe/users/status — batch status check
