@@ -17,7 +17,10 @@ func NewVoucherTemplateHandler(db *gorm.DB) *VoucherTemplateHandler {
 func (h *VoucherTemplateHandler) List(c fiber.Ctx) error {
 	var templates []models.VoucherTemplate
 	h.db.Order("createdAt desc").Find(&templates)
-	return c.JSON(fiber.Map{"success": true, "templates": templates})
+	if templates == nil {
+		templates = []models.VoucherTemplate{}
+	}
+	return c.JSON(templates)
 }
 
 // POST /api/voucher-templates

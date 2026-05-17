@@ -98,15 +98,47 @@ func (h *ReferralHandler) Delete(c fiber.Ctx) error {
 
 // GET /api/admin/referrals/config
 func (h *ReferralHandler) GetConfig(c fiber.Ctx) error {
-	// Referral config is stored in company or settings table
+	var company models.Company
+	enabled := false
+	rewardAmount := 10000
+	if err := h.db.First(&company).Error; err == nil {
+		if company.ReferralEnabled != nil {
+			enabled = *company.ReferralEnabled
+		}
+		if company.ReferralRewardAmount != nil {
+			rewardAmount = *company.ReferralRewardAmount
+		}
+	}
 	return c.JSON(fiber.Map{"success": true, "config": fiber.Map{
-		"enabled":      true,
-		"rewardAmount": 50000,
-		"rewardType":   "BALANCE",
+		"enabled":        enabled,
+		"rewardAmount":   rewardAmount,
+		"rewardType":     "FIRST_PAYMENT",
+		"rewardBoth":     false,
+		"referredAmount": 0,
 	}})
 }
 
 // PUT /api/admin/referrals/config
 func (h *ReferralHandler) UpdateConfig(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "message": "config updated"})
+	var body struct {
+		Enabled        bool   `json:"enabled"`
+		RewardAmount   int    `json:"rewardAmount"`
+		RewardType     string `json:"rewardType"`
+		RewardBoth     bool   `json:"rewardBoth"`
+		ReferredAmount int    `json:"referredAmount"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	h.db.Model(&models.Company{}).Where("1=1").Updates(map[string]interface{}{
+		"referralEnabled":      body.Enabled,
+		"referralRewardAmount": body.RewardAmount,
+	})
+	return c.JSON(fiber.Map{"success": true, "config": fiber.Map{
+		"enabled":        body.Enabled,
+		"rewardAmount":   body.RewardAmount,
+		"rewardType":     body.RewardType,
+		"rewardBoth":     body.RewardBoth,
+		"referredAmount": body.ReferredAmount,
+	}})
 }
