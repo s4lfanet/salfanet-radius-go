@@ -469,6 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.48.4 — 2026-05-17
+
+### Fixed
+- **`admin/hotspot/template` crash `u.map is not a function`** — Go `GET /api/voucher-templates` return `{ success: true, templates: [...] }`. Frontend langsung `.map()` di response → crash. Fix: handler return raw array.
+- **`admin/hotspot/voucher` crash `t.filter is not a function`** — Sama, handler return wrapped object bukan array. Fix sama: return raw array.
+- **`admin/settings/referral` crash `Cannot read properties of undefined (reading 'enabled')`** — Go `PUT /api/admin/referrals/config` return `{ success: true, message: "..." }` tanpa field `config`. Frontend `setConfig(data.config)` → `setConfig(undefined)` → render crash. Fix: handler return `config` dalam response. GET juga fix: baca dari Company DB, return semua 5 fields dengan default.
+### Files
+- `internal/api/handlers/voucher_templates.go` — List return raw array (bukan wrapped object)
+- `internal/api/handlers/referrals.go` — GetConfig baca dari Company, UpdateConfig save ke Company dan return config
+
 ### v2.48.3 — 2026-05-17
 
 ### Fixed
@@ -525,13 +535,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/api/admin/system/info/route.ts` — multi-source git dir, file fallback, GitHub API check
 - `src/app/api/admin/system/update/route.ts` — **BARU** — trigger + log endpoint
 - `src/app/admin/system/page.tsx` — update button, live log, commit date display
-
-### v2.47.21 — 2026-05-15
-
-### Fixed
-- **`POST /api/company` 400 Bad Request saat simpan pengaturan perusahaan** — Frontend mengirim `bankAccounts` sebagai JSON array (`[]`), tapi model Go menyimpannya sebagai `*string`. Fiber JSON binder gagal decode → 400. Fix: parse body sebagai `map[string]interface{}`, konversi `bankAccounts` array → JSON string sebelum bind ke struct. Juga: tambah UUID generation saat buat record company baru (fresh install).
-### Files
-- `internal/api/handlers/company.go` — `UpdateCompany` konversi bankAccounts + generate UUID
 
 <!-- AUTO-CHANGELOG:END -->
 
