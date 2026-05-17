@@ -469,6 +469,27 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.50.0 — 2026-05-19
+
+### Added
+- **Android QRIS Listener — Deteksi pembayaran otomatis** — Integrasi dengan app Android `QrisListener` (NotificationListenerService) yang menangkap notifikasi e-wallet (DANA, GoPay, BRImo, ShopeePay, BCA, Mandiri) dan mengirim jumlah ke server via webhook.
+- **Unique amount trick** — Setiap QRIS invoice mendapat nominal unik (base + suffix 1-999 dari MD5 invoiceId) sehingga server bisa mencocokkan pembayaran masuk ke invoice yang tepat.
+- **Model `QrisPending`** — Tabel `qris_pendings` menyimpan state transaksi QRIS mandiri: `uniqueAmount`, `status` (pending/paid/expired), `expiresAt` (15 menit).
+- **Field `QrisDeviceKey` di Company** — Kunci otentikasi untuk Android listener; jika diisi, QRIS berfungsi auto-konfirmasi.
+- **`POST /api/payment/qris-notify`** — Endpoint publik (auth via device_key) yang menerima notifikasi dari Android, mencocokkan `uniqueAmount`, dan otomatis menandai invoice PAID + extend subscription.
+- **`GET /api/payment/qris-status?orderId=`** — Polling endpoint publik untuk frontend mengetahui status pembayaran QRIS own (pending/paid/expired).
+- **Payment Gateway UI** — Tambah section "Device Key — Android Listener" di tab QRIS Mandiri dengan input key + tombol Generate; tampilkan status listener (hijau = aktif, kuning = manual).
+- **Pay page UI** — Tampilkan nominal unik dengan peringatan "Transfer TEPAT Rp X.XXX (jangan dibulatkan)"; auto-polling `qris-status` jika listener aktif; pesan berbeda untuk listener aktif vs manual; countdown 15 menit untuk QRIS own.
+### Files
+- `internal/db/models/models.go` — Tambah `QrisDeviceKey` di Company; struct `QrisPending`
+- `internal/lib/qris/qris.go` — Tambah `GenerateUniqueAmount(baseAmount, invoiceId)`
+- `internal/api/handlers/payment_handler.go` — Update `CreatePayment` (unique amount + QrisPending); tambah `QrisNotify`, `QrisStatus`, helper `addMonths`, `formatAmount`
+- `internal/api/handlers/invoices_ext.go` — `GetByToken` return `hasListener` di qrisOwn
+- `internal/api/handlers/misc_handler.go` — `CheckIsolationGlobal` return `hasListener` di qrisOwn
+- `internal/api/router.go` — Route baru: `POST /api/payment/qris-notify`, `GET /api/payment/qris-status`
+- `src/app/admin/payment-gateway/page.tsx` — Tambah Device Key UI + Generate button
+- `src/app/pay/[token]/page.tsx` — Unique amount display + polling qris-status + UI listener vs manual
+
 ### v2.49.0 — 2026-05-18
 
 ### Added
@@ -539,24 +560,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `src/lib/store.ts` — tambah `partialize` untuk exclude `logo` dari persist
 - `src/app/admin/AdminClientLayout.tsx` — tambah `onError` pada `<Image>` logo
-
-### v2.48.2 — 2026-05-16
-
-### Fixed
-- **`admin/payment-gateway` — "Fetch configs error: Invalid response from server"** — Go handler `PaymentGatewayConfig` return `{ success: true, gateways: [...] }` (bukan raw array). Frontend butuh raw array. Fix: rewrite handler return `[]PaymentGateway` langsung.
-- **`admin/payment/bank-accounts` crash `TypeError: u.map is not a function`** — Go `GetCompany` return `bankAccounts` sebagai JSON string `"[]"` (disimpan TEXT di DB). Frontend `setBankAccounts(data.bankAccounts || [])` → dapat string `"[]"` → `"[]".map()` → TypeError. Fix: tambah `companyResp` struct yang parse JSON string ke `json.RawMessage` sebelum return.
-- **`POST /api/payment-gateway/config` — endpoint tidak ada** — Go router hanya punya GET. Fix: tambah `PaymentGatewaySaveConfig` handler dan route POST.
-- **`GET /api/payment-gateway/webhook-logs` — tabel tidak diquery** — handler lama query table yang salah/belum ada. Fix: rewrite dengan real pagination, filter `gateway/orderId/success`.
-### Changed
-- **`PaymentGateway` model** — Rewrite dengan field per-provider lengkap (Midtrans, Xendit, Duitku, Tripay) menggantikan generic `ClientKey/MerchantCode/BaseURL/IsProduction`.
-- **`WebhookLog` model** — Tambah struct baru untuk table `webhook_logs`.
-- **`GetPaymentMethods` (customer portal)** — Sesuaikan dengan model baru; return `environment` & `isActive` saja (sanitized).
-### Files
-- `internal/db/models/extra.go` — Rewrite PaymentGateway, tambah WebhookLog
-- `internal/api/handlers/misc_handler.go` — Fix PaymentGatewayConfig GET, tambah POST + WebhookLogs
-- `internal/api/handlers/company.go` — Fix GetCompany + UpdateCompany dengan bankAccounts parsing
-- `internal/api/handlers/customer_portal_ext2.go` — Fix GetPaymentMethods sesuai model baru
-- `internal/api/router.go` — Tambah `api.Post("/payment-gateway/config", ...)`
 
 <!-- AUTO-CHANGELOG:END -->
 
