@@ -469,7 +469,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
-### v2.48.6 — 2026-05-17
+### v2.48.7 — 2026-05-17
+
+### Fixed
+- **`GET /api/olt/monitoring 404`** — Go router tidak punya route `/monitoring`. Fix: tambah handler `MonitoringList` (GET) + `MonitoringPoll` (POST) di `OLTHandler`. Handler list semua OLT dengan filter `search`/`status`, tambah field `unresolvedAlerts` (count) per OLT.
+- **`GET /api/olt/alerts 404`** — Go router tidak punya route global `/alerts`. Fix: tambah handler `ListAllAlerts` (GET) dengan filter `resolved`/`severity`/`type`/`limit`, serta preload data OLT dan ONU (dengan customer). Tambah `ResolveAlert` (PUT `/api/olt/alerts/:id`) untuk mark alert as resolved.
+### Files
+- `internal/api/handlers/olt.go` — Tambah 4 metode: `MonitoringList`, `MonitoringPoll`, `ListAllAlerts`, `ResolveAlert`
+- `internal/api/router.go` — Tambah 4 routes sebelum `/:id`: GET/POST `/monitoring`, GET `/alerts`, PUT `/alerts/:id`
+
 
 ### Fixed
 - **`admin/hotspot/voucher` crash `Cannot read properties of undefined (reading 'total')` & `(reading 'activated')`** — SSE handler kirim `{"count":N}` tapi frontend ekspek `{"stats":{total,waiting,active,expired,totalValue},"changes":{activated,expired}}`. `setStats(data.stats)` → `setStats(undefined)` → render crash. Fix: Go SSE handler kirim format lengkap dengan count per status (UNUSED→waiting, ACTIVE→active, EXPIRED/USED→expired). Fix frontend: tambah null check `data?.stats` dan `data?.changes` sebagai guard.
