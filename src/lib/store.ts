@@ -68,6 +68,13 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'salfanet-settings',
+      partialize: (state) => {
+        // Exclude logo from persistence — always fetch fresh from API
+        // to avoid stale file URLs that result in 404s
+        const { company, ...rest } = state;
+        const { logo: _logo, ...companyWithoutLogo } = company;
+        return { ...rest, company: companyWithoutLogo };
+      },
       onRehydrateStorage: () => (state) => {
         // Sync timezone lib after rehydration
         if (state?.company.timezone) {

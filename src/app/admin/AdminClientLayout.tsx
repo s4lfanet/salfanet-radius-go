@@ -1005,6 +1005,7 @@ function AdminLayoutContent({
                     width={120}
                     height={80}
                     className="max-w-full max-h-full w-auto h-auto object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                   />
                 </div>
               ) : (
