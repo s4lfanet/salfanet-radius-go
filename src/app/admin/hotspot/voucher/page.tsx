@@ -85,14 +85,15 @@ export default function HotspotVoucherPage() {
   // SSE Handler for real-time updates
   const handleSSEMessage = useCallback((event: string, data: any) => {
     if (event === 'voucher-stats') {
-      console.log('[SSE] Stats update received:', data.stats)
-      setStats(data.stats)
-      
-      // Show notification for changes
-      if (data.changes.activated > 0 || data.changes.expired > 0) {
+      console.log('[SSE] Stats update received:', data?.stats)
+      if (data?.stats) {
+        setStats(data.stats)
+      }
+      const changes = data?.changes
+      if (changes && (changes.activated > 0 || changes.expired > 0)) {
         const message = []
-        if (data.changes.activated > 0) message.push(`${data.changes.activated} activated`)
-        if (data.changes.expired > 0) message.push(`${data.changes.expired} expired`)
+        if (changes.activated > 0) message.push(`${changes.activated} activated`)
+        if (changes.expired > 0) message.push(`${changes.expired} expired`)
         console.log(`[SSE] Voucher changes: ${message.join(', ')}`)
       }
     } else if (event === 'voucher-changed') {

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bufio"
+	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -219,9 +220,24 @@ func (h *SettingsGenieacsHandler) SSEVoucherUpdates(c fiber.Ctx) error {
 		}
 
 		// Send initial voucher stats
-		var count int64
-		db.Model(&models.HotspotVoucher{}).Where("status = ?", "AVAILABLE").Count(&count)
-		if _, err := fmt.Fprintf(w, "event: voucher-stats\ndata: {\"count\":%d}\n\n", count); err != nil {
+		type voucherStats struct {
+			Total      int64 `json:"total"`
+			Waiting    int64 `json:"waiting"`
+			Active     int64 `json:"active"`
+			Expired    int64 `json:"expired"`
+			TotalValue int64 `json:"totalValue"`
+		}
+		var total, waiting, active, expired int64
+		db.Model(&models.HotspotVoucher{}).Count(&total)
+		db.Model(&models.HotspotVoucher{}).Where("status = ?", "UNUSED").Count(&waiting)
+		db.Model(&models.HotspotVoucher{}).Where("status = ?", "ACTIVE").Count(&active)
+		db.Model(&models.HotspotVoucher{}).Where("status IN ?", []string{"EXPIRED", "USED"}).Count(&expired)
+		statsData := voucherStats{Total: total, Waiting: waiting, Active: active, Expired: expired, TotalValue: 0}
+		statsJSON, _ := json.Marshal(map[string]interface{}{
+			"stats":   statsData,
+			"changes": map[string]int{"activated": 0, "expired": 0},
+		})
+		if _, err := fmt.Fprintf(w, "event: voucher-stats\ndata: %s\n\n", statsJSON); err != nil {
 			return
 		}
 		if err := w.Flush(); err != nil {
