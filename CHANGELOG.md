@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.48.6] — 2026-05-17
+### Fixed
+- **`admin/hotspot/voucher` crash `Cannot read properties of undefined (reading 'total')` & `(reading 'activated')`** — SSE handler kirim `{"count":N}` tapi frontend ekspek `{"stats":{total,waiting,active,expired,totalValue},"changes":{activated,expired}}`. `setStats(data.stats)` → `setStats(undefined)` → render crash. Fix: Go SSE handler kirim format lengkap dengan count per status (UNUSED→waiting, ACTIVE→active, EXPIRED/USED→expired). Fix frontend: tambah null check `data?.stats` dan `data?.changes` sebagai guard.
+### Files
+- `internal/api/handlers/settings_genieacs.go` — SSEVoucherUpdates kirim format stats yang benar
+- `src/app/admin/hotspot/voucher/page.tsx` — handleSSEMessage pakai optional chaining untuk null safety
+
 ## [2.48.5] — 2026-05-17
 ### Fixed
 - **`admin/pppoe/profiles` & `admin/pppoe/registrations` — `GET /api/pppoe/profiles/sync-mikrotik` 405 Method Not Allowed** — Frontend memanggil GET ke endpoint yang hanya tersedia sebagai POST (untuk sync, bukan list). Fix: ganti URL ke `GET /api/network/routers` yang sudah ada dan return raw array Router.
