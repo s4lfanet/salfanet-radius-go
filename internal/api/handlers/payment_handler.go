@@ -372,3 +372,96 @@ func formatAmount(amount int) string {
 	}
 	return result
 }
+
+// POST /api/payment/qris-test — simulasi pembayaran QRIS masuk (admin only, untuk testing)
+// Accepts: {orderId} atau {uniqueAmount} + optional {sourceApp}
+func (h *PaymentHandler) QrisTest(c fiber.Ctx) error {
+	var body struct {
+		OrderID      string `json:"orderId"`
+		UniqueAmount int    `json:"uniqueAmount"`
+		SourceApp    string `json:"source_app"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.OrderID == "" && body.UniqueAmount <= 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "orderId atau uniqueAmount wajib diisi"})
+	}
+	if body.SourceApp == "" {
+		body.SourceApp = "test.simulation"
+	}
+
+	// Cari pending QRIS
+	now := time.Now()
+	var pending models.QrisPending
+	q := h.db.Where("status = ?", "pending")
+	if body.OrderID != "" {
+		q = q.Where("orderId = ?", body.OrderID)
+	} else {
+		q = q.Where("uniqueAmount = ?", body.UniqueAmount)
+	}
+	if err := q.First(&pending).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{
+			"success": false,
+			"error":   "Tidak ada QRIS pending yang cocok. Pastikan invoice belum expired.",
+		})
+	}
+
+	// Cek expiry (test tetap harus valid)
+	if now.After(pending.ExpiresAt) {
+		return c.Status(400).JSON(fiber.Map{
+			"success":   false,
+			"error":     "QRIS pending sudah expired",
+			"expiredAt": pending.ExpiresAt,
+		})
+	}
+
+	// Tandai paid
+	paidAt := now
+	h.db.Model(&pending).Updates(map[string]interface{}{
+		"status":    "paid",
+		"sourceApp": body.SourceApp,
+		"paidAt":    paidAt,
+	})
+
+	// Update invoice
+	var invoice models.Invoice
+	if err := h.db.First(&invoice, "id = ?", pending.InvoiceID).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Invoice tidak ditemukan"})
+	}
+	if invoice.Status == "PAID" {
+		return c.JSON(fiber.Map{"success": true, "message": "Invoice sudah berstatus PAID sebelumnya", "invoiceId": invoice.ID})
+	}
+	h.db.Model(&invoice).Updates(map[string]interface{}{"status": "PAID", "paidAt": paidAt})
+
+	// Perpanjang subscription
+	if invoice.UserID != nil {
+		var user models.PppoeUser
+		if err := h.db.Preload("Profile").First(&user, "id = ?", *invoice.UserID).Error; err == nil {
+			newExpiry := now
+			if user.ExpiredAt != nil {
+				newExpiry = *user.ExpiredAt
+			}
+			if user.Profile.ValidityUnit == "MONTHS" {
+				newExpiry = addMonths(newExpiry, user.Profile.ValidityValue)
+			} else {
+				newExpiry = newExpiry.AddDate(0, 0, user.Profile.ValidityValue)
+			}
+			h.db.Model(&user).Updates(map[string]interface{}{
+				"expiredAt":       newExpiry,
+				"lastPaymentDate": now,
+				"status":          "active",
+			})
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"success":      true,
+		"message":      "✅ Simulasi pembayaran QRIS berhasil",
+		"invoiceId":    invoice.ID,
+		"orderId":      pending.OrderID,
+		"baseAmount":   pending.BaseAmount,
+		"uniqueAmount": pending.UniqueAmount,
+		"sourceApp":    body.SourceApp,
+	})
+}

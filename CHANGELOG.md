@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.1] — 2026-05-18
+### Added
+- **Simulasi pembayaran QRIS (testing)** — Endpoint `POST /api/payment/qris-test` (admin-only) + UI "🧪 Simulasi Pembayaran QRIS" di tab QRIS Mandiri: masukkan Order ID → server langsung tandai invoice PAID + extend subscription tanpa perlu HP Android.
+- **Android package ID baru** — APK diubah dari `id.salfanet.qrislistener` → `net.hotspotapp.qrislistener` agar bisa di-install bersamaan di satu HP dengan versi salfanet PHP lama.
+- **Label app dibedakan** — Nama app di drawer HP sekarang "QRIS Listener (Radius)" vs "QRIS Listener" versi lama.
+### Changed
+- **Suara notifikasi Android** — Channel alert dinaikkan ke `IMPORTANCE_HIGH`, ringtone diganti `TYPE_ALARM` (lebih keras), tambah vibration pattern `0,300,200,300,200,500` + LED hijau berkedip.
+- **APK versi 1.1.0** (versionCode 30) dengan package baru.
+### Files
+- `internal/api/handlers/payment_handler.go` — Tambah `QrisTest` handler
+- `internal/api/router.go` — Route `POST /api/payment/qris-test` (admin auth)
+- `src/app/admin/payment-gateway/page.tsx` — UI simulasi testing QRIS
+- `public/downloads/qris-listener.apk` — APK baru package `net.hotspotapp.qrislistener` v1.1.0
+
 ## [2.50.0] — 2026-05-19
 ### Added
 - **Android QRIS Listener — Deteksi pembayaran otomatis** — Integrasi dengan app Android `QrisListener` (NotificationListenerService) yang menangkap notifikasi e-wallet (DANA, GoPay, BRImo, ShopeePay, BCA, Mandiri) dan mengirim jumlah ke server via webhook.

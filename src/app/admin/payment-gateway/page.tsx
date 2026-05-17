@@ -65,6 +65,7 @@ export default function PaymentGatewayPage() {
   const [duitkuForm, setDuitkuForm] = useState({ merchantCode: '', apiKey: '', environment: 'sandbox', isActive: false });
   const [tripayForm, setTripayForm] = useState({ merchantCode: '', apiKey: '', privateKey: '', environment: 'sandbox', isActive: false });
   const [qrisForm, setQrisForm] = useState({ staticCode: '', merchantName: '', enabled: false, deviceKey: '' });
+  const [qrisTest, setQrisTest] = useState({ orderId: '', loading: false, result: null as null | { success: boolean; message: string; invoiceId?: string; baseAmount?: number; uniqueAmount?: number } });
 
   useEffect(() => {
     fetchConfigs();
@@ -194,6 +195,25 @@ export default function PaymentGatewayPage() {
       await showError('Gagal menyimpan QRIS Mandiri');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const runQrisTest = async () => {
+    if (!qrisTest.orderId.trim()) return;
+    setQrisTest(prev => ({ ...prev, loading: true, result: null }));
+    try {
+      const res = await fetch('/api/payment/qris-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderId: qrisTest.orderId.trim(), source_app: 'test.simulation' }),
+      });
+      const data = await res.json();
+      setQrisTest(prev => ({ ...prev, result: data }));
+    } catch {
+      setQrisTest(prev => ({ ...prev, result: { success: false, message: 'Gagal terhubung ke server' } }));
+    } finally {
+      setQrisTest(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -750,6 +770,37 @@ export default function PaymentGatewayPage() {
                   ))}
                 </div>
                 <p className="text-[9px] text-muted-foreground pt-0.5">Mendukung: DANA, GoPay, ShopeePay, BRImo, BCA Mobile, Mandiri. Suara notifikasi: alarm + pengumuman suara (TTS).</p>
+              </div>
+
+              {/* Simulasi / Testing QRIS Mandiri */}
+              <div className="p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-lg space-y-2">
+                <p className="text-[11px] font-semibold text-orange-600 dark:text-orange-400">🧪 Simulasi Pembayaran QRIS (Testing)</p>
+                <p className="text-[10px] text-muted-foreground">Masukkan Order ID dari invoice QRIS Mandiri yang masih pending untuk mensimulasikan pembayaran masuk tanpa menggunakan HP Android.</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={qrisTest.orderId}
+                    onChange={(e) => setQrisTest(prev => ({ ...prev, orderId: e.target.value, result: null }))}
+                    className="flex-1 px-2.5 py-1.5 text-xs font-mono border border-border rounded-lg bg-card focus:ring-1 focus:ring-ring"
+                    placeholder="Order ID (contoh: QRIS-abc123...)"
+                  />
+                  <button
+                    type="button"
+                    onClick={runQrisTest}
+                    disabled={qrisTest.loading || !qrisTest.orderId.trim()}
+                    className="px-3 py-1.5 text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-lg disabled:opacity-50 whitespace-nowrap"
+                  >
+                    {qrisTest.loading ? '⏳ Testing...' : '▶ Jalankan'}
+                  </button>
+                </div>
+                {qrisTest.result && (
+                  <div className={`p-2 rounded-lg text-[10px] ${qrisTest.result.success ? 'bg-success/10 border border-success/20 text-success' : 'bg-destructive/10 border border-destructive/20 text-destructive'}`}>
+                    <p className="font-semibold">{qrisTest.result.message}</p>
+                    {qrisTest.result.success && qrisTest.result.invoiceId && (
+                      <p className="text-muted-foreground mt-0.5">Invoice: {qrisTest.result.invoiceId} • Base: Rp {qrisTest.result.baseAmount?.toLocaleString('id-ID')} • Unique: Rp {qrisTest.result.uniqueAmount?.toLocaleString('id-ID')}</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <button

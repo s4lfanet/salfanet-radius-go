@@ -888,6 +888,8 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// QRIS Mandiri: Android app notify + frontend polling (public, auth by device_key)
 	app.Post("/api/payment/qris-notify", paymentH.QrisNotify)
 	app.Get("/api/payment/qris-status", paymentH.QrisStatus)
+	// QRIS test: admin-only simulation endpoint
+	api.Post("/payment/qris-test", paymentH.QrisTest)
 	api.Post("/payment/create", paymentH.CreatePayment)
 	api.Get("/payment/check-order", paymentH.CheckOrder)
 
