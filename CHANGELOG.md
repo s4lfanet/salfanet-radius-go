@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.48.5] — 2026-05-17
+### Fixed
+- **`admin/pppoe/profiles` & `admin/pppoe/registrations` — `GET /api/pppoe/profiles/sync-mikrotik` 405 Method Not Allowed** — Frontend memanggil GET ke endpoint yang hanya tersedia sebagai POST (untuk sync, bukan list). Fix: ganti URL ke `GET /api/network/routers` yang sudah ada dan return raw array Router.
+- **`[SSE] Connection error` loop di konsol** — Handler `SSEVoucherUpdates` langsung menutup koneksi setelah kirim 1 pesan → browser EventSource trigger `onerror` → reconnect setiap 3s → infinite error loop. Fix: ubah handler jadi long-lived SSE stream menggunakan `fasthttp.StreamWriter`, kirim `event: connected` + `event: voucher-stats` lalu heartbeat `: heartbeat` setiap 30s. Tambah header `X-Accel-Buffering: no` agar nginx tidak buffer SSE.
+### Files
+- `internal/api/handlers/settings_genieacs.go` — SSEVoucherUpdates jadi proper long-lived SSE stream
+- `src/app/admin/pppoe/profiles/page.tsx` — loadRouterList & handleSyncMikrotik modal gunakan `/api/network/routers`
+- `src/app/admin/pppoe/registrations/page.tsx` — useEffect gunakan `/api/network/routers`
+
 ## [2.48.4] — 2026-05-17
 ### Fixed
 - **`admin/hotspot/template` crash `u.map is not a function`** — Go `GET /api/voucher-templates` return `{ success: true, templates: [...] }`. Frontend langsung `.map()` di response → crash. Fix: handler return raw array.
