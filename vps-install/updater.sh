@@ -269,6 +269,36 @@ if [ -n "$USE_BRANCH" ]; then
         fi
     fi
 
+    # ─── Trap: ensure services always come back up on error ──────────────────
+    # This fires on EXIT so even if a later step fails, services are restored.
+    _ensure_services_up() {
+        local _exit=$?
+        [ "$_exit" -eq 0 ] && return 0
+        echo ""
+        print_warning "Updater keluar tidak normal (exit $_exit) — memulihkan services..."
+        # Go API
+        if [ -f "$APP_DIR/bin/server" ]; then
+            systemctl start salfanet-api 2>/dev/null || true
+            sleep 2
+        fi
+        # Next.js — kill any orphan on port 3000, then start via PM2
+        if [ -f "$APP_DIR/.next/standalone/server.js" ]; then
+            fuser -k 3000/tcp 2>/dev/null || true
+            sleep 1
+            pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
+            pm2 start "$APP_DIR/ecosystem.config.js" --only "$PM2_APP_NAME" 2>/dev/null || true
+            pm2 start "$APP_DIR/ecosystem.config.js" --only "$PM2_CRON_NAME" 2>/dev/null || true
+            pm2 save 2>/dev/null || true
+            sleep 3
+            if pm2 list 2>/dev/null | grep -q "$PM2_APP_NAME.*online"; then
+                print_success "Services dipulihkan — site kembali online"
+            else
+                print_warning "Periksa: pm2 logs $PM2_APP_NAME"
+            fi
+        fi
+    }
+    trap '_ensure_services_up' EXIT
+
     # ─── Migrate uploads to persistent directory ───────────────────────
     # Uploads now live in /var/data/salfanet/uploads/ (outside git/build).
     # Migrate any remaining files from legacy public/uploads/ location.
@@ -337,6 +367,8 @@ if [ -n "$USE_BRANCH" ]; then
             --exclude='COMMIT_HASH' \
             --exclude='COMMIT_DATE' \
             --exclude='COMMIT_MSG' \
+            --exclude='logs/' \
+            --exclude='bin/' \
             "$GIT_DIR/" "$APP_DIR/"
         print_success "Source ter-sync ke $APP_DIR"
     fi
@@ -376,8 +408,22 @@ if [ -n "$USE_BRANCH" ]; then
     done
     print_success "Stale file cleanup done"
 
-    # ── Ensure required directories exist (rsync --delete may remove them) ─
+    # ── Ensure required directories exist ────────────────────────────────────
     mkdir -p "${APP_DIR}/logs" "${APP_DIR}/bin"
+
+    # ── Bring Next.js online immediately with existing build (minimize downtime)
+    if [ -f "$APP_DIR/.next/standalone/server.js" ]; then
+        fuser -k 3000/tcp 2>/dev/null || true
+        sleep 1
+        pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
+        pm2 start "$APP_DIR/ecosystem.config.js" --only "$PM2_APP_NAME" 2>/dev/null || true
+        sleep 2
+        if pm2 list 2>/dev/null | grep -q "$PM2_APP_NAME.*online"; then
+            print_success "salfanet-radius online (existing build) selama proses update"
+        else
+            print_warning "salfanet-radius tidak bisa start — cek setelah update selesai"
+        fi
+    fi
 
     # ── Patch systemd service if ReadWritePaths is missing /uploads ───────
     # (Fixed in v2.47.13 — ProtectSystem=strict blocked writes to /uploads)
@@ -454,13 +500,17 @@ if [ -n "$USE_BRANCH" ]; then
         APP_DIR="$APP_DIR" bash "$APP_DIR/vps-install/fix-auth-after-update.sh" 2>&1 | tail -10 || true
     fi
 
-    print_step "Building application"
-    print_info "Removing previous .next build cache for clean build..."
-    rm -rf "$APP_DIR/.next" 2>/dev/null || true
-    NODE_OPTIONS="--max-old-space-size=1536" NEXT_TELEMETRY_DISABLED=1 npm run build
+    print_step "Building application (incremental — no .next wipe)"
+    BUILD_OK=false
+    if NODE_OPTIONS="--max-old-space-size=1536" NEXT_TELEMETRY_DISABLED=1 npm run build 2>&1; then
+        BUILD_OK=true
+    else
+        print_error "Next.js build gagal! Site tetap berjalan dengan build sebelumnya."
+        print_info  "Jalankan ulang updater.sh setelah memperbaiki masalah build."
+    fi
 
     # ── Copy static assets to standalone ──────────────────────────────────
-    if [ -d "$APP_DIR/.next/standalone" ]; then
+    if [ "$BUILD_OK" = true ] && [ -d "$APP_DIR/.next/standalone" ]; then
         mkdir -p "$APP_DIR/.next/standalone/public"
         cp -r "$APP_DIR/public/." "$APP_DIR/.next/standalone/public/" 2>/dev/null || true
         mkdir -p "$APP_DIR/.next/standalone/.next"
@@ -483,7 +533,28 @@ if [ -n "$USE_BRANCH" ]; then
         pm2 start "$APP_DIR/ecosystem.config.js" --only "$PM2_APP_NAME" 2>&1 | tail -3
         print_success "salfanet-radius migrated to standalone PM2 config"
     else
-        pm2 reload "$PM2_APP_NAME" --update-env 2>/dev/null || pm2 restart "$PM2_APP_NAME" 2>/dev/null || true
+        # Kill orphan process on 3000 before reload (avoids EADDRINUSE preventing start)
+        fuser -k 3000/tcp 2>/dev/null || true
+        sleep 1
+        pm2 reload "$PM2_APP_NAME" --update-env 2>/dev/null || \
+            pm2 restart "$PM2_APP_NAME" 2>/dev/null || \
+            pm2 start "$APP_DIR/ecosystem.config.js" --only "$PM2_APP_NAME" 2>/dev/null || true
+    fi
+
+    # Verify PM2 salfanet-radius actually came online; self-heal if not
+    sleep 5
+    if ! pm2 list 2>/dev/null | grep -q "$PM2_APP_NAME.*online"; then
+        print_warning "salfanet-radius tidak online setelah reload — mencoba paksa start..."
+        fuser -k 3000/tcp 2>/dev/null || true
+        sleep 1
+        pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
+        pm2 start "$APP_DIR/ecosystem.config.js" --only "$PM2_APP_NAME" 2>/dev/null || true
+        sleep 3
+        if pm2 list 2>/dev/null | grep -q "$PM2_APP_NAME.*online"; then
+            print_success "salfanet-radius online setelah paksa start"
+        else
+            print_error "salfanet-radius gagal start — cek: pm2 logs $PM2_APP_NAME"
+        fi
     fi
 
     # Jika ecosystem.config.js berubah (migrasi cron-service.js → tsx runner),
