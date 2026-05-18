@@ -31,9 +31,9 @@ import (
 
 // ─── VPS config file paths ────────────────────────────────────────────────────
 const (
-	wgInfoFile  = "/etc/wireguard/wg-server-info.json"
-	wgConfFile  = "/etc/wireguard/wg0.conf"
-	wgPubKey    = "/etc/wireguard/keys/server.pub"
+	wgInfoFile   = "/etc/wireguard/wg-server-info.json"
+	wgConfFile   = "/etc/wireguard/wg0.conf"
+	wgPubKey     = "/etc/wireguard/keys/server.pub"
 	l2tpInfoFile = "/etc/salfanet/l2tp/l2tp-server-info.json"
 )
 
