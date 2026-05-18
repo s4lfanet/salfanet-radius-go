@@ -17,7 +17,10 @@ package handlers
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -229,18 +232,119 @@ type vpnRouting struct {
 func (vpnRouting) TableName() string { return "vpn_routings" }
 
 type vpsPeer struct {
-	ID        string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Type      string    `json:"type"` // l2tp, wireguard
-	PeerName  string    `json:"peerName"`
-	PeerIP    string    `json:"peerIp"`
-	LocalIP   string    `json:"localIp"`
-	PublicKey *string   `json:"publicKey"`
-	IsActive  bool      `gorm:"default:true" json:"isActive"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID               string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Type             string    `json:"type"` // l2tp, wireguard
+	PeerName         string    `gorm:"column:peer_name" json:"peerName"`
+	PeerIP           string    `gorm:"column:peer_ip" json:"peerIp"`
+	LocalIP          string    `gorm:"column:local_ip" json:"localIp"`
+	PublicKey        *string   `gorm:"column:public_key" json:"publicKey"`
+	NasSecret        *string   `gorm:"column:nas_secret" json:"nasSecret"`
+	ApiUsername      *string   `gorm:"column:api_username" json:"apiUsername"`
+	ApiPassword      *string   `gorm:"column:api_password" json:"apiPassword"`
+	ClientPrivateKey *string   `gorm:"column:client_private_key" json:"-"` // sensitive — never return in list
+	IsActive         bool      `gorm:"column:is_active;default:true" json:"isActive"`
+	CreatedAt        time.Time `gorm:"column:created_at" json:"createdAt"`
+	UpdatedAt        time.Time `gorm:"column:updated_at" json:"updatedAt"`
 }
 
 func (vpsPeer) TableName() string { return "vps_peers" }
+
+// vpnClientResponse is the unified response format for both vpn_clients and vps_peers entries.
+type vpnClientResponse struct {
+	ID              string    `json:"id"`
+	Name            string    `json:"name"`
+	VpnServerId     string    `json:"vpnServerId"`
+	VpnIp           string    `json:"vpnIp"`
+	Username        string    `json:"username"`
+	Password        string    `json:"password"`
+	VpnType         string    `json:"vpnType"`
+	Description     *string   `json:"description"`
+	WinboxPort      *int      `json:"winboxPort"`
+	ApiUsername     *string   `json:"apiUsername"`
+	ApiPassword     *string   `json:"apiPassword"`
+	ClientPublicKey *string   `json:"clientPublicKey"`
+	IsActive        bool      `json:"isActive"`
+	IsRadiusServer  bool      `json:"isRadiusServer"`
+	CreatedAt       time.Time `json:"createdAt"`
+	NasSecret       *string   `json:"nasSecret"`
+}
+
+// nextAvailableWGIP finds the first unused IP in the WireGuard pool.
+func nextAvailableWGIP(db *gorm.DB, subnet, poolStart, poolEnd, gatewayIp string) (string, error) {
+	// Derive prefix from poolStart or subnet
+	prefix := ""
+	if poolStart != "" {
+		if parts := strings.Split(poolStart, "."); len(parts) == 4 {
+			prefix = strings.Join(parts[:3], ".") + "."
+		}
+	}
+	if prefix == "" {
+		if parts := strings.Split(strings.Split(subnet, "/")[0], "."); len(parts) == 4 {
+			prefix = strings.Join(parts[:3], ".") + "."
+		}
+	}
+	if prefix == "" {
+		return "", fmt.Errorf("cannot determine IP prefix from subnet %s", subnet)
+	}
+
+	startOctet, endOctet := 2, 254
+	if poolStart != "" {
+		if parts := strings.Split(poolStart, "."); len(parts) == 4 {
+			if n, err := strconv.Atoi(parts[3]); err == nil {
+				startOctet = n
+			}
+		}
+	}
+	if poolEnd != "" {
+		if parts := strings.Split(poolEnd, "."); len(parts) == 4 {
+			if n, err := strconv.Atoi(parts[3]); err == nil {
+				endOctet = n
+			}
+		}
+	}
+
+	// Collect IPs already in use
+	usedIPs := map[string]bool{gatewayIp: true}
+	var existingPeers []vpsPeer
+	db.Where("type = ?", "wireguard").Find(&existingPeers)
+	for _, p := range existingPeers {
+		usedIPs[p.PeerIP] = true
+	}
+	if raw, err := os.ReadFile(wgConfFile); err == nil {
+		re := regexp.MustCompile(`AllowedIPs\s*=\s*([\d.]+)/32`)
+		for _, m := range re.FindAllStringSubmatch(string(raw), -1) {
+			if len(m) == 2 {
+				usedIPs[m[1]] = true
+			}
+		}
+	}
+
+	for i := startOctet; i <= endOctet; i++ {
+		candidate := prefix + strconv.Itoa(i)
+		if !usedIPs[candidate] {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("IP pool (%d–%d) sudah habis", startOctet, endOctet)
+}
+
+// wgRandomHex generates a random lowercase hex string of n bytes (2n chars).
+func wgRandomHex(n int) string {
+	b := make([]byte, n)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
+// wgRandomAlphanumeric generates a random alphanumeric string of length n.
+func wgRandomAlphanumeric(n int) string {
+	const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	b := make([]byte, n)
+	_, _ = rand.Read(b)
+	for i := range b {
+		b[i] = chars[int(b[i])%len(chars)]
+	}
+	return string(b)
+}
 
 // prismaVpnClient maps to the "vpn_clients" table managed by Prisma.
 // Prisma stores column names in camelCase — explicit gorm:"column:..." tags required.
@@ -413,51 +517,91 @@ func (h *NetworkVPNHandler) proxyToNextJS(c fiber.Ctx, method string) error {
 	return c.Status(resp.StatusCode).Send(respBody)
 }
 
-// GET /api/network/vpn-client — list VPN clients (read directly from DB)
+// GET /api/network/vpn-client — list VPN clients (vpn_clients table + WG VPS peers)
 func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
-	var clients []prismaVpnClient
-	h.db.Order("createdAt desc").Find(&clients)
+	var prismaClients []prismaVpnClient
+	h.db.Order("createdAt desc").Find(&prismaClients)
 
 	var servers []prismaVpnServer
 	h.db.Where("isActive = ?", true).Order("name asc").Find(&servers)
 
-	// Find RADIUS server IP
-	var radiusServerIp *string
-	for _, cl := range clients {
-		if cl.IsRadiusServer {
-			ip := cl.VpnIp
-			radiusServerIp = &ip
-			break
-		}
+	// Build NAS secret map from the "nas" table (Prisma router model @@map("nas"))
+	type nasSecretRow struct {
+		VpnClientId string `gorm:"column:vpnClientId"`
+		Secret      string `gorm:"column:secret"`
 	}
-
-	// Attach NAS secrets from the "nas" table (Prisma router model)
-	type clientWithSecret struct {
-		prismaVpnClient
-		NasSecret *string `json:"nasSecret"`
-	}
-	result := make([]clientWithSecret, len(clients))
-	if len(clients) > 0 {
-		ids := make([]string, len(clients))
-		for i, cl := range clients {
+	secretMap := make(map[string]string)
+	if len(prismaClients) > 0 {
+		ids := make([]string, len(prismaClients))
+		for i, cl := range prismaClients {
 			ids[i] = cl.ID
-		}
-		type nasSecretRow struct {
-			VpnClientId string `gorm:"column:vpnClientId"`
-			Secret      string `gorm:"column:secret"`
 		}
 		var nasRows []nasSecretRow
 		h.db.Table("nas").Select("vpnClientId, secret").
 			Where("vpnClientId IN ?", ids).Find(&nasRows)
-		secretMap := make(map[string]string)
 		for _, row := range nasRows {
 			secretMap[row.VpnClientId] = row.Secret
 		}
-		for i, cl := range clients {
-			result[i] = clientWithSecret{prismaVpnClient: cl}
-			if s, ok := secretMap[cl.ID]; ok {
-				result[i].NasSecret = &s
-			}
+	}
+
+	// Convert prisma clients to unified response
+	result := make([]vpnClientResponse, 0, len(prismaClients))
+	for _, cl := range prismaClients {
+		r := vpnClientResponse{
+			ID:              cl.ID,
+			Name:            cl.Name,
+			VpnServerId:     cl.VpnServerId,
+			VpnIp:           cl.VpnIp,
+			Username:        cl.Username,
+			Password:        cl.Password,
+			VpnType:         cl.VpnType,
+			Description:     cl.Description,
+			WinboxPort:      cl.WinboxPort,
+			ApiUsername:     cl.ApiUsername,
+			ApiPassword:     cl.ApiPassword,
+			ClientPublicKey: cl.ClientPublicKey,
+			IsActive:        cl.IsActive,
+			IsRadiusServer:  cl.IsRadiusServer,
+			CreatedAt:       cl.CreatedAt,
+		}
+		if s, ok := secretMap[cl.ID]; ok {
+			r.NasSecret = &s
+		}
+		result = append(result, r)
+	}
+
+	// Also include WireGuard VPS peers from vps_peers table
+	var wgPeers []vpsPeer
+	h.db.Where("type = ?", "wireguard").Order("created_at desc").Find(&wgPeers)
+	for _, p := range wgPeers {
+		wgType := "wireguard"
+		desc := "VPS WireGuard Peer"
+		result = append(result, vpnClientResponse{
+			ID:              p.ID,
+			Name:            p.PeerName,
+			VpnServerId:     "__vps_wg__",
+			VpnIp:           p.PeerIP,
+			Username:        p.PeerName,
+			Password:        "",
+			VpnType:         wgType,
+			Description:     &desc,
+			ClientPublicKey: p.PublicKey,
+			ApiUsername:     p.ApiUsername,
+			ApiPassword:     p.ApiPassword,
+			NasSecret:       p.NasSecret,
+			IsActive:        p.IsActive,
+			IsRadiusServer:  false,
+			CreatedAt:       p.CreatedAt,
+		})
+	}
+
+	// Find RADIUS server IP
+	var radiusServerIp *string
+	for _, r := range result {
+		if r.IsRadiusServer {
+			ip := r.VpnIp
+			radiusServerIp = &ip
+			break
 		}
 	}
 
@@ -603,18 +747,144 @@ func (h *NetworkVPNHandler) ListWGPeers(c fiber.Ctx) error {
 	return c.JSON(info)
 }
 
-// POST /api/network/vps-wg-peer — add WireGuard peer on VPS
+// POST /api/network/vps-wg-peer — add WireGuard peer on VPS (generates keypair + assigns IP)
 func (h *NetworkVPNHandler) CreateWGPeer(c fiber.Ctx) error {
-	var body vpsPeer
+	info := readWGServerInfo()
+	if info == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "WireGuard server belum di-install di VPS ini"})
+	}
+
+	var body struct {
+		Action        string  `json:"action"`
+		NasName       string  `json:"nasName"`
+		LocalNetworks *string `json:"localNetworks"`
+	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body.ID = uuid.New().String()
-	body.Type = "wireguard"
-	body.CreatedAt = time.Now()
-	body.UpdatedAt = time.Now()
-	h.db.Create(&body)
-	return c.Status(201).JSON(fiber.Map{"success": true, "peer": body})
+	nasName := strings.TrimSpace(body.NasName)
+	if nasName == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "nasName wajib diisi"})
+	}
+
+	// Extract server info
+	publicKey := ""
+	if raw, err := os.ReadFile(wgPubKey); err == nil {
+		publicKey = strings.TrimSpace(string(raw))
+	}
+	if publicKey == "" {
+		if out, err := exec.Command("wg", "show", "wg0", "public-key").Output(); err == nil {
+			publicKey = strings.TrimSpace(string(out))
+		}
+	}
+	listenPort := 51820
+	if lp, ok := info["listenPort"].(float64); ok {
+		listenPort = int(lp)
+	}
+	subnet := "10.200.0.0/24"
+	if s, ok := info["subnet"].(string); ok && s != "" {
+		subnet = s
+	}
+	gatewayIp := "10.200.0.1"
+	if g, ok := info["gatewayIp"].(string); ok && g != "" {
+		gatewayIp = g
+	}
+	poolStart, _ := info["poolStart"].(string)
+	poolEnd, _ := info["poolEnd"].(string)
+	// Derive defaults from subnet if pool not configured
+	if poolStart == "" || poolEnd == "" {
+		if parts := strings.Split(strings.Split(subnet, "/")[0], "."); len(parts) == 4 {
+			pfx := strings.Join(parts[:3], ".")
+			if poolStart == "" {
+				poolStart = pfx + ".2"
+			}
+			if poolEnd == "" {
+				poolEnd = pfx + ".254"
+			}
+		}
+	}
+
+	// Find next available IP
+	vpnIp, err := nextAvailableWGIP(h.db, subnet, poolStart, poolEnd, gatewayIp)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Pool IP habis: " + err.Error()})
+	}
+
+	// Generate WireGuard keypair
+	privKeyOut, err := exec.Command("wg", "genkey").Output()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal generate WireGuard private key: " + err.Error()})
+	}
+	clientPrivKey := strings.TrimSpace(string(privKeyOut))
+
+	pubKeyCmd := exec.Command("wg", "pubkey")
+	pubKeyCmd.Stdin = strings.NewReader(clientPrivKey)
+	pubKeyOut, err := pubKeyCmd.Output()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal derive WireGuard public key"})
+	}
+	clientPubKey := strings.TrimSpace(string(pubKeyOut))
+
+	// Add [Peer] block to wg0.conf
+	peerBlock := fmt.Sprintf("\n\n[Peer]\n# %s\nPublicKey = %s\nAllowedIPs = %s/32\n",
+		nasName, clientPubKey, vpnIp)
+	if confRaw, readErr := os.ReadFile(wgConfFile); readErr == nil {
+		_ = os.WriteFile(wgConfFile, append(confRaw, []byte(peerBlock)...), 0600)
+	}
+
+	// Apply peer to running WireGuard interface (no restart needed)
+	_ = exec.Command("wg", "set", "wg0", "peer", clientPubKey, "allowed-ips", vpnIp+"/32").Run()
+
+	// Generate credentials
+	nasSecret := wgRandomHex(16)
+	safeNasName := strings.Trim(regexp.MustCompile(`[^a-z0-9]+`).ReplaceAllString(strings.ToLower(nasName), "-"), "-")
+	if safeNasName == "" {
+		safeNasName = "vpn"
+	}
+	apiUsername := "api-" + safeNasName
+	apiPassword := wgRandomAlphanumeric(12)
+
+	// Get public IP for endpoint
+	publicIP, _ := info["publicIp"].(string)
+	if publicIP == "" {
+		if out, err := exec.Command("curl", "-4", "-s", "--connect-timeout", "5", "ifconfig.me").Output(); err == nil {
+			publicIP = strings.TrimSpace(string(out))
+		}
+	}
+	serverEndpoint := publicIP + ":" + strconv.Itoa(listenPort)
+
+	// Save to vps_peers table
+	peer := vpsPeer{
+		ID:               uuid.New().String(),
+		Type:             "wireguard",
+		PeerName:         nasName,
+		PeerIP:           vpnIp,
+		LocalIP:          gatewayIp,
+		PublicKey:        &clientPubKey,
+		NasSecret:        &nasSecret,
+		ApiUsername:      &apiUsername,
+		ApiPassword:      &apiPassword,
+		ClientPrivateKey: &clientPrivKey,
+		IsActive:         true,
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+	}
+	_ = h.db.Create(&peer)
+
+	return c.Status(201).JSON(fiber.Map{
+		"success":          true,
+		"vpnIp":            vpnIp,
+		"vpnSubnet":        subnet,
+		"gatewayIp":        gatewayIp,
+		"serverPublicKey":  publicKey,
+		"clientPrivateKey": clientPrivKey,
+		"clientPublicKey":  clientPubKey,
+		"serverEndpoint":   serverEndpoint,
+		"wgPort":           listenPort,
+		"nasSecret":        nasSecret,
+		"apiUsername":      apiUsername,
+		"apiPassword":      apiPassword,
+	})
 }
 
 // PATCH /api/network/vps-wg-peer — update WireGuard server pool/gateway settings
