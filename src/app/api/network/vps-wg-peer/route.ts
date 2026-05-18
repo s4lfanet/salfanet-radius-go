@@ -25,16 +25,72 @@ const WG_INFO  = '/etc/wireguard/wg-server-info.json'
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 /**
- * Read the wg server info file written by install-wg-server.sh
- * Returns null if not installed.
+ * Read the wg server info file written by install-wg-server.sh.
+ * Falls back to detecting from wg.conf if the JSON file is missing
+ * (e.g. WireGuard was installed manually or info file was deleted).
+ * Returns null only if WireGuard is truly not installed.
  */
 async function readWgInfo(): Promise<Record<string, any> | null> {
+  // 1. Try the JSON info file first (fastest path)
   try {
     const raw = await readFile(WG_INFO, 'utf8')
     return JSON.parse(raw)
-  } catch {
-    return null
-  }
+  } catch { /* fall through to fallback detection */ }
+
+  // 2. Fallback: detect from wg.conf if info file missing
+  try {
+    const conf = await readFile(WG_CONF, 'utf8')
+
+    // Parse ListenPort
+    let listenPort = parseInt(process.env.WG_PORT || '51820')
+    const portMatch = conf.match(/ListenPort\s*=\s*(\d+)/)
+    if (portMatch) listenPort = parseInt(portMatch[1]) || listenPort
+
+    // Parse Address → gatewayIp and subnet
+    let gatewayIp = '10.200.0.1'
+    let subnet = '10.200.0.0/24'
+    const addrMatch = conf.match(/Address\s*=\s*([\d.]+)\/(\d+)/)
+    if (addrMatch) {
+      gatewayIp = addrMatch[1]
+      const parts = addrMatch[1].split('.')
+      parts[3] = '0'
+      subnet = `${parts.join('.')}/${addrMatch[2]}`
+    }
+
+    // Read server public key from key file or live wg interface
+    let publicKey = ''
+    try { publicKey = (await readFile('/etc/wireguard/keys/server.pub', 'utf8')).trim() } catch { /* ignore */ }
+    if (!publicKey) {
+      try {
+        const { stdout } = await exec(`wg show ${WG_IFACE} public-key 2>/dev/null`, { shell: '/bin/bash' })
+        publicKey = stdout.trim()
+      } catch { /* ignore */ }
+    }
+
+    // Get public IP
+    let publicIp = ''
+    try {
+      const { stdout } = await exec('curl -4 -s --connect-timeout 5 ifconfig.me 2>/dev/null', { shell: '/bin/bash' })
+      publicIp = stdout.trim()
+    } catch { /* ignore */ }
+
+    const infoData: Record<string, any> = {
+      interface: WG_IFACE,
+      listenPort,
+      subnet,
+      gatewayIp,
+      publicIp,
+      publicKey,
+      recoveredAt: new Date().toISOString(),
+    }
+
+    // Re-write JSON file so next load is instant (fire-and-forget)
+    writeFile(WG_INFO, JSON.stringify(infoData, null, 2) + '\n', 'utf8').catch(() => {/* ignore */})
+
+    return infoData
+  } catch { /* wg.conf not readable → WireGuard truly not installed */ }
+
+  return null
 }
 
 /**
