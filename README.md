@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.9 — 2026-05-19
+
+### Fixed
+- **Sidebar admin terlalu panjang** — Semua 7 kategori menu sebelumnya selalu terbuka (`useState(true)`). Sekarang kategori collapse by default; hanya kategori yang berisi halaman aktif yang auto-expand.
+### Files
+- `src/app/admin/AdminClientLayout.tsx` — `CategoryItem`: `useState(true)` → `useState(hasActiveItem)`
+
 ### v2.51.8 — 2026-05-19
 
 ### Fixed
@@ -535,14 +542,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **install-pm2 PM2 systemd supervision** — Tambah `systemctl start pm2-root` setelah `pm2 startup systemd` agar PM2 daemon berjalan di bawah systemd (bukan screen). PM2 processes kini auto-start tanpa intervensi manual.
 ### Files
 - `vps-install/install-pm2.sh` — Hapus `pkill -f "/root/salfanet-radius"` yang bunuh installer; skip `sudo su - root` di cleanup; tambah `systemctl start pm2-root`
-
-### v2.51.4 — 2026-05-19
-
-### Fixed
-- **VPS install test — sistem production ready** — Full fresh install test sukses: build OK, Go API healthy, nginx routing OK, FreeRADIUS aktif, MySQL aktif, semua PM2 processes online (salfanet-radius, salfanet-cron, salfanet-wa). Installer terbukti berjalan end-to-end tanpa error.
-- **system/page.tsx duplikat deklarasi** — Build gagal karena `interface SystemInfo`, `formatUptime`, `InfoCard`, `CmdBlock` dideklraasikan dua kali. Blok duplikat dihapus.
-### Files
-- `src/app/admin/system/page.tsx` — Hapus blok duplikat (~52 baris) yang menyebabkan TypeScript build error
 
 <!-- AUTO-CHANGELOG:END -->
 
