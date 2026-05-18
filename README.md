@@ -491,6 +491,21 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.2 — 2026-05-20
+
+### Fixed
+- **VPS WireGuard peer tidak muncul di VPN Client list** — `CreateWGPeer` sebelumnya adalah stub yang tidak generate keypair, tidak assign IP, dan menyimpan ke tabel `vps_peers` yang belum ada. Rewrite penuh: generate WireGuard keypair (`wg genkey`/`wg pubkey`), alokasi IP dari pool, tambah `[Peer]` ke wg0.conf, apply live via `wg set`, generate nasSecret/apiUsername/apiPassword, simpan ke DB.
+- **Script NAS IP undefined, API User api-undefined, CLIENT_PRIVATE_KEY placeholder** — `CreateWGPeer` tidak return `vpnIp`, `apiUsername`, `apiPassword`, `clientPrivateKey`, dll. Sekarang return semua field yang dibutuhkan frontend.
+- **vps_peers table tidak ada** — Dibuat via migration SQL baru.
+- **WG VPS peers tidak muncul di list** — `ListVPNClients` sekarang include entries dari `vps_peers` (type=wireguard), dimapping ke format VpnClient dengan `vpnServerId = "__vps_wg__"`.
+### Added
+- Migration `prisma/migrations/20260520_add_vps_peers_table.sql` — Create table `vps_peers` dengan kolom credentials
+- Helper functions: `nextAvailableWGIP`, `wgRandomHex`, `wgRandomAlphanumeric`
+- Struct `vpnClientResponse` — unified response format untuk `vpn_clients` dan `vps_peers`
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Rewrite `CreateWGPeer`, update `ListVPNClients`, tambah struct + helpers baru
+- `prisma/migrations/20260520_add_vps_peers_table.sql` — New migration
+
 ### v2.52.1 — 2026-05-20
 
 ### Fixed
@@ -528,18 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `PatchWGServerConfig` dan `PatchL2TPServerConfig`
 - `internal/api/router.go` — Register `api.Patch("/network/vps-wg-peer", ...)`, `api.Patch("/network/vps-l2tp-peer", ...)`, dan `"PATCH"` di CORS AllowMethods
-
-### v2.51.7 — 2026-05-19
-
-### Fixed
-- **updater.sh menyebabkan 502 setelah update** — Serangkaian bug yang saling terkait: (1) `local SVC_FILE` di luar function → `set -e` exit dini sebelum Go build & PM2 restart; (2) rsync `--delete` hapus `logs/` & `bin/` → salfanet-api gagal start dengan `status=226/NAMESPACE`; (3) `rm -rf .next` sebelum build → jika build gagal tidak ada fallback; (4) PM2 processes tidak pernah di-restore jika script exit di tengah jalan.
-### Changed
-- **updater.sh self-healing** — Tambah `_ensure_services_up()` trap (`trap ... EXIT`) yang selalu memulihkan salfanet-api dan PM2 salfanet-radius jika script exit abnormal. PM2 sekarang di-start dengan build lama segera setelah rsync (downtime minimal selama update). Setelah build selesai, pm2 reload + verifikasi online + self-heal otomatis jika masih failed.
-- **updater.sh no rm .next** — Build incremental (tidak wipe .next sebelum build), sehingga jika build gagal site tetap berjalan dengan versi sebelumnya.
-- **updater.sh exclude logs/ bin/ dari rsync** — `--exclude='logs/' --exclude='bin/'` ditambahkan ke rsync supaya direktori tidak dihapus oleh `--delete`.
-- **updater.sh PM2 orphan process** — Tambah `fuser -k 3000/tcp` sebelum PM2 start untuk mencegah EADDRINUSE jika ada orphan node process.
-### Files
-- `vps-install/updater.sh` — Multiple fixes: trap, no rm .next, mkdir logs/bin, rsync exclude, PM2 self-heal & verify
 
 <!-- AUTO-CHANGELOG:END -->
 
