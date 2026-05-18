@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.51.4] — 2026-05-19
+### Fixed
+- **VPS install test — sistem production ready** — Full fresh install test sukses: build OK, Go API healthy, nginx routing OK, FreeRADIUS aktif, MySQL aktif, semua PM2 processes online (salfanet-radius, salfanet-cron, salfanet-wa). Installer terbukti berjalan end-to-end tanpa error.
+- **system/page.tsx duplikat deklarasi** — Build gagal karena `interface SystemInfo`, `formatUptime`, `InfoCard`, `CmdBlock` dideklraasikan dua kali. Blok duplikat dihapus.
+### Files
+- `src/app/admin/system/page.tsx` — Hapus blok duplikat (~52 baris) yang menyebabkan TypeScript build error
+
+---
+
 ## [2.51.3] — 2026-05-18
 ### Fixed
 - **install-nginx.sh missing /api/push/send** — Fresh install tidak punya `location = /api/push/send` → Next.js, sehingga Push Notifikasi tetap 405. Ditambahkan ke kedua heredoc function (`_proxy_locations` dan `_proxy_locations_https_domain`).
