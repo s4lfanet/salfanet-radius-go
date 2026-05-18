@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.1 — 2026-05-20
+
+### Fixed
+- **VPN Client list masih kosong setelah proxy fix** — Root cause: `getServerSession` di Next.js route handler tidak bisa validasi NextAuth cookie karena perbedaan nama cookie (`__Secure-next-auth.session-token` dari HTTPS browser vs `next-auth.session-token` yang dicari di HTTP localhost). Solusi: `ListVPNClients` sekarang **baca langsung dari DB** (`vpn_clients` table via GORM + struct baru `prismaVpnClient`/`prismaVpnServer`) tanpa proxy ke Next.js, sehingga tidak perlu re-validasi session lagi.
+- **Proxy POST fix** — Tambah `req.Host = "localhost"` dan strip `__Secure-` prefix dari cookie sebelum forward ke Next.js, agar `getServerSession` bisa mengenali session cookie untuk CREATE/PATCH/PUT/DELETE.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah struct `prismaVpnClient`, `prismaVpnServer`; rewrite `ListVPNClients` baca DB langsung; fix `proxyToNextJS` Host header + cookie prefix
+
 ### v2.52.0 — 2026-05-19
 
 ### Fixed
@@ -532,19 +540,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **updater.sh PM2 orphan process** — Tambah `fuser -k 3000/tcp` sebelum PM2 start untuk mencegah EADDRINUSE jika ada orphan node process.
 ### Files
 - `vps-install/updater.sh` — Multiple fixes: trap, no rm .next, mkdir logs/bin, rsync exclude, PM2 self-heal & verify
-
-### v2.51.6 — 2026-05-20
-
-### Fixed
-- **WireGuard/L2TP UI menampilkan "belum terinstall" meski sudah terinstall** — Root cause: nginx route semua `/api/*` ke Go backend (port 8080), bukan Next.js. Go handler `ListWGPeers` hanya return list DB peers (bukan server info), dan `GetVPSL2TPInfo` return stub `{enabled: false}`. Frontend membaca `data.installed` yang tidak ada → dianggap false. Fix: implementasi Go yang membaca `/etc/wireguard/wg-server-info.json` dan `/etc/salfanet/l2tp/l2tp-server-info.json`, dengan fallback parse `wg0.conf`/`xl2tpd.conf` + `ipsec.secrets` jika file JSON tidak ada (auto-recovery).
-- **updater.sh SOURCE_DIR mismatch** — Default `/root/salfanet-radius-go` tidak cocok dengan path clone README (`/root/salfanet-radius`). Fix: auto-detect `/root/salfanet-radius/.git` terlebih dahulu sebelum fallback ke `-go` suffix.
-### Added
-- **WG server info fallback detection** — Jika `wg-server-info.json` tidak ada, Go handler parse `wg0.conf` untuk ListenPort/Address/subnet, baca pubkey dari file key atau `wg show wg0 public-key`, dan re-write JSON untuk akses berikutnya.
-- **L2TP server info fallback detection** — Jika `l2tp-server-info.json` tidak ada, Go handler parse `xl2tpd.conf` untuk ip range/local ip, baca PSK dari `/etc/salfanet/l2tp/ipsec.psk` atau `/etc/ipsec.secrets`.
-- **Live WG peers** — GET `/api/network/vps-wg-peer` kini include peers dari `wg show wg0 dump` (endpoint, allowedIps, dll).
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — Implementasi real untuk `ListWGPeers` dan `GetVPSL2TPInfo`; tambah `readWGServerInfo()` dan `readL2TPServerInfo()` helper
-- `vps-install/updater.sh` — Fix SOURCE_DIR auto-detect `/root/salfanet-radius` sebelum fallback ke `/root/salfanet-radius-go`
 
 <!-- AUTO-CHANGELOG:END -->
 
