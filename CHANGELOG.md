@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.2] — 2026-05-18
+### Fixed
+- **GenieACS parameter-config crash** — Go handler `ListVirtualParameters` mengembalikan key `"parameters"` tapi frontend membaca `data.data` → `TypeError: Cannot read properties of undefined (reading 'filter')`. Diperbaiki: key diubah ke `"data"` + tambah optional chaining `(data.data ?? []).filter(...)`.
+- **Tasks page GenieACS not-configured** — saat `/api/genieacs/tasks` mengembalikan 400 (GenieACS belum dikonfigurasi), halaman sekarang menampilkan banner peringatan dengan link ke pengaturan, bukan diam-diam tampilkan list kosong.
+### Files
+- `internal/api/handlers/settings_genieacs.go` — key `"parameters"` → `"data"`
+- `src/app/admin/genieacs/parameter-config/page.tsx` — optional chaining `(data.data ?? []).filter(...)`
+- `src/app/admin/genieacs/tasks/page.tsx` — banner "GenieACS belum dikonfigurasi" saat 400
+
 ## [2.50.1] — 2026-05-18
 ### Added
 - **Simulasi pembayaran QRIS (testing)** — Endpoint `POST /api/payment/qris-test` (admin-only) + UI "🧪 Simulasi Pembayaran QRIS" di tab QRIS Mandiri: masukkan Order ID → server langsung tandai invoice PAID + extend subscription tanpa perlu HP Android.

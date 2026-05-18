@@ -28,14 +28,18 @@ export default function GenieACSTasksPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [notConfigured, setNotConfigured] = useState(false);
 
   const fetchTasks = useCallback(async () => {
     try {
       const response = await fetch('/api/genieacs/tasks');
-      if (response.ok) {
-        const data = await response.json();
-        setTasks(data.tasks || []);
+      const data = await response.json();
+      if (!response.ok) {
+        if (response.status === 400) setNotConfigured(true);
+        return;
       }
+      setNotConfigured(false);
+      setTasks(data.tasks || []);
     } catch (error) {
       console.error('Error fetching tasks:', error);
     } finally {
@@ -205,6 +209,14 @@ export default function GenieACSTasksPage() {
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('genieacs.tasksSubtitle')}</p>
       </div>
+
+      {/* Not configured warning */}
+      {notConfigured && (
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>GenieACS belum dikonfigurasi. Silakan konfigurasi di <a href="/admin/genieacs/settings" className="underline font-medium">Pengaturan GenieACS</a>.</span>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-2">

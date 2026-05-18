@@ -51,7 +51,7 @@ export default function ParameterConfigPage() {
       const response = await fetch('/api/settings/genieacs/virtual-parameters');
       const data = await response.json();
       if (data.success) {
-        setVirtualParameters(data.data.filter((vp: VirtualParameter) => vp.isActive));
+        setVirtualParameters((data.data ?? []).filter((vp: VirtualParameter) => vp.isActive));
       }
     } catch (error) {
       console.error('Error fetching virtual parameters:', error);

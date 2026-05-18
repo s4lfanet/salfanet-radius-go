@@ -79,7 +79,7 @@ func (h *SettingsGenieacsHandler) ResetParameterDisplay(c fiber.Ctx) error {
 
 // GET /api/settings/genieacs/virtual-parameters
 func (h *SettingsGenieacsHandler) ListVirtualParameters(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "parameters": []fiber.Map{}})
+	return c.JSON(fiber.Map{"success": true, "data": []fiber.Map{}})
 }
 
 // GET /api/settings/genieacs/virtual-parameters/:id
