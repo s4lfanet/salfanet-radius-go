@@ -491,6 +491,19 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.6 — 2026-05-20
+
+### Fixed
+- **WireGuard/L2TP UI menampilkan "belum terinstall" meski sudah terinstall** — Root cause: nginx route semua `/api/*` ke Go backend (port 8080), bukan Next.js. Go handler `ListWGPeers` hanya return list DB peers (bukan server info), dan `GetVPSL2TPInfo` return stub `{enabled: false}`. Frontend membaca `data.installed` yang tidak ada → dianggap false. Fix: implementasi Go yang membaca `/etc/wireguard/wg-server-info.json` dan `/etc/salfanet/l2tp/l2tp-server-info.json`, dengan fallback parse `wg0.conf`/`xl2tpd.conf` + `ipsec.secrets` jika file JSON tidak ada (auto-recovery).
+- **updater.sh SOURCE_DIR mismatch** — Default `/root/salfanet-radius-go` tidak cocok dengan path clone README (`/root/salfanet-radius`). Fix: auto-detect `/root/salfanet-radius/.git` terlebih dahulu sebelum fallback ke `-go` suffix.
+### Added
+- **WG server info fallback detection** — Jika `wg-server-info.json` tidak ada, Go handler parse `wg0.conf` untuk ListenPort/Address/subnet, baca pubkey dari file key atau `wg show wg0 public-key`, dan re-write JSON untuk akses berikutnya.
+- **L2TP server info fallback detection** — Jika `l2tp-server-info.json` tidak ada, Go handler parse `xl2tpd.conf` untuk ip range/local ip, baca PSK dari `/etc/salfanet/l2tp/ipsec.psk` atau `/etc/ipsec.secrets`.
+- **Live WG peers** — GET `/api/network/vps-wg-peer` kini include peers dari `wg show wg0 dump` (endpoint, allowedIps, dll).
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Implementasi real untuk `ListWGPeers` dan `GetVPSL2TPInfo`; tambah `readWGServerInfo()` dan `readL2TPServerInfo()` helper
+- `vps-install/updater.sh` — Fix SOURCE_DIR auto-detect `/root/salfanet-radius` sebelum fallback ke `/root/salfanet-radius-go`
+
 ### v2.51.5 — 2026-05-19
 
 ### Fixed
@@ -520,13 +533,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Cleanup repo — hapus folder dev-only dari GitHub** — `OLT-ZTE-C320-Provisioning-main/` (118 file proyek Laravel terpisah), `update-olt-opt/` (patch script Go), dan `update-qris/` (patch script Next.js) dihapus dari git tracking. Tidak relevan dengan production salfanet-radius.
 ### Files
 - `.gitignore` — Tambah exclusion untuk `OLT-ZTE-C320-Provisioning-main/`, `update-olt-opt/`, `update-qris/`
-
-### v2.51.1 — 2026-05-19
-
-### Fixed
-- **Push Notifikasi 405 pada GET /api/push/send** — Halaman Push Notifikasi memanggil `GET /api/push/send?action=stats` dan `GET /api/push/send?limit=30` untuk memuat stats dan riwayat broadcast, namun Go backend hanya mendaftarkan POST untuk route ini sehingga GET mengembalikan 405. Perbaikan: tambahkan lokasi nginx `= /api/push/send` yang meneruskan semua method ke Next.js (port 3000), di mana GET dan POST handler sudah ada di `route.ts`.
-### Files
-- `production/nginx-radius.hotspotapp.net.conf` — Tambah `location = /api/push/send` → Next.js (3000)
 
 <!-- AUTO-CHANGELOG:END -->
 
