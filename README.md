@@ -2,7 +2,7 @@
 
 Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with FreeRADIUS integration supporting PPPoE and Hotspot authentication.
 
-> **Latest:** v2.25.2 — Native Baileys WhatsApp gateway built-in di VPS, QR modal auto-retry, auto-reconnect setelah device disconnect (Apr 26, 2026)
+> **Latest:** v2.51.5 — Fix PM2 auto-start pada fresh install: hapus `pkill` yang bunuh installer, PM2 di bawah systemd supervision (May 19, 2026)
 
 ---
 
@@ -67,7 +67,7 @@ pm2 logs salfanet-wa --lines 20
 
 | Process | Mode | Port | Purpose |
 |---------|------|------|---------|
-| `salfanet-radius` | cluster | 3000 | Next.js app |
+| `salfanet-radius` | fork | 3000 | Next.js app |
 | `salfanet-wa` | fork | 4000 (internal) | Baileys WA service |
 | `salfanet-cron` | fork | — | Background jobs |
 
@@ -82,11 +82,12 @@ Session WhatsApp tersimpan di `/var/data/salfanet/baileys_auth/` dan persist mes
 | Component | Technology |
 |-----------|------------|
 | Framework | Next.js 16 (App Router, standalone output) |
-| Language | TypeScript |
+| Language | TypeScript + Go |
 | Styling | Tailwind CSS |
 | Database | MySQL 8.0 + Prisma ORM |
 | RADIUS | FreeRADIUS 3.0.26 |
-| Process Manager | PM2 (cluster × 2) |
+| API Backend | Go (Fiber) — port 8080, systemd `salfanet-api.service` |
+| Process Manager | PM2 (fork mode, 3 processes) + systemd |
 | Session Tracking | FreeRADIUS radacct (real-time) |
 | Maps | Leaflet / OpenStreetMap |
 
@@ -123,17 +124,35 @@ salfanet-radius/
 
 ## ⚙️ Installation
 
-### Metode 1 — Git Clone (Recommended)
+### Metode 1 — Upload via zip (Recommended, karena repo private)
+
+> ⚠️ Repo ini **private** — git clone di VPS memerlukan autentikasi. Gunakan metode zip berikut:
 
 ```bash
-ssh root@YOUR_VPS_IP
+# Di komputer LOKAL — buat zip dari git HEAD
+git archive --format=zip HEAD -o salfanet-fresh.zip
 
-git clone https://github.com/s4lfanet/salfanet-radius.git /root/salfanet-radius
-cd /root/salfanet-radius
+# Upload ke VPS
+scp salfanet-fresh.zip root@YOUR_VPS_IP:/root/salfanet-fresh.zip
+
+# SSH ke VPS, unzip, lalu jalankan installer
+ssh root@YOUR_VPS_IP
+mkdir -p /root/salfanet-radius && cd /root/salfanet-radius
+unzip -q /root/salfanet-fresh.zip
 bash vps-install/vps-installer.sh
 ```
 
 Installer akan berjalan **interaktif** — mendeteksi environment otomatis, memandu konfigurasi, lalu menjalankan semua step.
+
+#### Unattended install (tanpa prompt)
+
+```bash
+bash vps-install/vps-installer.sh \
+  --env vps \
+  --domain yourdomain.com \
+  --db-pass YourDbPassword \
+  --unattended
+```
 
 ---
 
@@ -163,6 +182,13 @@ bash vps-install/vps-installer.sh
 ```bash
 # Contoh: paksa environment + IP
 bash vps-install/vps-installer.sh --env lxc --ip 192.168.1.50
+
+# Semua flag yang tersedia:
+# --env vps|lxc|vm|bare   Tipe environment (default: auto-detect)
+# --ip IP                 IP server (default: auto-detect)
+# --domain DOMAIN         Domain untuk SSL/nginx (lewati prompt)
+# --db-pass PASS          Password database MySQL
+# --unattended            Non-interactive, pakai semua default
 ```
 
 ---
@@ -180,7 +206,7 @@ Atau update dari branch terbaru secara manual:
 ```bash
 cd /var/www/salfanet-radius
 git pull origin master
-npm install --legacy-peer-deps
+npm install --omit=dev
 npx prisma db push
 npm run build
 pm2 reload all
