@@ -28,7 +28,14 @@ print_error()   { echo -e "${RED}✗ $1${NC}" >&2; }
 # ─── Config ────────────────────────────────────────────────────────────────
 APP_DIR="${APP_DIR:-/var/www/salfanet-radius}"
 GITHUB_REPO="s4lfanet/salfanet-radius-go"
-SOURCE_DIR="${SOURCE_DIR:-/root/salfanet-radius-go}"
+# Accept both /root/salfanet-radius (README install path) and -go suffix variant
+if [ -z "${SOURCE_DIR:-}" ]; then
+    if [ -d "/root/salfanet-radius/.git" ]; then
+        SOURCE_DIR="/root/salfanet-radius"
+    else
+        SOURCE_DIR="/root/salfanet-radius-go"
+    fi
+fi
 GITHUB_TOKEN="${GITHUB_TOKEN:-}"
 PM2_APP_NAME="salfanet-radius"
 PM2_CRON_NAME="salfanet-cron"
