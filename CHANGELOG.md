@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.51.1] — 2026-05-19
+### Fixed
+- **Push Notifikasi 405 pada GET /api/push/send** — Halaman Push Notifikasi memanggil `GET /api/push/send?action=stats` dan `GET /api/push/send?limit=30` untuk memuat stats dan riwayat broadcast, namun Go backend hanya mendaftarkan POST untuk route ini sehingga GET mengembalikan 405. Perbaikan: tambahkan lokasi nginx `= /api/push/send` yang meneruskan semua method ke Next.js (port 3000), di mana GET dan POST handler sudah ada di `route.ts`.
+### Files
+- `production/nginx-radius.hotspotapp.net.conf` — Tambah `location = /api/push/send` → Next.js (3000)
+
+---
+
 ## [2.51.0] — 2026-05-19
 ### Changed
 - **Konsolidasi manajemen teknisi — Option B** — Teknisi kini hanya dikelola via "Kelola Teknisi" menggunakan OTP WhatsApp. Role `TECHNICIAN` dihapus dari dropdown Admin & Role. Login via username/password untuk teknisi dinonaktifkan.
