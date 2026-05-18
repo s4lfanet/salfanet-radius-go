@@ -469,7 +469,26 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
-### v2.50.10 — 2026-05-18
+### v2.51.0 — 2026-05-19
+
+### Changed
+- **Konsolidasi manajemen teknisi — Option B** — Teknisi kini hanya dikelola via "Kelola Teknisi" menggunakan OTP WhatsApp. Role `TECHNICIAN` dihapus dari dropdown Admin & Role. Login via username/password untuk teknisi dinonaktifkan.
+- **Login portal teknisi ganti ke OTP** — Halaman `/technician/login` diganti dari form username+password ke form nomor HP + kode OTP WhatsApp (2-step). Teknisi harus sudah terdaftar di sistem (tidak ada auto-create).
+- **request-otp: hapus auto-create teknisi** — Sebelumnya siapa saja bisa membuat akun teknisi cukup dengan mengirim nomor HP. Kini nomor HP harus sudah terdaftar di tabel `technician`, atau API mengembalikan 404.
+### Files
+- `src/app/admin/management/page.tsx` — Hapus `TECHNICIAN` dari array `ROLES`
+- `src/app/technician/login/page.tsx` — Ganti form login ke 2-step OTP (phone → OTP code)
+- `src/app/api/technician/auth/login/route.ts` — Disabled, return 410 Gone
+- `src/app/api/technician/auth/request-otp/route.ts` — Hapus auto-create technician
+- `src/app/api/technician/auth/session/route.ts` — Hapus cabang `admin_user`, hanya OTP technician
+- `src/app/api/technician/profile/route.ts` — Hapus cabang `admin_user`
+- `src/app/api/technician/customers/route.ts` — Hapus `isAdminUser`, require routerId/areaId untuk semua teknisi
+- `src/app/api/technician/customers/create/route.ts` — Hapus cabang `admin_user`
+- `src/app/api/technician/work-orders/route.ts` — Hapus `isAdminUser`, semua teknisi lihat unassigned + miliknya
+- `src/app/api/technician/{form-data,genieacs,genieacs/devices,genieacs/devices/[deviceId],isolated,monitor,tasks,sessions,upload,offline,tickets}/route.ts` — Hapus blok `admin_user` dari `verifyTechnician`
+- `src/app/api/push/technician-subscribe/route.ts` — Hapus blok `admin_user`, hapus `upsertAdminPushSubscription`
+- `src/app/api/push/technician-unsubscribe/route.ts` — Hapus blok `admin_user`, hapus `removeAdminPushSubscription`
+
 
 ### Fixed
 - **TypeError di /admin/tickets dan /admin/tickets/categories** — Go handler `Stats` mengembalikan format flat `{open, resolved, pending}` tapi frontend mengharapkan `{byStatus: {open, inProgress, ...}, byPriority: {...}}` → crash `stats.byStatus.open`. Handler `ListCategories` mengembalikan `{success, categories:[]}` tapi frontend mengharapkan array langsung → crash `g.filter is not a function`. Fix: update kedua handler sesuai interface frontend.
