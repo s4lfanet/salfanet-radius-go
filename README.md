@@ -469,6 +469,11 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.50.7 — 2026-05-18
+
+### Fixed
+- **CSP violation Leaflet CSS (final fix)** — Root cause: nginx `sites-enabled/` punya dua config konflik untuk `radius.hotspotapp.net` (symlink asli + file `salfanet-radius` yang salah). Config aktif (`radius.hotspotapp.net`) tidak punya CSP sama sekali, sehingga CSP dari Next.js (build lama tanpa cdnjs) yang terpakai. Fix: deploy `nginx-radius.hotspotapp.net.conf` (HTTP-only, Cloudflare Flexible) ke `sites-available/radius.hotspotapp.net`, hapus `sites-enabled/salfanet-radius` yang konflik, reload nginx. CSP sekarang disuntik dari nginx dengan `proxy_hide_header Content-Security-Policy` + `add_header` baru yang mencakup `https://cdnjs.cloudflare.com`.
+
 ### v2.50.6 — 2026-05-19
 
 ### Fixed
@@ -515,16 +520,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/genieacs.go` — tambah helper `notConfiguredErr()`, replace 4 `c.Status(400)` setelah `getCredentials()`
 - `internal/api/handlers/genieacs_ext.go` — replace 21 `c.Status(400)` setelah `getCredentials()`
 - `src/app/admin/genieacs/tasks/page.tsx` — cek `data.notConfigured` bukan `response.status`
-
-### v2.50.2 — 2026-05-18
-
-### Fixed
-- **GenieACS parameter-config crash** — Go handler `ListVirtualParameters` mengembalikan key `"parameters"` tapi frontend membaca `data.data` → `TypeError: Cannot read properties of undefined (reading 'filter')`. Diperbaiki: key diubah ke `"data"` + tambah optional chaining `(data.data ?? []).filter(...)`.
-- **Tasks page GenieACS not-configured** — saat `/api/genieacs/tasks` mengembalikan 400 (GenieACS belum dikonfigurasi), halaman sekarang menampilkan banner peringatan dengan link ke pengaturan, bukan diam-diam tampilkan list kosong.
-### Files
-- `internal/api/handlers/settings_genieacs.go` — key `"parameters"` → `"data"`
-- `src/app/admin/genieacs/parameter-config/page.tsx` — optional chaining `(data.data ?? []).filter(...)`
-- `src/app/admin/genieacs/tasks/page.tsx` — banner "GenieACS belum dikonfigurasi" saat 400
 
 <!-- AUTO-CHANGELOG:END -->
 
