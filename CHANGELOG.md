@@ -6,7 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.50.7] — 2026-05-18
+## [2.50.8] — 2026-05-18
+### Fixed
+- **TypeError: Cannot read toLocaleString of undefined di /admin/laporan/analitik** — Root cause: Go backend mengembalikan format summary berbeda dari yang diharapkan halaman (`activeUsers` bukan `currentActiveUsers`, tidak ada `monthlyData`, `avgArpu`, dll). Fix: (1) tambah null guards di `fmtIDR`, `fmtIDRFull`, dan `currentActiveUsers` access; (2) tambah nginx `location = /api/admin/analytics` → Next.js port 3000 agar route Next.js yang detail (churn, ARPU, monthly data) digunakan, bukan Go handler yang simplified.
+### Files
+- `src/app/admin/laporan/analitik/page.tsx` — Null guards: `fmtIDR`/`fmtIDRFull` handle undefined/null, `AnalyticsSummary` interface semua field optional, `currentActiveUsers` fallback ke `activeUsers`
+- `production/nginx-radius.hotspotapp.net.conf` — Tambah `location = /api/admin/analytics` → port 3000 (Next.js) sebelum catch-all `/api/` → Go
+
+
 ### Fixed
 - **Error 521 Cloudflare** — Setelah deploy config HTTP-only, Cloudflare Full SSL mode tidak bisa connect ke port 443 (tidak listening) → 521. Fix: tambah `listen 443 ssl` + `listen [::]:443 ssl` dengan snakeoil cert ke nginx config agar support kedua mode (Flexible dan Full).
 - **CSP violation Leaflet CSS (final fix)** — Root cause: nginx `sites-enabled/` punya dua config konflik untuk `radius.hotspotapp.net`. Config aktif tidak punya CSP, sehingga CSP dari Next.js (build lama tanpa cdnjs) yang terpakai. Fix: deploy `nginx-radius.hotspotapp.net.conf` ke `sites-available/radius.hotspotapp.net`, hapus `sites-enabled/salfanet-radius`, reload nginx. CSP sekarang dari nginx dengan `proxy_hide_header Content-Security-Policy` + `add_header` baru yang mencakup `https://cdnjs.cloudflare.com`.

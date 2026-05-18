@@ -41,12 +41,13 @@ interface AreaBreakdown {
 
 interface AnalyticsSummary {
   totalRevenue: number;
-  totalNewCustomers: number;
-  totalChurned: number;
-  avgArpu: number;
-  avgChurnRate: number;
-  avgRetentionRate: number;
-  currentActiveUsers: number;
+  totalNewCustomers?: number;
+  totalChurned?: number;
+  avgArpu?: number;
+  avgChurnRate?: number;
+  avgRetentionRate?: number;
+  currentActiveUsers?: number;
+  activeUsers?: number; // Go backend compat
 }
 
 interface AnalyticsData {
@@ -59,12 +60,15 @@ interface AnalyticsData {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const fmtIDR = (n: number) =>
-  n >= 1_000_000
-    ? `Rp ${(n / 1_000_000).toFixed(1)}jt`
-    : `Rp ${n.toLocaleString('id-ID')}`;
+const fmtIDR = (n: number | undefined | null): string => {
+  const v = n ?? 0;
+  return v >= 1_000_000
+    ? `Rp ${(v / 1_000_000).toFixed(1)}jt`
+    : `Rp ${v.toLocaleString('id-ID')}`;
+};
 
-const fmtIDRFull = (n: number) => `Rp ${n.toLocaleString('id-ID')}`;
+const fmtIDRFull = (n: number | undefined | null): string =>
+  `Rp ${(n ?? 0).toLocaleString('id-ID')}`;
 
 // ─── Chart colors ─────────────────────────────────────────────────────────────
 
@@ -266,7 +270,7 @@ export default function LaporanAnalitikPage() {
           />
           <KpiCard
             label={t('laporanAnalitik.activeCustomers')}
-            value={s.currentActiveUsers.toLocaleString('id-ID')}
+            value={(s.currentActiveUsers ?? s.activeUsers ?? 0).toLocaleString('id-ID')}
             sub={t('laporanAnalitik.newIn', { n: String(s.totalNewCustomers), n2: String(data?.period) })}
             icon={Users}
             color="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
