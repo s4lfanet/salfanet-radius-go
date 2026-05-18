@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.51.8] — 2026-05-19
+### Fixed
+- **405 Method Not Allowed saat simpan konfigurasi WireGuard / L2TP** — `PATCH /api/network/vps-wg-peer` dan `PATCH /api/network/vps-l2tp-peer` tidak terdaftar di Go router (hanya ada di Next.js route handler lama yang sekarang tidak dipakai karena semua `/api/*` diproxy ke Go). `PATCH` juga tidak ada di daftar `AllowMethods` CORS sehingga preflight OPTIONS gagal.
+### Added
+- **Go handler `PatchWGServerConfig`** — `PATCH /api/network/vps-wg-peer`: update `poolStart`, `poolEnd`, `gatewayIp` di `wg-server-info.json`. Jika `gatewayIp` berubah, otomatis update `Address =` di `wg0.conf`, update PostUp/PostDown iptables, lalu restart WireGuard interface (`wg-quick down/up`).
+- **Go handler `PatchL2TPServerConfig`** — `PATCH /api/network/vps-l2tp-peer`: update `poolStart`, `poolEnd`, `gateway` di `l2tp-server-info.json`, restart xl2tpd + reload ipsec, pastikan iptables rules untuk `ppp+`.
+- **CORS PATCH** — Tambah `"PATCH"` ke `AllowMethods` di CORS middleware.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `PatchWGServerConfig` dan `PatchL2TPServerConfig`
+- `internal/api/router.go` — Register `api.Patch("/network/vps-wg-peer", ...)`, `api.Patch("/network/vps-l2tp-peer", ...)`, dan `"PATCH"` di CORS AllowMethods
+
+---
+
 ## [2.51.7] — 2026-05-19
 ### Fixed
 - **updater.sh menyebabkan 502 setelah update** — Serangkaian bug yang saling terkait: (1) `local SVC_FILE` di luar function → `set -e` exit dini sebelum Go build & PM2 restart; (2) rsync `--delete` hapus `logs/` & `bin/` → salfanet-api gagal start dengan `status=226/NAMESPACE`; (3) `rm -rf .next` sebelum build → jika build gagal tidak ada fallback; (4) PM2 processes tidak pernah di-restore jika script exit di tengah jalan.
