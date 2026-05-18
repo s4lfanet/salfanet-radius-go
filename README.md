@@ -469,6 +469,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.5 — 2026-05-19
+
+### Fixed
+- **install-pm2 cleanup pkill bunuh installer sendiri** — Root cause PM2 tidak auto-start: `pkill -9 -f "/root/salfanet-radius"` di `cleanup_pm2_processes()` cocok dengan command line bash installer (`bash -c 'cd /root/salfanet-radius && ...'`), membunuh screen session sebelum `pm2 start` berjalan. Fix: hapus pkill berbasis path source dir, ganti dengan pkill spesifik Node.js (`node.*server.js`, `node.*cron-service.js`, dll). Juga: skip `sudo su - root` untuk cleanup saat APP_USER=root (redundan + berpotensi interference).
+- **install-pm2 PM2 systemd supervision** — Tambah `systemctl start pm2-root` setelah `pm2 startup systemd` agar PM2 daemon berjalan di bawah systemd (bukan screen). PM2 processes kini auto-start tanpa intervensi manual.
+### Files
+- `vps-install/install-pm2.sh` — Hapus `pkill -f "/root/salfanet-radius"` yang bunuh installer; skip `sudo su - root` di cleanup; tambah `systemctl start pm2-root`
+
 ### v2.51.4 — 2026-05-19
 
 ### Fixed
@@ -497,32 +505,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Push Notifikasi 405 pada GET /api/push/send** — Halaman Push Notifikasi memanggil `GET /api/push/send?action=stats` dan `GET /api/push/send?limit=30` untuk memuat stats dan riwayat broadcast, namun Go backend hanya mendaftarkan POST untuk route ini sehingga GET mengembalikan 405. Perbaikan: tambahkan lokasi nginx `= /api/push/send` yang meneruskan semua method ke Next.js (port 3000), di mana GET dan POST handler sudah ada di `route.ts`.
 ### Files
 - `production/nginx-radius.hotspotapp.net.conf` — Tambah `location = /api/push/send` → Next.js (3000)
-
-### v2.51.0 — 2026-05-19
-
-### Changed
-- **Konsolidasi manajemen teknisi — Option B** — Teknisi kini hanya dikelola via "Kelola Teknisi" menggunakan OTP WhatsApp. Role `TECHNICIAN` dihapus dari dropdown Admin & Role. Login via username/password untuk teknisi dinonaktifkan.
-- **Login portal teknisi ganti ke OTP** — Halaman `/technician/login` diganti dari form username+password ke form nomor HP + kode OTP WhatsApp (2-step). Teknisi harus sudah terdaftar di sistem (tidak ada auto-create).
-- **request-otp: hapus auto-create teknisi** — Sebelumnya siapa saja bisa membuat akun teknisi cukup dengan mengirim nomor HP. Kini nomor HP harus sudah terdaftar di tabel `technician`, atau API mengembalikan 404.
-### Files
-- `src/app/admin/management/page.tsx` — Hapus `TECHNICIAN` dari array `ROLES`
-- `src/app/technician/login/page.tsx` — Ganti form login ke 2-step OTP (phone → OTP code)
-- `src/app/api/technician/auth/login/route.ts` — Disabled, return 410 Gone
-- `src/app/api/technician/auth/request-otp/route.ts` — Hapus auto-create technician
-- `src/app/api/technician/auth/session/route.ts` — Hapus cabang `admin_user`, hanya OTP technician
-- `src/app/api/technician/profile/route.ts` — Hapus cabang `admin_user`
-- `src/app/api/technician/customers/route.ts` — Hapus `isAdminUser`, require routerId/areaId untuk semua teknisi
-- `src/app/api/technician/customers/create/route.ts` — Hapus cabang `admin_user`
-- `src/app/api/technician/work-orders/route.ts` — Hapus `isAdminUser`, semua teknisi lihat unassigned + miliknya
-- `src/app/api/technician/{form-data,genieacs,genieacs/devices,genieacs/devices/[deviceId],isolated,monitor,tasks,sessions,upload,offline,tickets}/route.ts` — Hapus blok `admin_user` dari `verifyTechnician`
-- `src/app/api/push/technician-subscribe/route.ts` — Hapus blok `admin_user`, hapus `upsertAdminPushSubscription`
-- `src/app/api/push/technician-unsubscribe/route.ts` — Hapus blok `admin_user`, hapus `removeAdminPushSubscription`
-
-
-### Fixed
-- **TypeError di /admin/tickets dan /admin/tickets/categories** — Go handler `Stats` mengembalikan format flat `{open, resolved, pending}` tapi frontend mengharapkan `{byStatus: {open, inProgress, ...}, byPriority: {...}}` → crash `stats.byStatus.open`. Handler `ListCategories` mengembalikan `{success, categories:[]}` tapi frontend mengharapkan array langsung → crash `g.filter is not a function`. Fix: update kedua handler sesuai interface frontend.
-### Files
-- `internal/api/handlers/ticket_ext.go` — `Stats` return nested `byStatus`/`byPriority`/`unassigned`; `ListCategories` return array langsung (bukan wrapped object)
 
 <!-- AUTO-CHANGELOG:END -->
 
