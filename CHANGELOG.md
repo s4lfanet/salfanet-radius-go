@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.1] — 2026-05-20
+### Fixed
+- **VPN Client list masih kosong setelah proxy fix** — Root cause: `getServerSession` di Next.js route handler tidak bisa validasi NextAuth cookie karena perbedaan nama cookie (`__Secure-next-auth.session-token` dari HTTPS browser vs `next-auth.session-token` yang dicari di HTTP localhost). Solusi: `ListVPNClients` sekarang **baca langsung dari DB** (`vpn_clients` table via GORM + struct baru `prismaVpnClient`/`prismaVpnServer`) tanpa proxy ke Next.js, sehingga tidak perlu re-validasi session lagi.
+- **Proxy POST fix** — Tambah `req.Host = "localhost"` dan strip `__Secure-` prefix dari cookie sebelum forward ke Next.js, agar `getServerSession` bisa mengenali session cookie untuk CREATE/PATCH/PUT/DELETE.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah struct `prismaVpnClient`, `prismaVpnServer`; rewrite `ListVPNClients` baca DB langsung; fix `proxyToNextJS` Host header + cookie prefix
+
+---
+
 ## [2.52.0] — 2026-05-19
 ### Fixed
 - **VPN Client tidak muncul setelah ditambahkan** — Go handler `ListVPNClients`/`CreateVPNClient` menulis ke tabel `vpn_client_configs` yang tidak ada (tidak pernah di-migrate Prisma). Tabel yang benar adalah `vpn_clients`. Solusi: Go sekarang **proxy** semua request `/api/network/vpn-client` ke Next.js (port 3000) yang sudah punya logika lengkap (credential generation, MikroTik connection, Prisma).
