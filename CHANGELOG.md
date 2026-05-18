@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.9] — 2026-05-18
+### Fixed
+- **GET /api/tickets/stats dan /api/tickets/categories 404** — Route extension (`ticketExtH`) didaftarkan di level `api.Get(...)` setelah group `tickets` yang sudah punya wildcard `/:id`. Wildcard menangkap request lebih dulu sehingga handler mencari tiket dengan id="stats"/"categories" → 404. Fix: pindah semua ticket extension routes ke dalam group `tickets`, sebelum `/:id`, agar Fiber match spesifik dulu.
+### Files
+- `internal/api/router.go` — Ticket extension routes (`/stats`, `/categories`, `/messages`, `/dispatch`) dipindah ke dalam `tickets` group sebelum wildcard `/:id`
+
 ## [2.50.8] — 2026-05-18
 ### Fixed
 - **TypeError: Cannot read toLocaleString of undefined di /admin/laporan/analitik** — Root cause: Go backend mengembalikan format summary berbeda dari yang diharapkan halaman (`activeUsers` bukan `currentActiveUsers`, tidak ada `monthlyData`, `avgArpu`, dll). Fix: (1) tambah null guards di `fmtIDR`, `fmtIDRFull`, dan `currentActiveUsers` access; (2) tambah nginx `location = /api/admin/analytics` → Next.js port 3000 agar route Next.js yang detail (churn, ARPU, monthly data) digunakan, bukan Go handler yang simplified.
