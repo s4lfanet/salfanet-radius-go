@@ -29,7 +29,10 @@ func (h *TechnicianAdminHandler) List(c fiber.Ctx) error {
 
 	var technicians []models.Technician
 	query.Find(&technicians)
-	return c.JSON(fiber.Map{"success": true, "technicians": technicians})
+	if technicians == nil {
+		technicians = []models.Technician{}
+	}
+	return c.JSON(technicians)
 }
 
 // POST /api/admin/technicians
