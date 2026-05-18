@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.50.10 — 2026-05-18
+
+### Fixed
+- **TypeError di /admin/tickets dan /admin/tickets/categories** — Go handler `Stats` mengembalikan format flat `{open, resolved, pending}` tapi frontend mengharapkan `{byStatus: {open, inProgress, ...}, byPriority: {...}}` → crash `stats.byStatus.open`. Handler `ListCategories` mengembalikan `{success, categories:[]}` tapi frontend mengharapkan array langsung → crash `g.filter is not a function`. Fix: update kedua handler sesuai interface frontend.
+### Files
+- `internal/api/handlers/ticket_ext.go` — `Stats` return nested `byStatus`/`byPriority`/`unassigned`; `ListCategories` return array langsung (bukan wrapped object)
+
 ### v2.50.9 — 2026-05-18
 
 ### Fixed
@@ -518,15 +525,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `production/nginx-salfanet-radius.conf` — Tambah `location /api/customers/` → port 3000 di semua 3 server block sebelum `location /api/` catch-all
 - `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — Sama: tambah `location /api/customers/` → port 3000 di HTTP dan HTTPS block
-
-### v2.50.4 — 2026-05-18
-
-### Fixed
-- **TypeError: (e.users || e).filter is not a function di halaman Network Map** — Go handler `ListUsersWithFilters` mengembalikan `"users": null` (nil slice → JSON null) saat tidak ada data, sehingga `(data.users || data).filter(...)` crash karena object tidak punya `.filter`. Fix: (1) Go: gunakan `make([]models.PppoeUser, 0)` agar nil slice menjadi `[]` bukan `null`. (2) Frontend: ganti `(data.users || data).filter(...)` → `(data.users ?? []).filter(...)`.
-- **CSP violation Leaflet CSS** — `style-src` di `next.config.ts` sudah mencakup `https://cdnjs.cloudflare.com` (konfirmasi sudah benar).
-### Files
-- `internal/api/handlers/pppoe_ext.go` — `ListUsersWithFilters`: `var users []models.PppoeUser` → `users := make([]models.PppoeUser, 0)`
-- `src/app/admin/network/map/page.tsx` — line 373: `(data.users || data).filter(...)` → `(data.users ?? []).filter(...)`
 
 <!-- AUTO-CHANGELOG:END -->
 
