@@ -435,85 +435,120 @@ start_pm2_app() {
     # Cleanup old PM2 processes
     cleanup_pm2_processes
     
-    # Start both apps with PM2 as app user using su - for proper environment
+    # Start both apps with PM2
+    # When APP_USER=root, run pm2 directly (avoid sudo su - subshell which breaks log capture
+    # and causes PM2 processes to die when the screen session exits).
+    # For dedicated non-root users, use su - for proper environment.
     print_info "Launching applications (radius + cron) as ${APP_USER}..."
-    if ! sudo su - ${APP_USER} -c "cd ${APP_DIR} && pm2 start ecosystem.config.js" 2>&1 | tee /tmp/pm2-start.log; then
-        print_error "PM2 start failed!"
-        cat /tmp/pm2-start.log
-        return 1
+    if [ -z "${APP_USER}" ] || [ "${APP_USER}" = "root" ]; then
+        # Root: run directly so output is captured in install log
+        cd ${APP_DIR} && pm2 start ecosystem.config.js 2>&1 | tee /tmp/pm2-start.log
+    else
+        if ! sudo su - ${APP_USER} -c "cd ${APP_DIR} && pm2 start ecosystem.config.js" 2>&1 | tee /tmp/pm2-start.log; then
+            print_error "PM2 start failed!"
+            cat /tmp/pm2-start.log
+            return 1
+        fi
     fi
 
     # Validate app cwd points to the intended APP_DIR only
     print_info "Verifying PM2 working directories..."
-    sudo su - ${APP_USER} -c 'pm2 jlist' 2>/dev/null | grep -E '"name"|"pm_cwd"' || true
-    
-    # Save PM2 configuration for app user
-    sudo su - ${APP_USER} -c 'pm2 save'
-    
-    # Setup PM2 startup for app user
-    print_info "Configuring PM2 startup for ${APP_USER}..."
-    
-    # Handle root user or empty user: pm2 startup without -u/--hp flags
     if [ -z "${APP_USER}" ] || [ "${APP_USER}" = "root" ]; then
-        # Running as root - use standard startup without user flags
-        env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u root --hp /root || \
-        pm2 startup systemd || true
+        pm2 jlist 2>/dev/null | grep -E '"name"|"pm_cwd"' || true
     else
-        # Dedicated user - pass user and home path
-        sudo /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ${APP_USER} --hp /home/${APP_USER} || true
+        sudo su - ${APP_USER} -c 'pm2 jlist' 2>/dev/null | grep -E '"name"|"pm_cwd"' || true
     fi
-    
+
+    # Save PM2 configuration
+    if [ -z "${APP_USER}" ] || [ "${APP_USER}" = "root" ]; then
+        pm2 save
+    else
+        sudo su - ${APP_USER} -c 'pm2 save'
+    fi
+
+    # Setup PM2 startup — register with systemd and START immediately so PM2
+    # survives screen/SSH session exit (runs under systemd supervision).
+    print_info "Configuring PM2 startup for ${APP_USER}..."
+    if [ -z "${APP_USER}" ] || [ "${APP_USER}" = "root" ]; then
+        pm2 startup systemd -u root --hp /root 2>&1 || true
+        systemctl daemon-reload 2>/dev/null || true
+        systemctl enable pm2-root 2>/dev/null || true
+        # Start under systemd so the daemon is supervised independently of this script
+        systemctl start pm2-root 2>/dev/null || true
+        print_success "PM2 registered with systemd (pm2-root.service)"
+    else
+        sudo /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ${APP_USER} --hp /home/${APP_USER} 2>&1 || true
+        systemctl daemon-reload 2>/dev/null || true
+        systemctl enable pm2-${APP_USER} 2>/dev/null || true
+        systemctl start pm2-${APP_USER} 2>/dev/null || true
+    fi
+
     # Wait for app to stabilize
     print_info "Waiting for applications to stabilize..."
-    sleep 5
+    sleep 8
 
     # ── Start Baileys WhatsApp service ────────────────────────────────────
     print_info "Starting salfanet-wa (Baileys WhatsApp service)..."
     mkdir -p /var/data/salfanet/baileys_auth
     if [ -f "${APP_DIR}/wa-service.js" ]; then
-        if sudo su - ${APP_USER} -c "cd ${APP_DIR} && pm2 describe salfanet-wa" &>/dev/null; then
-            sudo su - ${APP_USER} -c "pm2 restart salfanet-wa --update-env" 2>/dev/null || true
+        if [ -z "${APP_USER}" ] || [ "${APP_USER}" = "root" ]; then
+            pm2 describe salfanet-wa &>/dev/null && \
+                pm2 restart salfanet-wa --update-env 2>/dev/null || \
+                pm2 start ${APP_DIR}/ecosystem.config.js --only salfanet-wa 2>&1 | tail -3 || true
         else
-            sudo su - ${APP_USER} -c "cd ${APP_DIR} && pm2 start ecosystem.config.js --only salfanet-wa" 2>&1 | tail -3 || true
+            if sudo su - ${APP_USER} -c "pm2 describe salfanet-wa" &>/dev/null; then
+                sudo su - ${APP_USER} -c "pm2 restart salfanet-wa --update-env" 2>/dev/null || true
+            else
+                sudo su - ${APP_USER} -c "cd ${APP_DIR} && pm2 start ecosystem.config.js --only salfanet-wa" 2>&1 | tail -3 || true
+            fi
         fi
         print_success "salfanet-wa started"
     else
         print_warning "wa-service.js not found — skipping salfanet-wa startup"
     fi
 
-    # Save updated PM2 config (includes salfanet-wa)
-    sudo su - ${APP_USER} -c 'pm2 save'
+    # Save final PM2 config (includes salfanet-wa)
+    if [ -z "${APP_USER}" ] || [ "${APP_USER}" = "root" ]; then
+        pm2 save
+    else
+        sudo su - ${APP_USER} -c 'pm2 save'
+    fi
 
-    # Check if apps are running using su -
-    if sudo su - ${APP_USER} -c 'pm2 list' | grep -q "salfanet-radius.*online"; then
+    # Check if apps are running
+    local PM2_STATUS
+    if [ -z "${APP_USER}" ] || [ "${APP_USER}" = "root" ]; then
+        PM2_STATUS=$(pm2 list --no-color 2>/dev/null)
+    else
+        PM2_STATUS=$(sudo su - ${APP_USER} -c 'pm2 list --no-color' 2>/dev/null)
+    fi
+
+    if echo "${PM2_STATUS}" | grep -q "salfanet-radius.*online"; then
         print_success "Applications started successfully!"
         echo ""
         print_info "Application status:"
-        sudo su - ${APP_USER} -c 'pm2 list'
+        echo "${PM2_STATUS}"
         echo ""
         print_info "Application URLs:"
         echo "  Main App: http://${VPS_IP} (via Nginx port 80)"
         echo "  Cron Service: Running in background"
         echo ""
         print_info "Monitor logs:"
-        echo "  sudo su - ${APP_USER} -c 'pm2 logs salfanet-radius'"
-        echo "  sudo su - ${APP_USER} -c 'pm2 logs salfanet-cron'"
+        echo "  pm2 logs salfanet-radius"
+        echo "  pm2 logs salfanet-cron"
         echo ""
         print_info "Restart apps:"
-        echo "  sudo su - ${APP_USER} -c 'pm2 restart salfanet-radius'"
-        echo "  sudo su - ${APP_USER} -c 'pm2 restart salfanet-cron'"
-        echo "  sudo su - ${APP_USER} -c 'pm2 restart all'"
+        echo "  pm2 restart all"
     else
         print_error "Applications failed to start!"
         echo ""
         print_info "Recent logs:"
-        sudo su - ${APP_USER} -c 'pm2 logs --lines 30 --nostream'
+        pm2 logs --lines 30 --nostream 2>/dev/null || true
         echo ""
         print_info "Troubleshooting commands:"
-        echo "  sudo su - ${APP_USER} -c 'pm2 logs'"
-        echo "  sudo su - ${APP_USER} -c 'pm2 restart all'"
+        echo "  pm2 logs"
+        echo "  pm2 restart all"
         echo "  lsof -i:3000"
-        echo "  cd ${APP_DIR} && sudo su - ${APP_USER} -c 'npm start'"
+        echo "  cd ${APP_DIR} && node .next/standalone/server.js"
         return 1
     fi
 }
