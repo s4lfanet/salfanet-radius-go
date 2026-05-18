@@ -279,6 +279,17 @@ _proxy_locations() {
         proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
     }
 
+    # Push Notifikasi: GET (stats/history) + POST (send) → Next.js
+    # Must be before /api/ catch-all, Go only has POST /api/push/send
+    location = /api/push/send {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+
     # All other /api/ routes → Go backend (CombinedAuthMiddleware: JWT Bearer or NextAuth cookie)
     location /api/ {
         proxy_pass         http://127.0.0.1:8080;
@@ -567,6 +578,17 @@ _proxy_locations_https_domain() {
         proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header   X-Forwarded-Proto $scheme;
         proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+
+    # Push Notifikasi: GET (stats/history) + POST (send) → Next.js
+    # Must be before /api/ catch-all, Go only has POST /api/push/send
+    location = /api/push/send {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
     }
 
     # All other /api/ routes → Go backend (CombinedAuthMiddleware: JWT Bearer or NextAuth cookie)
