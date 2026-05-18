@@ -16,7 +16,10 @@ package handlers
 // GET/POST /api/network/vps-wg-peer
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -327,29 +330,70 @@ func (h *NetworkVPNHandler) SSTPControl(c fiber.Ctx) error {
 
 // ─── VPN Client ──────────────────────────────────────────────────────────────
 
-// GET /api/network/vpn-client — list VPN client configs
-func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
-	routerID := c.Query("routerId")
-	var clients []vpnClientConfig
-	q := h.db
-	if routerID != "" {
-		q = q.Where("routerId = ?", routerID)
+// proxyToNextJS forwards a request to the Next.js API at localhost:3000.
+// Cookies and Authorization headers are forwarded so session auth works.
+func (h *NetworkVPNHandler) proxyToNextJS(c fiber.Ctx, method string) error {
+	targetURL := "http://localhost:3000" + string(c.Request().URI().Path())
+	if qs := c.Request().URI().QueryString(); len(qs) > 0 {
+		targetURL += "?" + string(qs)
 	}
-	q.Order("createdAt desc").Find(&clients)
-	return c.JSON(fiber.Map{"success": true, "clients": clients})
+
+	var bodyReader io.Reader
+	if body := c.Body(); len(body) > 0 {
+		bodyReader = bytes.NewReader(body)
+	}
+
+	req, err := http.NewRequest(method, targetURL, bodyReader)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "proxy: failed to build request"})
+	}
+	req.Header.Set("Content-Type", "application/json")
+	if cookie := c.Get("Cookie"); cookie != "" {
+		req.Header.Set("Cookie", cookie)
+	}
+	if auth := c.Get("Authorization"); auth != "" {
+		req.Header.Set("Authorization", auth)
+	}
+
+	client := &http.Client{Timeout: 45 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"error": "upstream unavailable"})
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	ct := resp.Header.Get("Content-Type")
+	if ct == "" {
+		ct = "application/json"
+	}
+	c.Set("Content-Type", ct)
+	return c.Status(resp.StatusCode).Send(respBody)
 }
 
-// POST /api/network/vpn-client — create/update VPN client config
+// GET /api/network/vpn-client — list VPN clients (proxied to Next.js)
+func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
+	return h.proxyToNextJS(c, "GET")
+}
+
+// POST /api/network/vpn-client — create VPN client (proxied to Next.js)
 func (h *NetworkVPNHandler) CreateVPNClient(c fiber.Ctx) error {
-	var body vpnClientConfig
-	if err := c.Bind().JSON(&body); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
-	}
-	body.ID = uuid.New().String()
-	body.CreatedAt = time.Now()
-	body.UpdatedAt = time.Now()
-	h.db.Create(&body)
-	return c.Status(201).JSON(fiber.Map{"success": true, "client": body})
+	return h.proxyToNextJS(c, "POST")
+}
+
+// PATCH /api/network/vpn-client — update VPN client IP (proxied to Next.js)
+func (h *NetworkVPNHandler) PatchVPNClient(c fiber.Ctx) error {
+	return h.proxyToNextJS(c, "PATCH")
+}
+
+// PUT /api/network/vpn-client — update VPN client (proxied to Next.js)
+func (h *NetworkVPNHandler) PutVPNClient(c fiber.Ctx) error {
+	return h.proxyToNextJS(c, "PUT")
+}
+
+// DELETE /api/network/vpn-client — delete VPN client (proxied to Next.js)
+func (h *NetworkVPNHandler) DeleteVPNClient(c fiber.Ctx) error {
+	return h.proxyToNextJS(c, "DELETE")
 }
 
 // ─── VPN Routing ─────────────────────────────────────────────────────────────
