@@ -378,7 +378,7 @@ if [ -n "$USE_BRANCH" ]; then
 
     # ── Patch systemd service if ReadWritePaths is missing /uploads ───────
     # (Fixed in v2.47.13 — ProtectSystem=strict blocked writes to /uploads)
-    local SVC_FILE="/etc/systemd/system/salfanet-api.service"
+    SVC_FILE="/etc/systemd/system/salfanet-api.service"
     if [ -f "$SVC_FILE" ]; then
         if grep -q "ReadWritePaths" "$SVC_FILE" && ! grep "ReadWritePaths" "$SVC_FILE" | grep -q "uploads"; then
             print_info "Patching salfanet-api.service: adding /uploads to ReadWritePaths..."
