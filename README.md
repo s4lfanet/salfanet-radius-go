@@ -469,6 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.50.3 — 2026-05-18
+
+### Fixed
+- **GenieACS 400 error merah di console** — Semua handler GenieACS yang mengembalikan 400 saat GenieACS belum dikonfigurasi sekarang mengembalikan **HTTP 200** dengan `{success: false, notConfigured: true}`. Browser tidak lagi mencatat error merah di DevTools console ketika GenieACS belum di-setup.
+- **Tasks page** — deteksi `notConfigured` kini menggunakan `data.notConfigured` dari response body (bukan `response.status === 400`) sesuai perubahan Go handler.
+### Files
+- `internal/api/handlers/genieacs.go` — tambah helper `notConfiguredErr()`, replace 4 `c.Status(400)` setelah `getCredentials()`
+- `internal/api/handlers/genieacs_ext.go` — replace 21 `c.Status(400)` setelah `getCredentials()`
+- `src/app/admin/genieacs/tasks/page.tsx` — cek `data.notConfigured` bukan `response.status`
+
 ### v2.50.2 — 2026-05-18
 
 ### Fixed
@@ -557,16 +567,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/settings_genieacs.go` — SSEVoucherUpdates kirim format stats yang benar
 - `src/app/admin/hotspot/voucher/page.tsx` — handleSSEMessage pakai optional chaining untuk null safety
-
-### v2.48.5 — 2026-05-17
-
-### Fixed
-- **`admin/pppoe/profiles` & `admin/pppoe/registrations` — `GET /api/pppoe/profiles/sync-mikrotik` 405 Method Not Allowed** — Frontend memanggil GET ke endpoint yang hanya tersedia sebagai POST (untuk sync, bukan list). Fix: ganti URL ke `GET /api/network/routers` yang sudah ada dan return raw array Router.
-- **`[SSE] Connection error` loop di konsol** — Handler `SSEVoucherUpdates` langsung menutup koneksi setelah kirim 1 pesan → browser EventSource trigger `onerror` → reconnect setiap 3s → infinite error loop. Fix: ubah handler jadi long-lived SSE stream menggunakan `fasthttp.StreamWriter`, kirim `event: connected` + `event: voucher-stats` lalu heartbeat `: heartbeat` setiap 30s. Tambah header `X-Accel-Buffering: no` agar nginx tidak buffer SSE.
-### Files
-- `internal/api/handlers/settings_genieacs.go` — SSEVoucherUpdates jadi proper long-lived SSE stream
-- `src/app/admin/pppoe/profiles/page.tsx` — loadRouterList & handleSyncMikrotik modal gunakan `/api/network/routers`
-- `src/app/admin/pppoe/registrations/page.tsx` — useEffect gunakan `/api/network/routers`
 
 <!-- AUTO-CHANGELOG:END -->
 
