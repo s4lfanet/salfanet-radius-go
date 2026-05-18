@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.50.9 — 2026-05-18
+
+### Fixed
+- **GET /api/tickets/stats dan /api/tickets/categories 404** — Route extension (`ticketExtH`) didaftarkan di level `api.Get(...)` setelah group `tickets` yang sudah punya wildcard `/:id`. Wildcard menangkap request lebih dulu sehingga handler mencari tiket dengan id="stats"/"categories" → 404. Fix: pindah semua ticket extension routes ke dalam group `tickets`, sebelum `/:id`, agar Fiber match spesifik dulu.
+### Files
+- `internal/api/router.go` — Ticket extension routes (`/stats`, `/categories`, `/messages`, `/dispatch`) dipindah ke dalam `tickets` group sebelum wildcard `/:id`
+
 ### v2.50.8 — 2026-05-18
 
 ### Fixed
@@ -520,16 +527,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/pppoe_ext.go` — `ListUsersWithFilters`: `var users []models.PppoeUser` → `users := make([]models.PppoeUser, 0)`
 - `src/app/admin/network/map/page.tsx` — line 373: `(data.users || data).filter(...)` → `(data.users ?? []).filter(...)`
-
-### v2.50.3 — 2026-05-18
-
-### Fixed
-- **GenieACS 400 error merah di console** — Semua handler GenieACS yang mengembalikan 400 saat GenieACS belum dikonfigurasi sekarang mengembalikan **HTTP 200** dengan `{success: false, notConfigured: true}`. Browser tidak lagi mencatat error merah di DevTools console ketika GenieACS belum di-setup.
-- **Tasks page** — deteksi `notConfigured` kini menggunakan `data.notConfigured` dari response body (bukan `response.status === 400`) sesuai perubahan Go handler.
-### Files
-- `internal/api/handlers/genieacs.go` — tambah helper `notConfiguredErr()`, replace 4 `c.Status(400)` setelah `getCredentials()`
-- `internal/api/handlers/genieacs_ext.go` — replace 21 `c.Status(400)` setelah `getCredentials()`
-- `src/app/admin/genieacs/tasks/page.tsx` — cek `data.notConfigured` bukan `response.status`
 
 <!-- AUTO-CHANGELOG:END -->
 
