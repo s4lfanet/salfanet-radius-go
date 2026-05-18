@@ -6,6 +6,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.0] — 2026-05-19
+### Fixed
+- **VPN Client tidak muncul setelah ditambahkan** — Go handler `ListVPNClients`/`CreateVPNClient` menulis ke tabel `vpn_client_configs` yang tidak ada (tidak pernah di-migrate Prisma). Tabel yang benar adalah `vpn_clients`. Solusi: Go sekarang **proxy** semua request `/api/network/vpn-client` ke Next.js (port 3000) yang sudah punya logika lengkap (credential generation, MikroTik connection, Prisma).
+### Added
+- **Proxy handler** — `proxyToNextJS()` helper di `NetworkVPNHandler`: forward Cookie + Authorization header agar session auth tetap valid
+- **Routes PATCH/PUT/DELETE** untuk `/api/network/vpn-client` yang sebelumnya tidak ada di Go router (menyebabkan 404 saat update IP / toggle RADIUS / hapus client)
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `proxyToNextJS`, rewrite `ListVPNClients`/`CreateVPNClient`, tambah `PatchVPNClient`, `PutVPNClient`, `DeleteVPNClient`
+- `internal/api/router.go` — Register `api.Patch/Put/Delete("/network/vpn-client", ...)`
+
+---
+
 ## [2.51.9] — 2026-05-19
 ### Fixed
 - **Sidebar admin terlalu panjang** — Semua 7 kategori menu sebelumnya selalu terbuka (`useState(true)`). Sekarang kategori collapse by default; hanya kategori yang berisi halaman aktif yang auto-expand.
