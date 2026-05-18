@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.10] — 2026-05-18
+### Fixed
+- **TypeError di /admin/tickets dan /admin/tickets/categories** — Go handler `Stats` mengembalikan format flat `{open, resolved, pending}` tapi frontend mengharapkan `{byStatus: {open, inProgress, ...}, byPriority: {...}}` → crash `stats.byStatus.open`. Handler `ListCategories` mengembalikan `{success, categories:[]}` tapi frontend mengharapkan array langsung → crash `g.filter is not a function`. Fix: update kedua handler sesuai interface frontend.
+### Files
+- `internal/api/handlers/ticket_ext.go` — `Stats` return nested `byStatus`/`byPriority`/`unassigned`; `ListCategories` return array langsung (bukan wrapped object)
+
 ## [2.50.9] — 2026-05-18
 ### Fixed
 - **GET /api/tickets/stats dan /api/tickets/categories 404** — Route extension (`ticketExtH`) didaftarkan di level `api.Get(...)` setelah group `tickets` yang sudah punya wildcard `/:id`. Wildcard menangkap request lebih dulu sehingga handler mencari tiket dengan id="stats"/"categories" → 404. Fix: pindah semua ticket extension routes ke dalam group `tickets`, sebelum `/:id`, agar Fiber match spesifik dulu.
