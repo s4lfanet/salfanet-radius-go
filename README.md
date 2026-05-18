@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.1 — 2026-05-19
+
+### Fixed
+- **Push Notifikasi 405 pada GET /api/push/send** — Halaman Push Notifikasi memanggil `GET /api/push/send?action=stats` dan `GET /api/push/send?limit=30` untuk memuat stats dan riwayat broadcast, namun Go backend hanya mendaftarkan POST untuk route ini sehingga GET mengembalikan 405. Perbaikan: tambahkan lokasi nginx `= /api/push/send` yang meneruskan semua method ke Next.js (port 3000), di mana GET dan POST handler sudah ada di `route.ts`.
+### Files
+- `production/nginx-radius.hotspotapp.net.conf` — Tambah `location = /api/push/send` → Next.js (3000)
+
 ### v2.51.0 — 2026-05-19
 
 ### Changed
@@ -536,14 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/admin/network/diagrams/page.tsx` — `text-gray-500` → `text-muted-foreground`
 - `src/app/admin/network/trace/page.tsx` — `text-gray-500` → `text-muted-foreground`
 - `src/app/admin/network/splice-points/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`
-
-### v2.50.5 — 2026-05-18
-
-### Fixed
-- **Error Loading Map — 401 pada `/api/customers/with-location`** — Cloudflare edge node berbeda dapat memproses request `/api/customers/with-location` tanpa meneruskan cookie yang benar ke Go backend, menyebabkan `CombinedAuthMiddleware` gagal validasi. Fix: tambahkan `location /api/customers/` di nginx yang meroute langsung ke Next.js (port 3000) sebelum catch-all `/api/`. Next.js menggunakan `getServerSession` (server-side) yang tidak bergantung pada internal call Go → NextAuth, sehingga auth selalu berhasil. Response format sudah cocok (`{success: true, data: [...], count: N}`) dengan komponen `UnifiedNetworkMap`.
-### Files
-- `production/nginx-salfanet-radius.conf` — Tambah `location /api/customers/` → port 3000 di semua 3 server block sebelum `location /api/` catch-all
-- `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — Sama: tambah `location /api/customers/` → port 3000 di HTTP dan HTTPS block
 
 <!-- AUTO-CHANGELOG:END -->
 
