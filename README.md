@@ -469,6 +469,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.50.4 — 2026-05-18
+
+### Fixed
+- **TypeError: (e.users || e).filter is not a function di halaman Network Map** — Go handler `ListUsersWithFilters` mengembalikan `"users": null` (nil slice → JSON null) saat tidak ada data, sehingga `(data.users || data).filter(...)` crash karena object tidak punya `.filter`. Fix: (1) Go: gunakan `make([]models.PppoeUser, 0)` agar nil slice menjadi `[]` bukan `null`. (2) Frontend: ganti `(data.users || data).filter(...)` → `(data.users ?? []).filter(...)`.
+- **CSP violation Leaflet CSS** — `style-src` di `next.config.ts` sudah mencakup `https://cdnjs.cloudflare.com` (konfirmasi sudah benar).
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `ListUsersWithFilters`: `var users []models.PppoeUser` → `users := make([]models.PppoeUser, 0)`
+- `src/app/admin/network/map/page.tsx` — line 373: `(data.users || data).filter(...)` → `(data.users ?? []).filter(...)`
+
 ### v2.50.3 — 2026-05-18
 
 ### Fixed
@@ -524,49 +533,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/router.go` — Route baru: `POST /api/payment/qris-notify`, `GET /api/payment/qris-status`
 - `src/app/admin/payment-gateway/page.tsx` — Tambah Device Key UI + Generate button
 - `src/app/pay/[token]/page.tsx` — Unique amount display + polling qris-status + UI listener vs manual
-
-### v2.49.0 — 2026-05-18
-
-### Added
-- **QRIS Mandiri (self-hosted QRIS)** — Dukungan pembayaran QRIS tanpa pihak ketiga menggunakan QRIS statis dari bank/merchant yang dikonversi ke QRIS dinamis (EMVCo TLV + CRC-16/CCITT-FALSE).
-- **Go QRIS library** — `internal/lib/qris/qris.go`: `StaticToDynamic(staticQris, amount)` mengubah QRIS statis → dinamis dengan nominal; `ValidateQris()` untuk validasi.
-- **`POST /api/payment/create` → `qris_own` gateway** — Endpoint baru menerima field `gateway: "qris_own"`, query config QRIS dari company, generate `qrString` dinamis, return `{success, orderId, qrString, isQrisOwn: true}`.
-- **`GET /api/invoices/by-token/:token` enriched** — Kini mengembalikan `{invoice, paymentGateways, qrisOwn, company}` sehingga halaman `/pay/[token]` bisa menampilkan gateway + QR code.
-- **`GET /api/pppoe/users/check-isolation` rewrite** — Sebelumnya hanya return `{isolatedCount}` tanpa melihat query params. Sekarang mendukung `?username=` dan `?ip=`, mengembalikan data user lengkap + unpaid invoices + available gateways + qrisOwn untuk halaman `/isolated`.
-- **Company model QRIS fields** — `qrisStaticCode (TEXT)`, `qrisMerchantName (VARCHAR)`, `qrisEnabled (BOOL)` di Go model + Prisma schema.
-- **Frontend: halaman `/pay/[token]`** — Tambah tampilan QR code QRIS Mandiri menggunakan `qrcode.react`, polling status Duitku/Tripay, tombol pilih gateway.
-- **Frontend: halaman `/isolated`** — Tambah opsi pembayaran QRIS Mandiri dengan QR code untuk user yang diisolasi.
-- **Frontend: Admin → Payment Gateway** — Section khusus QRIS Mandiri (self-hosted) terpisah dari gateway pihak ketiga.
-- **Frontend: Admin → Settings → Company** — Tambah field konfigurasi QRIS: textarea QRIS statis, merchant name, toggle enable/disable.
-### Files
-- `internal/lib/qris/qris.go` — NEW: Go QRIS library (TLV parser, CRC-16, StaticToDynamic)
-- `internal/db/models/models.go` — Tambah 3 field QRIS ke struct `Company`
-- `internal/api/handlers/company.go` — Default `qrisEnabled: false` di GetCompany
-- `internal/api/handlers/payment_handler.go` — Tambah `qris_own` branch di `CreatePayment`
-- `internal/api/handlers/invoices_ext.go` — `GetByToken` kini return gateways + qrisOwn + company
-- `internal/api/handlers/misc_handler.go` — `CheckIsolationGlobal` rewrite: handle `?username=`/`?ip=`, return full user data
-- `prisma/schema.prisma` — Tambah 3 field QRIS ke model `company`
-- `src/lib/qris.ts` — NEW: TypeScript QRIS library (untuk referensi / SSR)
-- `src/app/pay/[token]/page.tsx` — Tambah QRIS display + gateway selector
-- `src/app/isolated/page.tsx` — Tambah QRIS payment option
-- `src/app/admin/payment-gateway/page.tsx` — Section QRIS Mandiri
-- `src/app/admin/settings/company/page.tsx` — QRIS config fields
-- `package.json` — Tambah dependency `qrcode.react`
-
-
-### Fixed
-- **`GET /api/olt/monitoring 404`** — Go router tidak punya route `/monitoring`. Fix: tambah handler `MonitoringList` (GET) + `MonitoringPoll` (POST) di `OLTHandler`. Handler list semua OLT dengan filter `search`/`status`, tambah field `unresolvedAlerts` (count) per OLT.
-- **`GET /api/olt/alerts 404`** — Go router tidak punya route global `/alerts`. Fix: tambah handler `ListAllAlerts` (GET) dengan filter `resolved`/`severity`/`type`/`limit`, serta preload data OLT dan ONU (dengan customer). Tambah `ResolveAlert` (PUT `/api/olt/alerts/:id`) untuk mark alert as resolved.
-### Files
-- `internal/api/handlers/olt.go` — Tambah 4 metode: `MonitoringList`, `MonitoringPoll`, `ListAllAlerts`, `ResolveAlert`
-- `internal/api/router.go` — Tambah 4 routes sebelum `/:id`: GET/POST `/monitoring`, GET `/alerts`, PUT `/alerts/:id`
-
-
-### Fixed
-- **`admin/hotspot/voucher` crash `Cannot read properties of undefined (reading 'total')` & `(reading 'activated')`** — SSE handler kirim `{"count":N}` tapi frontend ekspek `{"stats":{total,waiting,active,expired,totalValue},"changes":{activated,expired}}`. `setStats(data.stats)` → `setStats(undefined)` → render crash. Fix: Go SSE handler kirim format lengkap dengan count per status (UNUSED→waiting, ACTIVE→active, EXPIRED/USED→expired). Fix frontend: tambah null check `data?.stats` dan `data?.changes` sebagai guard.
-### Files
-- `internal/api/handlers/settings_genieacs.go` — SSEVoucherUpdates kirim format stats yang benar
-- `src/app/admin/hotspot/voucher/page.tsx` — handleSSEMessage pakai optional chaining untuk null safety
 
 <!-- AUTO-CHANGELOG:END -->
 
