@@ -124,21 +124,13 @@ salfanet-radius/
 
 ## ⚙️ Installation
 
-### Metode 1 — Upload via zip (Recommended, karena repo private)
-
-> ⚠️ Repo ini **private** — git clone di VPS memerlukan autentikasi. Gunakan metode zip berikut:
+### Metode 1 — Git Clone (Recommended)
 
 ```bash
-# Di komputer LOKAL — buat zip dari git HEAD
-git archive --format=zip HEAD -o salfanet-fresh.zip
-
-# Upload ke VPS
-scp salfanet-fresh.zip root@YOUR_VPS_IP:/root/salfanet-fresh.zip
-
-# SSH ke VPS, unzip, lalu jalankan installer
 ssh root@YOUR_VPS_IP
-mkdir -p /root/salfanet-radius && cd /root/salfanet-radius
-unzip -q /root/salfanet-fresh.zip
+
+git clone https://github.com/s4lfanet/salfanet-radius-go.git /root/salfanet-radius
+cd /root/salfanet-radius
 bash vps-install/vps-installer.sh
 ```
 
@@ -159,12 +151,16 @@ bash vps-install/vps-installer.sh \
 ### Metode 2 — Upload Manual via SCP (Tanpa Akses Internet di Server)
 
 ```bash
-# Jalankan di terminal LOKAL (bukan di server)
-scp -r ./salfanet-radius root@YOUR_VPS_IP:/root/salfanet-radius
+# Di komputer LOKAL — buat zip dari git HEAD
+git archive --format=zip HEAD -o salfanet-fresh.zip
 
-# SSH ke server, lalu jalankan installer
+# Upload ke VPS
+scp salfanet-fresh.zip root@YOUR_VPS_IP:/root/salfanet-fresh.zip
+
+# SSH ke VPS, unzip, lalu jalankan installer
 ssh root@YOUR_VPS_IP
-cd /root/salfanet-radius
+mkdir -p /root/salfanet-radius && cd /root/salfanet-radius
+unzip -q /root/salfanet-fresh.zip
 bash vps-install/vps-installer.sh
 ```
 
