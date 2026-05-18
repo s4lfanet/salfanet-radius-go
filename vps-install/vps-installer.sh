@@ -33,14 +33,18 @@ while [[ "$#" -gt 0 ]]; do
         --domain)      export VPS_DOMAIN="$2";        shift ;;
         --db-pass)     export DB_PASSWORD="$2";       shift ;;
         --unattended)  export UNATTENDED="true" ;;
+        --vpn)         export INSTALL_VPN_SERVERS="true" ;;
+        --no-vpn)      export INSTALL_VPN_SERVERS="false" ;;
         --help|-h)
-            echo "Usage: bash vps-installer.sh [--env vps|lxc|vm|bare] [--ip IP] [--domain DOMAIN] [--db-pass PASS] [--unattended]"
+            echo "Usage: bash vps-installer.sh [--env vps|lxc|vm|bare] [--ip IP] [--domain DOMAIN] [--db-pass PASS] [--unattended] [--vpn] [--no-vpn]"
             echo ""
             echo "  --env vps|lxc|vm|bare  Force environment type (default: auto-detect)"
             echo "  --ip ADDRESS           Force IP address"
             echo "  --domain DOMAIN        Set domain for SSL (skips prompt)"
             echo "  --db-pass PASS         Set DB password (default: from common.sh)"
             echo "  --unattended           Non-interactive mode, use all defaults"
+            echo "  --vpn                  Install WireGuard + L2TP VPN servers (VPS only, unattended)"
+            echo "  --no-vpn               Skip VPN server prompt (unattended)"
             exit 0
             ;;
     esac
@@ -256,6 +260,9 @@ confirm_installation() {
     echo -e "  App User    : ${GREEN}${APP_USER}${NC}"
     echo -e "  Database    : ${GREEN}${DB_NAME}${NC}"
     echo -e "  UFW         : ${GREEN}$([ "${SKIP_UFW}" = "true" ] && echo "DILEWATI (LXC)" || echo "Aktif")${NC}"
+    if [ "${DEPLOY_ENV}" = "vps" ] && [ "${INSTALL_VPN_SERVERS:-}" != "false" ]; then
+    echo -e "  VPN Servers : ${GREEN}WireGuard + L2TP (akan ditanya setelah install utama)${NC}"
+    fi
     echo -e "${WHITE}=====================================================${NC}"
     echo ""
     if [ "${UNATTENDED}" = "true" ]; then
@@ -268,6 +275,84 @@ confirm_installation() {
             exit 0
         fi
     fi
+}
+
+# ============================================================================
+# VPN SERVER INSTALLATION (Public VPS only)
+# ============================================================================
+
+install_vpn_servers() {
+    print_step "Step 10: VPN Server Setup (WireGuard + L2TP)"
+
+    export VPN_WG_INSTALLED="false"
+    export VPN_L2TP_INSTALLED="false"
+
+    print_info "VPS publik terdeteksi. Setup VPN server memungkinkan NAS/router"
+    print_info "(MikroTik, dll) terhubung langsung ke VPS tanpa CHR forwarder."
+    echo ""
+    echo -e "  ${WHITE}WireGuard${NC} — RouterOS 7.1+, UDP 51820, overhead minimal"
+    echo -e "  ${WHITE}L2TP/IPsec${NC} — RouterOS 6.x+, kompatibel luas"
+    echo ""
+
+    # Tentukan default berdasarkan flag CLI
+    local DEFAULT_WG="y"
+    local DEFAULT_L2TP="y"
+
+    if [ "${INSTALL_VPN_SERVERS:-}" = "false" ]; then
+        # --no-vpn flag: skip semua
+        print_info "[--no-vpn] Melewati setup VPN server."
+        return 0
+    fi
+
+    # Tanya WireGuard
+    local INSTALL_WG=""
+    if [ "${UNATTENDED}" = "true" ]; then
+        INSTALL_WG="${INSTALL_VPN_SERVERS:-n}"
+        [ "${INSTALL_WG}" = "true" ] && INSTALL_WG="y"
+        echo "[unattended] WireGuard install: ${INSTALL_WG}"
+    else
+        read -t 30 -p "Install WireGuard VPN Server? [Y/n]: " INSTALL_WG </dev/tty || INSTALL_WG="y"
+    fi
+    INSTALL_WG="${INSTALL_WG:-y}"
+    echo ""
+
+    if [[ "${INSTALL_WG}" =~ ^[Yy]$ ]]; then
+        print_info "Menjalankan install-wg-server.sh..."
+        if bash "$SCRIPT_DIR/install-wg-server.sh"; then
+            export VPN_WG_INSTALLED="true"
+            print_success "WireGuard VPN Server terinstall (wg0, port 51820)"
+        else
+            print_warning "WireGuard install gagal — bisa diulang manual: bash vps-install/install-wg-server.sh"
+        fi
+    else
+        print_info "WireGuard dilewati."
+    fi
+    echo ""
+
+    # Tanya L2TP
+    local INSTALL_L2TP=""
+    if [ "${UNATTENDED}" = "true" ]; then
+        INSTALL_L2TP="${INSTALL_VPN_SERVERS:-n}"
+        [ "${INSTALL_L2TP}" = "true" ] && INSTALL_L2TP="y"
+        echo "[unattended] L2TP install: ${INSTALL_L2TP}"
+    else
+        read -t 30 -p "Install L2TP/IPsec VPN Server (untuk RouterOS 6.x)? [Y/n]: " INSTALL_L2TP </dev/tty || INSTALL_L2TP="y"
+    fi
+    INSTALL_L2TP="${INSTALL_L2TP:-y}"
+    echo ""
+
+    if [[ "${INSTALL_L2TP}" =~ ^[Yy]$ ]]; then
+        print_info "Menjalankan install-l2tp-server.sh..."
+        if bash "$SCRIPT_DIR/install-l2tp-server.sh"; then
+            export VPN_L2TP_INSTALLED="true"
+            print_success "L2TP/IPsec VPN Server terinstall"
+        else
+            print_warning "L2TP install gagal — bisa diulang manual: bash vps-install/install-l2tp-server.sh"
+        fi
+    else
+        print_info "L2TP dilewati."
+    fi
+    echo ""
 }
 
 # ============================================================================
@@ -357,6 +442,11 @@ run_installation() {
     fi
 
     export VPN_CLIENT_INSTALLED="false"
+
+    # Step 10: VPN Servers (hanya untuk public VPS)
+    if [ "${DEPLOY_ENV}" = "vps" ]; then
+        install_vpn_servers
+    fi
 
     print_success "All installation steps completed successfully!"
 }
@@ -540,6 +630,23 @@ show_final_summary() {
         echo "  - Setup SSL: certbot --nginx -d yourdomain.com"
     fi
     echo ""
+    if [ "${DEPLOY_ENV}" = "vps" ]; then
+        echo -e "${CYAN}VPN Server:${NC}"
+        if [ "${VPN_WG_INSTALLED:-false}" = "true" ]; then
+        echo -e "  WireGuard   : ${GREEN}Terinstall${NC} (wg0, UDP 51820, subnet 10.200.0.0/24)"
+        echo "  Status      : wg show wg0"
+        echo "  Info        : cat /etc/wireguard/wg-server-info.json"
+        else
+        echo -e "  WireGuard   : ${YELLOW}Tidak diinstall${NC} — jalankan manual: bash vps-install/install-wg-server.sh"
+        fi
+        if [ "${VPN_L2TP_INSTALLED:-false}" = "true" ]; then
+        echo -e "  L2TP/IPsec  : ${GREEN}Terinstall${NC} (xl2tpd, UDP 1701, subnet 10.201.0.0/24)"
+        echo "  Info        : cat /etc/salfanet/l2tp/l2tp-server-info.json"
+        else
+        echo -e "  L2TP/IPsec  : ${YELLOW}Tidak diinstall${NC} — jalankan manual: bash vps-install/install-l2tp-server.sh"
+        fi
+        echo ""
+    fi
     echo -e "${CYAN}Perintah Berguna:${NC}"
     echo "  Lihat logs : sudo su - ${APP_USER} -c 'pm2 logs salfanet-radius'"
     echo "  Restart app: sudo su - ${APP_USER} -c 'pm2 restart all'"
