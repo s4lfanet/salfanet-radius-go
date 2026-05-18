@@ -890,14 +890,72 @@ func (h *MiscHandler) RadiusAccounting(c fiber.Ctx) error {
 
 // GET /api/tickets/dispatch-data — data for ticket dispatch (technicians, areas)
 func (h *MiscHandler) TicketDispatchData(c fiber.Ctx) error {
+	customerSearch := c.Query("customerSearch")
+
+	// Technicians
 	var technicians []map[string]interface{}
-	h.db.Raw("SELECT id, name, phone FROM technicians WHERE isActive = 1").Scan(&technicians)
-	var areas []map[string]interface{}
-	h.db.Raw("SELECT id, name FROM areas ORDER BY name").Scan(&areas)
+	h.db.Raw("SELECT id, name, phoneNumber FROM technicians WHERE isActive = 1 ORDER BY name").Scan(&technicians)
+	if technicians == nil {
+		technicians = []map[string]interface{}{}
+	}
+
+	// Categories
+	var categories []map[string]interface{}
+	h.db.Raw("SELECT id, name, color FROM ticket_categories WHERE isActive = 1 ORDER BY name").Scan(&categories)
+	if categories == nil {
+		categories = []map[string]interface{}{}
+	}
+
+	// Routers
+	var routers []map[string]interface{}
+	h.db.Raw("SELECT id, name, nasname FROM routers ORDER BY name").Scan(&routers)
+	if routers == nil {
+		routers = []map[string]interface{}{}
+	}
+
+	// OLTs
+	var olts []map[string]interface{}
+	h.db.Raw("SELECT id, name, ipAddress FROM network_olts ORDER BY name").Scan(&olts)
+	if olts == nil {
+		olts = []map[string]interface{}{}
+	}
+
+	// ODCs
+	var odcs []map[string]interface{}
+	h.db.Raw("SELECT id, name, oltId FROM network_odcs ORDER BY name").Scan(&odcs)
+	if odcs == nil {
+		odcs = []map[string]interface{}{}
+	}
+
+	// ODPs
+	var odps []map[string]interface{}
+	h.db.Raw("SELECT id, name, odcId, portCount FROM network_odps ORDER BY name").Scan(&odps)
+	if odps == nil {
+		odps = []map[string]interface{}{}
+	}
+
+	// Customers (pppoe_users) — only when search query provided
+	var customers []map[string]interface{}
+	if customerSearch != "" {
+		like := "%" + customerSearch + "%"
+		h.db.Raw(`SELECT id, username, name, phone, address,
+			(SELECT odpId FROM pppoe_odp_assignments WHERE userId = pppoe_users.id LIMIT 1) AS odpId
+			FROM pppoe_users
+			WHERE username LIKE ? OR name LIKE ? OR phone LIKE ?
+			ORDER BY name LIMIT 20`, like, like, like).Scan(&customers)
+	}
+	if customers == nil {
+		customers = []map[string]interface{}{}
+	}
+
 	return c.JSON(fiber.Map{
-		"success":     true,
 		"technicians": technicians,
-		"areas":       areas,
+		"categories":  categories,
+		"routers":     routers,
+		"olts":        olts,
+		"odcs":        odcs,
+		"odps":        odps,
+		"customers":   customers,
 	})
 }
 

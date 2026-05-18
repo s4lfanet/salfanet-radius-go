@@ -348,6 +348,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	tickets.Get("/messages", ticketExtH.ListMessages)
 	tickets.Get("/dispatch", ticketExtH.ListDispatch)
 	tickets.Post("/dispatch", ticketExtH.Dispatch)
+	tickets.Get("/dispatch-data", miscH.TicketDispatchData)
 	// Wildcard routes after specific ones
 	tickets.Get("/:id", ticketH.GetTicket)
 	tickets.Put("/:id", ticketH.UpdateTicket)
@@ -1195,9 +1196,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 12: RADIUS accounting ─────────────────────────────────────────
 	app.Get("/api/radius/accounting", miscH.RadiusAccounting)
 	app.Post("/api/radius/accounting", miscH.RadiusAccounting)
-
-	// ─── Batch 12: Tickets dispatch-data ─────────────────────────────────────
-	api.Get("/tickets/dispatch-data", miscH.TicketDispatchData)
 
 	// ─── Batch 12: Network routers extras ────────────────────────────────────
 	api.Post("/network/routers/:id/setup-radius", miscH.SetupRadiusOnRouter)
