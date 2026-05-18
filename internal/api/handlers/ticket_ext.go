@@ -15,12 +15,33 @@ func NewTicketExtHandler(db *gorm.DB) *TicketExtHandler { return &TicketExtHandl
 
 // GET /api/tickets/categories
 func (h *TicketExtHandler) ListCategories(c fiber.Ctx) error {
-	var cats []models.TicketCategory
-	h.db.Order("name").Find(&cats)
-	if cats == nil {
-		cats = []models.TicketCategory{}
+	type CategoryWithCount struct {
+		models.TicketCategory
+		TicketCount int64 `gorm:"column:ticketCount" json:"-"`
 	}
-	return c.JSON(cats)
+	var rows []CategoryWithCount
+	h.db.Table("ticket_categories tc").
+		Select("tc.*, COUNT(t.id) AS ticketCount").
+		Joins("LEFT JOIN tickets t ON t.categoryId = tc.id").
+		Group("tc.id").
+		Order("tc.name").
+		Find(&rows)
+
+	type CountInner struct {
+		Tickets int64 `json:"tickets"`
+	}
+	type CategoryOut struct {
+		models.TicketCategory
+		Count CountInner `json:"_count"`
+	}
+	out := make([]CategoryOut, len(rows))
+	for i, r := range rows {
+		out[i] = CategoryOut{
+			TicketCategory: r.TicketCategory,
+			Count:          CountInner{Tickets: r.TicketCount},
+		}
+	}
+	return c.JSON(out)
 }
 
 // POST /api/tickets/categories
@@ -73,7 +94,7 @@ func (h *TicketExtHandler) Stats(c fiber.Ctx) error {
 			"high":   high,
 			"urgent": urgent,
 		},
-		"unassigned":          unassigned,
+		"unassigned":           unassigned,
 		"avgResponseTimeHours": 0,
 	})
 }
