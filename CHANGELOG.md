@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.5] — 2026-05-18
+### Fixed
+- **Error Loading Map — 401 pada `/api/customers/with-location`** — Cloudflare edge node berbeda dapat memproses request `/api/customers/with-location` tanpa meneruskan cookie yang benar ke Go backend, menyebabkan `CombinedAuthMiddleware` gagal validasi. Fix: tambahkan `location /api/customers/` di nginx yang meroute langsung ke Next.js (port 3000) sebelum catch-all `/api/`. Next.js menggunakan `getServerSession` (server-side) yang tidak bergantung pada internal call Go → NextAuth, sehingga auth selalu berhasil. Response format sudah cocok (`{success: true, data: [...], count: N}`) dengan komponen `UnifiedNetworkMap`.
+### Files
+- `production/nginx-salfanet-radius.conf` — Tambah `location /api/customers/` → port 3000 di semua 3 server block sebelum `location /api/` catch-all
+- `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — Sama: tambah `location /api/customers/` → port 3000 di HTTP dan HTTPS block
+
 ## [2.50.4] — 2026-05-18
 ### Fixed
 - **TypeError: (e.users || e).filter is not a function di halaman Network Map** — Go handler `ListUsersWithFilters` mengembalikan `"users": null` (nil slice → JSON null) saat tidak ada data, sehingga `(data.users || data).filter(...)` crash karena object tidak punya `.filter`. Fix: (1) Go: gunakan `make([]models.PppoeUser, 0)` agar nil slice menjadi `[]` bukan `null`. (2) Frontend: ganti `(data.users || data).filter(...)` → `(data.users ?? []).filter(...)`.
