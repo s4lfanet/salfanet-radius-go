@@ -98,6 +98,15 @@ nginx-frontend.conf
 # OLT SNMP OID reference table — not needed in repo
 ZTE_OID_TABLE.md
 
+# Separate Laravel OLT provisioning project — not part of salfanet-radius
+OLT-ZTE-C320-Provisioning-main/
+
+# OLT monitoring optimization patch — update script only, not production code
+update-olt-opt/
+
+# QRIS payment update patch — update script only, not production code
+update-qris/
+
 # Air live reload config (Go dev tool, not production)
 .air.toml
 
