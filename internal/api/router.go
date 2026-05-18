@@ -341,6 +341,14 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	tickets := api.Group("/tickets")
 	tickets.Get("/", ticketH.ListTickets)
 	tickets.Post("/", ticketH.CreateTicket)
+	// Ticket extensions — must be before /:id to avoid wildcard capture
+	tickets.Get("/categories", ticketExtH.ListCategories)
+	tickets.Post("/categories", ticketExtH.CreateCategory)
+	tickets.Get("/stats", ticketExtH.Stats)
+	tickets.Get("/messages", ticketExtH.ListMessages)
+	tickets.Get("/dispatch", ticketExtH.ListDispatch)
+	tickets.Post("/dispatch", ticketExtH.Dispatch)
+	// Wildcard routes after specific ones
 	tickets.Get("/:id", ticketH.GetTicket)
 	tickets.Put("/:id", ticketH.UpdateTicket)
 	tickets.Post("/:id/reply", ticketH.ReplyTicket)
@@ -571,14 +579,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/voucher-templates/:id", voucherTplH.Get)
 	api.Put("/voucher-templates/:id", voucherTplH.Update)
 	api.Delete("/voucher-templates/:id", voucherTplH.Delete)
-
-	// Ticket extensions
-	api.Get("/tickets/categories", ticketExtH.ListCategories)
-	api.Post("/tickets/categories", ticketExtH.CreateCategory)
-	api.Get("/tickets/stats", ticketExtH.Stats)
-	api.Get("/tickets/messages", ticketExtH.ListMessages)
-	api.Get("/tickets/dispatch", ticketExtH.ListDispatch)
-	api.Post("/tickets/dispatch", ticketExtH.Dispatch)
 
 	// Analytics
 	api.Get("/admin/analytics", analyticsH.GetAnalytics)
