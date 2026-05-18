@@ -297,7 +297,7 @@ export default function FiberCoresPage() {
             <Circle className="h-5 w-5 text-purple-500" />
             {t('fiberCore.title')}
           </h1>
-          <p className="text-xs text-gray-500">{t('fiberCore.subtitle')}</p>
+          <p className="text-xs text-muted-foreground">{t('fiberCore.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -313,45 +313,45 @@ export default function FiberCoresPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Circle className="h-4 w-4 text-purple-500" />
-            <span className="text-xs text-gray-500">{t('fiberCore.totalCores')}</span>
+            <span className="text-xs text-muted-foreground">{t('fiberCore.totalCores')}</span>
           </div>
           <p className="text-xl font-bold mt-1">{stats.total}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-green-500" />
-            <span className="text-xs text-gray-500">{t('fiberCore.available')}</span>
+            <span className="text-xs text-muted-foreground">{t('fiberCore.available')}</span>
           </div>
           <p className="text-xl font-bold mt-1 text-green-600">{stats.available}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Tag className="h-4 w-4 text-blue-500" />
-            <span className="text-xs text-gray-500">{t('fiberCore.used')}</span>
+            <span className="text-xs text-muted-foreground">{t('fiberCore.used')}</span>
           </div>
           <p className="text-xl font-bold mt-1 text-blue-600">{stats.assigned}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Bookmark className="h-4 w-4 text-yellow-500" />
-            <span className="text-xs text-gray-500">Reserved</span>
+            <span className="text-xs text-muted-foreground">Reserved</span>
           </div>
           <p className="text-xl font-bold mt-1 text-yellow-600">{stats.reserved}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-red-500" />
-            <span className="text-xs text-gray-500">{t('fiberCore.damaged')}</span>
+            <span className="text-xs text-muted-foreground">{t('fiberCore.damaged')}</span>
           </div>
           <p className="text-xl font-bold mt-1 text-red-600">{stats.damaged}</p>
         </div>
       </div>
 
       {/* Filters & Actions */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+      <div className="bg-card rounded-lg border border-border p-3">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="flex items-center gap-2 flex-1 min-w-[200px]">
@@ -400,7 +400,7 @@ export default function FiberCoresPage() {
             </select>
           </div>
 
-          <span className="text-[10px] text-gray-500">
+          <span className="text-[10px] text-muted-foreground">
             Menampilkan {filteredCores.length} core
           </span>
         </div>
@@ -408,7 +408,7 @@ export default function FiberCoresPage() {
         {/* Bulk Actions */}
         {selectedCores.size > 0 && (
           <div className="mt-3 pt-3 border-t dark:border-gray-700 flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] text-gray-500">
+            <span className="text-[10px] text-muted-foreground">
               {selectedCores.size} {t('common.selected').toLowerCase()}:
             </span>
             <button
@@ -449,32 +449,32 @@ export default function FiberCoresPage() {
       {/* Core Cards - Grouped by Cable/Tube */}
       <div className="space-y-4">
         {Object.keys(groupedCores).length === 0 ? (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             <Circle className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="text-sm">{t('fiberCore.noData')}</p>
             <p className="text-xs">{t('fiberCore.noDataHint')}</p>
           </div>
         ) : (
           Object.entries(groupedCores).map(([key, group]) => (
-            <div key={key} className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 overflow-hidden">
+            <div key={key} className="bg-card rounded-lg border border-border overflow-hidden">
               {/* Group Header */}
-              <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b dark:border-gray-800 flex items-center justify-between">
+              <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-2">
                     <Cable className="h-4 w-4 text-purple-600" />
                     <span className="text-sm font-semibold">{group.cableCode}</span>
                   </div>
-                  <span className="text-xs text-gray-500">{group.cableName}</span>
+                  <span className="text-xs text-muted-foreground">{group.cableName}</span>
                   <div className="flex items-center gap-2 ml-4">
                     <div 
                       className="w-3 h-3 rounded-full border"
                       style={{ backgroundColor: FIBER_COLORS[group.tubeColor] || '#888' }}
                     />
                     <span className="text-xs font-medium">Tube {group.tubeNumber}</span>
-                    <span className="text-[10px] text-gray-500">({group.tubeColor})</span>
+                    <span className="text-[10px] text-muted-foreground">({group.tubeColor})</span>
                   </div>
                 </div>
-                <span className="text-[10px] text-gray-500">{group.cores.length} cores</span>
+                <span className="text-[10px] text-muted-foreground">{group.cores.length} cores</span>
               </div>
 
               {/* Cores Grid */}
@@ -534,7 +534,7 @@ export default function FiberCoresPage() {
           >
             {t('common.prev')}
           </button>
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-muted-foreground">
             Halaman {pagination.page} dari {pagination.totalPages}
           </span>
           <button
@@ -548,32 +548,32 @@ export default function FiberCoresPage() {
       )}
 
       {/* Legend */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
-        <h3 className="text-[10px] font-semibold text-gray-500 mb-2">{t('fiberCore.statusLegend')}</h3>
+      <div className="bg-card rounded-lg border border-border p-3">
+        <h3 className="text-[10px] font-semibold text-muted-foreground mb-2">{t('fiberCore.statusLegend')}</h3>
         <div className="flex flex-wrap gap-3">
           <div className="flex items-center gap-1.5">
             <div className="px-1.5 py-0.5 rounded text-[9px] bg-green-100 text-green-700 border border-green-300 flex items-center gap-1">
               <Check className="h-2.5 w-2.5" /> AVAILABLE
             </div>
-            <span className="text-[10px] text-gray-500">{t('fiberCore.readyToUse')}</span>
+            <span className="text-[10px] text-muted-foreground">{t('fiberCore.readyToUse')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="px-1.5 py-0.5 rounded text-[9px] bg-blue-100 text-blue-700 border border-blue-300 flex items-center gap-1">
               <Tag className="h-2.5 w-2.5" /> ASSIGNED
             </div>
-            <span className="text-[10px] text-gray-500">{t('fiberCore.alreadyAssigned')}</span>
+            <span className="text-[10px] text-muted-foreground">{t('fiberCore.alreadyAssigned')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="px-1.5 py-0.5 rounded text-[9px] bg-yellow-100 text-yellow-700 border border-yellow-300 flex items-center gap-1">
               <Bookmark className="h-2.5 w-2.5" /> RESERVED
             </div>
-            <span className="text-[10px] text-gray-500">{t('fiberCore.reservedCore')}</span>
+            <span className="text-[10px] text-muted-foreground">{t('fiberCore.reservedCore')}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="px-1.5 py-0.5 rounded text-[9px] bg-red-100 text-red-700 border border-red-300 flex items-center gap-1">
               <AlertTriangle className="h-2.5 w-2.5" /> DAMAGED
             </div>
-            <span className="text-[10px] text-gray-500">{t('fiberCore.damagedCore')}</span>
+            <span className="text-[10px] text-muted-foreground">{t('fiberCore.damagedCore')}</span>
           </div>
         </div>
       </div>
@@ -581,11 +581,11 @@ export default function FiberCoresPage() {
       {/* Action Dialog */}
       {isActionDialogOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-4 py-3 border-b dark:border-gray-800 flex items-center justify-between">
+          <div className="bg-card rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
               <h2 className="text-sm font-semibold flex items-center gap-2">
                 {actionType === 'assign' && <Tag className="h-4 w-4 text-blue-500" />}
-                {actionType === 'release' && <X className="h-4 w-4 text-gray-500" />}
+                {actionType === 'release' && <X className="h-4 w-4 text-muted-foreground" />}
                 {actionType === 'reserve' && <Bookmark className="h-4 w-4 text-yellow-500" />}
                 {actionType === 'mark_damaged' && <AlertTriangle className="h-4 w-4 text-red-500" />}
                 {actionType === 'assign' && 'Assign Core'}
@@ -602,7 +602,7 @@ export default function FiberCoresPage() {
             </div>
 
             <div className="p-4 space-y-4">
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 {selectedCores.size} core {t('common.selected').toLowerCase()}
               </p>
 

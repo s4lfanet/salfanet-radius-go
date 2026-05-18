@@ -6,6 +6,25 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.6] — 2026-05-19
+### Fixed
+- **CSP violation Leaflet CSS** — nginx HTTPS server block tidak menyertakan `https://cdnjs.cloudflare.com` di `style-src`, menyebabkan Leaflet CSS diblokir. Fix: tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di nginx CSP. Deploy langsung ke VPS.
+- **Light mode conflicts di halaman ODC & ODP** — Elemen cyberpunk neon (background blob, button `bg-[#00f7ff]`, icon `text-[#00f7ff]`, mobile card border `border-[#bc13fe]/20`) tampil di kedua tema tanpa fallback. Fix: neon background blobs dibungkus `hidden dark:block`, button & icon diberi fallback light mode (`bg-blue-600 dark:bg-[#00f7ff]`, `text-cyan-500 dark:text-[#00f7ff]`), card border `border-border dark:border-[#bc13fe]/20`.
+- **Warna teks & background tidak konsisten di halaman Manajemen Fiber** — Fiber Cables, Fiber Cores, Fiber Joint Closures menggunakan `text-gray-500` (tanpa dark variant) → sulit dibaca di dark mode. Stat card menggunakan `bg-white dark:bg-gray-900` bukan CSS variable `bg-card`. Fix: ganti ke `text-muted-foreground` dan `bg-card border-border` di semua fiber pages.
+- **Theme inconsistency di halaman Topologi** — unified-map, diagrams, trace, splice-points: `text-gray-500` dan beberapa `bg-white dark:bg-gray-900` diganti ke `text-muted-foreground` dan `bg-card`.
+### Files
+- `production/nginx-salfanet-radius.conf` — Tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di CSP header HTTPS block
+- `/etc/nginx/sites-available/salfanet-radius` (VPS) — Sama, reload sukses
+- `src/app/admin/network/odcs/page.tsx` — Fix light mode: background blobs `hidden dark:block`, button, icon, mobile card borders
+- `src/app/admin/network/odps/page.tsx` — Fix light mode: sama seperti ODC
+- `src/app/admin/network/fiber-cables/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`, `border dark:border-gray-800` → `border-border`
+- `src/app/admin/network/fiber-cores/page.tsx` — `text-gray-500` → `text-muted-foreground`, fix borders
+- `src/app/admin/network/fiber-joint-closures/page.tsx` — `text-gray-500` → `text-muted-foreground`
+- `src/app/admin/network/unified-map/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`
+- `src/app/admin/network/diagrams/page.tsx` — `text-gray-500` → `text-muted-foreground`
+- `src/app/admin/network/trace/page.tsx` — `text-gray-500` → `text-muted-foreground`
+- `src/app/admin/network/splice-points/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`
+
 ## [2.50.5] — 2026-05-18
 ### Fixed
 - **Error Loading Map — 401 pada `/api/customers/with-location`** — Cloudflare edge node berbeda dapat memproses request `/api/customers/with-location` tanpa meneruskan cookie yang benar ke Go backend, menyebabkan `CombinedAuthMiddleware` gagal validasi. Fix: tambahkan `location /api/customers/` di nginx yang meroute langsung ke Next.js (port 3000) sebelum catch-all `/api/`. Next.js menggunakan `getServerSession` (server-side) yang tidak bergantung pada internal call Go → NextAuth, sehingga auth selalu berhasil. Response format sudah cocok (`{success: true, data: [...], count: N}`) dengan komponen `UnifiedNetworkMap`.

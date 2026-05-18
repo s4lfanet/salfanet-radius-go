@@ -386,7 +386,7 @@ export default function NetworkDiagramsPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               <p className="text-lg font-medium text-gray-900 dark:text-gray-300 mb-2">{t('network.diagram.noData')}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-500 mb-6">
+              <p className="text-sm text-gray-600 dark:text-muted-foreground mb-6">
                 {t('network.diagram.noDataDescription')}
               </p>
               <div className="flex gap-4 justify-center">
@@ -496,7 +496,7 @@ export default function NetworkDiagramsPage() {
 
                         {otbDetailLoading && (
                           <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center border border-gray-200 dark:border-gray-700">
-                            <p className="text-gray-500 dark:text-gray-400">Memuat data OTB...</p>
+                            <p className="text-muted-foreground dark:text-gray-400">Memuat data OTB...</p>
                           </div>
                         )}
 
@@ -577,9 +577,9 @@ export default function NetworkDiagramsPage() {
                             <table className="w-full text-xs">
                               <thead>
                                 <tr className="border-b border-gray-200 dark:border-gray-700">
-                                  <th className="text-left pb-2 text-gray-500 dark:text-gray-400">Tabung</th>
-                                  <th className="text-left pb-2 text-gray-500 dark:text-gray-400">JC</th>
-                                  <th className="text-left pb-2 text-gray-500 dark:text-gray-400">Status</th>
+                                  <th className="text-left pb-2 text-muted-foreground dark:text-gray-400">Tabung</th>
+                                  <th className="text-left pb-2 text-muted-foreground dark:text-gray-400">JC</th>
+                                  <th className="text-left pb-2 text-muted-foreground dark:text-gray-400">Status</th>
                                   <th className="pb-2" />
                                 </tr>
                               </thead>
@@ -612,7 +612,7 @@ export default function NetworkDiagramsPage() {
                             </table>
                           </div>
                         ) : (
-                          <p className="text-xs text-gray-400 dark:text-gray-500">Belum ada tabung yang ditugaskan ke JC.</p>
+                          <p className="text-xs text-gray-400 dark:text-muted-foreground">Belum ada tabung yang ditugaskan ke JC.</p>
                         )}
 
                         {/* Add assignment form */}
@@ -693,7 +693,7 @@ export default function NetworkDiagramsPage() {
 
                         {jcDetailLoading && (
                           <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center border border-gray-200 dark:border-gray-700">
-                            <p className="text-gray-500 dark:text-gray-400">Memuat data JC...</p>
+                            <p className="text-muted-foreground dark:text-gray-400">Memuat data JC...</p>
                           </div>
                         )}
 
@@ -779,7 +779,7 @@ export default function NetworkDiagramsPage() {
                         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                           <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-3">Kabel Masuk (dari OTB)</h3>
                           {(jcDetail?.inputSegments?.length ?? 0) === 0 ? (
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Belum ada kabel yang masuk.</p>
+                            <p className="text-xs text-gray-400 dark:text-muted-foreground">Belum ada kabel yang masuk.</p>
                           ) : (() => {
                             // Group by cable
                             const grouped = new Map<string, { cable: any; segments: any[] }>();
@@ -800,15 +800,15 @@ export default function NetworkDiagramsPage() {
                                       <p className="font-medium text-purple-700 dark:text-purple-300">
                                         {cable?.name ?? cid}
                                       </p>
-                                      <p className="text-gray-500 dark:text-gray-400">
+                                      <p className="text-muted-foreground dark:text-gray-400">
                                         {tubes}T × {cores}C = {tubes * cores} core
                                       </p>
                                       {tubeNums.length > 0 && (
-                                        <p className="text-gray-400 dark:text-gray-500">
+                                        <p className="text-gray-400 dark:text-muted-foreground">
                                           Tabung: {tubeNums.map((n: number) => `T${n}`).join(', ')}
                                         </p>
                                       )}
-                                      <p className="text-gray-400 dark:text-gray-500">
+                                      <p className="text-gray-400 dark:text-muted-foreground">
                                         Dari: {fromDevice ? `${fromDevice.name} (OTB)` : segments[0]?.fromDeviceId}
                                       </p>
                                     </div>
@@ -823,7 +823,7 @@ export default function NetworkDiagramsPage() {
                         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                           <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-3">Kabel Keluar (ke JC/ODC/ODP)</h3>
                           {(jcDetail?.outputSegments?.length ?? 0) === 0 ? (
-                            <p className="text-xs text-gray-400 dark:text-gray-500">Belum ada kabel yang keluar.</p>
+                            <p className="text-xs text-gray-400 dark:text-muted-foreground">Belum ada kabel yang keluar.</p>
                           ) : (() => {
                             const grouped = new Map<string, { cable: any; segments: any[] }>();
                             for (const seg of jcDetail.outputSegments) {
@@ -842,10 +842,10 @@ export default function NetworkDiagramsPage() {
                                       <p className="font-medium text-cyan-700 dark:text-cyan-300">
                                         {cable?.name ?? cid}
                                       </p>
-                                      <p className="text-gray-500 dark:text-gray-400">
+                                      <p className="text-muted-foreground dark:text-gray-400">
                                         {tubes}T × {cores}C = {tubes * cores} core
                                       </p>
-                                      <p className="text-gray-400 dark:text-gray-500">
+                                      <p className="text-gray-400 dark:text-muted-foreground">
                                         Ke: {toDevice ? `${toDevice.name} (${segments[0]?.toDeviceType})` : segments[0]?.toDeviceId}
                                       </p>
                                     </div>
@@ -859,11 +859,11 @@ export default function NetworkDiagramsPage() {
                         {/* Splice summary */}
                         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                           <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-2">Splice Points</h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-muted-foreground dark:text-gray-400">
                             {jcDetail?.splicePoints?.length ?? 0} sambungan tersimpan
                           </p>
                           {(jcDetail?.spliceTrayCount ?? 0) > 0 && (
-                            <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                            <p className="text-xs text-gray-400 dark:text-muted-foreground mt-1">
                               Tray: {jcDetail.spliceTrayCount} | Kapasitas: {jcDetail.totalSpliceCapacity}
                             </p>
                           )}

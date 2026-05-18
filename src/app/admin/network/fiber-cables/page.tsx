@@ -255,7 +255,7 @@ export default function FiberCablesPage() {
             <Cable className="h-5 w-5 text-blue-500" />
             {t('fiberCable.title')}
           </h1>
-          <p className="text-xs text-gray-500">{t('fiberCable.subtitle')}</p>
+          <p className="text-xs text-muted-foreground">{t('fiberCable.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -277,38 +277,38 @@ export default function FiberCablesPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Cable className="h-4 w-4 text-blue-500" />
-            <span className="text-xs text-gray-500">{t('fiberCable.totalCables')}</span>
+            <span className="text-xs text-muted-foreground">{t('fiberCable.totalCables')}</span>
           </div>
           <p className="text-xl font-bold mt-1">{stats.total}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Circle className="h-4 w-4 text-purple-500" />
-            <span className="text-xs text-gray-500">{t('fiberCable.totalCores')}</span>
+            <span className="text-xs text-muted-foreground">{t('fiberCable.totalCores')}</span>
           </div>
           <p className="text-xl font-bold mt-1 text-purple-600">{stats.totalCores}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-green-500" />
-            <span className="text-xs text-gray-500">{t('common.active')}</span>
+            <span className="text-xs text-muted-foreground">{t('common.active')}</span>
           </div>
           <p className="text-xl font-bold mt-1 text-green-600">{stats.active}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Layers className="h-4 w-4 text-orange-500" />
-            <span className="text-xs text-gray-500">{t('fiberCable.cableTypes')}</span>
+            <span className="text-xs text-muted-foreground">{t('fiberCable.cableTypes')}</span>
           </div>
           <p className="text-xl font-bold mt-1 text-orange-600">{stats.types}</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+      <div className="bg-card rounded-lg border border-border p-3">
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2 flex-1 min-w-[200px]">
             <input
@@ -320,7 +320,7 @@ export default function FiberCablesPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <label className="text-[10px] font-medium text-gray-500">{t('common.type')}:</label>
+            <label className="text-[10px] font-medium text-muted-foreground">{t('common.type')}:</label>
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
@@ -332,7 +332,7 @@ export default function FiberCablesPage() {
               ))}
             </select>
           </div>
-          <span className="text-[10px] text-gray-500">
+          <span className="text-[10px] text-muted-foreground">
             {t('fiberCable.showing', { count: filteredCables.length, total: cables.length })}
           </span>
         </div>
@@ -341,7 +341,7 @@ export default function FiberCablesPage() {
       {/* Cable Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {filteredCables.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-gray-500">
+          <div className="col-span-full text-center py-12 text-muted-foreground">
             <Cable className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="text-sm">{t('fiberCable.noData')}</p>
             <p className="text-xs">{t('fiberCable.noDataHint')}</p>
@@ -350,17 +350,17 @@ export default function FiberCablesPage() {
           filteredCables.map((cable) => (
             <div
               key={cable.id}
-              className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow"
+              className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow"
             >
               {/* Card Header */}
-              <div className="p-3 border-b dark:border-gray-800 flex items-start justify-between">
+              <div className="p-3 border-b border-border flex items-start justify-between">
                 <div className="flex items-center gap-2">
                   <div className={`p-2 rounded-lg ${getTypeColor(cable.cableType)}`}>
                     <Cable className="h-5 w-5" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-sm">{cable.code}</h3>
-                    <p className="text-[10px] text-gray-500">{cable.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{cable.name}</p>
                   </div>
                 </div>
                 <span className={`px-2 py-0.5 text-[10px] rounded-full border ${
@@ -373,28 +373,28 @@ export default function FiberCablesPage() {
               </div>
 
               {/* Cable Info */}
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/10 border-b dark:border-gray-800">
+              <div className="p-3 bg-blue-50 dark:bg-blue-900/10 border-b border-border">
                 <div className="flex items-center gap-2 mb-2">
                   <Cable className="h-3.5 w-3.5 text-blue-600" />
                   <span className="text-[10px] font-medium text-blue-700 dark:text-blue-400">{t('fiberCable.specification')}</span>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500">{t('fiberCable.cableType')}:</span>
+                    <span className="text-[10px] text-muted-foreground">{t('fiberCable.cableType')}:</span>
                     <span className={`px-1.5 py-0.5 rounded text-[9px] ${getTypeColor(cable.cableType)}`}>
                       {cable.cableType}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500">Tube:</span>
+                    <span className="text-[10px] text-muted-foreground">Tube:</span>
                     <span className="text-[10px] font-medium">{cable.tubeCount}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500">{t('fiberCable.coresPerTube')}:</span>
+                    <span className="text-[10px] text-muted-foreground">{t('fiberCable.coresPerTube')}:</span>
                     <span className="text-[10px] font-medium">{cable.coresPerTube}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500">{t('fiberCable.totalCores')}:</span>
+                    <span className="text-[10px] text-muted-foreground">{t('fiberCable.totalCores')}:</span>
                     <span className="text-[10px] font-bold text-purple-600">{cable.totalCores}</span>
                   </div>
                 </div>
@@ -402,8 +402,8 @@ export default function FiberCablesPage() {
 
               {/* Diameter */}
               {cable.outerDiameter && (
-                <div className="px-3 py-2 border-b dark:border-gray-800 flex items-center justify-between">
-                  <span className="text-[10px] text-gray-500">{t('fiberCable.diameter')}:</span>
+                <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+                  <span className="text-[10px] text-muted-foreground">{t('fiberCable.diameter')}:</span>
                   <span className="text-[10px] font-medium">{cable.outerDiameter} mm</span>
                 </div>
               )}
@@ -419,7 +419,7 @@ export default function FiberCablesPage() {
                 </button>
                 <button
                   onClick={() => handleEdit(cable)}
-                  className="p-1.5 text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                  className="p-1.5 text-muted-foreground hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
                   title={t('common.edit')}
                 >
                   <Pencil className="h-4 w-4" />
@@ -440,14 +440,14 @@ export default function FiberCablesPage() {
       {/* Add/Edit Dialog */}
       {isDialogOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-4 py-3 border-b dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900">
+          <div className="bg-card rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between sticky top-0 bg-card">
               <div>
                 <h2 className="text-sm font-semibold flex items-center gap-2">
                   <Cable className="h-4 w-4 text-blue-500" />
                   {editingCable ? t('fiberCable.editTitle') : t('fiberCable.addTitle')}
                 </h2>
-                <p className="text-[10px] text-gray-500">{t('fiberCable.subtitle')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('fiberCable.subtitle')}</p>
               </div>
               <button
                 onClick={() => { setIsDialogOpen(false); resetForm(); }}
@@ -518,7 +518,7 @@ export default function FiberCablesPage() {
                         className={`p-2 rounded-lg border-2 text-center transition-all ${
                           isActive 
                             ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                            : 'border-border hover:border-gray-300'
                         }`}
                       >
                         <span className="text-[10px] font-medium">{preset.label}</span>
@@ -602,14 +602,14 @@ export default function FiberCablesPage() {
       {/* Detail Dialog */}
       {isDetailDialogOpen && selectedCable && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-4 py-3 border-b dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900">
+          <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between sticky top-0 bg-card">
               <div>
                 <h2 className="text-sm font-semibold flex items-center gap-2">
                   <Cable className="h-4 w-4 text-blue-500" />
                   {t('fiberCable.detailTitle', { code: selectedCable.code })}
                 </h2>
-                <p className="text-[10px] text-gray-500">{selectedCable.name}</p>
+                <p className="text-[10px] text-muted-foreground">{selectedCable.name}</p>
               </div>
               <button
                 onClick={() => setIsDetailDialogOpen(false)}
@@ -623,19 +623,19 @@ export default function FiberCablesPage() {
               {/* Cable Summary */}
               <div className="grid grid-cols-4 gap-3">
                 <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-                  <p className="text-[10px] text-gray-500">{t('fiberCable.cableType')}</p>
+                  <p className="text-[10px] text-muted-foreground">{t('fiberCable.cableType')}</p>
                   <p className="text-sm font-bold text-blue-600">{selectedCable.cableType}</p>
                 </div>
                 <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
-                  <p className="text-[10px] text-gray-500">Tube</p>
+                  <p className="text-[10px] text-muted-foreground">Tube</p>
                   <p className="text-sm font-bold text-purple-600">{selectedCable.tubeCount}</p>
                 </div>
                 <div className="p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg text-center">
-                  <p className="text-[10px] text-gray-500">{t('fiberCable.coresPerTube')}</p>
+                  <p className="text-[10px] text-muted-foreground">{t('fiberCable.coresPerTube')}</p>
                   <p className="text-sm font-bold text-orange-600">{selectedCable.coresPerTube}</p>
                 </div>
                 <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                  <p className="text-[10px] text-gray-500">{t('fiberCable.totalCores')}</p>
+                  <p className="text-[10px] text-muted-foreground">{t('fiberCable.totalCores')}</p>
                   <p className="text-sm font-bold text-green-600">{selectedCable.totalCores}</p>
                 </div>
               </div>
@@ -661,9 +661,9 @@ export default function FiberCablesPage() {
                           style={{ backgroundColor: FIBER_COLORS[tube.colorCode] || '#888' }}
                         />
                         <span className="text-sm font-medium">{t('fiberCable.tubeN', { n: tube.tubeNumber })}</span>
-                        <span className="text-[10px] text-gray-500">({tube.colorCode})</span>
+                        <span className="text-[10px] text-muted-foreground">({tube.colorCode})</span>
                       </div>
-                      <span className="text-[10px] text-gray-500">{tube.cores?.length || 0} {t('fiberCable.cores')}</span>
+                      <span className="text-[10px] text-muted-foreground">{tube.cores?.length || 0} {t('fiberCable.cores')}</span>
                     </button>
                     
                     {expandedTubes.has(tube.id) && tube.cores && (
@@ -677,7 +677,7 @@ export default function FiberCablesPage() {
                                   ? 'bg-green-50 dark:bg-green-900/20 border-green-200' 
                                   : core.status === 'used'
                                     ? 'bg-red-50 dark:bg-red-900/20 border-red-200'
-                                    : 'bg-gray-50 dark:bg-gray-800 border-gray-200'
+                                    : 'bg-muted border-border'
                               }`}
                               title={`Core ${core.coreNumber} - ${core.colorCode} (${core.status})`}
                             >

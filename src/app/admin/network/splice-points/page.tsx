@@ -329,7 +329,7 @@ export default function SplicePointsPage() {
             <Link2 className="h-5 w-5 text-blue-500" />
             {t('splicePoint.title')}
           </h1>
-          <p className="text-xs text-gray-500">{t('splicePoint.subtitle')}</p>
+          <p className="text-xs text-muted-foreground">{t('splicePoint.subtitle')}</p>
         </div>
         <div className="flex gap-2">
           <button
@@ -352,45 +352,45 @@ export default function SplicePointsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Link2 className="h-4 w-4 text-blue-500" />
-            <span className="text-xs text-gray-500">{t('splicePoint.totalSplice')}</span>
+            <span className="text-xs text-muted-foreground">{t('splicePoint.totalSplice')}</span>
           </div>
           <p className="text-xl font-bold mt-1">{stats.total}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-blue-500" />
-            <span className="text-xs text-gray-500">Fusion</span>
+            <span className="text-xs text-muted-foreground">Fusion</span>
           </div>
           <p className="text-xl font-bold mt-1 text-blue-600">{stats.fusion}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Settings className="h-4 w-4 text-orange-500" />
-            <span className="text-xs text-gray-500">Mechanical</span>
+            <span className="text-xs text-muted-foreground">Mechanical</span>
           </div>
           <p className="text-xl font-bold mt-1 text-orange-600">{stats.mechanical}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Link2 className="h-4 w-4 text-purple-500" />
-            <span className="text-xs text-gray-500">Pigtail</span>
+            <span className="text-xs text-muted-foreground">Pigtail</span>
           </div>
           <p className="text-xl font-bold mt-1 text-purple-600">{stats.pigtail}</p>
         </div>
-        <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+        <div className="bg-card rounded-lg border border-border p-3">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-green-500" />
-            <span className="text-xs text-gray-500">{t('splicePoint.avgLoss')}</span>
+            <span className="text-xs text-muted-foreground">{t('splicePoint.avgLoss')}</span>
           </div>
           <p className="text-xl font-bold mt-1 text-green-600">{stats.avgLoss} dB</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
+      <div className="bg-card rounded-lg border border-border p-3">
         <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="flex items-center gap-2 flex-1 min-w-[200px]">
@@ -417,7 +417,7 @@ export default function SplicePointsPage() {
             </select>
           </div>
 
-          <span className="text-[10px] text-gray-500">
+          <span className="text-[10px] text-muted-foreground">
             {t('splicePoint.showing', { count: filteredSplices.length })}
           </span>
         </div>
@@ -426,7 +426,7 @@ export default function SplicePointsPage() {
       {/* Splice Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredSplices.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-gray-500">
+          <div className="col-span-full text-center py-12 text-muted-foreground">
             <Link2 className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p className="text-sm">{t('splicePoint.noData')}</p>
             <p className="text-xs">{t('splicePoint.noDataHint')}</p>
@@ -437,7 +437,7 @@ export default function SplicePointsPage() {
             return (
               <div
                 key={splice.id}
-                className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 overflow-hidden hover:shadow-lg transition-shadow"
+                className="bg-card rounded-lg border border-border overflow-hidden hover:shadow-lg transition-shadow"
               >
                 {/* Card Header */}
                 <div className="p-3 border-b dark:border-gray-800 flex items-center justify-between">
@@ -470,7 +470,7 @@ export default function SplicePointsPage() {
                   <div className="flex items-center justify-between gap-2">
                     {/* Incoming Core */}
                     <div className="flex-1 text-center p-2 bg-white dark:bg-gray-800 rounded-lg">
-                      <p className="text-[9px] text-gray-500 mb-1">Incoming</p>
+                      <p className="text-[9px] text-muted-foreground mb-1">Incoming</p>
                       {splice.incomingCore ? (
                         <>
                           <p className="text-[10px] font-semibold">{splice.incomingCore.tube?.cable?.code}</p>
@@ -496,7 +496,7 @@ export default function SplicePointsPage() {
 
                     {/* Outgoing Core */}
                     <div className="flex-1 text-center p-2 bg-white dark:bg-gray-800 rounded-lg">
-                      <p className="text-[9px] text-gray-500 mb-1">Outgoing</p>
+                      <p className="text-[9px] text-muted-foreground mb-1">Outgoing</p>
                       {splice.outgoingCore ? (
                         <>
                           <p className="text-[10px] font-semibold">{splice.outgoingCore.tube?.cable?.code}</p>
@@ -520,7 +520,7 @@ export default function SplicePointsPage() {
                 {/* Loss Info */}
                 <div className="px-3 py-2 border-b dark:border-gray-800">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500">Insertion Loss:</span>
+                    <span className="text-[10px] text-muted-foreground">Insertion Loss:</span>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-bold">
                         {splice.insertionLoss != null ? `${splice.insertionLoss.toFixed(3)} dB` : '-'}
@@ -566,24 +566,24 @@ export default function SplicePointsPage() {
       </div>
 
       {/* Loss Quality Guide */}
-      <div className="bg-white dark:bg-gray-900 rounded-lg border dark:border-gray-800 p-3">
-        <h3 className="text-[10px] font-semibold text-gray-500 mb-2">{t('splicePoint.qualityGuide')}</h3>
+      <div className="bg-card rounded-lg border border-border p-3">
+        <h3 className="text-[10px] font-semibold text-muted-foreground mb-2">{t('splicePoint.qualityGuide')}</h3>
         <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-[10px] text-gray-500">≤0.05 dB = Excellent</span>
+            <span className="text-[10px] text-muted-foreground">≤0.05 dB = Excellent</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-[10px] text-gray-500">≤0.10 dB = Good</span>
+            <span className="text-[10px] text-muted-foreground">≤0.10 dB = Good</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <span className="text-[10px] text-gray-500">≤0.20 dB = Fair</span>
+            <span className="text-[10px] text-muted-foreground">≤0.20 dB = Fair</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span className="text-[10px] text-gray-500">&gt;0.20 dB = Poor</span>
+            <span className="text-[10px] text-muted-foreground">&gt;0.20 dB = Poor</span>
           </div>
         </div>
       </div>
@@ -591,14 +591,14 @@ export default function SplicePointsPage() {
       {/* Create Splice Dialog */}
       {isCreateDialogOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-4 py-3 border-b dark:border-gray-800 flex items-center justify-between sticky top-0 bg-white dark:bg-gray-900">
+          <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-4 py-3 border-b dark:border-gray-800 flex items-center justify-between sticky top-0 bg-card">
               <div>
                 <h2 className="text-sm font-semibold flex items-center gap-2">
                   <Link2 className="h-4 w-4 text-blue-500" />
                   {t('splicePoint.createTitle')}
                 </h2>
-                <p className="text-[10px] text-gray-500">{t('splicePoint.createSubtitle')}</p>
+                <p className="text-[10px] text-muted-foreground">{t('splicePoint.createSubtitle')}</p>
               </div>
               <button
                 onClick={() => { setIsCreateDialogOpen(false); resetForm(); }}
@@ -796,7 +796,7 @@ export default function SplicePointsPage() {
       {/* Detail Dialog */}
       {isDetailDialogOpen && selectedSplice && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-xl max-w-lg w-full">
+          <div className="bg-card rounded-lg shadow-xl max-w-lg w-full">
             <div className="px-4 py-3 border-b dark:border-gray-800 flex items-center justify-between">
               <h2 className="text-sm font-semibold flex items-center gap-2">
                 <Link2 className="h-4 w-4 text-blue-500" />
@@ -829,7 +829,7 @@ export default function SplicePointsPage() {
               <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="text-center">
-                    <p className="text-[10px] text-gray-500 mb-1">Incoming</p>
+                    <p className="text-[10px] text-muted-foreground mb-1">Incoming</p>
                     <p className="text-sm font-semibold">{selectedSplice.incomingCore?.tube?.cable?.code || '-'}</p>
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <div 
@@ -850,7 +850,7 @@ export default function SplicePointsPage() {
                   </div>
                   
                   <div className="text-center">
-                    <p className="text-[10px] text-gray-500 mb-1">Outgoing</p>
+                    <p className="text-[10px] text-muted-foreground mb-1">Outgoing</p>
                     <p className="text-sm font-semibold">{selectedSplice.outgoingCore?.tube?.cable?.code || '-'}</p>
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <div 
@@ -869,7 +869,7 @@ export default function SplicePointsPage() {
               {/* Details */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between py-2 border-b dark:border-gray-700">
-                  <span className="text-xs text-gray-500">Insertion Loss</span>
+                  <span className="text-xs text-muted-foreground">Insertion Loss</span>
                   <span className={`text-sm font-bold ${getLossQuality(selectedSplice.insertionLoss).color}`}>
                     {selectedSplice.insertionLoss != null ? `${selectedSplice.insertionLoss.toFixed(3)} dB` : '-'}
                     <span className="text-[10px] font-normal ml-1">
@@ -879,19 +879,19 @@ export default function SplicePointsPage() {
                 </div>
                 {selectedSplice.locationDescription && (
                   <div className="flex items-center justify-between py-2 border-b dark:border-gray-700">
-                    <span className="text-xs text-gray-500">{t('common.location')}</span>
+                    <span className="text-xs text-muted-foreground">{t('common.location')}</span>
                     <span className="text-sm">{selectedSplice.locationDescription}</span>
                   </div>
                 )}
                 {selectedSplice.splicedBy && (
                   <div className="flex items-center justify-between py-2 border-b dark:border-gray-700">
-                    <span className="text-xs text-gray-500">Spliced By</span>
+                    <span className="text-xs text-muted-foreground">Spliced By</span>
                     <span className="text-sm">{selectedSplice.splicedBy}</span>
                   </div>
                 )}
                 {selectedSplice.splicedAt && (
                   <div className="flex items-center justify-between py-2 border-b dark:border-gray-700">
-                    <span className="text-xs text-gray-500">{t('common.date')}</span>
+                    <span className="text-xs text-muted-foreground">{t('common.date')}</span>
                     <span className="text-sm">
                       {formatWIB(selectedSplice.splicedAt, 'dd/MM/yyyy HH:mm')}
                     </span>
@@ -899,7 +899,7 @@ export default function SplicePointsPage() {
                 )}
                 {selectedSplice.notes && (
                   <div className="py-2">
-                    <span className="text-xs text-gray-500 block mb-1">{t('common.notes')}</span>
+                    <span className="text-xs text-muted-foreground block mb-1">{t('common.notes')}</span>
                     <p className="text-sm bg-gray-50 dark:bg-gray-800 p-2 rounded">{selectedSplice.notes}</p>
                   </div>
                 )}

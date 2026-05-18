@@ -112,7 +112,7 @@ function LogicalTraceTab() {
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-12 text-center border border-gray-200 dark:border-gray-700">
               <GitBranch className="w-20 h-20 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-300 mb-2">{t('network.tracing.selectNodeToStart')}</h3>
-              <p className="text-sm text-gray-500">{t('network.tracing.selectNodeDescription')}</p>
+              <p className="text-sm text-muted-foreground">{t('network.tracing.selectNodeDescription')}</p>
             </div>
           )}
         </div>
@@ -180,8 +180,8 @@ function PhysicalTraceTab() {
             {point.data.deviceType && <Badge variant="outline">{point.data.deviceType}</Badge>}
           </div>
           <div className="text-sm space-y-1">
-            {point.type === 'core' && (<><p className="font-medium">{point.data.cableCode} - Tube {point.data.tubeNumber}, Core {point.data.coreNumber}</p><p className="text-gray-500">Color: <span style={{ color: point.data.colorHex }}>{point.data.colorCode}</span></p>{point.data.cableName && <p className="text-gray-400 text-xs">{point.data.cableName}</p>}</>)}
-            {point.type === 'splice' && (<><p className="font-medium">Splice Point ({point.data.spliceType})</p>{point.data.insertionLoss !== undefined && <p className="text-gray-500">Loss: {point.data.insertionLoss} dB</p>}{point.data.locationDescription && <p className="text-gray-400 text-xs flex items-center gap-1"><MapPin className="h-3 w-3" />{point.data.locationDescription}</p>}</>)}
+            {point.type === 'core' && (<><p className="font-medium">{point.data.cableCode} - Tube {point.data.tubeNumber}, Core {point.data.coreNumber}</p><p className="text-muted-foreground">Color: <span style={{ color: point.data.colorHex }}>{point.data.colorCode}</span></p>{point.data.cableName && <p className="text-gray-400 text-xs">{point.data.cableName}</p>}</>)}
+            {point.type === 'splice' && (<><p className="font-medium">Splice Point ({point.data.spliceType})</p>{point.data.insertionLoss !== undefined && <p className="text-muted-foreground">Loss: {point.data.insertionLoss} dB</p>}{point.data.locationDescription && <p className="text-gray-400 text-xs flex items-center gap-1"><MapPin className="h-3 w-3" />{point.data.locationDescription}</p>}</>)}
             {point.type === 'device' && (<><p className="font-medium">{point.data.deviceType}: {point.data.deviceName || point.data.deviceId}</p>{point.data.locationDescription && <p className="text-gray-400 text-xs flex items-center gap-1"><MapPin className="h-3 w-3" />{point.data.locationDescription}</p>}</>)}
           </div>
         </div>
@@ -245,14 +245,14 @@ function PhysicalTraceTab() {
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[['Cores in Path', traceResult.coreCount, 'text-blue-600'], ['Splice Points', traceResult.spliceCount, 'text-yellow-600'], ['Total Length (m)', traceResult.totalLength ? traceResult.totalLength.toFixed(2) : '-', 'text-green-600'], ['Total Loss (dB)', traceResult.totalLoss ? traceResult.totalLoss.toFixed(2) : '-', 'text-red-600']].map(([label, value, cls]) => (
-              <Card key={label as string}><CardContent className="p-5 text-center"><p className={`text-3xl font-bold ${cls}`}>{value}</p><p className="text-sm text-gray-500">{label}</p></CardContent></Card>
+              <Card key={label as string}><CardContent className="p-5 text-center"><p className={`text-3xl font-bold ${cls}`}>{value}</p><p className="text-sm text-muted-foreground">{label}</p></CardContent></Card>
             ))}
           </div>
           <Card>
             <CardHeader className="px-5 pt-5 pb-3"><CardTitle className="flex items-center gap-2.5 leading-snug"><Route className="h-5 w-5" />Fiber Path</CardTitle><CardDescription>Total points: {traceResult.path.length}</CardDescription></CardHeader>
             <CardContent className="px-5 pt-0 pb-5">
               {traceResult.path.length === 0
-                ? <div className="text-center py-8"><AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" /><p className="text-gray-500">No fiber path found</p></div>
+                ? <div className="text-center py-8"><AlertTriangle className="h-12 w-12 text-yellow-500 mx-auto mb-4" /><p className="text-muted-foreground">No fiber path found</p></div>
                 : <div className="pl-2">{traceResult.path.map((p, i) => renderTracePoint(p, i, i === traceResult.path.length - 1))}</div>}
             </CardContent>
           </Card>
@@ -288,13 +288,13 @@ function PhysicalTraceTab() {
           <CardContent className="p-6 sm:p-8 text-center">
             <Route className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">How to Trace Fiber Paths</h3>
-            <p className="text-gray-500 max-w-md mx-auto">Select a search type, enter the core ID or device details, and click Trace to visualize the complete fiber path.</p>
+            <p className="text-muted-foreground max-w-md mx-auto">Select a search type, enter the core ID or device details, and click Trace to visualize the complete fiber path.</p>
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
               {[['By Core ID', 'Trace from a specific fiber core', Cable, 'text-blue-500'], ['By Device', 'Trace from ODP, OTB, or customer', Box, 'text-green-500'], ['View Splices', 'See all splice points in path', Link2, 'text-yellow-500']].map(([title, desc, Icon, cls]) => (
                 <div key={title as string} className="p-4 bg-white dark:bg-gray-800 rounded-lg border">
                   {React.createElement(Icon as any, { className: `h-8 w-8 ${cls} mx-auto mb-2` })}
                   <p className="text-sm font-medium">{title as string}</p>
-                  <p className="text-xs text-gray-500">{desc as string}</p>
+                  <p className="text-xs text-muted-foreground">{desc as string}</p>
                 </div>
               ))}
             </div>
@@ -316,7 +316,7 @@ export default function TracePage() {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Network Trace</h1>
-          <p className="text-gray-500 dark:text-gray-400">Logical path tracing and physical fiber tracing</p>
+          <p className="text-muted-foreground dark:text-gray-400">Logical path tracing and physical fiber tracing</p>
         </div>
 
         {/* Tabs */}

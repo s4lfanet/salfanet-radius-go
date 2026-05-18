@@ -234,7 +234,7 @@ export default function FiberJointClosuresPage() {
             <Link2 className="h-6 w-6 text-purple-500" />
             {t('network.jointClosure.title') || 'Joint Closure Management'}
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
+          <p className="text-muted-foreground dark:text-gray-400 text-sm mt-1">
             {t('network.jointClosure.subtitle') || 'Manage Joint Closures (JC)'}
           </p>
         </div>
@@ -294,7 +294,7 @@ export default function FiberJointClosuresPage() {
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
             <p className={`text-2xl font-bold ${color}`}>{value}</p>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
+            <p className="text-sm text-muted-foreground dark:text-gray-400">{label}</p>
           </div>
         ))}
       </div>
@@ -304,12 +304,12 @@ export default function FiberJointClosuresPage() {
         {loading ? (
           <div className="text-center py-12">
             <RefreshCcw className="h-8 w-8 animate-spin text-purple-500 mx-auto mb-2" />
-            <p className="text-gray-500">{t('common.loading') || 'Loading...'}</p>
+            <p className="text-muted-foreground">{t('common.loading') || 'Loading...'}</p>
           </div>
         ) : filteredJCs.length === 0 ? (
           <div className="text-center py-12">
             <Link2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500 dark:text-gray-400">
+            <p className="text-muted-foreground dark:text-gray-400">
               {jointClosures.length === 0
                 ? t('network.diagram.noJointClosures') || 'No Joint Closures yet'
                 : t('common.noResults') || 'No results'}
@@ -328,19 +328,19 @@ export default function FiberJointClosuresPage() {
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-900/50 border-b border-gray-200 dark:border-gray-700">
                 <tr>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground dark:text-gray-400 uppercase tracking-wider">
                     {t('network.jointClosure.code') || 'Code'} / {t('network.jointClosure.name') || 'Name'}
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
                     {t('network.jointClosure.type') || 'Type'}
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
                     {t('network.jointClosure.fiberCount') || 'Fibers'}
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground dark:text-gray-400 uppercase tracking-wider">
                     {t('common.status') || 'Status'}
                   </th>
-                  <th className="text-left py-3 px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
+                  <th className="text-left py-3 px-4 text-xs font-semibold text-muted-foreground dark:text-gray-400 uppercase tracking-wider hidden md:table-cell">
                     {t('network.jointClosure.location') || 'Location'}
                   </th>
                   <th className="py-3 px-4" />
@@ -352,7 +352,7 @@ export default function FiberJointClosuresPage() {
                     <td className="py-3 px-4">
                       <div>
                         <p className="font-medium text-gray-900 dark:text-white">{jc.name}</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{jc.code}</p>
+                        <p className="text-xs text-muted-foreground dark:text-gray-400 font-mono">{jc.code}</p>
                       </div>
                     </td>
                     <td className="py-3 px-4 hidden sm:table-cell">
@@ -374,7 +374,7 @@ export default function FiberJointClosuresPage() {
                     </td>
                     <td className="py-3 px-4 hidden md:table-cell">
                       {jc.address ? (
-                        <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 max-w-[200px]">
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground dark:text-gray-400 max-w-[200px]">
                           <MapPin className="h-3 w-3 shrink-0" />
                           <span className="truncate">{jc.address}</span>
                         </div>
@@ -388,14 +388,14 @@ export default function FiberJointClosuresPage() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => openEditDialog(jc)}
-                          className="p-1.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded transition-colors"
+                          className="p-1.5 text-muted-foreground hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded transition-colors"
                           title={t('network.jointClosure.edit') || 'Edit'}
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(jc)}
-                          className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                          className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
                           title={t('common.delete') || 'Delete'}
                         >
                           <Trash2 className="h-4 w-4" />

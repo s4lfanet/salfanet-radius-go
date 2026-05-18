@@ -265,12 +265,12 @@ export default function UnifiedMapPage() {
   };
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[44px] lg:left-64 flex flex-col bg-white dark:bg-gray-900 z-10">
+    <div className="fixed inset-x-0 bottom-0 top-[44px] lg:left-64 flex flex-col bg-card z-10">
       {/* Page Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 shrink-0 flex items-center gap-3">
         <div className="flex-1 min-w-0">
           <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{t('network.unifiedMap.title')}</h1>
-          <p className="hidden sm:block text-gray-500 dark:text-gray-400 mt-0.5 text-sm">{t('network.unifiedMap.subtitle')}</p>
+          <p className="hidden sm:block text-muted-foreground dark:text-gray-400 mt-0.5 text-sm">{t('network.unifiedMap.subtitle')}</p>
         </div>
       </div>
 
@@ -296,7 +296,7 @@ export default function UnifiedMapPage() {
             <span className="font-semibold text-gray-900 dark:text-white text-sm">
               {t('network.unifiedMap.statisticsTitle')} & Filter
             </span>
-            <button onClick={() => setShowPanel(false)} className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500">
+            <button onClick={() => setShowPanel(false)} className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-muted-foreground">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -357,7 +357,7 @@ export default function UnifiedMapPage() {
                 'flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-sm font-medium shadow-lg transition-all border',
                 showConnections
                   ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500 border-gray-300 dark:border-gray-600',
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-muted-foreground border-gray-300 dark:border-gray-600',
               )}
             >
               {showConnections ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -452,7 +452,7 @@ export default function UnifiedMapPage() {
                 </div>
 
                 {/* Info */}
-                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-4 text-xs text-gray-500 dark:text-gray-400">
+                <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-4 text-xs text-muted-foreground dark:text-gray-400">
                   {connectSource.type === 'OTB' && connectTarget.type === 'JOINT_CLOSURE' && (
                     <p>Semua tube dari kabel feeder OTB akan otomatis diteruskan ke JC ini (patch-through). Core assignment otomatis.</p>
                   )}
@@ -526,12 +526,12 @@ export default function UnifiedMapPage() {
                 ].map(([icon, cls, label]) => (
                   <div key={label} className="flex items-center gap-1.5">
                     <span className={cls}>{icon}</span>
-                    <span className="text-gray-500 dark:text-gray-300">{label}</span>
+                    <span className="text-muted-foreground dark:text-gray-300">{label}</span>
                   </div>
                 ))}
                 {/* Connection line legend */}
                 <div className="border-t border-gray-200/60 dark:border-gray-700/60 mt-1.5 pt-1.5">
-                  <span className="text-gray-400 dark:text-gray-500 font-semibold text-[10px] uppercase tracking-wider">Koneksi</span>
+                  <span className="text-gray-400 dark:text-muted-foreground font-semibold text-[10px] uppercase tracking-wider">Koneksi</span>
                   {[
                     ['#a855f7', 'OTB → JC (Feeder)'],
                     ['#8b5cf6', 'JC → JC (Branch)'],
@@ -540,7 +540,7 @@ export default function UnifiedMapPage() {
                   ].map(([color, label]) => (
                     <div key={label} className="flex items-center gap-1.5">
                       <div className="w-4 h-0.5 rounded" style={{ backgroundColor: color as string }} />
-                      <span className="text-gray-500 dark:text-gray-300">{label}</span>
+                      <span className="text-muted-foreground dark:text-gray-300">{label}</span>
                     </div>
                   ))}
                   {connections.length > 0 && (
