@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.51.7] — 2026-05-19
+### Fixed
+- **updater.sh menyebabkan 502 setelah update** — Serangkaian bug yang saling terkait: (1) `local SVC_FILE` di luar function → `set -e` exit dini sebelum Go build & PM2 restart; (2) rsync `--delete` hapus `logs/` & `bin/` → salfanet-api gagal start dengan `status=226/NAMESPACE`; (3) `rm -rf .next` sebelum build → jika build gagal tidak ada fallback; (4) PM2 processes tidak pernah di-restore jika script exit di tengah jalan.
+### Changed
+- **updater.sh self-healing** — Tambah `_ensure_services_up()` trap (`trap ... EXIT`) yang selalu memulihkan salfanet-api dan PM2 salfanet-radius jika script exit abnormal. PM2 sekarang di-start dengan build lama segera setelah rsync (downtime minimal selama update). Setelah build selesai, pm2 reload + verifikasi online + self-heal otomatis jika masih failed.
+- **updater.sh no rm .next** — Build incremental (tidak wipe .next sebelum build), sehingga jika build gagal site tetap berjalan dengan versi sebelumnya.
+- **updater.sh exclude logs/ bin/ dari rsync** — `--exclude='logs/' --exclude='bin/'` ditambahkan ke rsync supaya direktori tidak dihapus oleh `--delete`.
+- **updater.sh PM2 orphan process** — Tambah `fuser -k 3000/tcp` sebelum PM2 start untuk mencegah EADDRINUSE jika ada orphan node process.
+### Files
+- `vps-install/updater.sh` — Multiple fixes: trap, no rm .next, mkdir logs/bin, rsync exclude, PM2 self-heal & verify
+
+---
+
 ## [2.51.6] — 2026-05-20
 ### Fixed
 - **WireGuard/L2TP UI menampilkan "belum terinstall" meski sudah terinstall** — Root cause: nginx route semua `/api/*` ke Go backend (port 8080), bukan Next.js. Go handler `ListWGPeers` hanya return list DB peers (bukan server info), dan `GetVPSL2TPInfo` return stub `{enabled: false}`. Frontend membaca `data.installed` yang tidak ada → dianggap false. Fix: implementasi Go yang membaca `/etc/wireguard/wg-server-info.json` dan `/etc/salfanet/l2tp/l2tp-server-info.json`, dengan fallback parse `wg0.conf`/`xl2tpd.conf` + `ipsec.secrets` jika file JSON tidak ada (auto-recovery).
