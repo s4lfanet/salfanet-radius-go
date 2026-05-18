@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.3 — 2026-05-18
+
+### Fixed
+- **install-nginx.sh missing /api/push/send** — Fresh install tidak punya `location = /api/push/send` → Next.js, sehingga Push Notifikasi tetap 405. Ditambahkan ke kedua heredoc function (`_proxy_locations` dan `_proxy_locations_https_domain`).
+### Files
+- `vps-install/install-nginx.sh` — Tambah location = /api/push/send → Next.js di kedua proxy helper
+
 ### v2.51.2 — 2026-05-19
 
 ### Changed
@@ -515,21 +522,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **GET /api/tickets/stats dan /api/tickets/categories 404** — Route extension (`ticketExtH`) didaftarkan di level `api.Get(...)` setelah group `tickets` yang sudah punya wildcard `/:id`. Wildcard menangkap request lebih dulu sehingga handler mencari tiket dengan id="stats"/"categories" → 404. Fix: pindah semua ticket extension routes ke dalam group `tickets`, sebelum `/:id`, agar Fiber match spesifik dulu.
 ### Files
 - `internal/api/router.go` — Ticket extension routes (`/stats`, `/categories`, `/messages`, `/dispatch`) dipindah ke dalam `tickets` group sebelum wildcard `/:id`
-
-### v2.50.8 — 2026-05-18
-
-### Fixed
-- **TypeError: Cannot read toLocaleString of undefined di /admin/laporan/analitik** — Root cause: Go backend mengembalikan format summary berbeda dari yang diharapkan halaman (`activeUsers` bukan `currentActiveUsers`, tidak ada `monthlyData`, `avgArpu`, dll). Fix: (1) tambah null guards di `fmtIDR`, `fmtIDRFull`, dan `currentActiveUsers` access; (2) tambah nginx `location = /api/admin/analytics` → Next.js port 3000 agar route Next.js yang detail (churn, ARPU, monthly data) digunakan, bukan Go handler yang simplified.
-### Files
-- `src/app/admin/laporan/analitik/page.tsx` — Null guards: `fmtIDR`/`fmtIDRFull` handle undefined/null, `AnalyticsSummary` interface semua field optional, `currentActiveUsers` fallback ke `activeUsers`
-- `production/nginx-radius.hotspotapp.net.conf` — Tambah `location = /api/admin/analytics` → port 3000 (Next.js) sebelum catch-all `/api/` → Go
-
-
-### Fixed
-- **Error 521 Cloudflare** — Setelah deploy config HTTP-only, Cloudflare Full SSL mode tidak bisa connect ke port 443 (tidak listening) → 521. Fix: tambah `listen 443 ssl` + `listen [::]:443 ssl` dengan snakeoil cert ke nginx config agar support kedua mode (Flexible dan Full).
-- **CSP violation Leaflet CSS (final fix)** — Root cause: nginx `sites-enabled/` punya dua config konflik untuk `radius.hotspotapp.net`. Config aktif tidak punya CSP, sehingga CSP dari Next.js (build lama tanpa cdnjs) yang terpakai. Fix: deploy `nginx-radius.hotspotapp.net.conf` ke `sites-available/radius.hotspotapp.net`, hapus `sites-enabled/salfanet-radius`, reload nginx. CSP sekarang dari nginx dengan `proxy_hide_header Content-Security-Policy` + `add_header` baru yang mencakup `https://cdnjs.cloudflare.com`.
-### Files
-- `production/nginx-radius.hotspotapp.net.conf` — Tambah `listen 443 ssl` + snakeoil cert, CSP dengan cdnjs di `location /`
 
 <!-- AUTO-CHANGELOG:END -->
 
