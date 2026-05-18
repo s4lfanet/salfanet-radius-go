@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.7 — 2026-05-19
+
+### Fixed
+- **updater.sh menyebabkan 502 setelah update** — Serangkaian bug yang saling terkait: (1) `local SVC_FILE` di luar function → `set -e` exit dini sebelum Go build & PM2 restart; (2) rsync `--delete` hapus `logs/` & `bin/` → salfanet-api gagal start dengan `status=226/NAMESPACE`; (3) `rm -rf .next` sebelum build → jika build gagal tidak ada fallback; (4) PM2 processes tidak pernah di-restore jika script exit di tengah jalan.
+### Changed
+- **updater.sh self-healing** — Tambah `_ensure_services_up()` trap (`trap ... EXIT`) yang selalu memulihkan salfanet-api dan PM2 salfanet-radius jika script exit abnormal. PM2 sekarang di-start dengan build lama segera setelah rsync (downtime minimal selama update). Setelah build selesai, pm2 reload + verifikasi online + self-heal otomatis jika masih failed.
+- **updater.sh no rm .next** — Build incremental (tidak wipe .next sebelum build), sehingga jika build gagal site tetap berjalan dengan versi sebelumnya.
+- **updater.sh exclude logs/ bin/ dari rsync** — `--exclude='logs/' --exclude='bin/'` ditambahkan ke rsync supaya direktori tidak dihapus oleh `--delete`.
+- **updater.sh PM2 orphan process** — Tambah `fuser -k 3000/tcp` sebelum PM2 start untuk mencegah EADDRINUSE jika ada orphan node process.
+### Files
+- `vps-install/updater.sh` — Multiple fixes: trap, no rm .next, mkdir logs/bin, rsync exclude, PM2 self-heal & verify
+
 ### v2.51.6 — 2026-05-20
 
 ### Fixed
@@ -526,13 +538,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **install-nginx.sh missing /api/push/send** — Fresh install tidak punya `location = /api/push/send` → Next.js, sehingga Push Notifikasi tetap 405. Ditambahkan ke kedua heredoc function (`_proxy_locations` dan `_proxy_locations_https_domain`).
 ### Files
 - `vps-install/install-nginx.sh` — Tambah location = /api/push/send → Next.js di kedua proxy helper
-
-### v2.51.2 — 2026-05-19
-
-### Changed
-- **Cleanup repo — hapus folder dev-only dari GitHub** — `OLT-ZTE-C320-Provisioning-main/` (118 file proyek Laravel terpisah), `update-olt-opt/` (patch script Go), dan `update-qris/` (patch script Next.js) dihapus dari git tracking. Tidak relevan dengan production salfanet-radius.
-### Files
-- `.gitignore` — Tambah exclusion untuk `OLT-ZTE-C320-Provisioning-main/`, `update-olt-opt/`, `update-qris/`
 
 <!-- AUTO-CHANGELOG:END -->
 
