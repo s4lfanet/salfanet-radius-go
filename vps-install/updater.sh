@@ -376,6 +376,9 @@ if [ -n "$USE_BRANCH" ]; then
     done
     print_success "Stale file cleanup done"
 
+    # ── Ensure required directories exist (rsync --delete may remove them) ─
+    mkdir -p "${APP_DIR}/logs" "${APP_DIR}/bin"
+
     # ── Patch systemd service if ReadWritePaths is missing /uploads ───────
     # (Fixed in v2.47.13 — ProtectSystem=strict blocked writes to /uploads)
     SVC_FILE="/etc/systemd/system/salfanet-api.service"
