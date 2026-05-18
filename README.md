@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.8 — 2026-05-19
+
+### Fixed
+- **405 Method Not Allowed saat simpan konfigurasi WireGuard / L2TP** — `PATCH /api/network/vps-wg-peer` dan `PATCH /api/network/vps-l2tp-peer` tidak terdaftar di Go router (hanya ada di Next.js route handler lama yang sekarang tidak dipakai karena semua `/api/*` diproxy ke Go). `PATCH` juga tidak ada di daftar `AllowMethods` CORS sehingga preflight OPTIONS gagal.
+### Added
+- **Go handler `PatchWGServerConfig`** — `PATCH /api/network/vps-wg-peer`: update `poolStart`, `poolEnd`, `gatewayIp` di `wg-server-info.json`. Jika `gatewayIp` berubah, otomatis update `Address =` di `wg0.conf`, update PostUp/PostDown iptables, lalu restart WireGuard interface (`wg-quick down/up`).
+- **Go handler `PatchL2TPServerConfig`** — `PATCH /api/network/vps-l2tp-peer`: update `poolStart`, `poolEnd`, `gateway` di `l2tp-server-info.json`, restart xl2tpd + reload ipsec, pastikan iptables rules untuk `ppp+`.
+- **CORS PATCH** — Tambah `"PATCH"` ke `AllowMethods` di CORS middleware.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `PatchWGServerConfig` dan `PatchL2TPServerConfig`
+- `internal/api/router.go` — Register `api.Patch("/network/vps-wg-peer", ...)`, `api.Patch("/network/vps-l2tp-peer", ...)`, dan `"PATCH"` di CORS AllowMethods
+
 ### v2.51.7 — 2026-05-19
 
 ### Fixed
@@ -531,13 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **system/page.tsx duplikat deklarasi** — Build gagal karena `interface SystemInfo`, `formatUptime`, `InfoCard`, `CmdBlock` dideklraasikan dua kali. Blok duplikat dihapus.
 ### Files
 - `src/app/admin/system/page.tsx` — Hapus blok duplikat (~52 baris) yang menyebabkan TypeScript build error
-
-### v2.51.3 — 2026-05-18
-
-### Fixed
-- **install-nginx.sh missing /api/push/send** — Fresh install tidak punya `location = /api/push/send` → Next.js, sehingga Push Notifikasi tetap 405. Ditambahkan ke kedua heredoc function (`_proxy_locations` dan `_proxy_locations_https_domain`).
-### Files
-- `vps-install/install-nginx.sh` — Tambah location = /api/push/send → Next.js di kedua proxy helper
 
 <!-- AUTO-CHANGELOG:END -->
 
