@@ -17,7 +17,10 @@ func NewTicketExtHandler(db *gorm.DB) *TicketExtHandler { return &TicketExtHandl
 func (h *TicketExtHandler) ListCategories(c fiber.Ctx) error {
 	var cats []models.TicketCategory
 	h.db.Order("name").Find(&cats)
-	return c.JSON(fiber.Map{"success": true, "categories": cats})
+	if cats == nil {
+		cats = []models.TicketCategory{}
+	}
+	return c.JSON(cats)
 }
 
 // POST /api/tickets/categories
@@ -40,35 +43,38 @@ func (h *TicketExtHandler) CreateCategory(c fiber.Ctx) error {
 
 // GET /api/tickets/stats
 func (h *TicketExtHandler) Stats(c fiber.Ctx) error {
-	type TicketStats struct {
-		Total    int64
-		Open     int64
-		Resolved int64
-		Pending  int64
-	}
-	var stats TicketStats
-	h.db.Model(&models.Ticket{}).Count(&stats.Total)
-	h.db.Model(&models.Ticket{}).Where("status = ?", "OPEN").Count(&stats.Open)
-	h.db.Model(&models.Ticket{}).Where("status = ?", "RESOLVED").Count(&stats.Resolved)
-	h.db.Model(&models.Ticket{}).Where("status = ?", "PENDING").Count(&stats.Pending)
+	var total, open, inProgress, waitingCustomer, resolved, closed int64
+	var low, medium, high, urgent, unassigned int64
 
-	type CategoryCount struct {
-		CategoryID   *string `json:"categoryId"`
-		CategoryName string  `json:"categoryName"`
-		Count        int64   `json:"count"`
-	}
-	var byCategory []CategoryCount
-	h.db.Raw(`SELECT t.categoryId, c.name as category_name, COUNT(t.id) as count
-		FROM tickets t LEFT JOIN ticket_categories c ON c.id = t.categoryId
-		GROUP BY t.categoryId, c.name ORDER BY count DESC`).Scan(&byCategory)
+	h.db.Model(&models.Ticket{}).Count(&total)
+	h.db.Model(&models.Ticket{}).Where("status = ?", "OPEN").Count(&open)
+	h.db.Model(&models.Ticket{}).Where("status = ?", "IN_PROGRESS").Count(&inProgress)
+	h.db.Model(&models.Ticket{}).Where("status = ?", "WAITING_CUSTOMER").Count(&waitingCustomer)
+	h.db.Model(&models.Ticket{}).Where("status = ?", "RESOLVED").Count(&resolved)
+	h.db.Model(&models.Ticket{}).Where("status = ?", "CLOSED").Count(&closed)
+	h.db.Model(&models.Ticket{}).Where("priority = ?", "LOW").Count(&low)
+	h.db.Model(&models.Ticket{}).Where("priority = ?", "MEDIUM").Count(&medium)
+	h.db.Model(&models.Ticket{}).Where("priority = ?", "HIGH").Count(&high)
+	h.db.Model(&models.Ticket{}).Where("priority = ?", "URGENT").Count(&urgent)
+	h.db.Model(&models.Ticket{}).Where("assignedToId IS NULL AND status = ?", "OPEN").Count(&unassigned)
 
 	return c.JSON(fiber.Map{
-		"success":    true,
-		"total":      stats.Total,
-		"open":       stats.Open,
-		"resolved":   stats.Resolved,
-		"pending":    stats.Pending,
-		"byCategory": byCategory,
+		"total": total,
+		"byStatus": fiber.Map{
+			"open":            open,
+			"inProgress":      inProgress,
+			"waitingCustomer": waitingCustomer,
+			"resolved":        resolved,
+			"closed":          closed,
+		},
+		"byPriority": fiber.Map{
+			"low":    low,
+			"medium": medium,
+			"high":   high,
+			"urgent": urgent,
+		},
+		"unassigned":          unassigned,
+		"avgResponseTimeHours": 0,
 	})
 }
 
