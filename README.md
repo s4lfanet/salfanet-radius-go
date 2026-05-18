@@ -469,6 +469,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.50.2 — 2026-05-18
+
+### Fixed
+- **GenieACS parameter-config crash** — Go handler `ListVirtualParameters` mengembalikan key `"parameters"` tapi frontend membaca `data.data` → `TypeError: Cannot read properties of undefined (reading 'filter')`. Diperbaiki: key diubah ke `"data"` + tambah optional chaining `(data.data ?? []).filter(...)`.
+- **Tasks page GenieACS not-configured** — saat `/api/genieacs/tasks` mengembalikan 400 (GenieACS belum dikonfigurasi), halaman sekarang menampilkan banner peringatan dengan link ke pengaturan, bukan diam-diam tampilkan list kosong.
+### Files
+- `internal/api/handlers/settings_genieacs.go` — key `"parameters"` → `"data"`
+- `src/app/admin/genieacs/parameter-config/page.tsx` — optional chaining `(data.data ?? []).filter(...)`
+- `src/app/admin/genieacs/tasks/page.tsx` — banner "GenieACS belum dikonfigurasi" saat 400
+
 ### v2.50.1 — 2026-05-18
 
 ### Added
@@ -557,16 +567,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/settings_genieacs.go` — SSEVoucherUpdates jadi proper long-lived SSE stream
 - `src/app/admin/pppoe/profiles/page.tsx` — loadRouterList & handleSyncMikrotik modal gunakan `/api/network/routers`
 - `src/app/admin/pppoe/registrations/page.tsx` — useEffect gunakan `/api/network/routers`
-
-### v2.48.4 — 2026-05-17
-
-### Fixed
-- **`admin/hotspot/template` crash `u.map is not a function`** — Go `GET /api/voucher-templates` return `{ success: true, templates: [...] }`. Frontend langsung `.map()` di response → crash. Fix: handler return raw array.
-- **`admin/hotspot/voucher` crash `t.filter is not a function`** — Sama, handler return wrapped object bukan array. Fix sama: return raw array.
-- **`admin/settings/referral` crash `Cannot read properties of undefined (reading 'enabled')`** — Go `PUT /api/admin/referrals/config` return `{ success: true, message: "..." }` tanpa field `config`. Frontend `setConfig(data.config)` → `setConfig(undefined)` → render crash. Fix: handler return `config` dalam response. GET juga fix: baca dari Company DB, return semua 5 fields dengan default.
-### Files
-- `internal/api/handlers/voucher_templates.go` — List return raw array (bukan wrapped object)
-- `internal/api/handlers/referrals.go` — GetConfig baca dari Company, UpdateConfig save ke Company dan return config
 
 <!-- AUTO-CHANGELOG:END -->
 
