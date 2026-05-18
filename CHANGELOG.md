@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.51.9] — 2026-05-19
+### Fixed
+- **Sidebar admin terlalu panjang** — Semua 7 kategori menu sebelumnya selalu terbuka (`useState(true)`). Sekarang kategori collapse by default; hanya kategori yang berisi halaman aktif yang auto-expand.
+### Files
+- `src/app/admin/AdminClientLayout.tsx` — `CategoryItem`: `useState(true)` → `useState(hasActiveItem)`
+
+---
+
 ## [2.51.8] — 2026-05-19
 ### Fixed
 - **405 Method Not Allowed saat simpan konfigurasi WireGuard / L2TP** — `PATCH /api/network/vps-wg-peer` dan `PATCH /api/network/vps-l2tp-peer` tidak terdaftar di Go router (hanya ada di Next.js route handler lama yang sekarang tidak dipakai karena semua `/api/*` diproxy ke Go). `PATCH` juga tidak ada di daftar `AllowMethods` CORS sehingga preflight OPTIONS gagal.
