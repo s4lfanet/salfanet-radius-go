@@ -480,3 +480,221 @@ func (h *NetworkVPNHandler) CreateWGPeer(c fiber.Ctx) error {
 	h.db.Create(&body)
 	return c.Status(201).JSON(fiber.Map{"success": true, "peer": body})
 }
+
+// PATCH /api/network/vps-wg-peer — update WireGuard server pool/gateway settings
+func (h *NetworkVPNHandler) PatchWGServerConfig(c fiber.Ctx) error {
+	info := readWGServerInfo()
+	if info == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "WireGuard belum di-install di VPS ini"})
+	}
+
+	var body struct {
+		PoolStart *string `json:"poolStart"`
+		PoolEnd   *string `json:"poolEnd"`
+		GatewayIp *string `json:"gatewayIp"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+
+	ipRe := regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}$`)
+
+	if body.PoolStart != nil {
+		s := strings.TrimSpace(*body.PoolStart)
+		if !ipRe.MatchString(s) {
+			return c.Status(400).JSON(fiber.Map{"error": "poolStart harus berupa IP lengkap, mis. 10.200.0.2"})
+		}
+		info["poolStart"] = s
+	}
+	if body.PoolEnd != nil {
+		s := strings.TrimSpace(*body.PoolEnd)
+		if !ipRe.MatchString(s) {
+			return c.Status(400).JSON(fiber.Map{"error": "poolEnd harus berupa IP lengkap, mis. 10.200.0.254"})
+		}
+		info["poolEnd"] = s
+	}
+
+	// lastOctet extracts the last octet from an IP string or treats float64 JSON number as-is
+	lastOctet := func(v any, def int) int {
+		switch val := v.(type) {
+		case float64:
+			return int(val)
+		case string:
+			s := strings.TrimSpace(val)
+			if strings.Contains(s, ".") {
+				parts := strings.Split(s, ".")
+				if n, err := strconv.Atoi(parts[len(parts)-1]); err == nil {
+					return n
+				}
+			}
+			if n, err := strconv.Atoi(s); err == nil {
+				return n
+			}
+		}
+		return def
+	}
+	if lastOctet(info["poolStart"], 2) >= lastOctet(info["poolEnd"], 254) {
+		return c.Status(400).JSON(fiber.Map{"error": "poolStart harus lebih kecil dari poolEnd"})
+	}
+
+	gatewayChanged := false
+	if body.GatewayIp != nil {
+		trimmed := strings.TrimSpace(*body.GatewayIp)
+		if trimmed != "" {
+			if !ipRe.MatchString(trimmed) {
+				return c.Status(400).JSON(fiber.Map{"error": "Format gatewayIp tidak valid"})
+			}
+			info["gatewayIp"] = trimmed
+			gatewayChanged = true
+		}
+	}
+
+	// Derive subnet from gatewayIp, or from poolStart prefix if no gatewayIp
+	gatewayIp, _ := info["gatewayIp"].(string)
+	if gatewayIp != "" && ipRe.MatchString(gatewayIp) {
+		parts := strings.Split(gatewayIp, ".")
+		info["subnet"] = strings.Join(parts[:3], ".") + ".0/24"
+	} else if ps, ok := info["poolStart"].(string); ok && strings.Contains(ps, ".") {
+		parts := strings.Split(ps, ".")
+		info["subnet"] = strings.Join(parts[:3], ".") + ".0/24"
+	}
+
+	// Update wg0.conf Address and restart WireGuard interface if gateway changed
+	if gatewayChanged && gatewayIp != "" {
+		confRaw, err := os.ReadFile(wgConfFile)
+		if err == nil {
+			conf := string(confRaw)
+			addrRe := regexp.MustCompile(`(?m)^(Address\s*=\s*)[\d./]+`)
+			conf = addrRe.ReplaceAllString(conf, "${1}"+gatewayIp+"/24")
+
+			postUp := "iptables -I INPUT -p udp --dport 51820 -j ACCEPT; iptables -I FORWARD -i wg0 -j ACCEPT; iptables -I FORWARD -o wg0 -j ACCEPT; iptables -I INPUT -i wg0 -p udp -m multiport --dports 1812,1813,3799 -j ACCEPT"
+			postDown := "iptables -D INPUT -p udp --dport 51820 -j ACCEPT; iptables -D FORWARD -i wg0 -j ACCEPT; iptables -D FORWARD -o wg0 -j ACCEPT; iptables -D INPUT -i wg0 -p udp -m multiport --dports 1812,1813,3799 -j ACCEPT"
+
+			postUpRe := regexp.MustCompile(`(?m)^PostUp\s*=.*`)
+			if postUpRe.MatchString(conf) {
+				conf = postUpRe.ReplaceAllString(conf, "PostUp = "+postUp)
+			} else {
+				conf = regexp.MustCompile(`(?m)^(\[Interface\])`).ReplaceAllString(conf, "$1\nPostUp = "+postUp)
+			}
+			postDownRe := regexp.MustCompile(`(?m)^PostDown\s*=.*`)
+			if postDownRe.MatchString(conf) {
+				conf = postDownRe.ReplaceAllString(conf, "PostDown = "+postDown)
+			} else {
+				conf = regexp.MustCompile(`(?m)^(PostUp\s*=.*)`).ReplaceAllString(conf, "$1\nPostDown = "+postDown)
+			}
+
+			_ = os.WriteFile(wgConfFile, []byte(conf), 0o640)
+			_ = exec.Command("wg-quick", "down", "wg0").Run()
+			_ = exec.Command("wg-quick", "up", "wg0").Run()
+		}
+	}
+
+	// Save updated info JSON
+	if raw, err := json.MarshalIndent(info, "", "  "); err == nil {
+		_ = os.WriteFile(wgInfoFile, append(raw, '\n'), 0o640)
+	}
+
+	return c.JSON(fiber.Map{
+		"success":   true,
+		"poolStart": info["poolStart"],
+		"poolEnd":   info["poolEnd"],
+		"gatewayIp": info["gatewayIp"],
+		"subnet":    info["subnet"],
+	})
+}
+
+// PATCH /api/network/vps-l2tp-peer — update L2TP server pool/gateway settings
+func (h *NetworkVPNHandler) PatchL2TPServerConfig(c fiber.Ctx) error {
+	info := readL2TPServerInfo()
+	if info == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "L2TP server belum di-install di VPS ini"})
+	}
+
+	var body struct {
+		PoolStart *string `json:"poolStart"`
+		PoolEnd   *string `json:"poolEnd"`
+		Gateway   *string `json:"gateway"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+
+	ipRe := regexp.MustCompile(`^(\d{1,3}\.){3}\d{1,3}$`)
+
+	if body.PoolStart != nil {
+		s := strings.TrimSpace(*body.PoolStart)
+		if !ipRe.MatchString(s) {
+			return c.Status(400).JSON(fiber.Map{"error": "poolStart harus berupa IP lengkap, mis. 10.201.0.10"})
+		}
+		info["poolStart"] = s
+	}
+	if body.PoolEnd != nil {
+		s := strings.TrimSpace(*body.PoolEnd)
+		if !ipRe.MatchString(s) {
+			return c.Status(400).JSON(fiber.Map{"error": "poolEnd harus berupa IP lengkap, mis. 10.201.0.254"})
+		}
+		info["poolEnd"] = s
+	}
+	if body.Gateway != nil {
+		trimmed := strings.TrimSpace(*body.Gateway)
+		if trimmed != "" {
+			if !ipRe.MatchString(trimmed) {
+				return c.Status(400).JSON(fiber.Map{"error": "Format gateway tidak valid"})
+			}
+			info["gateway"] = trimmed
+		}
+	}
+
+	// lastOctet extracts the last octet from an IP string or treats float64 JSON number as-is
+	lastOctet := func(v any, def int) int {
+		switch val := v.(type) {
+		case float64:
+			return int(val)
+		case string:
+			s := strings.TrimSpace(val)
+			if strings.Contains(s, ".") {
+				parts := strings.Split(s, ".")
+				if n, err := strconv.Atoi(parts[len(parts)-1]); err == nil {
+					return n
+				}
+			}
+			if n, err := strconv.Atoi(s); err == nil {
+				return n
+			}
+		}
+		return def
+	}
+	if lastOctet(info["poolStart"], 10) >= lastOctet(info["poolEnd"], 254) {
+		return c.Status(400).JSON(fiber.Map{"error": "poolStart harus lebih kecil dari poolEnd"})
+	}
+
+	// Save updated info JSON
+	_ = os.MkdirAll("/etc/salfanet/l2tp", 0o700)
+	if raw, err := json.MarshalIndent(info, "", "  "); err == nil {
+		_ = os.WriteFile(l2tpInfoFile, append(raw, '\n'), 0o640)
+	}
+
+	// Restart xl2tpd and reload ipsec (best-effort — non-fatal)
+	_ = exec.Command("systemctl", "restart", "xl2tpd").Run()
+	_ = exec.Command("ipsec", "reload").Run()
+
+	// Ensure iptables rules allow PPP traffic to reach RADIUS (idempotent check-then-insert)
+	for _, rule := range []string{
+		"FORWARD -i ppp+ -j ACCEPT",
+		"FORWARD -o ppp+ -j ACCEPT",
+		"INPUT -i ppp+ -p udp -m multiport --dports 1812,1813,3799 -j ACCEPT",
+	} {
+		checkArgs := append([]string{"-C"}, strings.Fields(rule)...)
+		if exec.Command("iptables", checkArgs...).Run() != nil {
+			insertArgs := append([]string{"-I"}, strings.Fields(rule)...)
+			_ = exec.Command("iptables", insertArgs...).Run()
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"success":   true,
+		"poolStart": info["poolStart"],
+		"poolEnd":   info["poolEnd"],
+		"gateway":   info["gateway"],
+	})
+}

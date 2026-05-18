@@ -37,7 +37,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: config.C.CORSOrigins,
 		AllowHeaders: []string{"Origin", "Content-Type", "Authorization"},
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 	}))
 
 	// ─── Handlers ────────────────────────────────────────────────────────────
@@ -1156,6 +1156,8 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/network/vps-l2tp-peer", networkVPNH.CreateL2TPPeer)
 	api.Get("/network/vps-wg-peer", networkVPNH.ListWGPeers)
 	api.Post("/network/vps-wg-peer", networkVPNH.CreateWGPeer)
+	api.Patch("/network/vps-wg-peer", networkVPNH.PatchWGServerConfig)
+	api.Patch("/network/vps-l2tp-peer", networkVPNH.PatchL2TPServerConfig)
 
 	// ─── Batch 11: Agent portal extras ────────────────────────────────────────
 	api.Get("/agent/deposit/check", agentH.DepositCheck)
