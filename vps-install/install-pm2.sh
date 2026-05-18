@@ -386,14 +386,16 @@ cleanup_pm2_processes() {
     # Remove stale root PM2 dump so old processes don't resurrect on reboot
     rm -f /root/.pm2/dump.pm2 /root/.pm2/dump.pm2.bak 2>/dev/null || true
 
-    # Cleanup app user PM2 processes using su - for proper environment
-    sudo su - ${APP_USER} -c 'pm2 delete all 2>/dev/null || true'
-    sudo su - ${APP_USER} -c 'pm2 delete salfanet-radius 2>/dev/null || true'
-    sudo su - ${APP_USER} -c 'pm2 delete salfanet-cron 2>/dev/null || true'
-    sudo su - ${APP_USER} -c 'pm2 kill 2>/dev/null || true'
-
-    # Remove stale PM2 dumps for app user as well
-    sudo su - ${APP_USER} -c 'rm -f ~/.pm2/dump.pm2 ~/.pm2/dump.pm2.bak 2>/dev/null || true'
+    # Cleanup app user PM2 processes — only needed when running as non-root
+    # (root cleanup already done above; sudo su - root is redundant and can
+    #  interfere with terminal/screen session when APP_USER=root)
+    if [ -n "${APP_USER}" ] && [ "${APP_USER}" != "root" ]; then
+        sudo su - ${APP_USER} -c 'pm2 delete all 2>/dev/null || true'
+        sudo su - ${APP_USER} -c 'pm2 delete salfanet-radius 2>/dev/null || true'
+        sudo su - ${APP_USER} -c 'pm2 delete salfanet-cron 2>/dev/null || true'
+        sudo su - ${APP_USER} -c 'pm2 kill 2>/dev/null || true'
+        sudo su - ${APP_USER} -c 'rm -f ~/.pm2/dump.pm2 ~/.pm2/dump.pm2.bak 2>/dev/null || true'
+    fi
 
     # Stop root PM2 startup service if app should run as non-root to avoid duplicate resurrection
     if [ -n "${APP_USER}" ] && [ "${APP_USER}" != "root" ]; then
@@ -402,11 +404,13 @@ cleanup_pm2_processes() {
     fi
     
     # Kill any Node processes that might be lingering
+    # IMPORTANT: Do NOT use pkill -f "/root/salfanet-radius" — that pattern matches
+    # the installer bash -c command itself and would kill this script!
     pkill -9 -f "node.*next-server" 2>/dev/null || true
-    pkill -9 -f "PM2.*salfanet" 2>/dev/null || true
-    pkill -9 -f "/root/salfanet-radius" 2>/dev/null || true
-    pkill -9 -f "/home/.*/salfanet-radius" 2>/dev/null || true
-    pkill -9 -f "/var/www/salfanet-radius" 2>/dev/null || true
+    pkill -9 -f "PM2 v.*God Daemon" 2>/dev/null || true
+    pkill -9 -f "node.*\.next/standalone/server\.js" 2>/dev/null || true
+    pkill -9 -f "node.*cron-service\.js" 2>/dev/null || true
+    pkill -9 -f "node.*wa-service\.js" 2>/dev/null || true
     
     # Final check on port 3000
     lsof -ti:3000 2>/dev/null | xargs -r kill -9 2>/dev/null || true
