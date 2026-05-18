@@ -469,6 +469,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.4 — 2026-05-19
+
+### Fixed
+- **VPS install test — sistem production ready** — Full fresh install test sukses: build OK, Go API healthy, nginx routing OK, FreeRADIUS aktif, MySQL aktif, semua PM2 processes online (salfanet-radius, salfanet-cron, salfanet-wa). Installer terbukti berjalan end-to-end tanpa error.
+- **system/page.tsx duplikat deklarasi** — Build gagal karena `interface SystemInfo`, `formatUptime`, `InfoCard`, `CmdBlock` dideklraasikan dua kali. Blok duplikat dihapus.
+### Files
+- `src/app/admin/system/page.tsx` — Hapus blok duplikat (~52 baris) yang menyebabkan TypeScript build error
+
 ### v2.51.3 — 2026-05-18
 
 ### Fixed
@@ -515,13 +523,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **TypeError di /admin/tickets dan /admin/tickets/categories** — Go handler `Stats` mengembalikan format flat `{open, resolved, pending}` tapi frontend mengharapkan `{byStatus: {open, inProgress, ...}, byPriority: {...}}` → crash `stats.byStatus.open`. Handler `ListCategories` mengembalikan `{success, categories:[]}` tapi frontend mengharapkan array langsung → crash `g.filter is not a function`. Fix: update kedua handler sesuai interface frontend.
 ### Files
 - `internal/api/handlers/ticket_ext.go` — `Stats` return nested `byStatus`/`byPriority`/`unassigned`; `ListCategories` return array langsung (bukan wrapped object)
-
-### v2.50.9 — 2026-05-18
-
-### Fixed
-- **GET /api/tickets/stats dan /api/tickets/categories 404** — Route extension (`ticketExtH`) didaftarkan di level `api.Get(...)` setelah group `tickets` yang sudah punya wildcard `/:id`. Wildcard menangkap request lebih dulu sehingga handler mencari tiket dengan id="stats"/"categories" → 404. Fix: pindah semua ticket extension routes ke dalam group `tickets`, sebelum `/:id`, agar Fiber match spesifik dulu.
-### Files
-- `internal/api/router.go` — Ticket extension routes (`/stats`, `/categories`, `/messages`, `/dispatch`) dipindah ke dalam `tickets` group sebelum wildcard `/:id`
 
 <!-- AUTO-CHANGELOG:END -->
 
