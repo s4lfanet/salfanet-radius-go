@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.51.3] — 2026-05-18
+### Fixed
+- **install-nginx.sh missing /api/push/send** — Fresh install tidak punya `location = /api/push/send` → Next.js, sehingga Push Notifikasi tetap 405. Ditambahkan ke kedua heredoc function (`_proxy_locations` dan `_proxy_locations_https_domain`).
+### Files
+- `vps-install/install-nginx.sh` — Tambah location = /api/push/send → Next.js di kedua proxy helper
+
+---
+
 ## [2.51.2] — 2026-05-19
 ### Changed
 - **Cleanup repo — hapus folder dev-only dari GitHub** — `OLT-ZTE-C320-Provisioning-main/` (118 file proyek Laravel terpisah), `update-olt-opt/` (patch script Go), dan `update-qris/` (patch script Next.js) dihapus dari git tracking. Tidak relevan dengan production salfanet-radius.
