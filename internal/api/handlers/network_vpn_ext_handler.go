@@ -242,6 +242,45 @@ type vpsPeer struct {
 
 func (vpsPeer) TableName() string { return "vps_peers" }
 
+// prismaVpnClient maps to the "vpn_clients" table managed by Prisma.
+// Prisma stores column names in camelCase — explicit gorm:"column:..." tags required.
+type prismaVpnClient struct {
+	ID              string    `gorm:"primaryKey;column:id" json:"id"`
+	Name            string    `gorm:"column:name" json:"name"`
+	VpnServerId     string    `gorm:"column:vpnServerId" json:"vpnServerId"`
+	VpnIp           string    `gorm:"column:vpnIp" json:"vpnIp"`
+	Username        string    `gorm:"column:username" json:"username"`
+	Password        string    `gorm:"column:password" json:"password"`
+	VpnType         string    `gorm:"column:vpnType" json:"vpnType"`
+	Description     *string   `gorm:"column:description" json:"description"`
+	WinboxPort      *int      `gorm:"column:winboxPort" json:"winboxPort"`
+	ApiUsername     *string   `gorm:"column:apiUsername" json:"apiUsername"`
+	ApiPassword     *string   `gorm:"column:apiPassword" json:"apiPassword"`
+	ClientPublicKey *string   `gorm:"column:clientPublicKey" json:"clientPublicKey"`
+	IsActive        bool      `gorm:"column:isActive" json:"isActive"`
+	IsRadiusServer  bool      `gorm:"column:isRadiusServer" json:"isRadiusServer"`
+	CreatedAt       time.Time `gorm:"column:createdAt" json:"createdAt"`
+}
+
+func (prismaVpnClient) TableName() string { return "vpn_clients" }
+
+// prismaVpnServer maps to the "vpn_servers" table managed by Prisma.
+type prismaVpnServer struct {
+	ID          string  `gorm:"primaryKey;column:id" json:"id"`
+	Name        string  `gorm:"column:name" json:"name"`
+	Host        string  `gorm:"column:host" json:"host"`
+	Subnet      string  `gorm:"column:subnet" json:"subnet"`
+	L2tpEnabled bool    `gorm:"column:l2tpEnabled" json:"l2tpEnabled"`
+	SstpEnabled bool    `gorm:"column:sstpEnabled" json:"sstpEnabled"`
+	PptpEnabled bool    `gorm:"column:pptpEnabled" json:"pptpEnabled"`
+	WgEnabled   bool    `gorm:"column:wgEnabled" json:"wgEnabled"`
+	WgPublicKey *string `gorm:"column:wgPublicKey" json:"wgPublicKey"`
+	WgPort      *int    `gorm:"column:wgPort" json:"wgPort"`
+	IsActive    bool    `gorm:"column:isActive" json:"isActive"`
+}
+
+func (prismaVpnServer) TableName() string { return "vpn_servers" }
+
 // ─── VPN Server ──────────────────────────────────────────────────────────────
 
 // GET /api/network/vpn-server — get VPN server config for a router
@@ -347,8 +386,11 @@ func (h *NetworkVPNHandler) proxyToNextJS(c fiber.Ctx, method string) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "proxy: failed to build request"})
 	}
+	req.Host = "localhost"
 	req.Header.Set("Content-Type", "application/json")
 	if cookie := c.Get("Cookie"); cookie != "" {
+		// Strip __Secure- prefix so NextAuth validates correctly on HTTP localhost
+		cookie = strings.ReplaceAll(cookie, "__Secure-next-auth.", "next-auth.")
 		req.Header.Set("Cookie", cookie)
 	}
 	if auth := c.Get("Authorization"); auth != "" {
@@ -371,9 +413,59 @@ func (h *NetworkVPNHandler) proxyToNextJS(c fiber.Ctx, method string) error {
 	return c.Status(resp.StatusCode).Send(respBody)
 }
 
-// GET /api/network/vpn-client — list VPN clients (proxied to Next.js)
+// GET /api/network/vpn-client — list VPN clients (read directly from DB)
 func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
-	return h.proxyToNextJS(c, "GET")
+	var clients []prismaVpnClient
+	h.db.Order("createdAt desc").Find(&clients)
+
+	var servers []prismaVpnServer
+	h.db.Where("isActive = ?", true).Order("name asc").Find(&servers)
+
+	// Find RADIUS server IP
+	var radiusServerIp *string
+	for _, cl := range clients {
+		if cl.IsRadiusServer {
+			ip := cl.VpnIp
+			radiusServerIp = &ip
+			break
+		}
+	}
+
+	// Attach NAS secrets from the "nas" table (Prisma router model)
+	type clientWithSecret struct {
+		prismaVpnClient
+		NasSecret *string `json:"nasSecret"`
+	}
+	result := make([]clientWithSecret, len(clients))
+	if len(clients) > 0 {
+		ids := make([]string, len(clients))
+		for i, cl := range clients {
+			ids[i] = cl.ID
+		}
+		type nasSecretRow struct {
+			VpnClientId string `gorm:"column:vpnClientId"`
+			Secret      string `gorm:"column:secret"`
+		}
+		var nasRows []nasSecretRow
+		h.db.Table("nas").Select("vpnClientId, secret").
+			Where("vpnClientId IN ?", ids).Find(&nasRows)
+		secretMap := make(map[string]string)
+		for _, row := range nasRows {
+			secretMap[row.VpnClientId] = row.Secret
+		}
+		for i, cl := range clients {
+			result[i] = clientWithSecret{prismaVpnClient: cl}
+			if s, ok := secretMap[cl.ID]; ok {
+				result[i].NasSecret = &s
+			}
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"clients":        result,
+		"vpnServers":     servers,
+		"radiusServerIp": radiusServerIp,
+	})
 }
 
 // POST /api/network/vpn-client — create VPN client (proxied to Next.js)
