@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.51.6] — 2026-05-20
+### Fixed
+- **WireGuard/L2TP UI menampilkan "belum terinstall" meski sudah terinstall** — Root cause: nginx route semua `/api/*` ke Go backend (port 8080), bukan Next.js. Go handler `ListWGPeers` hanya return list DB peers (bukan server info), dan `GetVPSL2TPInfo` return stub `{enabled: false}`. Frontend membaca `data.installed` yang tidak ada → dianggap false. Fix: implementasi Go yang membaca `/etc/wireguard/wg-server-info.json` dan `/etc/salfanet/l2tp/l2tp-server-info.json`, dengan fallback parse `wg0.conf`/`xl2tpd.conf` + `ipsec.secrets` jika file JSON tidak ada (auto-recovery).
+- **updater.sh SOURCE_DIR mismatch** — Default `/root/salfanet-radius-go` tidak cocok dengan path clone README (`/root/salfanet-radius`). Fix: auto-detect `/root/salfanet-radius/.git` terlebih dahulu sebelum fallback ke `-go` suffix.
+### Added
+- **WG server info fallback detection** — Jika `wg-server-info.json` tidak ada, Go handler parse `wg0.conf` untuk ListenPort/Address/subnet, baca pubkey dari file key atau `wg show wg0 public-key`, dan re-write JSON untuk akses berikutnya.
+- **L2TP server info fallback detection** — Jika `l2tp-server-info.json` tidak ada, Go handler parse `xl2tpd.conf` untuk ip range/local ip, baca PSK dari `/etc/salfanet/l2tp/ipsec.psk` atau `/etc/ipsec.secrets`.
+- **Live WG peers** — GET `/api/network/vps-wg-peer` kini include peers dari `wg show wg0 dump` (endpoint, allowedIps, dll).
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Implementasi real untuk `ListWGPeers` dan `GetVPSL2TPInfo`; tambah `readWGServerInfo()` dan `readL2TPServerInfo()` helper
+- `vps-install/updater.sh` — Fix SOURCE_DIR auto-detect `/root/salfanet-radius` sebelum fallback ke `/root/salfanet-radius-go`
+
+---
+
 ## [2.51.5] — 2026-05-19
 ### Fixed
 - **install-pm2 cleanup pkill bunuh installer sendiri** — Root cause PM2 tidak auto-start: `pkill -9 -f "/root/salfanet-radius"` di `cleanup_pm2_processes()` cocok dengan command line bash installer (`bash -c 'cd /root/salfanet-radius && ...'`), membunuh screen session sebelum `pm2 start` berjalan. Fix: hapus pkill berbasis path source dir, ganti dengan pkill spesifik Node.js (`node.*server.js`, `node.*cron-service.js`, dll). Juga: skip `sudo su - root` untuk cleanup saat APP_USER=root (redundan + berpotensi interference).
