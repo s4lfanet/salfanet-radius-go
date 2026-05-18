@@ -6,6 +6,10 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.7] — 2026-05-18
+### Fixed
+- **CSP violation Leaflet CSS (final fix)** — Root cause: nginx `sites-enabled/` punya dua config konflik untuk `radius.hotspotapp.net` (symlink asli + file `salfanet-radius` yang salah). Config aktif (`radius.hotspotapp.net`) tidak punya CSP sama sekali, sehingga CSP dari Next.js (build lama tanpa cdnjs) yang terpakai. Fix: deploy `nginx-radius.hotspotapp.net.conf` (HTTP-only, Cloudflare Flexible) ke `sites-available/radius.hotspotapp.net`, hapus `sites-enabled/salfanet-radius` yang konflik, reload nginx. CSP sekarang disuntik dari nginx dengan `proxy_hide_header Content-Security-Policy` + `add_header` baru yang mencakup `https://cdnjs.cloudflare.com`.
+
 ## [2.50.6] — 2026-05-19
 ### Fixed
 - **CSP violation Leaflet CSS** — nginx HTTPS server block tidak menyertakan `https://cdnjs.cloudflare.com` di `style-src`, menyebabkan Leaflet CSS diblokir. Fix: tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di nginx CSP. Deploy langsung ke VPS.
