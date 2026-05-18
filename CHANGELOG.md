@@ -6,6 +6,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.2] — 2026-05-20
+### Fixed
+- **VPS WireGuard peer tidak muncul di VPN Client list** — `CreateWGPeer` sebelumnya adalah stub yang tidak generate keypair, tidak assign IP, dan menyimpan ke tabel `vps_peers` yang belum ada. Rewrite penuh: generate WireGuard keypair (`wg genkey`/`wg pubkey`), alokasi IP dari pool, tambah `[Peer]` ke wg0.conf, apply live via `wg set`, generate nasSecret/apiUsername/apiPassword, simpan ke DB.
+- **Script NAS IP undefined, API User api-undefined, CLIENT_PRIVATE_KEY placeholder** — `CreateWGPeer` tidak return `vpnIp`, `apiUsername`, `apiPassword`, `clientPrivateKey`, dll. Sekarang return semua field yang dibutuhkan frontend.
+- **vps_peers table tidak ada** — Dibuat via migration SQL baru.
+- **WG VPS peers tidak muncul di list** — `ListVPNClients` sekarang include entries dari `vps_peers` (type=wireguard), dimapping ke format VpnClient dengan `vpnServerId = "__vps_wg__"`.
+### Added
+- Migration `prisma/migrations/20260520_add_vps_peers_table.sql` — Create table `vps_peers` dengan kolom credentials
+- Helper functions: `nextAvailableWGIP`, `wgRandomHex`, `wgRandomAlphanumeric`
+- Struct `vpnClientResponse` — unified response format untuk `vpn_clients` dan `vps_peers`
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Rewrite `CreateWGPeer`, update `ListVPNClients`, tambah struct + helpers baru
+- `prisma/migrations/20260520_add_vps_peers_table.sql` — New migration
+
+---
+
 ## [2.52.1] — 2026-05-20
 ### Fixed
 - **VPN Client list masih kosong setelah proxy fix** — Root cause: `getServerSession` di Next.js route handler tidak bisa validasi NextAuth cookie karena perbedaan nama cookie (`__Secure-next-auth.session-token` dari HTTPS browser vs `next-auth.session-token` yang dicari di HTTP localhost). Solusi: `ListVPNClients` sekarang **baca langsung dari DB** (`vpn_clients` table via GORM + struct baru `prismaVpnClient`/`prismaVpnServer`) tanpa proxy ke Next.js, sehingga tidak perlu re-validasi session lagi.
