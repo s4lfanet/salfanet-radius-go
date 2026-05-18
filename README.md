@@ -469,6 +469,26 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.50.6 — 2026-05-19
+
+### Fixed
+- **CSP violation Leaflet CSS** — nginx HTTPS server block tidak menyertakan `https://cdnjs.cloudflare.com` di `style-src`, menyebabkan Leaflet CSS diblokir. Fix: tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di nginx CSP. Deploy langsung ke VPS.
+- **Light mode conflicts di halaman ODC & ODP** — Elemen cyberpunk neon (background blob, button `bg-[#00f7ff]`, icon `text-[#00f7ff]`, mobile card border `border-[#bc13fe]/20`) tampil di kedua tema tanpa fallback. Fix: neon background blobs dibungkus `hidden dark:block`, button & icon diberi fallback light mode (`bg-blue-600 dark:bg-[#00f7ff]`, `text-cyan-500 dark:text-[#00f7ff]`), card border `border-border dark:border-[#bc13fe]/20`.
+- **Warna teks & background tidak konsisten di halaman Manajemen Fiber** — Fiber Cables, Fiber Cores, Fiber Joint Closures menggunakan `text-gray-500` (tanpa dark variant) → sulit dibaca di dark mode. Stat card menggunakan `bg-white dark:bg-gray-900` bukan CSS variable `bg-card`. Fix: ganti ke `text-muted-foreground` dan `bg-card border-border` di semua fiber pages.
+- **Theme inconsistency di halaman Topologi** — unified-map, diagrams, trace, splice-points: `text-gray-500` dan beberapa `bg-white dark:bg-gray-900` diganti ke `text-muted-foreground` dan `bg-card`.
+### Files
+- `production/nginx-salfanet-radius.conf` — Tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di CSP header HTTPS block
+- `/etc/nginx/sites-available/salfanet-radius` (VPS) — Sama, reload sukses
+- `src/app/admin/network/odcs/page.tsx` — Fix light mode: background blobs `hidden dark:block`, button, icon, mobile card borders
+- `src/app/admin/network/odps/page.tsx` — Fix light mode: sama seperti ODC
+- `src/app/admin/network/fiber-cables/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`, `border dark:border-gray-800` → `border-border`
+- `src/app/admin/network/fiber-cores/page.tsx` — `text-gray-500` → `text-muted-foreground`, fix borders
+- `src/app/admin/network/fiber-joint-closures/page.tsx` — `text-gray-500` → `text-muted-foreground`
+- `src/app/admin/network/unified-map/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`
+- `src/app/admin/network/diagrams/page.tsx` — `text-gray-500` → `text-muted-foreground`
+- `src/app/admin/network/trace/page.tsx` — `text-gray-500` → `text-muted-foreground`
+- `src/app/admin/network/splice-points/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`
+
 ### v2.50.5 — 2026-05-18
 
 ### Fixed
@@ -505,21 +525,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/settings_genieacs.go` — key `"parameters"` → `"data"`
 - `src/app/admin/genieacs/parameter-config/page.tsx` — optional chaining `(data.data ?? []).filter(...)`
 - `src/app/admin/genieacs/tasks/page.tsx` — banner "GenieACS belum dikonfigurasi" saat 400
-
-### v2.50.1 — 2026-05-18
-
-### Added
-- **Simulasi pembayaran QRIS (testing)** — Endpoint `POST /api/payment/qris-test` (admin-only) + UI "🧪 Simulasi Pembayaran QRIS" di tab QRIS Mandiri: masukkan Order ID → server langsung tandai invoice PAID + extend subscription tanpa perlu HP Android.
-- **Android package ID baru** — APK diubah dari `id.salfanet.qrislistener` → `net.hotspotapp.qrislistener` agar bisa di-install bersamaan di satu HP dengan versi salfanet PHP lama.
-- **Label app dibedakan** — Nama app di drawer HP sekarang "QRIS Listener (Radius)" vs "QRIS Listener" versi lama.
-### Changed
-- **Suara notifikasi Android** — Channel alert dinaikkan ke `IMPORTANCE_HIGH`, ringtone diganti `TYPE_ALARM` (lebih keras), tambah vibration pattern `0,300,200,300,200,500` + LED hijau berkedip.
-- **APK versi 1.1.0** (versionCode 30) dengan package baru.
-### Files
-- `internal/api/handlers/payment_handler.go` — Tambah `QrisTest` handler
-- `internal/api/router.go` — Route `POST /api/payment/qris-test` (admin auth)
-- `src/app/admin/payment-gateway/page.tsx` — UI simulasi testing QRIS
-- `public/downloads/qris-listener.apk` — APK baru package `net.hotspotapp.qrislistener` v1.1.0
 
 <!-- AUTO-CHANGELOG:END -->
 
