@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.3] — 2026-05-18
+### Fixed
+- **GenieACS 400 error merah di console** — Semua handler GenieACS yang mengembalikan 400 saat GenieACS belum dikonfigurasi sekarang mengembalikan **HTTP 200** dengan `{success: false, notConfigured: true}`. Browser tidak lagi mencatat error merah di DevTools console ketika GenieACS belum di-setup.
+- **Tasks page** — deteksi `notConfigured` kini menggunakan `data.notConfigured` dari response body (bukan `response.status === 400`) sesuai perubahan Go handler.
+### Files
+- `internal/api/handlers/genieacs.go` — tambah helper `notConfiguredErr()`, replace 4 `c.Status(400)` setelah `getCredentials()`
+- `internal/api/handlers/genieacs_ext.go` — replace 21 `c.Status(400)` setelah `getCredentials()`
+- `src/app/admin/genieacs/tasks/page.tsx` — cek `data.notConfigured` bukan `response.status`
+
 ## [2.50.2] — 2026-05-18
 ### Fixed
 - **GenieACS parameter-config crash** — Go handler `ListVirtualParameters` mengembalikan key `"parameters"` tapi frontend membaca `data.data` → `TypeError: Cannot read properties of undefined (reading 'filter')`. Diperbaiki: key diubah ke `"data"` + tambah optional chaining `(data.data ?? []).filter(...)`.

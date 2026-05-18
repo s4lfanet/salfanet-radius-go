@@ -34,8 +34,8 @@ export default function GenieACSTasksPage() {
     try {
       const response = await fetch('/api/genieacs/tasks');
       const data = await response.json();
-      if (!response.ok) {
-        if (response.status === 400) setNotConfigured(true);
+      if (data.notConfigured) {
+        setNotConfigured(true);
         return;
       }
       setNotConfigured(false);

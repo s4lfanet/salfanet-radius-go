@@ -1,4 +1,4 @@
-package handlers
+﻿package handlers
 
 // genieacs_ext.go — full GenieACS proxy routes (devices, provisions, presets,
 // virtual-parameters, files, faults, config, backup, auto-provision, tasks retry).
@@ -21,7 +21,7 @@ import (
 func (h *GenieacsHandler) ListDevices(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	query := c.Queries()
 	u := host + "/devices"
@@ -44,7 +44,7 @@ func (h *GenieacsHandler) GetDevice(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
 	if err != nil {
@@ -58,7 +58,7 @@ func (h *GenieacsHandler) DeleteDevice(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	status, err := h.proxyDELETE(host+"/devices/"+url.PathEscape(deviceID), auth)
 	if err != nil {
@@ -72,7 +72,7 @@ func (h *GenieacsHandler) DeviceAllParameters(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID)+"/all-parameters", auth)
 	if err != nil {
@@ -86,7 +86,7 @@ func (h *GenieacsHandler) DeviceDownload(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -102,7 +102,7 @@ func (h *GenieacsHandler) GetDeviceParameters(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
 	if err != nil {
@@ -116,7 +116,7 @@ func (h *GenieacsHandler) SetDeviceParameters(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -133,7 +133,7 @@ func (h *GenieacsHandler) GetDeviceTasks(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	q := `[["deviceId","=","` + deviceID + `"]]`
 	result, status, err := h.proxyGET(host+"/tasks?query="+url.QueryEscape(q), auth)
@@ -148,7 +148,7 @@ func (h *GenieacsHandler) CreateDeviceTask(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -164,7 +164,7 @@ func (h *GenieacsHandler) DeviceWAN(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -181,7 +181,7 @@ func (h *GenieacsHandler) GetDeviceWifi(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
 	if err != nil {
@@ -195,7 +195,7 @@ func (h *GenieacsHandler) RebootDevice(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	task := fiber.Map{"name": "reboot"}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
@@ -210,7 +210,7 @@ func (h *GenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.", "Device."}}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
@@ -225,7 +225,7 @@ func (h *GenieacsHandler) FactoryResetDevice(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	task := fiber.Map{"name": "factoryReset"}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
@@ -242,7 +242,7 @@ func (h *GenieacsHandler) RetryTask(c fiber.Ctx) error {
 	taskID := c.Params("taskId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyPOST(host+"/tasks/"+taskID+"/retry", auth, nil)
 	if err != nil {
@@ -257,7 +257,7 @@ func (h *GenieacsHandler) RetryTask(c fiber.Ctx) error {
 func (h *GenieacsHandler) ListPresets(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/presets", auth)
 	if err != nil {
@@ -270,7 +270,7 @@ func (h *GenieacsHandler) ListPresets(c fiber.Ctx) error {
 func (h *GenieacsHandler) CreatePreset(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -286,7 +286,7 @@ func (h *GenieacsHandler) GetPreset(c fiber.Ctx) error {
 	presetID := c.Params("presetId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/presets/"+url.PathEscape(presetID), auth)
 	if err != nil {
@@ -300,7 +300,7 @@ func (h *GenieacsHandler) UpdatePreset(c fiber.Ctx) error {
 	presetID := c.Params("presetId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -312,7 +312,7 @@ func (h *GenieacsHandler) DeletePreset(c fiber.Ctx) error {
 	presetID := c.Params("presetId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	status, err := h.proxyDELETE(host+"/presets/"+url.PathEscape(presetID), auth)
 	if err != nil {
@@ -327,7 +327,7 @@ func (h *GenieacsHandler) DeletePreset(c fiber.Ctx) error {
 func (h *GenieacsHandler) ListProvisions(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/provisions", auth)
 	if err != nil {
@@ -340,7 +340,7 @@ func (h *GenieacsHandler) ListProvisions(c fiber.Ctx) error {
 func (h *GenieacsHandler) CreateProvision(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -356,7 +356,7 @@ func (h *GenieacsHandler) GetProvision(c fiber.Ctx) error {
 	provID := c.Params("provisionId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/provisions/"+url.PathEscape(provID), auth)
 	if err != nil {
@@ -370,7 +370,7 @@ func (h *GenieacsHandler) UpdateProvision(c fiber.Ctx) error {
 	provID := c.Params("provisionId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -382,7 +382,7 @@ func (h *GenieacsHandler) DeleteProvision(c fiber.Ctx) error {
 	provID := c.Params("provisionId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	status, err := h.proxyDELETE(host+"/provisions/"+url.PathEscape(provID), auth)
 	if err != nil {
@@ -397,7 +397,7 @@ func (h *GenieacsHandler) DeleteProvision(c fiber.Ctx) error {
 func (h *GenieacsHandler) ListVirtualParameters(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/virtual-parameters", auth)
 	if err != nil {
@@ -410,7 +410,7 @@ func (h *GenieacsHandler) ListVirtualParameters(c fiber.Ctx) error {
 func (h *GenieacsHandler) CreateVirtualParameter(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -426,7 +426,7 @@ func (h *GenieacsHandler) GetVirtualParameter(c fiber.Ctx) error {
 	vpID := c.Params("vpId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/virtual-parameters/"+url.PathEscape(vpID), auth)
 	if err != nil {
@@ -440,7 +440,7 @@ func (h *GenieacsHandler) UpdateVirtualParameter(c fiber.Ctx) error {
 	vpID := c.Params("vpId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -452,7 +452,7 @@ func (h *GenieacsHandler) DeleteVirtualParameter(c fiber.Ctx) error {
 	vpID := c.Params("vpId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	status, err := h.proxyDELETE(host+"/virtual-parameters/"+url.PathEscape(vpID), auth)
 	if err != nil {
@@ -467,7 +467,7 @@ func (h *GenieacsHandler) DeleteVirtualParameter(c fiber.Ctx) error {
 func (h *GenieacsHandler) ListFiles(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/files", auth)
 	if err != nil {
@@ -480,7 +480,7 @@ func (h *GenieacsHandler) ListFiles(c fiber.Ctx) error {
 func (h *GenieacsHandler) UploadFile(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	// Forward raw body to GenieACS
 	req, err := http.NewRequest("POST", host+"/files", bytes.NewReader(c.Body()))
@@ -504,7 +504,7 @@ func (h *GenieacsHandler) DeleteFile(c fiber.Ctx) error {
 	filename := c.Query("filename")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	u := host + "/files"
 	if filename != "" {
@@ -523,7 +523,7 @@ func (h *GenieacsHandler) DeleteFile(c fiber.Ctx) error {
 func (h *GenieacsHandler) ListFaults(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	q := c.Query("query", "")
 	u := host + "/faults"
@@ -542,7 +542,7 @@ func (h *GenieacsHandler) DeleteFault(c fiber.Ctx) error {
 	faultID := c.Params("faultId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	status, err := h.proxyDELETE(host+"/faults/"+url.PathEscape(faultID), auth)
 	if err != nil {
@@ -557,7 +557,7 @@ func (h *GenieacsHandler) DeleteFault(c fiber.Ctx) error {
 func (h *GenieacsHandler) SyncDevices(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	// Trigger a full refresh on all devices
 	result, status, err := h.proxyPOST(host+"/devices/force-sync", auth, nil)
@@ -578,7 +578,7 @@ func (h *GenieacsHandler) SyncDevices(c fiber.Ctx) error {
 func (h *GenieacsHandler) ListConfig(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/config", auth)
 	if err != nil {
@@ -591,7 +591,7 @@ func (h *GenieacsHandler) ListConfig(c fiber.Ctx) error {
 func (h *GenieacsHandler) UpdateConfig(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -603,7 +603,7 @@ func (h *GenieacsHandler) DeleteConfig(c fiber.Ctx) error {
 	key := c.Query("key")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	u := host + "/config"
 	if key != "" {
@@ -622,7 +622,7 @@ func (h *GenieacsHandler) DeleteConfig(c fiber.Ctx) error {
 func (h *GenieacsHandler) GetBackup(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/backup", auth)
 	if err != nil {
@@ -635,7 +635,7 @@ func (h *GenieacsHandler) GetBackup(c fiber.Ctx) error {
 func (h *GenieacsHandler) CreateBackup(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyPOST(host+"/backup", auth, nil)
 	if err != nil {
@@ -650,7 +650,7 @@ func (h *GenieacsHandler) CreateBackup(c fiber.Ctx) error {
 func (h *GenieacsHandler) ListAutoProvision(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	result, status, err := h.proxyGET(host+"/provisions?type=auto", auth)
 	if err != nil {
@@ -663,7 +663,7 @@ func (h *GenieacsHandler) ListAutoProvision(c fiber.Ctx) error {
 func (h *GenieacsHandler) CreateAutoProvision(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
@@ -679,7 +679,7 @@ func (h *GenieacsHandler) DeleteAutoProvision(c fiber.Ctx) error {
 	name := c.Query("name")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 	u := host + "/provisions"
 	if name != "" {

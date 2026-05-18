@@ -1,4 +1,4 @@
-package handlers
+﻿package handlers
 
 import (
 	"encoding/base64"
@@ -25,6 +25,16 @@ func NewGenieacsHandler(db *gorm.DB) *GenieacsHandler {
 		db:         db,
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 	}
+}
+
+// notConfiguredErr returns HTTP 200 with notConfigured:true so the browser
+// does not log a red network error when GenieACS is simply not set up yet.
+func (h *GenieacsHandler) notConfiguredErr(c fiber.Ctx) error {
+	return c.Status(200).JSON(fiber.Map{
+		"success":       false,
+		"notConfigured": true,
+		"error":         "GenieACS belum dikonfigurasi",
+	})
 }
 
 // getCredentials returns GenieACS host + basic auth header from DB
@@ -116,7 +126,7 @@ func (h *GenieacsHandler) proxyDELETE(url, authHeader string) (int, error) {
 func (h *GenieacsHandler) ListTasks(c fiber.Ctx) error {
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"success": false, "error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 
 	result, statusCode, err := h.proxyGET(host+"/tasks", auth)
@@ -136,7 +146,7 @@ func (h *GenieacsHandler) DeleteTask(c fiber.Ctx) error {
 	taskID := c.Params("taskId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"success": false, "error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 
 	statusCode, err := h.proxyDELETE(host+"/tasks/"+taskID, auth)
@@ -154,7 +164,7 @@ func (h *GenieacsHandler) ConnectionRequest(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"success": false, "error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 
 	// Create a getParameterValues task with connection_request flag to trigger device
@@ -213,7 +223,7 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 
 	host, auth, err := h.getCredentials()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"success": false, "error": err.Error()})
+		return h.notConfiguredErr(c)
 	}
 
 	// Security mode mapping
