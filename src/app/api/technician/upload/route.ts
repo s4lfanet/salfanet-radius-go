@@ -13,14 +13,6 @@ async function verifyTechnician(req: NextRequest) {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, TECH_JWT_SECRET);
-    if (payload.type === 'admin_user') {
-      const adminUser = await prisma.adminUser.findUnique({
-        where: { id: payload.id as string },
-        select: { id: true, name: true, isActive: true, role: true },
-      });
-      if (!adminUser?.isActive || adminUser.role !== 'TECHNICIAN') return null;
-      return { id: adminUser.id, name: adminUser.name ?? '' };
-    }
     const tech = await prisma.technician.findUnique({
       where: { id: payload.id as string },
       select: { id: true, name: true, isActive: true },

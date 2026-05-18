@@ -19,20 +19,15 @@ export async function GET(req: NextRequest) {
     const secret = TECH_JWT_SECRET;
 
     const { payload } = await jwtVerify(token, secret);
-    let technicianId: string;
-    let isAdminUser = false;
-    if (payload.type === 'admin_user') {
-      const adminUser = await prisma.adminUser.findUnique({
-        where: { id: payload.id as string },
-        select: { id: true, isActive: true, role: true },
-      });
-      if (!adminUser?.isActive || adminUser.role !== 'TECHNICIAN') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      technicianId = adminUser.id;
-      isAdminUser = true;
-    } else {
-      technicianId = payload.id as string;
+    const technicianId = payload.id as string;
+
+    // Verify technician exists and is active
+    const tech = await prisma.technician.findUnique({
+      where: { id: technicianId },
+      select: { id: true, isActive: true },
+    });
+    if (!tech?.isActive) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get query parameters
@@ -43,17 +38,15 @@ export async function GET(req: NextRequest) {
     // Build where clause
     const where: any = {};
 
-    // admin_user (TECHNICIAN role) lihat semua work order agar tiket selesai tetap muncul
-    // legacy technician hanya lihat yang belum diassign atau miliknya
+    // Show work orders unassigned or assigned to this technician
     if (searchParams.get('mine') === 'true') {
       where.technicianId = technicianId;
-    } else if (!isAdminUser) {
+    } else {
       where.OR = [
         { technicianId: null },
         { technicianId: technicianId },
       ];
     }
-    // isAdminUser tanpa filter 'mine' → tanpa filter technicianId → tampil semua
 
     if (status) {
       where.status = status;
@@ -110,18 +103,15 @@ export async function POST(req: NextRequest) {
     const secret = TECH_JWT_SECRET;
 
     const { payload } = await jwtVerify(token, secret);
-    let technicianId: string;
-    if (payload.type === 'admin_user') {
-      const adminUser = await prisma.adminUser.findUnique({
-        where: { id: payload.id as string },
-        select: { id: true, isActive: true, role: true },
-      });
-      if (!adminUser?.isActive || adminUser.role !== 'TECHNICIAN') {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
-      technicianId = adminUser.id;
-    } else {
-      technicianId = payload.id as string;
+    const technicianId = payload.id as string;
+
+    // Verify technician
+    const tech = await prisma.technician.findUnique({
+      where: { id: technicianId },
+      select: { id: true, isActive: true },
+    });
+    if (!tech?.isActive) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { workOrderId, action } = await req.json();

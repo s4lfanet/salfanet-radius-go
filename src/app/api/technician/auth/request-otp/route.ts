@@ -23,20 +23,16 @@ export async function POST(req: NextRequest) {
       ? '62' + normalizedPhone.substring(1)
       : '62' + normalizedPhone;
 
-    // Find or create technician
-    let technician = await prisma.technician.findUnique({
+    // Only allow technicians already registered in the system
+    const technician = await prisma.technician.findUnique({
       where: { phoneNumber: formattedPhone },
     });
 
     if (!technician) {
-      // Create new technician with default name (can be updated later)
-      technician = await prisma.technician.create({
-        data: {
-          phoneNumber: formattedPhone,
-          name: `Teknisi ${formattedPhone.substring(formattedPhone.length - 4)}`,
-          isActive: true,
-        },
-      });
+      return NextResponse.json(
+        { error: 'Nomor HP tidak terdaftar sebagai teknisi. Hubungi administrator.' },
+        { status: 404 },
+      );
     }
 
     if (!technician.isActive) {

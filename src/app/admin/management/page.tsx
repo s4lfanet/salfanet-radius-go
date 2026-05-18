@@ -41,7 +41,6 @@ const ROLES = [
   { value: 'SUPER_ADMIN', translationKey: 'superAdmin' },
   { value: 'FINANCE', translationKey: 'finance' },
   { value: 'CUSTOMER_SERVICE', translationKey: 'customerService' },
-  { value: 'TECHNICIAN', translationKey: 'technician' },
   { value: 'MARKETING', translationKey: 'marketing' },
   { value: 'VIEWER', translationKey: 'viewer' },
 ];

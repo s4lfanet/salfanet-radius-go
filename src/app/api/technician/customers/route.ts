@@ -9,19 +9,11 @@ async function verifyTechnician(req: NextRequest) {
   try {
     const secret = TECH_JWT_SECRET;
     const { payload } = await jwtVerify(token, secret);
-    if (payload.type === 'admin_user') {
-      const adminUser = await prisma.adminUser.findUnique({
-        where: { id: payload.id as string },
-        select: { id: true, isActive: true, role: true },
-      });
-      if (!adminUser?.isActive || adminUser.role !== 'TECHNICIAN') return null;
-      return { id: adminUser.id, isActive: true, isAdminUser: true as const };
-    }
     const tech = await prisma.technician.findUnique({
       where: { id: payload.id as string },
       select: { id: true, isActive: true },
     });
-    return tech?.isActive ? { ...tech, isAdminUser: false as const } : null;
+    return tech?.isActive ? tech : null;
   } catch {
     return null;
   }
@@ -41,7 +33,7 @@ export async function GET(req: NextRequest) {
   const skip = (page - 1) * limit;
 
   // Field technicians must scope their query to a router or area
-  if (!tech.isAdminUser && !routerId && !areaId) {
+  if (!routerId && !areaId) {
     return NextResponse.json(
       { error: 'routerId or areaId parameter is required' },
       { status: 400 },

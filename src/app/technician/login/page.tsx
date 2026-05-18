@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useTranslation } from '@/hooks/useTranslation';
-import { User, Lock, Loader2, Wrench } from 'lucide-react';
+import { Phone, ShieldCheck, Loader2, Wrench, ArrowLeft } from 'lucide-react';
 
 export default function TechnicianLoginPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otpCode, setOtpCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -38,16 +39,57 @@ export default function TechnicianLoginPage() {
       .finally(() => setBrandLoaded(true));
   }, []);
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const res = await fetch('/api/technician/auth/login', {
+      const res = await fetch('/api/technician/auth/request-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        if (data.requireOtp === false) {
+          // No OTP required — auto login via verify-otp with skipOtp
+          const verifyRes = await fetch('/api/technician/auth/verify-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phoneNumber, skipOtp: true }),
+          });
+          if (verifyRes.ok) {
+            router.push('/technician/dashboard');
+          } else {
+            const verifyData = await verifyRes.json();
+            setError(verifyData.error || 'Login gagal');
+          }
+        } else {
+          setStep('otp');
+        }
+      } else {
+        setError(data.error || 'Gagal mengirim OTP');
+      }
+    } catch {
+      setError('Terjadi kesalahan. Silakan coba lagi.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/technician/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneNumber, otpCode }),
       });
 
       const data = await res.json();
@@ -55,7 +97,7 @@ export default function TechnicianLoginPage() {
       if (res.ok) {
         router.push('/technician/dashboard');
       } else {
-        setError(data.error || 'Login gagal');
+        setError(data.error || 'OTP tidak valid');
       }
     } catch {
       setError('Terjadi kesalahan. Silakan coba lagi.');
@@ -118,49 +160,77 @@ export default function TechnicianLoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 dark:focus-within:ring-blue-800/50 transition-all">
-              <div className="bg-blue-600 px-4 flex items-center justify-center flex-shrink-0">
-                <User className="w-5 h-5 text-white" />
+          {step === 'phone' ? (
+            <form onSubmit={handleRequestOtp} className="space-y-4">
+              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 dark:focus-within:ring-blue-800/50 transition-all">
+                <div className="bg-blue-600 px-4 flex items-center justify-center flex-shrink-0">
+                  <Phone className="w-5 h-5 text-white" />
+                </div>
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="Nomor HP (contoh: 08123456789)"
+                  required
+                  autoComplete="tel"
+                  className="flex-1 px-4 py-3 text-sm bg-blue-50 dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-colors"
+                />
               </div>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Masukkan username"
-                required
-                autoComplete="username"
-                className="flex-1 px-4 py-3 text-sm bg-blue-50 dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-colors"
-              />
-            </div>
 
-            <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 dark:focus-within:ring-blue-800/50 transition-all">
-              <div className="bg-blue-600 px-4 flex items-center justify-center flex-shrink-0">
-                <Lock className="w-5 h-5 text-white" />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-all shadow-sm flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Mengirim OTP...</>
+                ) : (
+                  <><ShieldCheck className="w-4 h-4" />Kirim Kode OTP</>
+                )}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <p className="text-xs text-gray-500 dark:text-slate-400 text-center mb-2">
+                Kode OTP dikirim via WhatsApp ke <strong>{phoneNumber}</strong>
+              </p>
+              <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 dark:focus-within:ring-blue-800/50 transition-all">
+                <div className="bg-blue-600 px-4 flex items-center justify-center flex-shrink-0">
+                  <ShieldCheck className="w-5 h-5 text-white" />
+                </div>
+                <input
+                  type="text"
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                  placeholder="Masukkan kode OTP"
+                  required
+                  autoComplete="one-time-code"
+                  inputMode="numeric"
+                  className="flex-1 px-4 py-3 text-sm bg-blue-50 dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-colors"
+                />
               </div>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Masukkan password"
-                required
-                autoComplete="current-password"
-                className="flex-1 px-4 py-3 text-sm bg-blue-50 dark:bg-slate-900 text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none transition-colors"
-              />
-            </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-all shadow-sm flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Memproses...</>
-              ) : (
-                <><Wrench className="w-4 h-4" />Masuk</>
-              )}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-all shadow-sm flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" />Memverifikasi...</>
+                ) : (
+                  <><Wrench className="w-4 h-4" />Masuk</>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setStep('phone'); setOtpCode(''); setError(''); }}
+                className="w-full py-2 text-sm text-gray-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 flex items-center justify-center gap-1 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />Ganti nomor HP
+              </button>
+            </form>
+          )}
 
           {/* Footer */}
           <p className="text-center text-xs text-gray-400 dark:text-slate-500 mt-8">{footerText}</p>

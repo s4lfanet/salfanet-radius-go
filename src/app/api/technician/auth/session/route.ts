@@ -20,39 +20,6 @@ export async function GET(req: NextRequest) {
 
     const { payload } = await jwtVerify(token, secret);
 
-    // Support both admin_user (username/password) and legacy technician (OTP) tokens
-    if (payload.type === 'admin_user') {
-      const user = await prisma.adminUser.findUnique({
-        where: { id: payload.id as string },
-        select: {
-          id: true,
-          name: true,
-          username: true,
-          phone: true,
-          email: true,
-          isActive: true,
-        },
-      });
-
-      if (!user || !user.isActive) {
-        return NextResponse.json(
-          { error: 'User not found or inactive' },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json({
-        success: true,
-        technician: {
-          id: user.id,
-          name: user.name,
-          phoneNumber: user.phone || user.username,
-          email: user.email,
-        },
-      });
-    }
-
-    // Legacy: OTP-based technician token
     const technician = await prisma.technician.findUnique({
       where: { id: payload.id as string },
       select: {

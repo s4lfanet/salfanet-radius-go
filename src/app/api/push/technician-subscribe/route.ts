@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { jwtVerify } from 'jose';
 import { prisma } from '@/server/db/client';
-import { TECH_JWT_SECRET } from '@/server/auth/technician-secret';
-import { upsertTechnicianPushSubscription, upsertAdminPushSubscription } from '@/server/services/push-notification.service';
+import { upsertTechnicianPushSubscription } from '@/server/services/push-notification.service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,23 +9,6 @@ export async function POST(request: NextRequest) {
 
     if (!technicianId || !subscription) {
       return NextResponse.json({ success: false, error: 'technicianId and subscription are required' }, { status: 400 });
-    }
-
-    // Detect if this is an admin_user (TECHNICIAN role) by verifying the JWT cookie
-    const token = request.cookies.get('technician-token')?.value;
-    if (token) {
-      try {
-        const { payload } = await jwtVerify(token, TECH_JWT_SECRET);
-        if (payload.type === 'admin_user') {
-          // admin_user has no entry in technician table — save to adminPushSubscription instead
-          const saved = await upsertAdminPushSubscription(
-            String(payload.id),
-            subscription,
-            request.headers.get('user-agent'),
-          );
-          return NextResponse.json({ success: true, subscriptionId: saved.id });
-        }
-      } catch { /* invalid token — fall through to normal check */ }
     }
 
     // Verify technician exists and is active
