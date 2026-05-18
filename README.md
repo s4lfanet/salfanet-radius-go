@@ -469,6 +469,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.51.2 — 2026-05-19
+
+### Changed
+- **Cleanup repo — hapus folder dev-only dari GitHub** — `OLT-ZTE-C320-Provisioning-main/` (118 file proyek Laravel terpisah), `update-olt-opt/` (patch script Go), dan `update-qris/` (patch script Next.js) dihapus dari git tracking. Tidak relevan dengan production salfanet-radius.
+### Files
+- `.gitignore` — Tambah exclusion untuk `OLT-ZTE-C320-Provisioning-main/`, `update-olt-opt/`, `update-qris/`
+
 ### v2.51.1 — 2026-05-19
 
 ### Fixed
@@ -523,26 +530,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **CSP violation Leaflet CSS (final fix)** — Root cause: nginx `sites-enabled/` punya dua config konflik untuk `radius.hotspotapp.net`. Config aktif tidak punya CSP, sehingga CSP dari Next.js (build lama tanpa cdnjs) yang terpakai. Fix: deploy `nginx-radius.hotspotapp.net.conf` ke `sites-available/radius.hotspotapp.net`, hapus `sites-enabled/salfanet-radius`, reload nginx. CSP sekarang dari nginx dengan `proxy_hide_header Content-Security-Policy` + `add_header` baru yang mencakup `https://cdnjs.cloudflare.com`.
 ### Files
 - `production/nginx-radius.hotspotapp.net.conf` — Tambah `listen 443 ssl` + snakeoil cert, CSP dengan cdnjs di `location /`
-
-### v2.50.6 — 2026-05-19
-
-### Fixed
-- **CSP violation Leaflet CSS** — nginx HTTPS server block tidak menyertakan `https://cdnjs.cloudflare.com` di `style-src`, menyebabkan Leaflet CSS diblokir. Fix: tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di nginx CSP. Deploy langsung ke VPS.
-- **Light mode conflicts di halaman ODC & ODP** — Elemen cyberpunk neon (background blob, button `bg-[#00f7ff]`, icon `text-[#00f7ff]`, mobile card border `border-[#bc13fe]/20`) tampil di kedua tema tanpa fallback. Fix: neon background blobs dibungkus `hidden dark:block`, button & icon diberi fallback light mode (`bg-blue-600 dark:bg-[#00f7ff]`, `text-cyan-500 dark:text-[#00f7ff]`), card border `border-border dark:border-[#bc13fe]/20`.
-- **Warna teks & background tidak konsisten di halaman Manajemen Fiber** — Fiber Cables, Fiber Cores, Fiber Joint Closures menggunakan `text-gray-500` (tanpa dark variant) → sulit dibaca di dark mode. Stat card menggunakan `bg-white dark:bg-gray-900` bukan CSS variable `bg-card`. Fix: ganti ke `text-muted-foreground` dan `bg-card border-border` di semua fiber pages.
-- **Theme inconsistency di halaman Topologi** — unified-map, diagrams, trace, splice-points: `text-gray-500` dan beberapa `bg-white dark:bg-gray-900` diganti ke `text-muted-foreground` dan `bg-card`.
-### Files
-- `production/nginx-salfanet-radius.conf` — Tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di CSP header HTTPS block
-- `/etc/nginx/sites-available/salfanet-radius` (VPS) — Sama, reload sukses
-- `src/app/admin/network/odcs/page.tsx` — Fix light mode: background blobs `hidden dark:block`, button, icon, mobile card borders
-- `src/app/admin/network/odps/page.tsx` — Fix light mode: sama seperti ODC
-- `src/app/admin/network/fiber-cables/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`, `border dark:border-gray-800` → `border-border`
-- `src/app/admin/network/fiber-cores/page.tsx` — `text-gray-500` → `text-muted-foreground`, fix borders
-- `src/app/admin/network/fiber-joint-closures/page.tsx` — `text-gray-500` → `text-muted-foreground`
-- `src/app/admin/network/unified-map/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`
-- `src/app/admin/network/diagrams/page.tsx` — `text-gray-500` → `text-muted-foreground`
-- `src/app/admin/network/trace/page.tsx` — `text-gray-500` → `text-muted-foreground`
-- `src/app/admin/network/splice-points/page.tsx` — `text-gray-500` → `text-muted-foreground`, `bg-white dark:bg-gray-900` → `bg-card`
 
 <!-- AUTO-CHANGELOG:END -->
 
