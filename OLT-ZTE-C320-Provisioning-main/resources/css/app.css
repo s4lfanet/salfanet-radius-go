@@ -1,0 +1,201 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   OLT Provisioning - Premium Dark Theme
+   Salfanet Radius Style
+   ============================================ */
+
+:root {
+    --bg-primary: #0a0e1a;
+    --bg-secondary: #0f1424;
+    --bg-card: rgba(26, 31, 46, 0.8);
+    --bg-card-hover: rgba(255, 255, 255, 0.03);
+    --border-color: rgba(255, 255, 255, 0.06);
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --accent: #06b6d4;
+    --accent-glow: rgba(6, 182, 212, 0.15);
+}
+
+@layer base {
+    body {
+        background-color: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Override Tailwind default white backgrounds */
+    .bg-gray-50, .bg-white {
+        background-color: transparent !important;
+    }
+
+    /* Form inputs dark theme */
+    input[type="text"],
+    input[type="password"],
+    input[type="email"],
+    input[type="number"],
+    input[type="url"],
+    input[type="tel"],
+    input[type="search"],
+    select,
+    textarea {
+        background-color: var(--bg-primary) !important;
+        border-color: var(--border-color) !important;
+        color: var(--text-primary) !important;
+    }
+
+    input::placeholder,
+    textarea::placeholder {
+        color: var(--text-muted) !important;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+        border-color: var(--accent) !important;
+        box-shadow: 0 0 0 2px var(--accent-glow) !important;
+    }
+
+    /* Labels */
+    label {
+        color: #94a3b8 !important;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+        background: var(--bg-primary);
+    }
+    ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+}
+
+@layer components {
+    /* Glass card component */
+    .glass-card {
+        background: linear-gradient(135deg, rgba(26, 31, 46, 0.8), rgba(17, 24, 39, 0.9)) !important;
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+    }
+
+    /* Glow effect on hover */
+    .glow-accent {
+        box-shadow: 0 0 20px var(--accent-glow), 0 0 40px rgba(6, 182, 212, 0.05);
+    }
+
+    /* Table styles */
+    table th {
+        color: var(--text-muted) !important;
+        background: transparent !important;
+        font-size: 11px;
+        letter-spacing: 0.05em;
+    }
+
+    table td {
+        color: #94a3b8 !important;
+    }
+
+    table tr {
+        border-color: var(--border-color) !important;
+    }
+
+    /* Override divide colors */
+    .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+    .divide-gray-100 > :not([hidden]) ~ :not([hidden]) {
+        border-color: var(--border-color) !important;
+    }
+
+    .border-gray-200,
+    .border-gray-100,
+    .border-gray-300 {
+        border-color: var(--border-color) !important;
+    }
+
+    /* Text color overrides */
+    .text-gray-900,
+    .text-gray-800 {
+        color: var(--text-primary) !important;
+    }
+
+    .text-gray-700 {
+        color: var(--text-secondary) !important;
+    }
+
+    .text-gray-500,
+    .text-gray-400 {
+        color: var(--text-muted) !important;
+    }
+
+    /* Button hover states */
+    .hover\:bg-gray-50:hover {
+        background-color: var(--bg-card-hover) !important;
+    }
+
+    /* Badge overrides */
+    .bg-green-100 {
+        background: rgba(16, 185, 129, 0.12) !important;
+    }
+    .text-green-800 {
+        color: #10b981 !important;
+    }
+    .bg-red-100 {
+        background: rgba(239, 68, 68, 0.12) !important;
+    }
+    .text-red-800 {
+        color: #ef4444 !important;
+    }
+    .bg-yellow-100 {
+        background: rgba(245, 158, 11, 0.12) !important;
+    }
+    .text-yellow-800 {
+        color: #f59e0b !important;
+    }
+    .bg-blue-50 {
+        background: rgba(59, 130, 246, 0.12) !important;
+    }
+    .text-blue-600 {
+        color: #3b82f6 !important;
+    }
+
+    /* Pagination active override */
+    .bg-indigo-50 {
+        background: var(--accent-glow) !important;
+    }
+    .text-indigo-600 {
+        color: var(--accent) !important;
+    }
+
+    /* Smooth animations */
+    .animate-fade-in-up {
+        animation: fadeInUp 0.3s ease-out;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Select dropdown option styling */
+    select option {
+        background: var(--bg-secondary) !important;
+        color: var(--text-primary) !important;
+    }
+}

@@ -229,10 +229,10 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 	// Security mode mapping
 	type secMode struct{ beacon, authMode, encMode string }
 	secMap := map[string]secMode{
-		"None":        {"None", "None", "None"},
-		"Open":        {"None", "None", "None"},
-		"WPA-PSK":     {"WPA", "PSKAuthentication", "TKIPEncryption"},
-		"WPA2-PSK":    {"11i", "PSKAuthentication", "AESEncryption"},
+		"None":         {"None", "None", "None"},
+		"Open":         {"None", "None", "None"},
+		"WPA-PSK":      {"WPA", "PSKAuthentication", "TKIPEncryption"},
+		"WPA2-PSK":     {"11i", "PSKAuthentication", "AESEncryption"},
 		"WPA-WPA2-PSK": {"WPAand11i", "PSKAuthentication", "TKIPandAESEncryption"},
 	}
 	sm, ok := secMap[body.SecurityMode]

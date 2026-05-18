@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.50.4] — 2026-05-18
+### Fixed
+- **TypeError: (e.users || e).filter is not a function di halaman Network Map** — Go handler `ListUsersWithFilters` mengembalikan `"users": null` (nil slice → JSON null) saat tidak ada data, sehingga `(data.users || data).filter(...)` crash karena object tidak punya `.filter`. Fix: (1) Go: gunakan `make([]models.PppoeUser, 0)` agar nil slice menjadi `[]` bukan `null`. (2) Frontend: ganti `(data.users || data).filter(...)` → `(data.users ?? []).filter(...)`.
+- **CSP violation Leaflet CSS** — `style-src` di `next.config.ts` sudah mencakup `https://cdnjs.cloudflare.com` (konfirmasi sudah benar).
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `ListUsersWithFilters`: `var users []models.PppoeUser` → `users := make([]models.PppoeUser, 0)`
+- `src/app/admin/network/map/page.tsx` — line 373: `(data.users || data).filter(...)` → `(data.users ?? []).filter(...)`
+
 ## [2.50.3] — 2026-05-18
 ### Fixed
 - **GenieACS 400 error merah di console** — Semua handler GenieACS yang mengembalikan 400 saat GenieACS belum dikonfigurasi sekarang mengembalikan **HTTP 200** dengan `{success: false, notConfigured: true}`. Browser tidak lagi mencatat error merah di DevTools console ketika GenieACS belum di-setup.

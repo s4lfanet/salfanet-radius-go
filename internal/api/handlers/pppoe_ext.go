@@ -298,7 +298,7 @@ func (h *PppoeExtHandler) ListUsersWithFilters(c fiber.Ctx) error {
 	var total int64
 	q.Count(&total)
 
-	var users []models.PppoeUser
+	users := make([]models.PppoeUser, 0)
 	q.Order("createdAt desc").Offset((page - 1) * limit).Limit(limit).Find(&users)
 
 	return c.JSON(fiber.Map{

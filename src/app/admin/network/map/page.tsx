@@ -370,7 +370,7 @@ export default function NetworkMapPage() {
       }
       if (customersRes.ok) {
         const data = await customersRes.json();
-        const customersWithGps = (data.users || data).filter((c: Customer) => c.latitude && c.longitude);
+        const customersWithGps = (data.users ?? []).filter((c: Customer) => c.latitude && c.longitude);
         setCustomers(customersWithGps);
       }
       if (profilesRes.ok) {
