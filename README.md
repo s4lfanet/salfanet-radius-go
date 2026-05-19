@@ -491,6 +491,23 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.11 — 2026-05-20
+
+### Fixed
+- **Template WhatsApp tidak muncul** — `waH.ListTemplates` mengembalikan raw array; frontend mengecek `data.success` → templates tidak pernah dimuat. Fix: wrap response jadi `{success: true, data: [...]}`.
+- **Update template gagal** — `waH.UpdateTemplate` lookup by "type" string, tapi frontend mengirim UUID → tidak ketemu, membuat record salah. Fix: lookup by UUID dulu, fallback ke type string. Response kini `{success: true}`.
+- **Kirim pesan tunggal selalu error** — `waH.SendMessage` mengembalikan `{message:"sent"}` tanpa `success: true` → frontend selalu masuk blok error. Fix: return `{success: true, message:"sent", provider:"whatsapp"}`.
+- **Broadcast tidak mengirim pesan** — `Broadcast` handler hanya membuat record QUEUED tanpa benar-benar mengirim ke WA service. Fix: panggil WA service untuk setiap user, track sukses/gagal, return `{total, successCount, failCount}`.
+- **Hapus provider gagal (404)** — tidak ada route `DELETE /api/whatsapp/providers/:id`. Fix: tambah route.
+- **REST alias untuk templates** — tambah `GET /whatsapp/templates`, `PUT /whatsapp/templates/:id`, `DELETE /whatsapp/templates/:id` dan `DELETE /whatsapp/providers/:id` sebagai override dari route lama.
+- **`ListTemplates` key salah** — `waCrudH.ListTemplates` mengembalikan key `templates`, frontend mengecek `data.data`. Fix: ganti key menjadi `data`.
+
+### Files
+- `internal/api/handlers/whatsapp.go` — fix `ListTemplates`, `UpdateTemplate`, `SendMessage` response format
+- `internal/api/handlers/whatsapp_crud.go` — fix `ListTemplates` key: `templates` → `data`
+- `internal/api/handlers/whatsapp_ext.go` — add `httpClient`, fix `Broadcast` untuk benar-benar kirim ke WA service + response format `{total, successCount, failCount}`
+- `internal/api/router.go` — tambah REST alias: `DELETE /whatsapp/providers/:id`, `GET /whatsapp/templates`, `PUT /whatsapp/templates/:id`, `DELETE /whatsapp/templates/:id`
+
 ### v2.52.10 — 2026-05-19
 
 ### Fixed
@@ -553,18 +570,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — full migration 3 endpoints + helpers + hapus proxy
 - `go.mod` / `go.sum` — tambah `github.com/go-routeros/routeros/v3 v3.0.1`
-
-### v2.52.6 — 2026-05-19
-
-### Fixed
-- **DELETE VPN client 401 Unauthorized** — DELETE sebelumnya di-proxy ke Next.js. Next.js `getServerSession()` gagal karena cookie domain mismatch (cookie dari `https://radius.hotspotapp.net` tidak valid di `localhost:3000`). Solusi: DELETE sekarang ditangani langsung di Go, tidak proxy ke Next.js. Go sudah melakukan auth check sendiri untuk semua `/api/*` routes.
-- **Hapus VPN client tidak hapus dari database** — Sekarang hapus dari tabel yang tepat: `vps_peers` (untuk VPS WireGuard/L2TP peer) atau `vpn_clients` (untuk MikroTik-managed client).
-- **Cleanup file sistem saat hapus VPS peer** — WireGuard: hapus `[Peer]` block dari `/etc/wireguard/wg0.conf` + `wg set wg0 peer <pubkey> remove`. L2TP: hapus user line dari `/etc/ppp/chap-secrets`.
-### Added
-- `removeWGPeerFromConf(pubkey)` — helper hapus peer dari wg0.conf via regex
-- `removeL2TPUserFromChapSecrets(username)` — helper hapus user dari chap-secrets
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — `DeleteVPNClient` rewrite + 2 helper functions
 
 <!-- AUTO-CHANGELOG:END -->
 
