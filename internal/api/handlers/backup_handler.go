@@ -60,7 +60,7 @@ func parseDBCredentials() (host, user, pass, dbname string) {
 // doMysqlDump runs mysqldump and gzips the output to targetPath.
 func doMysqlDump(targetPath string) error {
 	host, user, pass, dbname := parseDBCredentials()
-	shellCmd := fmt.Sprintf("mysqldump -h%s -u%s %s | gzip > %s", host, user, dbname, targetPath)
+	shellCmd := fmt.Sprintf("mysqldump -h%s -u%s --no-tablespaces %s | gzip > %s", host, user, dbname, targetPath)
 	cmd := exec.Command("sh", "-c", shellCmd)
 	cmd.Env = append(os.Environ(), "MYSQL_PWD="+pass)
 	out, err := cmd.CombinedOutput()
@@ -388,7 +388,3 @@ func getEnvOrDefault(key, def string) string {
 	}
 	return def
 }
-
-
-
-

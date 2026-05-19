@@ -31,7 +31,7 @@ var wsUpgrader = fws.FastHTTPUpgrader{
 func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched *cron.Scheduler) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      "Salfanet RADIUS API",
-		IdleTimeout:  60 * time.Second,  // close idle keep-alive connections before nginx's keepalive_timeout
+		IdleTimeout:  60 * time.Second, // close idle keep-alive connections before nginx's keepalive_timeout
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
 	})
@@ -610,7 +610,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/backup/restore", backupH.Restore)
 	api.Get("/backup/telegram/settings", backupH.GetTelegramSettings)
 	api.Put("/backup/telegram/settings", backupH.UpdateTelegramSettings)
-	api.Delete("/backup/:id", backupH.Delete)
+	api.Delete("/backup/delete/:id", backupH.Delete)
 
 	// Telegram
 	api.Get("/telegram/settings", telegramH.GetSettings)
