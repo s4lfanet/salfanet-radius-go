@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.6] — 2026-05-19
+### Fixed
+- **DELETE VPN client 401 Unauthorized** — DELETE sebelumnya di-proxy ke Next.js. Next.js `getServerSession()` gagal karena cookie domain mismatch (cookie dari `https://radius.hotspotapp.net` tidak valid di `localhost:3000`). Solusi: DELETE sekarang ditangani langsung di Go, tidak proxy ke Next.js. Go sudah melakukan auth check sendiri untuk semua `/api/*` routes.
+- **Hapus VPN client tidak hapus dari database** — Sekarang hapus dari tabel yang tepat: `vps_peers` (untuk VPS WireGuard/L2TP peer) atau `vpn_clients` (untuk MikroTik-managed client).
+- **Cleanup file sistem saat hapus VPS peer** — WireGuard: hapus `[Peer]` block dari `/etc/wireguard/wg0.conf` + `wg set wg0 peer <pubkey> remove`. L2TP: hapus user line dari `/etc/ppp/chap-secrets`.
+### Added
+- `removeWGPeerFromConf(pubkey)` — helper hapus peer dari wg0.conf via regex
+- `removeL2TPUserFromChapSecrets(username)` — helper hapus user dari chap-secrets
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — `DeleteVPNClient` rewrite + 2 helper functions
+
+---
+
 ## [2.52.5] — 2026-05-19
 ### Fixed
 - **SERVER VPN tampil "N/A" di list VPN client** — Go backend mengirim `vpnServerId = "__vps_wg__"` dan `"__vps_l2tp__"` untuk VPS peers, tapi frontend `resolveServer()` memeriksa `"__vps_wg_server__"` dan `"__vps_l2tp_server__"` (dengan suffix `_server`). Akibatnya server name selalu null → tampil "N/A", dan tombol "Lihat" tidak berfungsi (`if (!server) return`). Fix: ubah nilai `vpnServerId` di `ListVPNClients` sesuai yang diharapkan frontend.
