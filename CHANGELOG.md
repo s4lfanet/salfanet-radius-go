@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.12] — 2026-05-20
+### Fixed
+- **Gagal memuat history (root cause)** — `waH.ListHistory` (route terdaftar pertama, line 341) mengembalikan raw array tanpa `success: true`; Fiber v3 selalu menggunakan handler pertama yang terdaftar, sehingga fix di `waCrudH.ListHistory` (line 752) tidak pernah dipanggil. Fix: update `waH.ListHistory` langsung dengan response format `{success, data, pagination, stats}` beserta pagination, search, dan status filter.
+- **WhatsApp sidebar double menu** — Hapus sub-item dropdown (Riwayat, Template, Kirim, Notifikasi, Penyedia) dari sidebar; WhatsApp kini langsung menuju `/admin/settings/whatsapp` yang sudah memiliki semua tab.
+### Files
+- `internal/api/handlers/whatsapp.go` — fix `ListHistory`: full response format `{success, data, pagination, stats}` + pagination + search + stats; tambah `strconv` import
+- `src/app/admin/AdminClientLayout.tsx` — WhatsApp nav: hapus children dropdown, direct href ke `/admin/settings/whatsapp`
+
 ## [2.52.11] — 2026-05-20
 ### Fixed
 - **Template WhatsApp tidak muncul** — `waH.ListTemplates` mengembalikan raw array; frontend mengecek `data.success` → templates tidak pernah dimuat. Fix: wrap response jadi `{success: true, data: [...]}`.
