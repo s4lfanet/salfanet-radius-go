@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.32 — 2026-05-20
+
+### Fixed
+- **VPN Client data hilang setiap update** — `vpn_servers` dan `vpn_clients` adalah tabel Prisma, tapi saat `prisma db push --accept-data-loss` berjalan dengan perubahan schema, datanya bisa DROP. Fix: `updater.sh` kini mem-backup kedua tabel ini sebelum Prisma berjalan dan merestore-nya sesudah (dengan `SET FOREIGN_KEY_CHECKS=0` agar urutan restore tidak masalah).
+### Files
+- `vps-install/updater.sh` — Tambah `backup_vpn_data` / `restore_vpn_data`, dipanggil di Mode A dan Mode B sekitar `prisma db push`
+
 ### v2.52.31 — 2026-05-20
 
 ### Fixed
@@ -525,17 +532,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/pppoe_ext.go` — BulkImport: baca `profileId` form field sebagai fallback; ganti `failures`→`errors`, tambah field `line`/`username`
 - `src/app/admin/pppoe/users/page.tsx` — Import dialog: tambah state `importProfileId`, dropdown profile, kirim `profileId` ke backend
-
-### v2.52.26 — 2026-05-19
-
-### Fixed / Added
-- **Template kolom lengkap** — Template import kini menyertakan kolom `areaName`, `subscriptionType` (PREPAID/POSTPAID), dan `billingDay`. BulkGet export juga menambahkan kolom-kolom tersebut.
-- **Password opsional** — Jika kolom `password` kosong saat import, sistem otomatis membuat password default `<username>123`. Tidak lagi menjadi required field yang memblokir seluruh baris.
-- **Column alias** — Import sekarang menerima nama kolom dari output `ExportUsers` (kolom `Profile` → `profileName`, `Router` → `routerName`, `Area` → `areaName`) sehingga file export bisa langsung di-import kembali.
-- **Lookup case-insensitive** — Pencarian profile, router, dan area berdasarkan nama tidak lagi case-sensitive.
-- **Error message lebih jelas** — Baris yang gagal karena profile tidak ditemukan kini menampilkan nama profile yang dimaksud.
-### Files
-- `internal/api/handlers/pppoe_ext.go` — `BulkGet` template + export header; `BulkImport` alias, optional password, area support, subscriptionType, case-insensitive lookup
 
 <!-- AUTO-CHANGELOG:END -->
 
