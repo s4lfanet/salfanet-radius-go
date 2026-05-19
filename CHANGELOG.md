@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.17] — 2026-05-19
+### Fixed
+- **Backup Create 500 (lanjutan 2)** — `ProtectSystem=strict` di systemd membuat `/backups` read-only karena tidak ada di `ReadWritePaths`. Meski `MkdirAll` berhasil (berjalan sebagai root), `sh -c "... > file.gz"` tetap diblokir oleh kernel sandboxing. Fix: tambah `/var/www/salfanet-radius/backups` ke `ReadWritePaths` di `/etc/systemd/system/salfanet-api.service`, daemon-reload, restart.
+- **Installer future-proof** — `install-go.sh` dan `updater.sh` diperbarui agar `/backups` selalu ada di `ReadWritePaths` dan direktori `backups/` dibuat saat install/update.
+### Files
+- `/etc/systemd/system/salfanet-api.service` (VPS) — tambah `${APP_DIR}/backups` ke `ReadWritePaths`
+- `vps-install/install-go.sh` — `ReadWritePaths` ditambah `${_APP_DIR}/backups`
+- `vps-install/updater.sh` — patch `ReadWritePaths` untuk `/backups` jika belum ada; `mkdir -p backups`
+
 ## [2.52.16] — 2026-05-19
 ### Fixed
 - **Backup Create 500 (lanjutan)** — `mysqldump` gagal dengan "Access denied; you need PROCESS privilege" saat dump tablespaces. User `salfanet_user` tidak punya privilege tersebut. Fix: tambah flag `--no-tablespaces` ke perintah mysqldump.
