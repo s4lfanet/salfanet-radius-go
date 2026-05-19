@@ -51,8 +51,17 @@ export default function TelegramSettingsPage() {
     try {
       const res = await fetch('/api/telegram/settings');
       const data = await res.json();
-      if (data && !data.error) {
-        setTelegramSettings(data);
+      if (data.success && data.settings) {
+        setTelegramSettings({
+          enabled: data.settings.enabled ?? false,
+          botToken: data.settings.botToken ?? '',
+          chatId: data.settings.chatId ?? '',
+          backupTopicId: data.settings.backupTopicId ?? '',
+          healthTopicId: data.settings.healthTopicId ?? '',
+          schedule: data.settings.schedule ?? 'daily',
+          scheduleTime: data.settings.scheduleTime ?? '02:00',
+          keepLastN: data.settings.keepLastN ?? 7,
+        });
       }
     } catch (error) {
       console.error('Load telegram settings error:', error);
