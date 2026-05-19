@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.6 — 2026-05-19
+
+### Fixed
+- **DELETE VPN client 401 Unauthorized** — DELETE sebelumnya di-proxy ke Next.js. Next.js `getServerSession()` gagal karena cookie domain mismatch (cookie dari `https://radius.hotspotapp.net` tidak valid di `localhost:3000`). Solusi: DELETE sekarang ditangani langsung di Go, tidak proxy ke Next.js. Go sudah melakukan auth check sendiri untuk semua `/api/*` routes.
+- **Hapus VPN client tidak hapus dari database** — Sekarang hapus dari tabel yang tepat: `vps_peers` (untuk VPS WireGuard/L2TP peer) atau `vpn_clients` (untuk MikroTik-managed client).
+- **Cleanup file sistem saat hapus VPS peer** — WireGuard: hapus `[Peer]` block dari `/etc/wireguard/wg0.conf` + `wg set wg0 peer <pubkey> remove`. L2TP: hapus user line dari `/etc/ppp/chap-secrets`.
+### Added
+- `removeWGPeerFromConf(pubkey)` — helper hapus peer dari wg0.conf via regex
+- `removeL2TPUserFromChapSecrets(username)` — helper hapus user dari chap-secrets
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — `DeleteVPNClient` rewrite + 2 helper functions
+
 ### v2.52.5 — 2026-05-19
 
 ### Fixed
@@ -531,14 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — Rewrite `CreateWGPeer`, update `ListVPNClients`, tambah struct + helpers baru
 - `prisma/migrations/20260520_add_vps_peers_table.sql` — New migration
-
-### v2.52.1 — 2026-05-20
-
-### Fixed
-- **VPN Client list masih kosong setelah proxy fix** — Root cause: `getServerSession` di Next.js route handler tidak bisa validasi NextAuth cookie karena perbedaan nama cookie (`__Secure-next-auth.session-token` dari HTTPS browser vs `next-auth.session-token` yang dicari di HTTP localhost). Solusi: `ListVPNClients` sekarang **baca langsung dari DB** (`vpn_clients` table via GORM + struct baru `prismaVpnClient`/`prismaVpnServer`) tanpa proxy ke Next.js, sehingga tidak perlu re-validasi session lagi.
-- **Proxy POST fix** — Tambah `req.Host = "localhost"` dan strip `__Secure-` prefix dari cookie sebelum forward ke Next.js, agar `getServerSession` bisa mengenali session cookie untuk CREATE/PATCH/PUT/DELETE.
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah struct `prismaVpnClient`, `prismaVpnServer`; rewrite `ListVPNClients` baca DB langsung; fix `proxyToNextJS` Host header + cookie prefix
 
 <!-- AUTO-CHANGELOG:END -->
 
