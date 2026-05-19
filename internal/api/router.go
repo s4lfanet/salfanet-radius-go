@@ -2,6 +2,8 @@
 package api
 
 import (
+	"time"
+
 	fws "github.com/fasthttp/websocket"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
@@ -28,7 +30,10 @@ var wsUpgrader = fws.FastHTTPUpgrader{
 // New builds and returns the configured Fiber app.
 func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched *cron.Scheduler) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName: "Salfanet RADIUS API",
+		AppName:     "Salfanet RADIUS API",
+		IdleTimeout: 270 * time.Second, // slightly below Nginx keepalive_timeout 300s
+		ReadTimeout: 60 * time.Second,
+		WriteTimeout: 60 * time.Second,
 	})
 
 	// Global middleware
@@ -644,7 +649,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/pppoe/users/export", pppoeExtH.ExportUsers)
 	api.Post("/pppoe/users/bulk-create", pppoeExtH.BulkCreateUsers)
 	api.Get("/pppoe/users/bulk-status", pppoeExtH.BulkStatus)
-	api.Put("/pppoe/users/bulk-status", pppoeExtH.BulkStatus) // frontend sends PUT
+	api.Put("/pppoe/users/bulk-status", pppoeExtH.BulkStatus)  // frontend sends PUT
 	api.Post("/pppoe/users/bulk-status", pppoeExtH.BulkStatus) // POST alias
 	api.Get("/pppoe/users/:id/check-isolation", pppoeExtH.CheckIsolation)
 	api.Post("/pppoe/users/:id/send-notification", pppoeExtH.SendNotification)
