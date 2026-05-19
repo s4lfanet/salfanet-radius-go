@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -136,9 +137,53 @@ func (h *WhatsappHandler) SendMessage(c fiber.Ctx) error {
 // ─── History ─────────────────────────────────────────────────────────────────
 
 func (h *WhatsappHandler) ListHistory(c fiber.Ctx) error {
-	var history []models.WhatsappHistory
-	h.db.Order("sentAt DESC").Limit(200).Find(&history)
-	return c.JSON(history)
+	page := 1
+	limit := 20
+	if p := c.Query("page"); p != "" {
+		if v, err := strconv.Atoi(p); err == nil && v > 0 {
+			page = v
+		}
+	}
+	if l := c.Query("limit"); l != "" {
+		if v, err := strconv.Atoi(l); err == nil && v > 0 && v <= 100 {
+			limit = v
+		}
+	}
+
+	q := h.db.Model(&models.WhatsappHistory{})
+	if status := c.Query("status"); status != "" && status != "all" {
+		q = q.Where("status = ?", status)
+	}
+	if search := c.Query("search"); search != "" {
+		q = q.Where("phone LIKE ? OR message LIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+
+	var total int64
+	q.Count(&total)
+	history := make([]models.WhatsappHistory, 0)
+	q.Order("sentAt desc").Offset((page - 1) * limit).Limit(limit).Find(&history)
+
+	last24h := time.Now().Add(-24 * time.Hour)
+	var totalAll, sentCount, failedCount, last24hCount int64
+	h.db.Model(&models.WhatsappHistory{}).Count(&totalAll)
+	h.db.Model(&models.WhatsappHistory{}).Where("status = ?", "sent").Count(&sentCount)
+	h.db.Model(&models.WhatsappHistory{}).Where("status = ?", "failed").Count(&failedCount)
+	h.db.Model(&models.WhatsappHistory{}).Where("sentAt >= ?", last24h).Count(&last24hCount)
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    history,
+		"pagination": fiber.Map{
+			"page": page, "limit": limit, "total": total,
+			"totalPages": (total + int64(limit) - 1) / int64(limit),
+		},
+		"stats": fiber.Map{
+			"total":       totalAll,
+			"sent":        sentCount,
+			"failed":      failedCount,
+			"last24Hours": last24hCount,
+		},
+	})
 }
 
 // ─── Reminder Settings ───────────────────────────────────────────────────────

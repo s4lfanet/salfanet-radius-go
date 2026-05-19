@@ -395,15 +395,8 @@ const menuGroups: MenuGroup[] = [
       {
         titleKey: 'nav.whatsapp',
         icon: <MessageCircle className="w-4 h-4" />,
+        href: '/admin/settings/whatsapp',
         requiredPermission: 'whatsapp.view',
-        children: [
-          { titleKey: 'nav.settings', href: '/admin/settings/whatsapp', requiredPermission: 'whatsapp.view' },
-          { titleKey: 'nav.history', href: '/admin/whatsapp/history', requiredPermission: 'whatsapp.view' },
-          { titleKey: 'nav.templates', href: '/admin/whatsapp/templates', requiredPermission: 'whatsapp.view' },
-          { titleKey: 'nav.send', href: '/admin/whatsapp/send', requiredPermission: 'whatsapp.view' },
-          { titleKey: 'nav.notifications', href: '/admin/whatsapp/notifications', requiredPermission: 'whatsapp.view' },
-          { titleKey: 'nav.providers', href: '/admin/whatsapp/providers', requiredPermission: 'whatsapp.view' },
-        ],
       },
       {
         titleKey: 'nav.email',
