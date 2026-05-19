@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.26] — 2026-05-19
+### Fixed / Added
+- **Template kolom lengkap** — Template import kini menyertakan kolom `areaName`, `subscriptionType` (PREPAID/POSTPAID), dan `billingDay`. BulkGet export juga menambahkan kolom-kolom tersebut.
+- **Password opsional** — Jika kolom `password` kosong saat import, sistem otomatis membuat password default `<username>123`. Tidak lagi menjadi required field yang memblokir seluruh baris.
+- **Column alias** — Import sekarang menerima nama kolom dari output `ExportUsers` (kolom `Profile` → `profileName`, `Router` → `routerName`, `Area` → `areaName`) sehingga file export bisa langsung di-import kembali.
+- **Lookup case-insensitive** — Pencarian profile, router, dan area berdasarkan nama tidak lagi case-sensitive.
+- **Error message lebih jelas** — Baris yang gagal karena profile tidak ditemukan kini menampilkan nama profile yang dimaksud.
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `BulkGet` template + export header; `BulkImport` alias, optional password, area support, subscriptionType, case-insensitive lookup
+
 ## [2.52.25] — 2026-05-19
 ### Fixed
 - **Import xlsx fallback** — Jika file `.xlsx` yang diupload ternyata berisi konten CSV (format export lama sebelum v2.52.24), import akan otomatis fallback ke parser CSV sehingga tetap berhasil diimport tanpa error "zip: not a valid zip file".
