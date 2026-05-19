@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.31 — 2026-05-20
+
+### Fixed
+- **400 Error saat Tambah/Edit Router** — Field `port`, `apiPort`, `ports` dikirim sebagai string dari form state, tapi Go struct `Router` expect `int`. Fix: konversi ke `parseInt()` di `handleSubmit`. Juga fix: PUT URL edit sekarang `/api/network/routers/:id` (sebelumnya tidak ada `:id`). Router model ditambah field `Server`, `Community`, `VpnClientId` yang ada di tabel `nas` tapi belum ada di struct. `CreateRouter` kini menggunakan `routerBody` struct agar `password` dan `secret` (yang punya `json:"-"` di `Router` struct) tetap bisa dibaca dari request body.
+### Files
+- `src/app/admin/network/routers/page.tsx` — `handleSubmit`: `parseInt` untuk port fields, fix PUT URL ke `/api/network/routers/:id`
+- `internal/api/handlers/network.go` — Tambah `routerBody` struct, fix `CreateRouter` untuk handle `password`/`secret`
+- `internal/db/models/models.go` — `Router` struct: tambah field `Server`, `Community`, `VpnClientId`
+
 ### v2.52.30 — 2026-05-20
 
 ### Fixed
@@ -527,13 +536,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Error message lebih jelas** — Baris yang gagal karena profile tidak ditemukan kini menampilkan nama profile yang dimaksud.
 ### Files
 - `internal/api/handlers/pppoe_ext.go` — `BulkGet` template + export header; `BulkImport` alias, optional password, area support, subscriptionType, case-insensitive lookup
-
-### v2.52.25 — 2026-05-19
-
-### Fixed
-- **Import xlsx fallback** — Jika file `.xlsx` yang diupload ternyata berisi konten CSV (format export lama sebelum v2.52.24), import akan otomatis fallback ke parser CSV sehingga tetap berhasil diimport tanpa error "zip: not a valid zip file".
-### Files
-- `internal/api/handlers/pppoe_ext.go` — `BulkImport`: tambah CSV fallback saat excelize gagal parse xlsx
 
 <!-- AUTO-CHANGELOG:END -->
 
