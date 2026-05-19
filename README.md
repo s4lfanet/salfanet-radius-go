@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.17 — 2026-05-19
+
+### Fixed
+- **Backup Create 500 (lanjutan 2)** — `ProtectSystem=strict` di systemd membuat `/backups` read-only karena tidak ada di `ReadWritePaths`. Meski `MkdirAll` berhasil (berjalan sebagai root), `sh -c "... > file.gz"` tetap diblokir oleh kernel sandboxing. Fix: tambah `/var/www/salfanet-radius/backups` ke `ReadWritePaths` di `/etc/systemd/system/salfanet-api.service`, daemon-reload, restart.
+- **Installer future-proof** — `install-go.sh` dan `updater.sh` diperbarui agar `/backups` selalu ada di `ReadWritePaths` dan direktori `backups/` dibuat saat install/update.
+### Files
+- `/etc/systemd/system/salfanet-api.service` (VPS) — tambah `${APP_DIR}/backups` ke `ReadWritePaths`
+- `vps-install/install-go.sh` — `ReadWritePaths` ditambah `${_APP_DIR}/backups`
+- `vps-install/updater.sh` — patch `ReadWritePaths` untuk `/backups` jika belum ada; `mkdir -p backups`
+
 ### v2.52.16 — 2026-05-19
 
 ### Fixed
@@ -533,15 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Crash di tab Kirim/Broadcast (`Cannot read properties of undefined (reading 'map')`)** — data list dari API (`users`, `templates`, dan `filters.*`) bisa datang `undefined` pada kondisi tertentu dan langsung dipakai di `.map(...)`. Fix: normalisasi semua payload list ke array aman sebelum disimpan ke state agar UI tidak crash.
 ### Files
 - `src/app/admin/whatsapp/send/page.tsx` — tambah normalisasi array aman untuk `users`, `templates`, dan `filters` sebelum render `.map(...)`
-
-### v2.52.12 — 2026-05-20
-
-### Fixed
-- **Gagal memuat history (root cause)** — `waH.ListHistory` (route terdaftar pertama, line 341) mengembalikan raw array tanpa `success: true`; Fiber v3 selalu menggunakan handler pertama yang terdaftar, sehingga fix di `waCrudH.ListHistory` (line 752) tidak pernah dipanggil. Fix: update `waH.ListHistory` langsung dengan response format `{success, data, pagination, stats}` beserta pagination, search, dan status filter.
-- **WhatsApp sidebar double menu** — Hapus sub-item dropdown (Riwayat, Template, Kirim, Notifikasi, Penyedia) dari sidebar; WhatsApp kini langsung menuju `/admin/settings/whatsapp` yang sudah memiliki semua tab.
-### Files
-- `internal/api/handlers/whatsapp.go` — fix `ListHistory`: full response format `{success, data, pagination, stats}` + pagination + search + stats; tambah `strconv` import
-- `src/app/admin/AdminClientLayout.tsx` — WhatsApp nav: hapus children dropdown, direct href ke `/admin/settings/whatsapp`
 
 <!-- AUTO-CHANGELOG:END -->
 
