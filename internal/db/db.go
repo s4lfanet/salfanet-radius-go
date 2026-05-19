@@ -73,8 +73,43 @@ func Init(databaseURL string) (*gorm.DB, error) {
 	sqlDB.SetMaxIdleConns(10)
 	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
+	// Run Go-managed table migrations (tables not managed by Prisma)
+	if err := runMigrations(db); err != nil {
+		return nil, fmt.Errorf("db migrations failed: %w", err)
+	}
+
 	DB = db
 	return db, nil
+}
+
+// runMigrations creates tables that are managed by Go (not by Prisma).
+// Uses CREATE TABLE IF NOT EXISTS so it is safe to run on every startup.
+func runMigrations(db *gorm.DB) error {
+	statements := []string{
+		`CREATE TABLE IF NOT EXISTS vps_peers (
+			id               VARCHAR(191) NOT NULL,
+			type             VARCHAR(50)  NOT NULL DEFAULT 'wireguard',
+			peer_name        VARCHAR(255) NOT NULL DEFAULT '',
+			peer_ip          VARCHAR(45)  NOT NULL DEFAULT '',
+			local_ip         VARCHAR(45)  NOT NULL DEFAULT '',
+			public_key       TEXT         NULL,
+			nas_secret       VARCHAR(64)  NULL,
+			api_username     VARCHAR(255) NULL,
+			api_password     VARCHAR(255) NULL,
+			client_private_key TEXT       NULL,
+			is_active        TINYINT(1)   NOT NULL DEFAULT 1,
+			created_at       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updated_at       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_vps_peers_type (type)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+	}
+	for _, stmt := range statements {
+		if err := db.Exec(stmt).Error; err != nil {
+			return fmt.Errorf("migration failed: %w", err)
+		}
+	}
+	return nil
 }
 
 // convertDSN converts a Prisma-style mysql:// URL to a GORM DSN.
