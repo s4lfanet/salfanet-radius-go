@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.9] — 2026-05-19
+### Fixed
+- **ERR_CONNECTION_CLOSED setelah idle lama** — Nginx `keepalive_timeout` global hanya 65s; browser throttle `setInterval` saat tab di background menjadi >65s sehingga koneksi terputus sebelum poll berikutnya. Fix: tambah `keepalive_timeout 300; keepalive_requests 10000;` di Nginx site config `radius.hotspotapp.net`, dan set `IdleTimeout: 270s`, `ReadTimeout: 60s`, `WriteTimeout: 60s` di Go Fiber. Ini memperbaiki error berulang pada semua polling request: `GET /api/notifications`, `GET /api/admin/registrations?status=PENDING`, `GET /api/manual-payments?status=PENDING`.
+### Files
+- `internal/api/router.go` — tambah `IdleTimeout`, `ReadTimeout`, `WriteTimeout` di `fiber.Config`
+- `/etc/nginx/sites-enabled/radius.hotspotapp.net` (VPS) — tambah `keepalive_timeout 300; keepalive_requests 10000;`
+
 ## [2.52.8] — 2026-05-19
 ### Fixed
 - **405 Method Not Allowed — audit & perbaiki semua HTTP method mismatch** — frontend mengirim method yang berbeda dari yang terdaftar di Go router; sekarang semua route mendukung method yang dikirim frontend
