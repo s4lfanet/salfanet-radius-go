@@ -491,6 +491,30 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.8 — 2026-05-19
+
+### Fixed
+- **405 Method Not Allowed — audit & perbaiki semua HTTP method mismatch** — frontend mengirim method yang berbeda dari yang terdaftar di Go router; sekarang semua route mendukung method yang dikirim frontend
+- `POST /api/telegram/settings` — tambah alias POST (was PUT only)
+- `POST /api/admin/cloudflare-tunnel` — tambah alias POST (was PUT only)
+- `POST /api/push/unsubscribe` — tambah alias POST (was DELETE only)
+- `POST /api/push/agent-unsubscribe` — tambah alias POST (was DELETE only)
+- `POST /api/push/technician-unsubscribe` — tambah alias POST (was DELETE only)
+- `PUT /api/pppoe/users/status` — tambah alias PUT (was POST only)
+- `PUT /api/pppoe/users/bulk-status` + `POST` alias — tambah (was GET only)
+- `POST /api/admin/referrals/:id` — tambah alias POST (was PUT only)
+- `POST /api/hotspot/vouchers/validate` — tambah alias POST (was GET only)
+- `POST /api/network/olts/status` — tambah alias POST (was GET only)
+- `POST /api/network/routers/status` — tambah alias POST (was GET only)
+- `POST /api/settings/timezone` — implementasi handler baru `SetTimezone` yang simpan ke DB
+- `POST /api/admin/users/:id/renewal` — tambah alias POST (was GET only)
+- `POST /api/customer/wifi` — tambah alias POST (was PUT only)
+### Added
+- `SettingsExtHandler.SetTimezone` — handler baru untuk simpan timezone ke tabel company di DB
+### Files
+- `internal/api/router.go` — tambah 14 method alias untuk fix 405 errors
+- `internal/api/handlers/settings_ext.go` — tambah `SetTimezone` POST handler
+
 ### v2.52.7 — 2026-05-19
 
 ### Changed
@@ -544,13 +568,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/db/db.go` — `runMigrations` pakai `sqlDB.Exec` bukan `db.Exec`
 - `internal/api/handlers/network_vpn_ext_handler.go` — `ListVPNClients` include semua vps_peers, `CreateL2TPPeer` implemented, tambah `nextAvailableL2TPIP`
-
-### v2.52.3 — 2026-05-19
-
-### Fixed
-- **vps_peers table hilang / tidak persisten** — Migration via SQL file gagal karena BOM (byte-order mark) di file. Solusi: pindahkan pembuatan tabel ke Go code (`runMigrations` di `db.Init`) menggunakan `db.Exec("CREATE TABLE IF NOT EXISTS ...")`, sehingga tabel dibuat otomatis setiap startup — tidak perlu manual migration lagi.
-### Files
-- `internal/db/db.go` — Tambah fungsi `runMigrations` yang membuat tabel `vps_peers` via raw SQL saat startup
 
 <!-- AUTO-CHANGELOG:END -->
 
