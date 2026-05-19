@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.20] — 2026-05-19
+### Fixed
+- **`/api/push/send` masih route ke Next.js di server block 2 & 3** — Setelah Go sudah memiliki handler `pushH.Send`, nginx di server block 2 (IP direct) dan block 3 (HTTPS default_server) masih memiliki `location = /api/push/send { proxy_pass 127.0.0.1:3000 }`. Server block 1 (Cloudflare/main) sudah benar. Block 2 & 3 kini konsisten: rule dihapus, request jatuh ke catch-all `/api/ → Go`.
+### Files
+- `vps-install/install-nginx.sh` — hapus 2 blok `location = /api/push/send → Next.js` dari server block 2 & 3
+- `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — hapus blok yang sama, nginx reload
+
 ## [2.52.19] — 2026-05-19
 ### Fixed
 - **ERR_CONNECTION_CLOSED pada idle API connections** — Root cause: nginx `keepalive_timeout 65s` terlalu pendek, Cloudflare mempertahankan koneksi ke origin ~90s. Jika nginx tutup koneksi duluan, Cloudflare mencoba kirim request ke koneksi yang sudah tutup → browser mendapat `ERR_CONNECTION_CLOSED`. Fix: naikkan nginx `keepalive_timeout` 65→120s dan Fiber `IdleTimeout` 60→150s agar server tidak menutup koneksi sebelum Cloudflare.
