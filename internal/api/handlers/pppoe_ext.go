@@ -242,19 +242,30 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 
 	var records [][]string
 	if strings.HasSuffix(filename, ".xlsx") || strings.HasSuffix(filename, ".xls") {
-		// Parse Excel file
+		// Read all bytes so we can fallback to CSV if needed
 		data, err2 := io.ReadAll(f)
 		if err2 != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "gagal membaca file Excel"})
 		}
 		exf, err2 := excelize.OpenReader(bytes.NewReader(data))
 		if err2 != nil {
-			return c.Status(400).JSON(fiber.Map{"error": "file Excel tidak valid: " + err2.Error()})
-		}
-		defer exf.Close()
-		records, err2 = exf.GetRows(exf.GetSheetName(0))
-		if err2 != nil {
-			return c.Status(400).JSON(fiber.Map{"error": "gagal membaca baris Excel"})
+			// Fallback: file might be CSV content disguised as .xlsx (old export format)
+			if strings.Contains(err2.Error(), "zip") || strings.Contains(err2.Error(), "ZIP") {
+				r := csv.NewReader(bytes.NewReader(data))
+				r.FieldsPerRecord = -1
+				records, err = r.ReadAll()
+				if err != nil {
+					return c.Status(400).JSON(fiber.Map{"error": "file tidak valid (bukan Excel maupun CSV yang bisa dibaca)"})
+				}
+			} else {
+				return c.Status(400).JSON(fiber.Map{"error": "file Excel tidak valid: " + err2.Error()})
+			}
+		} else {
+			defer exf.Close()
+			records, err2 = exf.GetRows(exf.GetSheetName(0))
+			if err2 != nil {
+				return c.Status(400).JSON(fiber.Map{"error": "gagal membaca baris Excel"})
+			}
 		}
 	} else {
 		// Parse CSV file
