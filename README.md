@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.25 — 2026-05-19
+
+### Fixed
+- **Import xlsx fallback** — Jika file `.xlsx` yang diupload ternyata berisi konten CSV (format export lama sebelum v2.52.24), import akan otomatis fallback ke parser CSV sehingga tetap berhasil diimport tanpa error "zip: not a valid zip file".
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `BulkImport`: tambah CSV fallback saat excelize gagal parse xlsx
+
 ### v2.52.24 — 2026-05-19
 
 ### Added
@@ -542,14 +549,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/technician/layout.tsx` — ganti Prisma → Go API fetch
 - `vps-install/install-nginx.sh` — tambah `location = /api/auth/logout-log → Go` di 2 server block functions
 - `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — tambah logout-log block di 3 server block, nginx reload
-
-### v2.52.20 — 2026-05-19
-
-### Fixed
-- **`/api/push/send` masih route ke Next.js di server block 2 & 3** — Setelah Go sudah memiliki handler `pushH.Send`, nginx di server block 2 (IP direct) dan block 3 (HTTPS default_server) masih memiliki `location = /api/push/send { proxy_pass 127.0.0.1:3000 }`. Server block 1 (Cloudflare/main) sudah benar. Block 2 & 3 kini konsisten: rule dihapus, request jatuh ke catch-all `/api/ → Go`.
-### Files
-- `vps-install/install-nginx.sh` — hapus 2 blok `location = /api/push/send → Next.js` dari server block 2 & 3
-- `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — hapus blok yang sama, nginx reload
 
 <!-- AUTO-CHANGELOG:END -->
 
