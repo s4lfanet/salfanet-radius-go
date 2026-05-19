@@ -30,9 +30,9 @@ var wsUpgrader = fws.FastHTTPUpgrader{
 // New builds and returns the configured Fiber app.
 func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched *cron.Scheduler) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:     "Salfanet RADIUS API",
-		IdleTimeout: 270 * time.Second, // slightly below Nginx keepalive_timeout 300s
-		ReadTimeout: 60 * time.Second,
+		AppName:      "Salfanet RADIUS API",
+		IdleTimeout:  270 * time.Second, // slightly below Nginx keepalive_timeout 300s
+		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
 	})
 
@@ -749,7 +749,8 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/whatsapp/providers/:id/detail", waCrudH.GetProvider)
 	api.Put("/whatsapp/providers/:id/update", waCrudH.UpdateProvider)
 	api.Delete("/whatsapp/providers/:id/remove", waCrudH.DeleteProvider)
-	api.Get("/whatsapp/history-list", waCrudH.ListHistory)
+	api.Get("/whatsapp/history", waCrudH.ListHistory)      // primary route used by frontend
+	api.Get("/whatsapp/history-list", waCrudH.ListHistory) // legacy alias
 	api.Delete("/whatsapp/history/delete", waCrudH.DeleteHistory)
 	api.Get("/whatsapp/templates-list", waCrudH.ListTemplates)
 	api.Post("/whatsapp/templates-create", waCrudH.CreateTemplate)

@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.10] — 2026-05-19
+### Fixed
+- **WhatsApp History gagal dimuat** — Go router mendaftarkan `/whatsapp/history-list` tapi frontend memanggil `/whatsapp/history`; response format juga salah (`history` vs `data`, tidak ada field `stats`). Fix: tambah route `GET /api/whatsapp/history`, ubah response menjadi `data` + `stats` (total/sent/failed/last24Hours), dan handle `search` + `status=all` dengan benar.
+### Files
+- `internal/api/router.go` — tambah `GET /whatsapp/history` (alias ke `waCrudH.ListHistory`)
+- `internal/api/handlers/whatsapp_crud.go` — fix `ListHistory`: response format, stats, search param, status=all handling
+
 ## [2.52.9] — 2026-05-19
 ### Fixed
 - **ERR_CONNECTION_CLOSED setelah idle lama** — Nginx `keepalive_timeout` global hanya 65s; browser throttle `setInterval` saat tab di background menjadi >65s sehingga koneksi terputus sebelum poll berikutnya. Fix: tambah `keepalive_timeout 300; keepalive_requests 10000;` di Nginx site config `radius.hotspotapp.net`, dan set `IdleTimeout: 270s`, `ReadTimeout: 60s`, `WriteTimeout: 60s` di Go Fiber. Ini memperbaiki error berulang pada semua polling request: `GET /api/notifications`, `GET /api/admin/registrations?status=PENDING`, `GET /api/manual-payments?status=PENDING`.

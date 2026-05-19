@@ -82,26 +82,45 @@ func (h *WhatsappCrudHandler) DeleteProvider(c fiber.Ctx) error {
 func (h *WhatsappCrudHandler) ListHistory(c fiber.Ctx) error {
 	page, limit := pageParams(c)
 	status := c.Query("status")
-	phone := c.Query("phone")
+	// support both 'search' (frontend) and 'phone' (legacy)
+	search := c.Query("search")
+	if search == "" {
+		search = c.Query("phone")
+	}
 
 	q := h.db.Model(&models.WhatsappHistory{})
-	if status != "" {
+	if status != "" && status != "all" {
 		q = q.Where("status = ?", status)
 	}
-	if phone != "" {
-		q = q.Where("phone LIKE ?", "%"+phone+"%")
+	if search != "" {
+		q = q.Where("phone LIKE ? OR message LIKE ?", "%"+search+"%", "%"+search+"%")
 	}
 
 	var total int64
 	q.Count(&total)
 	var history []models.WhatsappHistory
 	q.Order("sentAt desc").Offset((page - 1) * limit).Limit(limit).Find(&history)
+
+	// Compute stats (all-time totals + last 24h)
+	last24h := time.Now().Add(-24 * time.Hour)
+	var totalAll, sentCount, failedCount, last24hCount int64
+	h.db.Model(&models.WhatsappHistory{}).Count(&totalAll)
+	h.db.Model(&models.WhatsappHistory{}).Where("status = ?", "sent").Count(&sentCount)
+	h.db.Model(&models.WhatsappHistory{}).Where("status = ?", "failed").Count(&failedCount)
+	h.db.Model(&models.WhatsappHistory{}).Where("sentAt >= ?", last24h).Count(&last24hCount)
+
 	return c.JSON(fiber.Map{
 		"success": true,
-		"history": history,
+		"data":    history,
 		"pagination": fiber.Map{
 			"page": page, "limit": limit, "total": total,
 			"totalPages": (total + int64(limit) - 1) / int64(limit),
+		},
+		"stats": fiber.Map{
+			"total":       totalAll,
+			"sent":        sentCount,
+			"failed":      failedCount,
+			"last24Hours": last24hCount,
 		},
 	})
 }
