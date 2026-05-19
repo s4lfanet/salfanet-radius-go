@@ -150,9 +150,9 @@ func (h *WhatsappExtHandler) ProviderStatus(c fiber.Ctx) error {
 	}
 	// Status check would call WA service API - stub
 	return c.JSON(fiber.Map{
-		"success":  true,
-		"provider": provider,
-		"status":   "UNKNOWN",
+		"success":   true,
+		"provider":  provider,
+		"status":    "UNKNOWN",
 		"connected": false,
 	})
 }
@@ -198,11 +198,11 @@ func (h *WhatsappExtHandler) ProviderTest(c fiber.Ctx) error {
 		body.Message = "Test message from Salfanet RADIUS"
 	}
 	history := models.WhatsappHistory{
-		ID:     generateID(),
-		Phone:  body.Phone,
+		ID:      generateID(),
+		Phone:   body.Phone,
 		Message: body.Message,
-		Status: "QUEUED",
-		SentAt: time.Now(),
+		Status:  "QUEUED",
+		SentAt:  time.Now(),
 	}
 	h.db.Create(&history)
 	return c.JSON(fiber.Map{"success": true, "message": "test message queued"})

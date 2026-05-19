@@ -1,13 +1,25 @@
 import type { Metadata, Viewport } from 'next';
 import AgentLayoutClient from './AgentLayoutClient';
-import { prisma } from '@/server/db/client';
+
+async function getCompanyName(): Promise<string> {
+  try {
+    const res = await fetch('http://127.0.0.1:8080/api/public/company', {
+      next: { revalidate: 3600 },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.company?.name || 'SALFANET RADIUS';
+    }
+  } catch {}
+  return 'SALFANET RADIUS';
+}
 
 export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
-  const company = await prisma.company.findFirst({ select: { name: true } });
+  const name = await getCompanyName();
   return {
-    title: `Agent Portal - ${company?.name || 'SALFANET RADIUS'}`,
+    title: `Agent Portal - ${name}`,
     description: 'Portal Agent untuk Generate Voucher',
     manifest: '/manifest-agent.json',
   };

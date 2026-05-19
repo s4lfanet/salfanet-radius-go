@@ -1,4 +1,4 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ============================================================================
 # SALFANET RADIUS VPS Installer - Nginx Module
 # ============================================================================
@@ -179,6 +179,16 @@ _proxy_locations() {
         proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
     }
     location /api/auth/agent/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    # logout-log → Go backend (custom activity logging)
+    location = /api/auth/logout-log {
         proxy_pass         http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header   Host $host;
@@ -466,6 +476,16 @@ _proxy_locations_https_domain() {
         proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
     }
     location /api/auth/agent/ {
+        proxy_pass         http://127.0.0.1:8080;
+        proxy_http_version 1.1;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+        proxy_set_header   CF-Connecting-IP $http_cf_connecting_ip;
+    }
+    # logout-log → Go backend (custom activity logging)
+    location = /api/auth/logout-log {
         proxy_pass         http://127.0.0.1:8080;
         proxy_http_version 1.1;
         proxy_set_header   Host $host;

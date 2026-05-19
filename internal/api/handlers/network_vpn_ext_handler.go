@@ -460,7 +460,7 @@ func generateX25519KeyPair() (privateKeyB64, publicKeyB64 string, err error) {
 
 // buildNasSetupScript generates the RouterOS setup script for a VPN client.
 func buildNasSetupScript(name, vpnType, serverHost, vpnIp, username, password, apiUsername, apiPassword string,
-	winboxPort *int, clientPrivateKey *string, serverWgPublicKey string, wgPort int, nasSecret, radiusServerVpnIp string) string {
+	_ *int, clientPrivateKey *string, serverWgPublicKey string, wgPort int, nasSecret, radiusServerVpnIp string) string {
 
 	var radiusSection string
 	if radiusServerVpnIp != "" {
@@ -532,9 +532,10 @@ func buildNasSetupScript(name, vpnType, serverHost, vpnIp, username, password, a
 
 	vpnTypeUpper := strings.ToUpper(vpnType)
 	interfaceType := "l2tp-client"
-	if vpnType == "pptp" {
+	switch vpnType {
+	case "pptp":
 		interfaceType = "pptp-client"
-	} else if vpnType == "sstp" {
+	case "sstp":
 		interfaceType = "sstp-client"
 	}
 	ipsecLine := ""

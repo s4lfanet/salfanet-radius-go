@@ -211,4 +211,3 @@ func (h *TelegramHandler) SendHealth(c fiber.Ctx) error {
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "health report sent to telegram"})
 }
-

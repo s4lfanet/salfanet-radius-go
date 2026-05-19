@@ -1,10 +1,22 @@
 import type { Metadata, Viewport } from 'next';
-import { prisma } from '@/server/db/client';
+
+async function getCompanyName(): Promise<string> {
+  try {
+    const res = await fetch('http://127.0.0.1:8080/api/public/company', {
+      next: { revalidate: 3600 },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.company?.name || 'SALFANET RADIUS';
+    }
+  } catch {}
+  return 'SALFANET RADIUS';
+}
 
 export async function generateMetadata(): Promise<Metadata> {
-  const company = await prisma.company.findFirst({ select: { name: true } });
+  const name = await getCompanyName();
   return {
-    title: `Portal Teknisi - ${company?.name || 'SALFANET RADIUS'}`,
+    title: `Portal Teknisi - ${name}`,
     description: 'Portal Teknisi untuk manajemen tiket dan pelanggan',
     manifest: '/manifest-technician.json',
   };
