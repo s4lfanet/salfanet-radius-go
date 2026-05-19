@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.35] — 2026-05-20
+### Fixed
+- **VPN Client data selalu hilang setiap deploy (permanen fix)** — Root cause: `vpn_servers` dan `vpn_clients` masih dikelola Prisma. Saat `prisma db push --accept-data-loss` berjalan dengan schema change (misal: hapus FK di v2.52.33), Prisma DROP + RECREATE tabel sehingga data hilang. Backup/restore di updater.sh tidak cukup reliable. Fix permanen: tambah `@@ignore` ke kedua model di Prisma schema → Prisma tidak pernah menyentuh tabel ini lagi. Tambah `CREATE TABLE IF NOT EXISTS vpn_servers` dan `CREATE TABLE IF NOT EXISTS vpn_clients` ke `runMigrations` di `db.go` → Go yang create dan manage kedua tabel ini (sama seperti `vps_peers`).
+### Files
+- `prisma/schema.prisma` — Tambah `@@ignore` ke model `vpnServer` dan `vpnClient`
+- `internal/db/db.go` — Tambah `CREATE TABLE IF NOT EXISTS vpn_servers` dan `vpn_clients` ke `runMigrations`
+
 ## [2.52.34] — 2026-05-21
 ### Fixed
 - **TypeError: Cannot read properties of undefined (reading 'radiusServer')** — `SetupRadiusOnRouter` Go handler adalah stub kosong (hanya return `success: true` tanpa `config`, `script`, dll). Setelah router disimpan, frontend otomatis memanggil `handleSetupRadius` → `setScriptModalData({ config: result.config })` → `config` = `undefined` → modal crash saat render `scriptModalData.config.radiusServer`. Fix: implementasikan handler yang benar (lookup router, generate script RouterOS 6 + 7, return `config` object lengkap) dan tambah optional chaining `?.` di frontend sebagai safety guard.

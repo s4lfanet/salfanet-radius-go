@@ -264,6 +264,7 @@ enum InvoiceType {
   RENEWAL      // Perpanjangan (prepaid)
 }
 
+/// Managed by Go/GORM via runMigrations — Prisma must NOT touch this table.
 model vpnServer {
   id             String      @id @default(uuid())
   name           String
@@ -272,9 +273,9 @@ model vpnServer {
   password       String
   apiPort        Int         @default(8728)
   subnet         String
-  poolStart      Int         @default(10)    // First IP in pool (e.g. 10 → .10)
-  poolEnd        Int         @default(254)   // Last IP in pool (e.g. 254 → .254)
-  gateway        String?                     // Gateway IP override (default: subnet .1)
+  poolStart      Int         @default(10)
+  poolEnd        Int         @default(254)
+  gateway        String?
   l2tpEnabled    Boolean     @default(false)
   sstpEnabled    Boolean     @default(false)
   pptpEnabled    Boolean     @default(false)
@@ -287,11 +288,11 @@ model vpnServer {
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
-  vpnClients     vpnClient[]
-
   @@map("vpn_servers")
+  @@ignore
 }
 
+/// Managed by Go/GORM via runMigrations — Prisma must NOT touch this table.
 model vpnClient {
   id               String     @id @default(uuid())
   name             String
@@ -311,11 +312,9 @@ model vpnClient {
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
-  vpnServer        vpnServer  @relation(fields: [vpnServerId], references: [id], onDelete: Cascade)
-  // routers relation removed — vpnClientId on nas can reference vpn_clients OR vps_peers
-
   @@unique([vpnServerId, vpnIp])
   @@map("vpn_clients")
+  @@ignore
 }
 
 model router {

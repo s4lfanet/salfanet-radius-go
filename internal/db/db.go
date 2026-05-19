@@ -91,6 +91,56 @@ func runMigrations(db *gorm.DB) error {
 		return fmt.Errorf("runMigrations: get sql.DB: %w", err)
 	}
 	statements := []string{
+		// vpn_servers: managed by Go (@@ignore in Prisma schema) — Prisma will NOT touch this table
+		`CREATE TABLE IF NOT EXISTS vpn_servers (
+			id             VARCHAR(191) NOT NULL,
+			name           VARCHAR(255) NOT NULL DEFAULT '',
+			host           VARCHAR(255) NOT NULL DEFAULT '',
+			username       VARCHAR(255) NOT NULL DEFAULT '',
+			password       VARCHAR(255) NOT NULL DEFAULT '',
+			apiPort        INT          NOT NULL DEFAULT 8728,
+			subnet         VARCHAR(45)  NOT NULL DEFAULT '',
+			poolStart      INT          NOT NULL DEFAULT 10,
+			poolEnd        INT          NOT NULL DEFAULT 254,
+			gateway        VARCHAR(45)  NULL,
+			l2tpEnabled    TINYINT(1)   NOT NULL DEFAULT 0,
+			sstpEnabled    TINYINT(1)   NOT NULL DEFAULT 0,
+			pptpEnabled    TINYINT(1)   NOT NULL DEFAULT 0,
+			wgEnabled      TINYINT(1)   NOT NULL DEFAULT 0,
+			wgPublicKey    TEXT         NULL,
+			wgPort         INT          NULL DEFAULT 51820,
+			openVpnEnabled TINYINT(1)   NOT NULL DEFAULT 0,
+			openVpnPort    INT          NULL DEFAULT 1194,
+			isActive       TINYINT(1)   NOT NULL DEFAULT 1,
+			createdAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updatedAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		// vpn_clients: managed by Go (@@ignore in Prisma schema) — Prisma will NOT touch this table
+		`CREATE TABLE IF NOT EXISTS vpn_clients (
+			id               VARCHAR(191) NOT NULL,
+			name             VARCHAR(255) NOT NULL DEFAULT '',
+			vpnServerId      VARCHAR(191) NOT NULL,
+			vpnIp            VARCHAR(45)  NOT NULL DEFAULT '',
+			username         VARCHAR(255) NOT NULL DEFAULT '',
+			password         VARCHAR(255) NOT NULL DEFAULT '',
+			vpnType          VARCHAR(50)  NOT NULL DEFAULT 'L2TP',
+			description      TEXT         NULL,
+			winboxPort       INT          NULL,
+			apiUsername      VARCHAR(255) NULL,
+			apiPassword      VARCHAR(255) NULL,
+			clientPublicKey  TEXT         NULL,
+			clientPrivateKey TEXT         NULL,
+			isActive         TINYINT(1)   NOT NULL DEFAULT 1,
+			isRadiusServer   TINYINT(1)   NOT NULL DEFAULT 0,
+			createdAt        DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updatedAt        DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			UNIQUE KEY vpn_clients_username_key (username),
+			UNIQUE KEY vpn_clients_vpnServerId_vpnIp_key (vpnServerId, vpnIp),
+			KEY vpn_clients_vpnServerId_fkey (vpnServerId),
+			CONSTRAINT vpn_clients_vpnServerId_fkey FOREIGN KEY (vpnServerId) REFERENCES vpn_servers (id) ON DELETE CASCADE
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 		`CREATE TABLE IF NOT EXISTS vps_peers (
 			id                VARCHAR(191) NOT NULL,
 			type              VARCHAR(50)  NOT NULL DEFAULT 'wireguard',
