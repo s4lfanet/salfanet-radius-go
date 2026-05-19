@@ -41,6 +41,9 @@ _proxy_locations() {
     cat <<'LOCATIONS'
     client_max_body_size 100M;
 
+    keepalive_timeout    300;
+    keepalive_requests   10000;
+
     proxy_connect_timeout 600;
     proxy_send_timeout    600;
     proxy_read_timeout    600;
@@ -329,6 +332,9 @@ LOCATIONS
 _proxy_locations_https_domain() {
     cat <<'LOCATIONS'
     client_max_body_size 100M;
+
+    keepalive_timeout    300;
+    keepalive_requests   10000;
 
     proxy_connect_timeout 600;
     proxy_send_timeout    600;
@@ -642,6 +648,9 @@ LOCATIONS
 _proxy_locations_cloudflare() {
     cat <<'LOCATIONS'
     client_max_body_size 100M;
+
+    keepalive_timeout    300;
+    keepalive_requests   10000;
 
     proxy_connect_timeout 600;
     proxy_send_timeout    600;
