@@ -638,10 +638,85 @@ func (h *NetworkVPNHandler) PutVPNClient(c fiber.Ctx) error {
 	return h.proxyToNextJS(c, "PUT")
 }
 
-// DELETE /api/network/vpn-client — delete VPN client (proxied to Next.js)
+// DELETE /api/network/vpn-client — delete VPN client from DB
+// Handles both vps_peers (WireGuard/L2TP VPS) and Prisma vpn_clients (MikroTik).
+// Not proxied to Next.js because session cookie forwarding fails for DELETE from domain context.
 func (h *NetworkVPNHandler) DeleteVPNClient(c fiber.Ctx) error {
-	return h.proxyToNextJS(c, "DELETE")
+	id := c.Query("id")
+	if id == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "id diperlukan"})
+	}
+
+	// 1. Check vps_peers table first
+	var peer vpsPeer
+	if err := h.db.Where("id = ?", id).First(&peer).Error; err == nil {
+		// Clean up system config files
+		if peer.Type == "wireguard" && peer.PublicKey != nil {
+			removeWGPeerFromConf(*peer.PublicKey)
+			_ = exec.Command("wg", "set", "wg0", "peer", *peer.PublicKey, "remove").Run()
+		}
+		if peer.Type == "l2tp" {
+			// Derive l2tp username: api_username = "api-label" → l2tp username = "l2tp-label"
+			l2tpUser := ""
+			if peer.ApiUsername != nil {
+				l2tpUser = strings.Replace(*peer.ApiUsername, "api-", "l2tp-", 1)
+			}
+			if l2tpUser != "" {
+				removeL2TPUserFromChapSecrets(l2tpUser)
+			}
+		}
+		if err := h.db.Delete(&peer).Error; err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Gagal hapus dari database: " + err.Error()})
+		}
+		return c.JSON(fiber.Map{"success": true})
+	}
+
+	// 2. Not a VPS peer — check vpn_clients table (Prisma-managed)
+	result := h.db.Table("vpn_clients").Where("id = ?", id).Delete(nil)
+	if result.Error != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal hapus: " + result.Error.Error()})
+	}
+	if result.RowsAffected == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "VPN client tidak ditemukan"})
+	}
+	return c.JSON(fiber.Map{"success": true})
 }
+
+// removeWGPeerFromConf removes a [Peer] block matching publicKey from wg0.conf.
+func removeWGPeerFromConf(publicKey string) {
+	raw, err := os.ReadFile(wgConfFile)
+	if err != nil {
+		return
+	}
+	content := string(raw)
+
+	// Match entire [Peer] block that contains this public key.
+	// A block starts with [Peer] and ends before the next [section] or EOF.
+	re := regexp.MustCompile(`(?m)(\n|^)\[Peer\][^\[]*PublicKey\s*=\s*` + regexp.QuoteMeta(strings.TrimSpace(publicKey)) + `[^\[]*`)
+	cleaned := re.ReplaceAllString(content, "")
+	cleaned = strings.TrimRight(cleaned, "\n") + "\n"
+	_ = os.WriteFile(wgConfFile, []byte(cleaned), 0600)
+}
+
+// removeL2TPUserFromChapSecrets removes a user line from /etc/ppp/chap-secrets.
+func removeL2TPUserFromChapSecrets(username string) {
+	const chapFile = "/etc/ppp/chap-secrets"
+	raw, err := os.ReadFile(chapFile)
+	if err != nil {
+		return
+	}
+	var kept []string
+	for _, line := range strings.Split(string(raw), "\n") {
+		// Match lines that start with this username followed by tab or space
+		trimmed := strings.TrimSpace(line)
+		if trimmed == username || strings.HasPrefix(trimmed, username+"\t") || strings.HasPrefix(trimmed, username+" ") {
+			continue
+		}
+		kept = append(kept, line)
+	}
+	_ = os.WriteFile(chapFile, []byte(strings.Join(kept, "\n")), 0600)
+}
+
 
 // ─── VPN Routing ─────────────────────────────────────────────────────────────
 
