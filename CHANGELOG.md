@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.16] — 2026-05-19
+### Fixed
+- **Backup Create 500 (lanjutan)** — `mysqldump` gagal dengan "Access denied; you need PROCESS privilege" saat dump tablespaces. User `salfanet_user` tidak punya privilege tersebut. Fix: tambah flag `--no-tablespaces` ke perintah mysqldump.
+- **Backup Delete 404** — Route terdaftar sebagai `DELETE /api/backup/:id` tapi frontend memanggil `DELETE /api/backup/delete/{id}`. Fix: ubah route ke `/api/backup/delete/:id`.
+### Files
+- `internal/api/handlers/backup_handler.go` — tambah `--no-tablespaces` ke perintah mysqldump
+- `internal/api/router.go` — route DELETE dari `/backup/:id` → `/backup/delete/:id`
+
 ## [2.52.15] — 2026-05-19
 ### Fixed
 - **Backup Create HTTP 500** — handler menggunakan `DB_HOST`/`DB_USER`/`DB_PASSWORD`/`DB_NAME` yang tidak ada di VPS (hanya ada `DATABASE_URL`). Fix: `parseDBCredentials()` parse `DATABASE_URL` Prisma format dengan `net/url`. Gunakan `MYSQL_PWD` env var (bukan flag `-p`) agar password dengan karakter spesial aman dari shell escaping.
