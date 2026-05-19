@@ -24,6 +24,7 @@ print_step()    { echo -e "\n${CYAN}▶ $1${NC}"; }
 print_success() { echo -e "${GREEN}✓ $1${NC}"; }
 print_info()    { echo -e "${YELLOW}  $1${NC}"; }
 print_error()   { echo -e "${RED}✗ $1${NC}" >&2; }
+print_warning() { echo -e "${YELLOW}⚠ $1${NC}" >&2; }
 
 # ─── Config ────────────────────────────────────────────────────────────────
 APP_DIR="${APP_DIR:-/var/www/salfanet-radius}"
@@ -492,7 +493,7 @@ if [ -n "$USE_BRANCH" ]; then
     backup_genieacs_data
     node_modules/.bin/prisma db push --accept-data-loss 2>/dev/null || node_modules/.bin/prisma db push
     restore_genieacs_data
-    apply_sql_migrations || true ────────────────────────────────
+    apply_sql_migrations || true
     # Migrate legacy admin_user -> admin_users if needed and ensure
     # at least one active SUPER_ADMIN exists.
     if [ -f "$APP_DIR/vps-install/fix-auth-after-update.sh" ]; then
