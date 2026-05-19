@@ -6,7 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.52.2] — 2026-05-20
+## [2.52.3] — 2026-05-19
+### Fixed
+- **vps_peers table hilang / tidak persisten** — Migration via SQL file gagal karena BOM (byte-order mark) di file. Solusi: pindahkan pembuatan tabel ke Go code (`runMigrations` di `db.Init`) menggunakan `db.Exec("CREATE TABLE IF NOT EXISTS ...")`, sehingga tabel dibuat otomatis setiap startup — tidak perlu manual migration lagi.
+### Files
+- `internal/db/db.go` — Tambah fungsi `runMigrations` yang membuat tabel `vps_peers` via raw SQL saat startup
+
+---
+
+## [2.52.2] — 2026-05-19
 ### Fixed
 - **VPS WireGuard peer tidak muncul di VPN Client list** — `CreateWGPeer` sebelumnya adalah stub yang tidak generate keypair, tidak assign IP, dan menyimpan ke tabel `vps_peers` yang belum ada. Rewrite penuh: generate WireGuard keypair (`wg genkey`/`wg pubkey`), alokasi IP dari pool, tambah `[Peer]` ke wg0.conf, apply live via `wg set`, generate nasSecret/apiUsername/apiPassword, simpan ke DB.
 - **Script NAS IP undefined, API User api-undefined, CLIENT_PRIVATE_KEY placeholder** — `CreateWGPeer` tidak return `vpnIp`, `apiUsername`, `apiPassword`, `clientPrivateKey`, dll. Sekarang return semua field yang dibutuhkan frontend.
