@@ -98,7 +98,7 @@ func (h *WhatsappCrudHandler) ListHistory(c fiber.Ctx) error {
 
 	var total int64
 	q.Count(&total)
-	var history []models.WhatsappHistory
+	history := make([]models.WhatsappHistory, 0) // always [] not null in JSON
 	q.Order("sentAt desc").Offset((page - 1) * limit).Limit(limit).Find(&history)
 
 	// Compute stats (all-time totals + last 24h)
