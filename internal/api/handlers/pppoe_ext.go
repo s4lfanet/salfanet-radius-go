@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	excelize "github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
@@ -18,6 +20,37 @@ type PppoeExtHandler struct{ db *gorm.DB }
 
 func NewPppoeExtHandler(db *gorm.DB) *PppoeExtHandler {
 	return &PppoeExtHandler{db: db}
+}
+
+// writeXLSX creates a proper .xlsx file from column headers and data rows.
+func writeXLSX(headers []string, rows [][]string) ([]byte, error) {
+	f := excelize.NewFile()
+	defer f.Close()
+	sw, err := f.NewStreamWriter("Sheet1")
+	if err != nil {
+		return nil, err
+	}
+	heatRow := make([]interface{}, len(headers))
+	for i, h := range headers {
+		heatRow[i] = h
+	}
+	if err = sw.SetRow("A1", heatRow); err != nil {
+		return nil, err
+	}
+	for i, row := range rows {
+		cells := make([]interface{}, len(row))
+		for j, v := range row {
+			cells[j] = v
+		}
+		cell, _ := excelize.CoordinatesToCellName(1, i+2)
+		if err = sw.SetRow(cell, cells); err != nil {
+			return nil, err
+		}
+	}
+	if err = sw.Flush(); err != nil {
+		return nil, err
+	}
+	return f.WriteToBuffer()
 }
 
 // GET /api/pppoe/users/status — count by status
@@ -33,7 +66,7 @@ func (h *PppoeExtHandler) UserStatus(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "data": rows})
 }
 
-// GET /api/pppoe/users/export — export users (CSV or Excel-compatible CSV)
+// GET /api/pppoe/users/export — export users as CSV or real Excel (.xlsx)
 func (h *PppoeExtHandler) ExportUsers(c fiber.Ctx) error {
 	profileID := c.Query("profileId")
 	routerID := c.Query("routerId")
@@ -53,9 +86,8 @@ func (h *PppoeExtHandler) ExportUsers(c fiber.Ctx) error {
 	}
 	q.Find(&users)
 
-	var buf bytes.Buffer
-	w := csv.NewWriter(&buf)
-	_ = w.Write([]string{"ID", "Username", "Name", "Phone", "Email", "Profile", "Area", "Status", "SubscriptionType", "ExpiredAt", "CreatedAt"})
+	headers := []string{"ID", "Username", "Name", "Phone", "Email", "Profile", "Area", "Status", "SubscriptionType", "ExpiredAt", "CreatedAt"}
+	var dataRows [][]string
 	for _, u := range users {
 		expStr := ""
 		if u.ExpiredAt != nil {
@@ -69,40 +101,61 @@ func (h *PppoeExtHandler) ExportUsers(c fiber.Ctx) error {
 		if u.Email != nil {
 			emailStr = *u.Email
 		}
-		_ = w.Write([]string{u.ID, u.Username, u.Name, u.Phone, emailStr, u.Profile.Name, areaName, u.Status, string(u.SubscriptionType), expStr, u.CreatedAt.Format("2006-01-02")})
+		dataRows = append(dataRows, []string{u.ID, u.Username, u.Name, u.Phone, emailStr, u.Profile.Name, areaName, u.Status, string(u.SubscriptionType), expStr, u.CreatedAt.Format("2006-01-02")})
+	}
+
+	if format == "excel" || format == "xlsx" {
+		data, err := writeXLSX(headers, dataRows)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "gagal membuat Excel"})
+		}
+		c.Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		c.Set("Content-Disposition", "attachment; filename=pppoe-users.xlsx")
+		return c.Send(data)
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+	_ = w.Write(headers)
+	for _, row := range dataRows {
+		_ = w.Write(row)
 	}
 	w.Flush()
-
-	filename := "pppoe-users.csv"
-	if format == "excel" || format == "xlsx" {
-		filename = "pppoe-users.xlsx"
-	}
 	c.Set("Content-Type", "text/csv; charset=utf-8")
-	c.Set("Content-Disposition", "attachment; filename="+filename)
+	c.Set("Content-Disposition", "attachment; filename=pppoe-users.csv")
 	return c.Send(buf.Bytes())
 }
 
-// GET /api/pppoe/users/bulk — template download or CSV export
+// GET /api/pppoe/users/bulk — template download or export (csv or real xlsx)
 func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	t := c.Query("type", "template")
 	format := c.Query("format", "csv")
 
-	var buf bytes.Buffer
-	w := csv.NewWriter(&buf)
+	tplHeaders := []string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "expiredAt"}
+	tplExample := [][]string{{"user001", "pass123", "John Doe", "08123456789", "", "", "", "Paket 10 Mbps", "Router 1", "2025-12-31"}}
 
 	if t == "template" {
-		// Return template with example row
-		_ = w.Write([]string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "expiredAt"})
-		_ = w.Write([]string{"user001", "pass123", "John Doe", "08123456789", "", "", "", "Paket 10 Mbps", "Router 1", "2025-12-31"})
+		if format == "xlsx" {
+			data, err := writeXLSX(tplHeaders, tplExample)
+			if err != nil {
+				return c.Status(500).JSON(fiber.Map{"error": "gagal membuat Excel template"})
+			}
+			c.Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+			c.Set("Content-Disposition", "attachment; filename=pppoe-template.xlsx")
+			return c.Send(data)
+		}
+		// CSV template
+		var buf bytes.Buffer
+		w := csv.NewWriter(&buf)
+		_ = w.Write(tplHeaders)
+		_ = w.Write(tplExample[0])
 		w.Flush()
-		// Always use .csv extension — xlsx would need a binary Excel format we don't support
-		_ = format // ignored
 		c.Set("Content-Type", "text/csv; charset=utf-8")
 		c.Set("Content-Disposition", "attachment; filename=pppoe-template.csv")
 		return c.Send(buf.Bytes())
 	}
 
-	// type=export: full CSV export with all fields for re-import
+	// type=export
 	paymentStatus := c.Query("paymentStatus")
 	var users []models.PppoeUser
 	q := h.db.Preload("Profile").Preload("Area").Preload("Router")
@@ -114,7 +167,8 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	}
 	q.Find(&users)
 
-	_ = w.Write([]string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "status", "expiredAt"})
+	expHeaders := []string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "status", "expiredAt"}
+	var expRows [][]string
 	for _, u := range users {
 		expStr := ""
 		if u.ExpiredAt != nil {
@@ -136,7 +190,24 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 		if u.IPAddress != nil {
 			ipStr = *u.IPAddress
 		}
-		_ = w.Write([]string{u.Username, u.Password, u.Name, u.Phone, emailStr, addrStr, ipStr, u.Profile.Name, routerName, u.Status, expStr})
+		expRows = append(expRows, []string{u.Username, u.Password, u.Name, u.Phone, emailStr, addrStr, ipStr, u.Profile.Name, routerName, u.Status, expStr})
+	}
+
+	if format == "xlsx" {
+		data, err := writeXLSX(expHeaders, expRows)
+		if err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "gagal membuat Excel"})
+		}
+		c.Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+		c.Set("Content-Disposition", "attachment; filename=pppoe-export.xlsx")
+		return c.Send(data)
+	}
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+	_ = w.Write(expHeaders)
+	for _, row := range expRows {
+		_ = w.Write(row)
 	}
 	w.Flush()
 	c.Set("Content-Type", "text/csv; charset=utf-8")
@@ -144,7 +215,7 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	return c.Send(buf.Bytes())
 }
 
-// POST /api/pppoe/users/bulk — import users from CSV file upload
+// POST /api/pppoe/users/bulk — import users from CSV or Excel (.xlsx) file upload
 func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 	// Explicitly parse multipart form (more reliable than c.FormFile in Fiber v3 beta)
 	mf, err := c.MultipartForm()
@@ -157,14 +228,7 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "tidak ada file yang diunggah"})
 	}
 	fileHeader := fileHeaders[0]
-
-	// Reject Excel binary formats — only CSV is supported
 	filename := strings.ToLower(fileHeader.Filename)
-	if strings.HasSuffix(filename, ".xlsx") || strings.HasSuffix(filename, ".xls") {
-		return c.Status(400).JSON(fiber.Map{
-			"error": "Format Excel (.xlsx/.xls) tidak didukung. Simpan file sebagai CSV terlebih dahulu, lalu upload ulang.",
-		})
-	}
 
 	f, err := fileHeader.Open()
 	if err != nil {
@@ -172,11 +236,30 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 	}
 	defer f.Close()
 
-	r := csv.NewReader(f)
-	r.FieldsPerRecord = -1 // allow variable fields
-	records, err := r.ReadAll()
-	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "gagal membaca CSV: " + err.Error()})
+	var records [][]string
+	if strings.HasSuffix(filename, ".xlsx") || strings.HasSuffix(filename, ".xls") {
+		// Parse Excel file
+		data, err2 := io.ReadAll(f)
+		if err2 != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "gagal membaca file Excel"})
+		}
+		exf, err2 := excelize.OpenReader(bytes.NewReader(data))
+		if err2 != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "file Excel tidak valid: " + err2.Error()})
+		}
+		defer exf.Close()
+		records, err2 = exf.GetRows(exf.GetSheetName(0))
+		if err2 != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "gagal membaca baris Excel"})
+		}
+	} else {
+		// Parse CSV file
+		r := csv.NewReader(f)
+		r.FieldsPerRecord = -1 // allow variable fields
+		records, err = r.ReadAll()
+		if err != nil {
+			return c.Status(400).JSON(fiber.Map{"error": "gagal membaca CSV: " + err.Error()})
+		}
 	}
 
 	if len(records) < 2 {
