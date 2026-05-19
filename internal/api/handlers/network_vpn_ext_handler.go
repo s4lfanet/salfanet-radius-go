@@ -574,11 +574,11 @@ func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
 	var vpsPeers []vpsPeer
 	h.db.Order("created_at desc").Find(&vpsPeers)
 	for _, p := range vpsPeers {
-		serverID := "__vps_wg__"
+		serverID := "__vps_wg_server__"
 		descText := "VPS WireGuard Peer"
 		vpnType := "wireguard"
 		if p.Type == "l2tp" {
-			serverID = "__vps_l2tp__"
+			serverID = "__vps_l2tp_server__"
 			descText = "VPS L2TP Peer"
 			vpnType = "l2tp"
 		}
