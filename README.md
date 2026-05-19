@@ -491,6 +491,22 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.15 — 2026-05-19
+
+### Fixed
+- **Backup Create HTTP 500** — handler menggunakan `DB_HOST`/`DB_USER`/`DB_PASSWORD`/`DB_NAME` yang tidak ada di VPS (hanya ada `DATABASE_URL`). Fix: `parseDBCredentials()` parse `DATABASE_URL` Prisma format dengan `net/url`. Gunakan `MYSQL_PWD` env var (bukan flag `-p`) agar password dengan karakter spesial aman dari shell escaping.
+- **Backup Restore gagal** — sama, credentials parsing salah. Fixed bersama dengan fix backup create.
+- **Backup history 0 items** — konsekuensi dari backup create yang selalu gagal; otomatis teratasi setelah create diperbaiki.
+- **Telegram settings tidak tersimpan** — `GetTelegramSettings`/`UpdateTelegramSettings` di kedua handler adalah stub hardcoded. Fix: baca/tulis ke tabel `telegram_backup_settings` di DB. Tambah model `TelegramBackupSettings` di Go.
+- **Telegram send/test-backup tidak berfungsi** — semua endpoint Telegram selalu return stub success tanpa mengirim apapun. Fix: implementasi penuh dengan Telegram Bot API (`sendMessage` untuk teks, `sendDocument` untuk file backup via multipart upload).
+- **ERR_CONNECTION_CLOSED saat idle** — Fiber `IdleTimeout=270s` sedangkan nginx `keepalive_timeout` default 75s. Race condition: nginx tutup koneksi lebih dulu, browser coba reuse → `ERR_CONNECTION_CLOSED`. Fix: turunkan Fiber `IdleTimeout` ke 60s + tambah `keepalive_timeout 65;` ke semua server block di nginx.
+### Files
+- `internal/db/models/extra.go` — tambah model `TelegramBackupSettings` (tabel `telegram_backup_settings`)
+- `internal/api/handlers/backup_handler.go` — rewrite: `parseDBCredentials()`, `doMysqlDump()`, `doMysqlRestore()`, `sendTelegramMessage()`, `sendTelegramDocument()`, semua handler implementasi penuh
+- `internal/api/handlers/telegram_handler.go` — rewrite: `GetSettings`/`UpdateSettings` baca/tulis DB, `Test`/`SendBackup`/`TestBackup`/`SendHealth` panggil Telegram API sungguhan
+- `internal/api/router.go` — `IdleTimeout`: 270s → 60s; fix route `/backup/telegram/test` ke `telegramH.TestBackup`
+- `nginx /etc/nginx/sites-enabled/salfanet-radius` — tambah `keepalive_timeout 65;` di semua server block (VPS only)
+
 ### v2.52.14 — 2026-05-19
 
 ### Fixed
@@ -534,14 +550,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/whatsapp_crud.go` — fix `ListTemplates` key: `templates` → `data`
 - `internal/api/handlers/whatsapp_ext.go` — add `httpClient`, fix `Broadcast` untuk benar-benar kirim ke WA service + response format `{total, successCount, failCount}`
 - `internal/api/router.go` — tambah REST alias: `DELETE /whatsapp/providers/:id`, `GET /whatsapp/templates`, `PUT /whatsapp/templates/:id`, `DELETE /whatsapp/templates/:id`
-
-### v2.52.10 — 2026-05-19
-
-### Fixed
-- **WhatsApp History gagal dimuat** — Go router mendaftarkan `/whatsapp/history-list` tapi frontend memanggil `/whatsapp/history`; response format juga salah (`history` vs `data`, tidak ada field `stats`). Fix: tambah route `GET /api/whatsapp/history`, ubah response menjadi `data` + `stats` (total/sent/failed/last24Hours), dan handle `search` + `status=all` dengan benar.
-### Files
-- `internal/api/router.go` — tambah `GET /whatsapp/history` (alias ke `waCrudH.ListHistory`)
-- `internal/api/handlers/whatsapp_crud.go` — fix `ListHistory`: response format (data+stats), search param, status=all, empty array not null
 
 <!-- AUTO-CHANGELOG:END -->
 
