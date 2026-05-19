@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.30 — 2026-05-20
+
+### Fixed
+- **vps_peers terhapus saat deploy** — `updater.sh` kini mem-backup data tabel `vps_peers` sebelum `prisma db push` dan merestore-nya setelahnya (seperti GenieACS tables). Go API juga di-restart ulang setelah Prisma selesai agar `runMigrations` memastikan tabel selalu ada.
+- **VPN Client dropdown tidak menampilkan VPS WireGuard/L2TP peers** — `ListRouters` sebelumnya hanya fetch dari `vpn_clients`. Kini juga fetch dari `vps_peers` (tabel Go-managed), sehingga peer WireGuard/L2TP yang didaftarkan via halaman VPN Clients ikut muncul di dropdown.
+### Files
+- `vps-install/updater.sh` — Tambah `backup_vps_peers_data` / `restore_vps_peers_data` + restart Go setelah Prisma (Mode A & B)
+- `internal/api/handlers/network.go` — `ListRouters`: tambah fetch dari `vps_peers` dan gabungkan ke hasil `vpnClients`
+
 ### v2.52.29 — 2026-05-20
 
 ### Fixed
@@ -525,17 +534,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Import xlsx fallback** — Jika file `.xlsx` yang diupload ternyata berisi konten CSV (format export lama sebelum v2.52.24), import akan otomatis fallback ke parser CSV sehingga tetap berhasil diimport tanpa error "zip: not a valid zip file".
 ### Files
 - `internal/api/handlers/pppoe_ext.go` — `BulkImport`: tambah CSV fallback saat excelize gagal parse xlsx
-
-### v2.52.24 — 2026-05-19
-
-### Added
-- **Export real `.xlsx`** — `GET /api/pppoe/users/export?format=excel` sekarang menghasilkan file Excel binary asli (`.xlsx`) menggunakan library `excelize v2.10.1`, bukan CSV yang di-rename. Begitu juga `GET /api/pppoe/users/bulk?type=template&format=xlsx` menghasilkan template Excel asli.
-- **Import dari `.xlsx`** — `POST /api/pppoe/users/bulk` kini menerima file `.xlsx` maupun `.xls` selain `.csv`. File Excel di-parse menggunakan excelize, baris data diproses sama seperti CSV.
-### Changed
-- **Dependency baru** — `github.com/xuri/excelize/v2 v2.10.1` ditambahkan ke `go.mod`.
-### Files
-- `internal/api/handlers/pppoe_ext.go` — tambah `writeXLSX()` helper, update `ExportUsers`, `BulkGet`, `BulkImport`
-- `go.mod`, `go.sum` — tambah excelize dan dependensi turunannya
 
 <!-- AUTO-CHANGELOG:END -->
 
