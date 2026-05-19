@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.16 — 2026-05-19
+
+### Fixed
+- **Backup Create 500 (lanjutan)** — `mysqldump` gagal dengan "Access denied; you need PROCESS privilege" saat dump tablespaces. User `salfanet_user` tidak punya privilege tersebut. Fix: tambah flag `--no-tablespaces` ke perintah mysqldump.
+- **Backup Delete 404** — Route terdaftar sebagai `DELETE /api/backup/:id` tapi frontend memanggil `DELETE /api/backup/delete/{id}`. Fix: ubah route ke `/api/backup/delete/:id`.
+### Files
+- `internal/api/handlers/backup_handler.go` — tambah `--no-tablespaces` ke perintah mysqldump
+- `internal/api/router.go` — route DELETE dari `/backup/:id` → `/backup/delete/:id`
+
 ### v2.52.15 — 2026-05-19
 
 ### Fixed
@@ -533,23 +542,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/whatsapp.go` — fix `ListHistory`: full response format `{success, data, pagination, stats}` + pagination + search + stats; tambah `strconv` import
 - `src/app/admin/AdminClientLayout.tsx` — WhatsApp nav: hapus children dropdown, direct href ke `/admin/settings/whatsapp`
-
-### v2.52.11 — 2026-05-20
-
-### Fixed
-- **Template WhatsApp tidak muncul** — `waH.ListTemplates` mengembalikan raw array; frontend mengecek `data.success` → templates tidak pernah dimuat. Fix: wrap response jadi `{success: true, data: [...]}`.
-- **Update template gagal** — `waH.UpdateTemplate` lookup by "type" string, tapi frontend mengirim UUID → tidak ketemu, membuat record salah. Fix: lookup by UUID dulu, fallback ke type string. Response kini `{success: true}`.
-- **Kirim pesan tunggal selalu error** — `waH.SendMessage` mengembalikan `{message:"sent"}` tanpa `success: true` → frontend selalu masuk blok error. Fix: return `{success: true, message:"sent", provider:"whatsapp"}`.
-- **Broadcast tidak mengirim pesan** — `Broadcast` handler hanya membuat record QUEUED tanpa benar-benar mengirim ke WA service. Fix: panggil WA service untuk setiap user, track sukses/gagal, return `{total, successCount, failCount}`.
-- **Hapus provider gagal (404)** — tidak ada route `DELETE /api/whatsapp/providers/:id`. Fix: tambah route.
-- **REST alias untuk templates** — tambah `GET /whatsapp/templates`, `PUT /whatsapp/templates/:id`, `DELETE /whatsapp/templates/:id` dan `DELETE /whatsapp/providers/:id` sebagai override dari route lama.
-- **`ListTemplates` key salah** — `waCrudH.ListTemplates` mengembalikan key `templates`, frontend mengecek `data.data`. Fix: ganti key menjadi `data`.
-
-### Files
-- `internal/api/handlers/whatsapp.go` — fix `ListTemplates`, `UpdateTemplate`, `SendMessage` response format
-- `internal/api/handlers/whatsapp_crud.go` — fix `ListTemplates` key: `templates` → `data`
-- `internal/api/handlers/whatsapp_ext.go` — add `httpClient`, fix `Broadcast` untuk benar-benar kirim ke WA service + response format `{total, successCount, failCount}`
-- `internal/api/router.go` — tambah REST alias: `DELETE /whatsapp/providers/:id`, `GET /whatsapp/templates`, `PUT /whatsapp/templates/:id`, `DELETE /whatsapp/templates/:id`
 
 <!-- AUTO-CHANGELOG:END -->
 
