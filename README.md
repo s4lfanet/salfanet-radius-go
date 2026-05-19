@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.5 — 2026-05-19
+
+### Fixed
+- **SERVER VPN tampil "N/A" di list VPN client** — Go backend mengirim `vpnServerId = "__vps_wg__"` dan `"__vps_l2tp__"` untuk VPS peers, tapi frontend `resolveServer()` memeriksa `"__vps_wg_server__"` dan `"__vps_l2tp_server__"` (dengan suffix `_server`). Akibatnya server name selalu null → tampil "N/A", dan tombol "Lihat" tidak berfungsi (`if (!server) return`). Fix: ubah nilai `vpnServerId` di `ListVPNClients` sesuai yang diharapkan frontend.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — `vpnServerId` VPS peers: `__vps_wg__` → `__vps_wg_server__`, `__vps_l2tp__` → `__vps_l2tp_server__`
+
 ### v2.52.4 — 2026-05-19
 
 ### Fixed
@@ -532,17 +539,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Proxy POST fix** — Tambah `req.Host = "localhost"` dan strip `__Secure-` prefix dari cookie sebelum forward ke Next.js, agar `getServerSession` bisa mengenali session cookie untuk CREATE/PATCH/PUT/DELETE.
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — Tambah struct `prismaVpnClient`, `prismaVpnServer`; rewrite `ListVPNClients` baca DB langsung; fix `proxyToNextJS` Host header + cookie prefix
-
-### v2.52.0 — 2026-05-19
-
-### Fixed
-- **VPN Client tidak muncul setelah ditambahkan** — Go handler `ListVPNClients`/`CreateVPNClient` menulis ke tabel `vpn_client_configs` yang tidak ada (tidak pernah di-migrate Prisma). Tabel yang benar adalah `vpn_clients`. Solusi: Go sekarang **proxy** semua request `/api/network/vpn-client` ke Next.js (port 3000) yang sudah punya logika lengkap (credential generation, MikroTik connection, Prisma).
-### Added
-- **Proxy handler** — `proxyToNextJS()` helper di `NetworkVPNHandler`: forward Cookie + Authorization header agar session auth tetap valid
-- **Routes PATCH/PUT/DELETE** untuk `/api/network/vpn-client` yang sebelumnya tidak ada di Go router (menyebabkan 404 saat update IP / toggle RADIUS / hapus client)
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `proxyToNextJS`, rewrite `ListVPNClients`/`CreateVPNClient`, tambah `PatchVPNClient`, `PutVPNClient`, `DeleteVPNClient`
-- `internal/api/router.go` — Register `api.Patch/Put/Delete("/network/vpn-client", ...)`
 
 <!-- AUTO-CHANGELOG:END -->
 
