@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.29] — 2026-05-20
+### Fixed
+- **VPN Client dropdown kosong di modal "Tambah Router Baru"** — `GET /api/network/routers` sebelumnya hanya mengembalikan array router mentah. Frontend mengharapkan `{ routers: [...], vpnClients: [...] }`, sehingga `data.routers` dan `data.vpnClients` keduanya `undefined` → `[]`. Fix: handler `ListRouters` kini fetch VPN clients dari tabel `vpn_clients` (beserta NAS secret dari tabel `nas`) dan mengembalikan response dalam format yang benar.
+### Files
+- `internal/api/handlers/network.go` — `ListRouters`: ganti `c.JSON(routers)` dengan `c.JSON({ routers, vpnClients })`
+
 ## [2.52.28] — 2026-05-19
 ### Fixed / Added
 - **Import: Profile Default Fallback** — Dialog import kini memiliki dropdown **Profile Default** (opsional). Jika nama profile di file tidak cocok dengan DB (atau DB profile kosong), profile default yang dipilih di UI dipakai — persis seperti sistem Next.js lama.
