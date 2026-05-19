@@ -95,12 +95,10 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 		_ = w.Write([]string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "expiredAt"})
 		_ = w.Write([]string{"user001", "pass123", "John Doe", "08123456789", "", "", "", "Paket 10 Mbps", "Router 1", "2025-12-31"})
 		w.Flush()
-		filename := "pppoe-template.csv"
-		if format == "xlsx" {
-			filename = "pppoe-template.xlsx"
-		}
+		// Always use .csv extension — xlsx would need a binary Excel format we don't support
+		_ = format // ignored
 		c.Set("Content-Type", "text/csv; charset=utf-8")
-		c.Set("Content-Disposition", "attachment; filename="+filename)
+		c.Set("Content-Disposition", "attachment; filename=pppoe-template.csv")
 		return c.Send(buf.Bytes())
 	}
 
@@ -108,9 +106,10 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	paymentStatus := c.Query("paymentStatus")
 	var users []models.PppoeUser
 	q := h.db.Preload("Profile").Preload("Area").Preload("Router")
-	if paymentStatus == "paid" {
+	switch paymentStatus {
+	case "paid":
 		q = q.Where("id IN (SELECT userId FROM Invoice WHERE status = 'PAID')")
-	} else if paymentStatus == "unpaid" {
+	case "unpaid":
 		q = q.Where("id IN (SELECT userId FROM Invoice WHERE status IN ('PENDING','OVERDUE'))")
 	}
 	q.Find(&users)
@@ -145,15 +144,31 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	return c.Send(buf.Bytes())
 }
 
-// POST /api/pppoe/users/bulk — import users from CSV/Excel file upload
+// POST /api/pppoe/users/bulk — import users from CSV file upload
 func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
-	file, err := c.FormFile("file")
+	// Explicitly parse multipart form (more reliable than c.FormFile in Fiber v3 beta)
+	mf, err := c.MultipartForm()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "no file uploaded"})
+		return c.Status(400).JSON(fiber.Map{"error": "gagal membaca form: " + err.Error()})
 	}
-	f, err := file.Open()
+
+	fileHeaders, ok := mf.File["file"]
+	if !ok || len(fileHeaders) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "tidak ada file yang diunggah"})
+	}
+	fileHeader := fileHeaders[0]
+
+	// Reject Excel binary formats — only CSV is supported
+	filename := strings.ToLower(fileHeader.Filename)
+	if strings.HasSuffix(filename, ".xlsx") || strings.HasSuffix(filename, ".xls") {
+		return c.Status(400).JSON(fiber.Map{
+			"error": "Format Excel (.xlsx/.xls) tidak didukung. Simpan file sebagai CSV terlebih dahulu, lalu upload ulang.",
+		})
+	}
+
+	f, err := fileHeader.Open()
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "failed to open file"})
+		return c.Status(500).JSON(fiber.Map{"error": "gagal membuka file"})
 	}
 	defer f.Close()
 
@@ -161,11 +176,11 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 	r.FieldsPerRecord = -1 // allow variable fields
 	records, err := r.ReadAll()
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "failed to parse CSV: " + err.Error()})
+		return c.Status(400).JSON(fiber.Map{"error": "gagal membaca CSV: " + err.Error()})
 	}
 
 	if len(records) < 2 {
-		return c.Status(400).JSON(fiber.Map{"error": "file is empty or has no data rows"})
+		return c.Status(400).JSON(fiber.Map{"error": "file kosong atau tidak ada baris data"})
 	}
 
 	// Build header index map (case-insensitive)
