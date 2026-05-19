@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.4 — 2026-05-19
+
+### Fixed
+- **vps_peers table tidak pernah terbuat** — Root cause: GORM dengan `PrepareStmt: true` tidak bisa menjalankan DDL (`CREATE TABLE`) karena MySQL tidak support prepared statement untuk DDL. `runMigrations` sekarang pakai raw `sqlDB.Exec` (dari `db.DB()`) yang bypass PrepareStmt.
+- **VPN Client list kosong (Total Klien: 0)** — `ListVPNClients` sekarang include semua tipe peer dari `vps_peers` (WireGuard dan L2TP), bukan hanya WireGuard.
+- **L2TP VPS peer creation — username/password/vpnIp undefined** — `CreateL2TPPeer` sebelumnya stub yang hanya bind body ke struct kosong. Sekarang fully implemented: baca info server, cari IP berikutnya dari pool, generate credentials (username, password, nasSecret, apiUsername, apiPassword), tambah user ke `/etc/ppp/chap-secrets`, simpan ke `vps_peers`, return semua field yang dibutuhkan frontend.
+### Added
+- Helper `nextAvailableL2TPIP` — find next unused L2TP pool IP dari `vps_peers` table
+### Files
+- `internal/db/db.go` — `runMigrations` pakai `sqlDB.Exec` bukan `db.Exec`
+- `internal/api/handlers/network_vpn_ext_handler.go` — `ListVPNClients` include semua vps_peers, `CreateL2TPPeer` implemented, tambah `nextAvailableL2TPIP`
+
 ### v2.52.3 — 2026-05-19
 
 ### Fixed
@@ -531,13 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `proxyToNextJS`, rewrite `ListVPNClients`/`CreateVPNClient`, tambah `PatchVPNClient`, `PutVPNClient`, `DeleteVPNClient`
 - `internal/api/router.go` — Register `api.Patch/Put/Delete("/network/vpn-client", ...)`
-
-### v2.51.9 — 2026-05-19
-
-### Fixed
-- **Sidebar admin terlalu panjang** — Semua 7 kategori menu sebelumnya selalu terbuka (`useState(true)`). Sekarang kategori collapse by default; hanya kategori yang berisi halaman aktif yang auto-expand.
-### Files
-- `src/app/admin/AdminClientLayout.tsx` — `CategoryItem`: `useState(true)` → `useState(hasActiveItem)`
 
 <!-- AUTO-CHANGELOG:END -->
 
