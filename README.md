@@ -491,7 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
-### v2.52.2 — 2026-05-20
+### v2.52.3 — 2026-05-19
+
+### Fixed
+- **vps_peers table hilang / tidak persisten** — Migration via SQL file gagal karena BOM (byte-order mark) di file. Solusi: pindahkan pembuatan tabel ke Go code (`runMigrations` di `db.Init`) menggunakan `db.Exec("CREATE TABLE IF NOT EXISTS ...")`, sehingga tabel dibuat otomatis setiap startup — tidak perlu manual migration lagi.
+### Files
+- `internal/db/db.go` — Tambah fungsi `runMigrations` yang membuat tabel `vps_peers` via raw SQL saat startup
+
+### v2.52.2 — 2026-05-19
 
 ### Fixed
 - **VPS WireGuard peer tidak muncul di VPN Client list** — `CreateWGPeer` sebelumnya adalah stub yang tidak generate keypair, tidak assign IP, dan menyimpan ke tabel `vps_peers` yang belum ada. Rewrite penuh: generate WireGuard keypair (`wg genkey`/`wg pubkey`), alokasi IP dari pool, tambah `[Peer]` ke wg0.conf, apply live via `wg set`, generate nasSecret/apiUsername/apiPassword, simpan ke DB.
@@ -531,18 +538,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Sidebar admin terlalu panjang** — Semua 7 kategori menu sebelumnya selalu terbuka (`useState(true)`). Sekarang kategori collapse by default; hanya kategori yang berisi halaman aktif yang auto-expand.
 ### Files
 - `src/app/admin/AdminClientLayout.tsx` — `CategoryItem`: `useState(true)` → `useState(hasActiveItem)`
-
-### v2.51.8 — 2026-05-19
-
-### Fixed
-- **405 Method Not Allowed saat simpan konfigurasi WireGuard / L2TP** — `PATCH /api/network/vps-wg-peer` dan `PATCH /api/network/vps-l2tp-peer` tidak terdaftar di Go router (hanya ada di Next.js route handler lama yang sekarang tidak dipakai karena semua `/api/*` diproxy ke Go). `PATCH` juga tidak ada di daftar `AllowMethods` CORS sehingga preflight OPTIONS gagal.
-### Added
-- **Go handler `PatchWGServerConfig`** — `PATCH /api/network/vps-wg-peer`: update `poolStart`, `poolEnd`, `gatewayIp` di `wg-server-info.json`. Jika `gatewayIp` berubah, otomatis update `Address =` di `wg0.conf`, update PostUp/PostDown iptables, lalu restart WireGuard interface (`wg-quick down/up`).
-- **Go handler `PatchL2TPServerConfig`** — `PATCH /api/network/vps-l2tp-peer`: update `poolStart`, `poolEnd`, `gateway` di `l2tp-server-info.json`, restart xl2tpd + reload ipsec, pastikan iptables rules untuk `ppp+`.
-- **CORS PATCH** — Tambah `"PATCH"` ke `AllowMethods` di CORS middleware.
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `PatchWGServerConfig` dan `PatchL2TPServerConfig`
-- `internal/api/router.go` — Register `api.Patch("/network/vps-wg-peer", ...)`, `api.Patch("/network/vps-l2tp-peer", ...)`, dan `"PATCH"` di CORS AllowMethods
 
 <!-- AUTO-CHANGELOG:END -->
 
