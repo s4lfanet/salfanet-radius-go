@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.18 — 2026-05-19
+
+### Fixed
+- **Telegram settings tidak tampil setelah save** — `loadSettings()` melakukan `setTelegramSettings(data)` padahal API return `{ success: true, settings: {...} }`. Akibatnya seluruh field (botToken, chatId, dll) jadi `undefined` setelah reload. Data sebenarnya sudah tersimpan di DB, tapi UI tidak menampilkannya. Fix: ganti ke `setTelegramSettings(data.settings)` dengan fallback untuk tiap field.
+### Files
+- `src/app/admin/settings/telegram/page.tsx` — fix `loadSettings`: `setTelegramSettings(data)` → `setTelegramSettings(data.settings)` dengan field defaults
+
 ### v2.52.17 — 2026-05-19
 
 ### Fixed
@@ -536,13 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/admin/settings/email/page.tsx` — fix class Tailwind `dark:bg-inputpx-1` → `dark:bg-gray-700 px-1`
 - `internal/db/models/extra.go` — tambah model `EmailTemplate` (tabel `email_templates`)
 - `internal/api/handlers/settings_ext.go` — fix `ListEmailTemplates` (baca dari DB) dan `UpdateEmailTemplate` (update ke DB)
-
-### v2.52.13 — 2026-05-19
-
-### Fixed
-- **Crash di tab Kirim/Broadcast (`Cannot read properties of undefined (reading 'map')`)** — data list dari API (`users`, `templates`, dan `filters.*`) bisa datang `undefined` pada kondisi tertentu dan langsung dipakai di `.map(...)`. Fix: normalisasi semua payload list ke array aman sebelum disimpan ke state agar UI tidak crash.
-### Files
-- `src/app/admin/whatsapp/send/page.tsx` — tambah normalisasi array aman untuk `users`, `templates`, dan `filters` sebelum render `.map(...)`
 
 <!-- AUTO-CHANGELOG:END -->
 
