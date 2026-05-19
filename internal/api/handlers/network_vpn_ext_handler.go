@@ -570,20 +570,31 @@ func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
 		result = append(result, r)
 	}
 
-	// Also include WireGuard VPS peers from vps_peers table
-	var wgPeers []vpsPeer
-	h.db.Where("type = ?", "wireguard").Order("created_at desc").Find(&wgPeers)
-	for _, p := range wgPeers {
-		wgType := "wireguard"
-		desc := "VPS WireGuard Peer"
+	// Also include all VPS peers (WireGuard and L2TP) from vps_peers table
+	var vpsPeers []vpsPeer
+	h.db.Order("created_at desc").Find(&vpsPeers)
+	for _, p := range vpsPeers {
+		serverID := "__vps_wg__"
+		descText := "VPS WireGuard Peer"
+		vpnType := "wireguard"
+		if p.Type == "l2tp" {
+			serverID = "__vps_l2tp__"
+			descText = "VPS L2TP Peer"
+			vpnType = "l2tp"
+		}
+		desc := descText
+		username := p.PeerName
+		if p.ApiUsername != nil {
+			username = *p.ApiUsername
+		}
 		result = append(result, vpnClientResponse{
 			ID:              p.ID,
 			Name:            p.PeerName,
-			VpnServerId:     "__vps_wg__",
+			VpnServerId:     serverID,
 			VpnIp:           p.PeerIP,
-			Username:        p.PeerName,
+			Username:        username,
 			Password:        "",
-			VpnType:         wgType,
+			VpnType:         vpnType,
 			Description:     &desc,
 			ClientPublicKey: p.PublicKey,
 			ApiUsername:     p.ApiUsername,
@@ -685,6 +696,44 @@ func (h *NetworkVPNHandler) GetVPSL2TPInfo(c fiber.Ctx) error {
 
 // ─── VPS Peers ───────────────────────────────────────────────────────────────
 
+// nextAvailableL2TPIP finds the first unused IP in the L2TP pool.
+func nextAvailableL2TPIP(db *gorm.DB, poolStart, poolEnd string) (string, error) {
+	prefix := ""
+	if parts := strings.Split(poolStart, "."); len(parts) == 4 {
+		prefix = strings.Join(parts[:3], ".") + "."
+	}
+	if prefix == "" {
+		return "", fmt.Errorf("poolStart tidak valid: %s", poolStart)
+	}
+
+	startOctet, endOctet := 10, 254
+	if parts := strings.Split(poolStart, "."); len(parts) == 4 {
+		if n, err := strconv.Atoi(parts[3]); err == nil {
+			startOctet = n
+		}
+	}
+	if parts := strings.Split(poolEnd, "."); len(parts) == 4 {
+		if n, err := strconv.Atoi(parts[3]); err == nil {
+			endOctet = n
+		}
+	}
+
+	usedIPs := map[string]bool{}
+	var peers []vpsPeer
+	db.Where("type = ?", "l2tp").Find(&peers)
+	for _, p := range peers {
+		usedIPs[p.PeerIP] = true
+	}
+
+	for i := startOctet; i <= endOctet; i++ {
+		candidate := prefix + strconv.Itoa(i)
+		if !usedIPs[candidate] {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("IP pool L2TP (%d–%d) sudah habis", startOctet, endOctet)
+}
+
 // GET /api/network/vps-l2tp-peer — list L2TP peers
 func (h *NetworkVPNHandler) ListL2TPPeers(c fiber.Ctx) error {
 	var peers []vpsPeer
@@ -692,18 +741,116 @@ func (h *NetworkVPNHandler) ListL2TPPeers(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "peers": peers})
 }
 
-// POST /api/network/vps-l2tp-peer — add L2TP peer
+// POST /api/network/vps-l2tp-peer — add L2TP peer (generate credentials + add to chap-secrets)
 func (h *NetworkVPNHandler) CreateL2TPPeer(c fiber.Ctx) error {
-	var body vpsPeer
+	info := readL2TPServerInfo()
+	if info == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "L2TP/IPsec server belum di-install di VPS ini"})
+	}
+
+	var body struct {
+		Action        string  `json:"action"`
+		Label         string  `json:"label"`
+		NasName       string  `json:"nasName"`
+		LocalNetworks *string `json:"localNetworks"`
+	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	body.ID = uuid.New().String()
-	body.Type = "l2tp"
-	body.CreatedAt = time.Now()
-	body.UpdatedAt = time.Now()
-	h.db.Create(&body)
-	return c.Status(201).JSON(fiber.Map{"success": true, "peer": body})
+
+	// Support both "label" and "nasName" as peer identifier
+	label := strings.TrimSpace(body.Label)
+	if label == "" {
+		label = strings.TrimSpace(body.NasName)
+	}
+	if label == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "label atau nasName wajib diisi"})
+	}
+
+	// Extract pool info from L2TP server info
+	poolStart, _ := info["poolStart"].(string)
+	poolEnd, _ := info["poolEnd"].(string)
+	localIP, _ := info["localIp"].(string)
+	ipsecPsk, _ := info["ipsecPsk"].(string)
+	publicIP, _ := info["publicIp"].(string)
+	subnet, _ := info["subnet"].(string)
+
+	if poolStart == "" {
+		poolStart = "10.201.0.10"
+	}
+	if poolEnd == "" {
+		poolEnd = "10.201.0.254"
+	}
+	if localIP == "" {
+		localIP = "10.201.0.1"
+	}
+
+	// Find next available IP from L2TP pool
+	vpnIP, err := nextAvailableL2TPIP(h.db, poolStart, poolEnd)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Pool IP habis: " + err.Error()})
+	}
+
+	// Generate credentials
+	safeLabel := strings.Trim(regexp.MustCompile(`[^a-z0-9]+`).ReplaceAllString(strings.ToLower(label), "-"), "-")
+	if safeLabel == "" {
+		safeLabel = "nas"
+	}
+	username := "l2tp-" + safeLabel
+	password := wgRandomAlphanumeric(16)
+	nasSecret := wgRandomHex(16)
+	apiUsername := "api-" + safeLabel
+	apiPassword := wgRandomAlphanumeric(12)
+
+	// Add to /etc/ppp/chap-secrets (static IP assignment)
+	// Format: client  server  secret  IP-addresses
+	chapEntry := fmt.Sprintf("%s\t*\t%s\t%s\n", username, password, vpnIP)
+	chapFile, err := os.OpenFile("/etc/ppp/chap-secrets", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err == nil {
+		_, _ = chapFile.WriteString(chapEntry)
+		chapFile.Close()
+	}
+
+	// Save to vps_peers table
+	nasSecretStr := nasSecret
+	apiUserStr := apiUsername
+	apiPassStr := apiPassword
+	peer := vpsPeer{
+		ID:          uuid.New().String(),
+		Type:        "l2tp",
+		PeerName:    label,
+		PeerIP:      vpnIP,
+		LocalIP:     localIP,
+		NasSecret:   &nasSecretStr,
+		ApiUsername: &apiUserStr,
+		ApiPassword: &apiPassStr,
+		IsActive:    true,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
+	}
+	if err := h.db.Create(&peer).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal simpan peer: " + err.Error()})
+	}
+
+	// Build MikroTik RouterOS script
+	routerosScript := fmt.Sprintf(
+		`/interface l2tp-client add name="l2tp-%s" connect-to=%s user=%s password="%s" ipsec-secret="%s" use-ipsec=yes disabled=no`,
+		safeLabel, publicIP, username, password, ipsecPsk,
+	)
+
+	return c.Status(201).JSON(fiber.Map{
+		"success":        true,
+		"vpnIp":          vpnIP,
+		"vpnSubnet":      subnet,
+		"username":       username,
+		"password":       password,
+		"nasSecret":      nasSecret,
+		"apiUsername":    apiUsername,
+		"apiPassword":    apiPassword,
+		"ipsecPsk":       ipsecPsk,
+		"serverPublicIp": publicIP,
+		"routerosScript": routerosScript,
+	})
 }
 
 // GET /api/network/vps-wg-peer — WireGuard server info + live peers

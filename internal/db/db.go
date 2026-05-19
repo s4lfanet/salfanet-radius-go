@@ -83,29 +83,34 @@ func Init(databaseURL string) (*gorm.DB, error) {
 }
 
 // runMigrations creates tables that are managed by Go (not by Prisma).
-// Uses CREATE TABLE IF NOT EXISTS so it is safe to run on every startup.
+// Uses raw *sql.DB (not GORM Exec) to bypass PrepareStmt=true which
+// blocks DDL statements on some MySQL setups.
 func runMigrations(db *gorm.DB) error {
+	sqlDB, err := db.DB()
+	if err != nil {
+		return fmt.Errorf("runMigrations: get sql.DB: %w", err)
+	}
 	statements := []string{
 		`CREATE TABLE IF NOT EXISTS vps_peers (
-			id               VARCHAR(191) NOT NULL,
-			type             VARCHAR(50)  NOT NULL DEFAULT 'wireguard',
-			peer_name        VARCHAR(255) NOT NULL DEFAULT '',
-			peer_ip          VARCHAR(45)  NOT NULL DEFAULT '',
-			local_ip         VARCHAR(45)  NOT NULL DEFAULT '',
-			public_key       TEXT         NULL,
-			nas_secret       VARCHAR(64)  NULL,
-			api_username     VARCHAR(255) NULL,
-			api_password     VARCHAR(255) NULL,
-			client_private_key TEXT       NULL,
-			is_active        TINYINT(1)   NOT NULL DEFAULT 1,
-			created_at       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-			updated_at       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+			id                VARCHAR(191) NOT NULL,
+			type              VARCHAR(50)  NOT NULL DEFAULT 'wireguard',
+			peer_name         VARCHAR(255) NOT NULL DEFAULT '',
+			peer_ip           VARCHAR(45)  NOT NULL DEFAULT '',
+			local_ip          VARCHAR(45)  NOT NULL DEFAULT '',
+			public_key        TEXT         NULL,
+			nas_secret        VARCHAR(64)  NULL,
+			api_username      VARCHAR(255) NULL,
+			api_password      VARCHAR(255) NULL,
+			client_private_key TEXT        NULL,
+			is_active         TINYINT(1)   NOT NULL DEFAULT 1,
+			created_at        DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updated_at        DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 			PRIMARY KEY (id),
 			INDEX idx_vps_peers_type (type)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 	}
 	for _, stmt := range statements {
-		if err := db.Exec(stmt).Error; err != nil {
+		if _, err := sqlDB.Exec(stmt); err != nil {
 			return fmt.Errorf("migration failed: %w", err)
 		}
 	}
