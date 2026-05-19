@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.19] — 2026-05-19
+### Fixed
+- **ERR_CONNECTION_CLOSED pada idle API connections** — Root cause: nginx `keepalive_timeout 65s` terlalu pendek, Cloudflare mempertahankan koneksi ke origin ~90s. Jika nginx tutup koneksi duluan, Cloudflare mencoba kirim request ke koneksi yang sudah tutup → browser mendapat `ERR_CONNECTION_CLOSED`. Fix: naikkan nginx `keepalive_timeout` 65→120s dan Fiber `IdleTimeout` 60→150s agar server tidak menutup koneksi sebelum Cloudflare.
+- **Duplicate nginx config** — File `/etc/nginx/sites-enabled/radius.hotspotapp.net` (lama) konflik dengan `salfanet-radius`, menyebabkan warning "conflicting server name". Dihapus dari sites-enabled.
+### Files
+- `internal/api/router.go` — `IdleTimeout` 60s → 150s
+- `vps-install/install-nginx.sh` — `keepalive_timeout` 65 → 120 (4 lokasi)
+
 ## [2.52.18] — 2026-05-19
 ### Fixed
 - **Telegram settings tidak tampil setelah save** — `loadSettings()` melakukan `setTelegramSettings(data)` padahal API return `{ success: true, settings: {...} }`. Akibatnya seluruh field (botToken, chatId, dll) jadi `undefined` setelah reload. Data sebenarnya sudah tersimpan di DB, tapi UI tidak menampilkannya. Fix: ganti ke `setTelegramSettings(data.settings)` dengan fallback untuk tiap field.

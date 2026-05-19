@@ -31,7 +31,7 @@ var wsUpgrader = fws.FastHTTPUpgrader{
 func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched *cron.Scheduler) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      "Salfanet RADIUS API",
-		IdleTimeout:  60 * time.Second, // close idle keep-alive connections before nginx's keepalive_timeout
+		IdleTimeout:  150 * time.Second, // must be > nginx keepalive_timeout (120s) to avoid race with Cloudflare
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
 	})

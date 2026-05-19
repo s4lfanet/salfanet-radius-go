@@ -41,7 +41,7 @@ _proxy_locations() {
     cat <<'LOCATIONS'
     client_max_body_size 100M;
 
-    keepalive_timeout    65;
+    keepalive_timeout    120;
     keepalive_requests   10000;
 
     proxy_connect_timeout 600;
@@ -333,7 +333,7 @@ _proxy_locations_https_domain() {
     cat <<'LOCATIONS'
     client_max_body_size 100M;
 
-    keepalive_timeout    65;
+    keepalive_timeout    120;
     keepalive_requests   10000;
 
     proxy_connect_timeout 600;
@@ -649,7 +649,7 @@ _proxy_locations_cloudflare() {
     cat <<'LOCATIONS'
     client_max_body_size 100M;
 
-    keepalive_timeout    65;
+    keepalive_timeout    120;
     keepalive_requests   10000;
 
     proxy_connect_timeout 600;
@@ -944,7 +944,7 @@ http {
     types_hash_max_size 2048;
     server_tokens       off;
 
-    keepalive_timeout   65;
+    keepalive_timeout   120;
     keepalive_requests  200;
 
     client_body_buffer_size     16k;
