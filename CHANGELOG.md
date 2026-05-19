@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.28] — 2026-05-19
+### Fixed / Added
+- **Import: Profile Default Fallback** — Dialog import kini memiliki dropdown **Profile Default** (opsional). Jika nama profile di file tidak cocok dengan DB (atau DB profile kosong), profile default yang dipilih di UI dipakai — persis seperti sistem Next.js lama.
+- **Detail error import tampil** — Backend kini mengembalikan key `errors` (bukan `failures`) dengan field `line`, `username`, `error` sehingga detail kegagalan per-baris tampil di dialog import.
+- **Root cause 75 gagal** — `pppoe_profiles` tabel kosong (0 row); semua baris gagal karena profile tidak ditemukan. Kini bisa diatasi dengan memilih Profile Default di dialog import.
+### Files
+- `internal/api/handlers/pppoe_ext.go` — BulkImport: baca `profileId` form field sebagai fallback; ganti `failures`→`errors`, tambah field `line`/`username`
+- `src/app/admin/pppoe/users/page.tsx` — Import dialog: tambah state `importProfileId`, dropdown profile, kirim `profileId` ke backend
+
 ## [2.52.26] — 2026-05-19
 ### Fixed / Added
 - **Template kolom lengkap** — Template import kini menyertakan kolom `areaName`, `subscriptionType` (PREPAID/POSTPAID), dan `billingDay`. BulkGet export juga menambahkan kolom-kolom tersebut.
