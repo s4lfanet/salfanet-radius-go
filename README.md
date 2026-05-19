@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.34 — 2026-05-21
+
+### Fixed
+- **TypeError: Cannot read properties of undefined (reading 'radiusServer')** — `SetupRadiusOnRouter` Go handler adalah stub kosong (hanya return `success: true` tanpa `config`, `script`, dll). Setelah router disimpan, frontend otomatis memanggil `handleSetupRadius` → `setScriptModalData({ config: result.config })` → `config` = `undefined` → modal crash saat render `scriptModalData.config.radiusServer`. Fix: implementasikan handler yang benar (lookup router, generate script RouterOS 6 + 7, return `config` object lengkap) dan tambah optional chaining `?.` di frontend sebagai safety guard.
+### Files
+- `internal/api/handlers/misc_handler.go` — Implementasi nyata `SetupRadiusOnRouter`: lookup router, baca `APP_BASE_URL`/`RADIUS_SERVER_IP` env untuk server IP, generate script MikroTik ROS6+ROS7, return `config` + `script` + `scriptRos6` + `scriptRos7`
+- `src/app/admin/network/routers/page.tsx` — Optional chaining `?.` pada `scriptModalData.config?.radiusServer` dll agar tidak crash bila `config` undefined
+
 ### v2.52.33 — 2026-05-20
 
 ### Fixed
@@ -523,13 +531,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `vps-install/updater.sh` — Tambah `backup_vps_peers_data` / `restore_vps_peers_data` + restart Go setelah Prisma (Mode A & B)
 - `internal/api/handlers/network.go` — `ListRouters`: tambah fetch dari `vps_peers` dan gabungkan ke hasil `vpnClients`
-
-### v2.52.29 — 2026-05-20
-
-### Fixed
-- **VPN Client dropdown kosong di modal "Tambah Router Baru"** — `GET /api/network/routers` sebelumnya hanya mengembalikan array router mentah. Frontend mengharapkan `{ routers: [...], vpnClients: [...] }`, sehingga `data.routers` dan `data.vpnClients` keduanya `undefined` → `[]`. Fix: handler `ListRouters` kini fetch VPN clients dari tabel `vpn_clients` (beserta NAS secret dari tabel `nas`) dan mengembalikan response dalam format yang benar.
-### Files
-- `internal/api/handlers/network.go` — `ListRouters`: ganti `c.JSON(routers)` dengan `c.JSON({ routers, vpnClients })`
 
 <!-- AUTO-CHANGELOG:END -->
 
