@@ -56,6 +56,8 @@ export default function SendMessagePage() {
   // Template states
   const [templates, setTemplates] = useState<{ id: string; name: string; message: string }[]>([]);
 
+  const toArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? value : []);
+
   useEffect(() => {
     loadUsers();
     loadTemplates();
@@ -76,8 +78,14 @@ export default function SendMessagePage() {
       const data = await res.json();
 
       if (data.success) {
-        setUsers(data.users);
-        setFilters(data.filters);
+        setUsers(toArray<User>(data.users));
+        const safeFilters = data.filters || {};
+        setFilters({
+          profiles: toArray<{ id: string; name: string }>(safeFilters.profiles),
+          routers: toArray<{ id: string; name: string }>(safeFilters.routers),
+          statuses: toArray<string>(safeFilters.statuses),
+          odps: toArray<{ id: string; name: string }>(safeFilters.odps),
+        });
       }
     } catch (error) {
       console.error('Load users error:', error);
@@ -91,7 +99,7 @@ export default function SendMessagePage() {
       const res = await fetch('/api/whatsapp/templates');
       const data = await res.json();
       if (data.success) {
-        setTemplates(data.data);
+        setTemplates(toArray<{ id: string; name: string; message: string }>(data.data));
       }
     } catch (error) {
       console.error('Load templates error:', error);

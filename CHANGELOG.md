@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.13] — 2026-05-19
+### Fixed
+- **Crash di tab Kirim/Broadcast (`Cannot read properties of undefined (reading 'map')`)** — data list dari API (`users`, `templates`, dan `filters.*`) bisa datang `undefined` pada kondisi tertentu dan langsung dipakai di `.map(...)`. Fix: normalisasi semua payload list ke array aman sebelum disimpan ke state agar UI tidak crash.
+### Files
+- `src/app/admin/whatsapp/send/page.tsx` — tambah normalisasi array aman untuk `users`, `templates`, dan `filters` sebelum render `.map(...)`
+
 ## [2.52.12] — 2026-05-20
 ### Fixed
 - **Gagal memuat history (root cause)** — `waH.ListHistory` (route terdaftar pertama, line 341) mengembalikan raw array tanpa `success: true`; Fiber v3 selalu menggunakan handler pertama yang terdaftar, sehingga fix di `waCrudH.ListHistory` (line 752) tidak pernah dipanggil. Fix: update `waH.ListHistory` langsung dengan response format `{success, data, pagination, stats}` beserta pagination, search, dan status filter.
