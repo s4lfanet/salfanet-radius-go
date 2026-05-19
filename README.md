@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.20 — 2026-05-19
+
+### Fixed
+- **`/api/push/send` masih route ke Next.js di server block 2 & 3** — Setelah Go sudah memiliki handler `pushH.Send`, nginx di server block 2 (IP direct) dan block 3 (HTTPS default_server) masih memiliki `location = /api/push/send { proxy_pass 127.0.0.1:3000 }`. Server block 1 (Cloudflare/main) sudah benar. Block 2 & 3 kini konsisten: rule dihapus, request jatuh ke catch-all `/api/ → Go`.
+### Files
+- `vps-install/install-nginx.sh` — hapus 2 blok `location = /api/push/send → Next.js` dari server block 2 & 3
+- `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — hapus blok yang sama, nginx reload
+
 ### v2.52.19 — 2026-05-19
 
 ### Fixed
@@ -525,22 +533,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/backup_handler.go` — tambah `--no-tablespaces` ke perintah mysqldump
 - `internal/api/router.go` — route DELETE dari `/backup/:id` → `/backup/delete/:id`
-
-### v2.52.15 — 2026-05-19
-
-### Fixed
-- **Backup Create HTTP 500** — handler menggunakan `DB_HOST`/`DB_USER`/`DB_PASSWORD`/`DB_NAME` yang tidak ada di VPS (hanya ada `DATABASE_URL`). Fix: `parseDBCredentials()` parse `DATABASE_URL` Prisma format dengan `net/url`. Gunakan `MYSQL_PWD` env var (bukan flag `-p`) agar password dengan karakter spesial aman dari shell escaping.
-- **Backup Restore gagal** — sama, credentials parsing salah. Fixed bersama dengan fix backup create.
-- **Backup history 0 items** — konsekuensi dari backup create yang selalu gagal; otomatis teratasi setelah create diperbaiki.
-- **Telegram settings tidak tersimpan** — `GetTelegramSettings`/`UpdateTelegramSettings` di kedua handler adalah stub hardcoded. Fix: baca/tulis ke tabel `telegram_backup_settings` di DB. Tambah model `TelegramBackupSettings` di Go.
-- **Telegram send/test-backup tidak berfungsi** — semua endpoint Telegram selalu return stub success tanpa mengirim apapun. Fix: implementasi penuh dengan Telegram Bot API (`sendMessage` untuk teks, `sendDocument` untuk file backup via multipart upload).
-- **ERR_CONNECTION_CLOSED saat idle** — Fiber `IdleTimeout=270s` sedangkan nginx `keepalive_timeout` default 75s. Race condition: nginx tutup koneksi lebih dulu, browser coba reuse → `ERR_CONNECTION_CLOSED`. Fix: turunkan Fiber `IdleTimeout` ke 60s + tambah `keepalive_timeout 65;` ke semua server block di nginx.
-### Files
-- `internal/db/models/extra.go` — tambah model `TelegramBackupSettings` (tabel `telegram_backup_settings`)
-- `internal/api/handlers/backup_handler.go` — rewrite: `parseDBCredentials()`, `doMysqlDump()`, `doMysqlRestore()`, `sendTelegramMessage()`, `sendTelegramDocument()`, semua handler implementasi penuh
-- `internal/api/handlers/telegram_handler.go` — rewrite: `GetSettings`/`UpdateSettings` baca/tulis DB, `Test`/`SendBackup`/`TestBackup`/`SendHealth` panggil Telegram API sungguhan
-- `internal/api/router.go` — `IdleTimeout`: 270s → 60s; fix route `/backup/telegram/test` ke `telegramH.TestBackup`
-- `nginx /etc/nginx/sites-enabled/salfanet-radius` — tambah `keepalive_timeout 65;` di semua server block (VPS only)
 
 <!-- AUTO-CHANGELOG:END -->
 
