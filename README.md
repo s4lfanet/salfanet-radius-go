@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.23 — 2026-05-19
+
+### Fixed
+- **`POST /api/pppoe/users/bulk` 400 saat import** — Root cause: `c.FormFile()` di Fiber v3 beta tidak selalu berhasil parse multipart. Diganti dengan `c.MultipartForm()` yang lebih eksplisit. Ditambah juga deteksi file `.xlsx/.xls` (binary Excel) yang tidak bisa di-parse sebagai CSV, mengembalikan error yang jelas: *"Simpan file sebagai CSV terlebih dahulu"*.
+- **Template download selalu `.csv`** — `GET /api/pppoe/users/bulk?type=template&format=xlsx` sebelumnya mengirim CSV dengan nama file `.xlsx`, membingungkan pengguna agar menyimpan ulang sebagai Excel lalu import gagal. Sekarang selalu menggunakan ekstensi `.csv`.
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `BulkImport`: pakai `MultipartForm()`, deteksi xlsx, pesan error bahasa Indonesia; `BulkGet`: template selalu `.csv`
+
 ### v2.52.22 — 2026-05-20
 
 ### Fixed
@@ -540,13 +548,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/router.go` — `IdleTimeout` 60s → 150s
 - `vps-install/install-nginx.sh` — `keepalive_timeout` 65 → 120 (4 lokasi)
-
-### v2.52.18 — 2026-05-19
-
-### Fixed
-- **Telegram settings tidak tampil setelah save** — `loadSettings()` melakukan `setTelegramSettings(data)` padahal API return `{ success: true, settings: {...} }`. Akibatnya seluruh field (botToken, chatId, dll) jadi `undefined` setelah reload. Data sebenarnya sudah tersimpan di DB, tapi UI tidak menampilkannya. Fix: ganti ke `setTelegramSettings(data.settings)` dengan fallback untuk tiap field.
-### Files
-- `src/app/admin/settings/telegram/page.tsx` — fix `loadSettings`: `setTelegramSettings(data)` → `setTelegramSettings(data.settings)` dengan field defaults
 
 <!-- AUTO-CHANGELOG:END -->
 
