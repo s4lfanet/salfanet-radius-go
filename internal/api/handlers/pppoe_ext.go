@@ -314,8 +314,9 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 
 	successCount, failedCount := 0, 0
 	type failRow struct {
-		Row   int    `json:"row"`
-		Error string `json:"error"`
+		Line     int    `json:"line"`
+		Username string `json:"username"`
+		Error    string `json:"error"`
 	}
 	var failures []failRow
 
@@ -333,7 +334,7 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 				continue // skip empty rows
 			}
 			failedCount++
-			failures = append(failures, failRow{Row: rowIdx + 2, Error: "username/name/phone wajib diisi"})
+			failures = append(failures, failRow{Line: rowIdx + 2, Username: username, Error: "username/name/phone wajib diisi"})
 			continue
 		}
 		// Auto-generate password if not provided
@@ -353,7 +354,7 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 		}
 		if profile.ID == "" {
 			failedCount++
-			failures = append(failures, failRow{Row: rowIdx + 2, Error: fmt.Sprintf("profile '%s' tidak ditemukan", profileName)})
+			failures = append(failures, failRow{Line: rowIdx + 2, Username: username, Error: fmt.Sprintf("profile '%s' tidak ditemukan", profileName)})
 			continue
 		}
 
@@ -417,18 +418,24 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 
 		if err2 := h.db.Create(&user).Error; err2 != nil {
 			failedCount++
-			failures = append(failures, failRow{Row: rowIdx + 2, Error: err2.Error()})
+			failures = append(failures, failRow{Line: rowIdx + 2, Username: username, Error: err2.Error()})
 		} else {
 			successCount++
 		}
 	}
 
+	// Cap errors returned to 20 to keep response payload small
+	errorsToReturn := failures
+	if len(errorsToReturn) > 20 {
+		errorsToReturn = errorsToReturn[:20]
+	}
+
 	return c.JSON(fiber.Map{
 		"success": true,
 		"results": fiber.Map{
-			"success":  successCount,
-			"failed":   failedCount,
-			"failures": failures,
+			"success": successCount,
+			"failed":  failedCount,
+			"errors":  errorsToReturn,
 		},
 	})
 }
