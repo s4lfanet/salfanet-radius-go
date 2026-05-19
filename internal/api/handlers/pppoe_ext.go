@@ -135,8 +135,8 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	t := c.Query("type", "template")
 	format := c.Query("format", "csv")
 
-	tplHeaders := []string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "expiredAt"}
-	tplExample := [][]string{{"user001", "pass123", "John Doe", "08123456789", "", "", "", "Paket 10 Mbps", "Router 1", "2025-12-31"}}
+	tplHeaders := []string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "areaName", "subscriptionType", "expiredAt"}
+	tplExample := [][]string{{"user001", "pass123", "John Doe", "08123456789", "", "", "", "Paket 10 Mbps", "Router 1", "", "POSTPAID", "2025-12-31"}}
 
 	if t == "template" {
 		if format == "xlsx" {
@@ -171,7 +171,7 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	}
 	q.Find(&users)
 
-	expHeaders := []string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "status", "expiredAt"}
+	expHeaders := []string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "areaName", "subscriptionType", "status", "expiredAt"}
 	var expRows [][]string
 	for _, u := range users {
 		expStr := ""
@@ -181,6 +181,10 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 		routerName := ""
 		if u.Router != nil {
 			routerName = u.Router.Name
+		}
+		areaName2 := ""
+		if u.Area != nil {
+			areaName2 = u.Area.Name
 		}
 		emailStr := ""
 		if u.Email != nil {
@@ -194,7 +198,7 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 		if u.IPAddress != nil {
 			ipStr = *u.IPAddress
 		}
-		expRows = append(expRows, []string{u.Username, u.Password, u.Name, u.Phone, emailStr, addrStr, ipStr, u.Profile.Name, routerName, u.Status, expStr})
+		expRows = append(expRows, []string{u.Username, u.Password, u.Name, u.Phone, emailStr, addrStr, ipStr, u.Profile.Name, routerName, areaName2, string(u.SubscriptionType), u.Status, expStr})
 	}
 
 	if format == "xlsx" {
@@ -287,6 +291,19 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 	for i, h2 := range headers {
 		idx[strings.ToLower(strings.TrimSpace(h2))] = i
 	}
+	// Accept column aliases from ExportUsers-format files
+	aliases := map[string]string{
+		"profile": "profilename",
+		"router":  "routername",
+		"area":    "areaname",
+	}
+	for src, dst := range aliases {
+		if v, ok := idx[src]; ok {
+			if _, has := idx[dst]; !has {
+				idx[dst] = v
+			}
+		}
+	}
 	col := func(row []string, key string) string {
 		i, ok := idx[key]
 		if !ok || i >= len(row) {
@@ -303,31 +320,67 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 	var failures []failRow
 
 	for rowIdx, row := range records[1:] {
+		// Skip blank rows
+		if len(row) == 0 {
+			continue
+		}
 		username := col(row, "username")
 		password := col(row, "password")
 		name := col(row, "name")
 		phone := col(row, "phone")
-		if username == "" || password == "" || name == "" || phone == "" {
+		if username == "" || name == "" || phone == "" {
+			if username == "" {
+				continue // skip empty rows
+			}
 			failedCount++
-			failures = append(failures, failRow{Row: rowIdx + 2, Error: "missing required fields"})
+			failures = append(failures, failRow{Row: rowIdx + 2, Error: "username/name/phone wajib diisi"})
 			continue
 		}
+		// Auto-generate password if not provided
+		if password == "" {
+			pfx := username
+			if len(pfx) > 6 {
+				pfx = pfx[:6]
+			}
+			password = pfx + "123"
+		}
 
-		// Look up profile by name
+		// Profile lookup (case-insensitive; required)
 		profileName := col(row, "profilename")
 		var profile models.PppoeProfile
 		if profileName != "" {
-			h.db.Where("name = ?", profileName).First(&profile)
+			h.db.Where("LOWER(name) = LOWER(?)", profileName).First(&profile)
+		}
+		if profile.ID == "" {
+			failedCount++
+			failures = append(failures, failRow{Row: rowIdx + 2, Error: fmt.Sprintf("profile '%s' tidak ditemukan", profileName)})
+			continue
 		}
 
-		// Look up router by name
+		// Router lookup (case-insensitive; optional)
 		routerName := col(row, "routername")
 		var router models.Router
 		routerID := (*string)(nil)
 		if routerName != "" {
-			if err2 := h.db.Where("name = ?", routerName).First(&router).Error; err2 == nil {
+			if err2 := h.db.Where("LOWER(name) = LOWER(?)", routerName).First(&router).Error; err2 == nil {
 				routerID = &router.ID
 			}
+		}
+
+		// Area lookup (case-insensitive; optional)
+		areaNameStr := col(row, "areaname")
+		var area models.PppoeArea
+		areaID := (*string)(nil)
+		if areaNameStr != "" {
+			if err2 := h.db.Where("LOWER(name) = LOWER(?)", areaNameStr).First(&area).Error; err2 == nil {
+				areaID = &area.ID
+			}
+		}
+
+		// Subscription type
+		subType := models.Postpaid
+		if strings.ToUpper(col(row, "subscriptiontype")) == "PREPAID" {
+			subType = models.Prepaid
 		}
 
 		emailStr := col(row, "email")
@@ -336,14 +389,16 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 		expiredAtStr := col(row, "expiredat")
 
 		user := models.PppoeUser{
-			ID:        generateID(),
-			Username:  username,
-			Password:  password,
-			Name:      name,
-			Phone:     phone,
-			Status:    "active",
-			ProfileID: profile.ID,
-			RouterID:  routerID,
+			ID:               generateID(),
+			Username:         username,
+			Password:         password,
+			Name:             name,
+			Phone:            phone,
+			Status:           "active",
+			ProfileID:        profile.ID,
+			RouterID:         routerID,
+			AreaID:           areaID,
+			SubscriptionType: subType,
 		}
 		if emailStr != "" {
 			user.Email = &emailStr
