@@ -6,6 +6,29 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.8] — 2026-05-19
+### Fixed
+- **405 Method Not Allowed — audit & perbaiki semua HTTP method mismatch** — frontend mengirim method yang berbeda dari yang terdaftar di Go router; sekarang semua route mendukung method yang dikirim frontend
+- `POST /api/telegram/settings` — tambah alias POST (was PUT only)
+- `POST /api/admin/cloudflare-tunnel` — tambah alias POST (was PUT only)
+- `POST /api/push/unsubscribe` — tambah alias POST (was DELETE only)
+- `POST /api/push/agent-unsubscribe` — tambah alias POST (was DELETE only)
+- `POST /api/push/technician-unsubscribe` — tambah alias POST (was DELETE only)
+- `PUT /api/pppoe/users/status` — tambah alias PUT (was POST only)
+- `PUT /api/pppoe/users/bulk-status` + `POST` alias — tambah (was GET only)
+- `POST /api/admin/referrals/:id` — tambah alias POST (was PUT only)
+- `POST /api/hotspot/vouchers/validate` — tambah alias POST (was GET only)
+- `POST /api/network/olts/status` — tambah alias POST (was GET only)
+- `POST /api/network/routers/status` — tambah alias POST (was GET only)
+- `POST /api/settings/timezone` — implementasi handler baru `SetTimezone` yang simpan ke DB
+- `POST /api/admin/users/:id/renewal` — tambah alias POST (was GET only)
+- `POST /api/customer/wifi` — tambah alias POST (was PUT only)
+### Added
+- `SettingsExtHandler.SetTimezone` — handler baru untuk simpan timezone ke tabel company di DB
+### Files
+- `internal/api/router.go` — tambah 14 method alias untuk fix 405 errors
+- `internal/api/handlers/settings_ext.go` — tambah `SetTimezone` POST handler
+
 ## [2.52.7] — 2026-05-19
 ### Changed
 - **Audit & migrasi semua proxy ke Next.js → Go native** — 3 endpoint tersisa yang masih `proxyToNextJS` (POST/PATCH/PUT `/api/network/vpn-client`) sekarang ditangani sepenuhnya di Go. Next.js sekarang hanya melayani frontend, tidak ada lagi API call yang di-proxy.
