@@ -6,6 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.22] — 2026-05-20
+### Fixed
+- **404 pada `GET /api/pppoe/users/export`** — Di Fiber v3 beta, route parametrik `/users/:id` menangkap path statis seperti `/users/export`. Semua static sub-path `/pppoe/users/*` dipindah ke dalam `pppoe` group **sebelum** `/users/:id`, sehingga Fiber menggunakan static route yang tepat.
+- **Import PPPoE user dari CSV gagal 400** — `POST /api/pppoe/users/bulk` sebelumnya ditangani `miscH.PppoeBulk` yang hanya menerima JSON. Diganti dengan `BulkImport` yang menerima multipart/form-data dengan field `file` (CSV).
+- **Profiles/customers static routes juga diperbaiki** — `/profiles/sync-mikrotik`, `/profiles/sync-radius`, `/customers/export`, `/customers/bulk-create` dipindah sebelum route parametrik `:id` di masing-masing grup.
+### Added
+- **`GET /api/pppoe/users/bulk`** — Download template CSV (`?type=template`) atau export seluruh data user untuk re-import (`?type=export`). Support filter `?paymentStatus=paid|unpaid`.
+- **`POST /api/pppoe/users/bulk`** — Import user dari file CSV (multipart form-data, field `file`). Parse header CSV secara fleksibel (case-insensitive). Mengembalikan `{success, results:{success, failed, failures[]}}`.
+- **`DELETE /api/pppoe/users/bulk-delete`** — Bulk delete user PPPoE berdasarkan array `userIds`. Dipakai di halaman Stopped Users.
+- **Filter di `ExportUsers`** — Support query param `profileId`, `routerId`, `status`, `format` (csv/excel). Format excel mengembalikan CSV dengan ekstensi .xlsx (kompatibel dengan Excel).
+### Changed
+- **Konsolidasi semua pppoe routes ke `pppoe` group** — Semua route `/pppoe/**` yang sebelumnya terdaftar via `api.Get(...)` di luar group dipindah ke dalam `pppoe := api.Group("/pppoe")` untuk memastikan ordering statis-sebelum-parametrik konsisten. Blok duplikat "PPPoE extended routes" dan pppoe-related lines di "Batch 7: Misc" dihapus.
+- **`POST /users/:id/sync-radius`** — Diganti dari `pppoeH.SyncToRadius` ke `pppoeExtH.SyncUserRadius` (handler yang lebih lengkap).
+### Files
+- `internal/api/router.go` — Refactor pppoe group: static routes sebelum :id, hapus duplicate blocks
+- `internal/api/handlers/pppoe_ext.go` — Tambah `BulkGet`, `BulkImport`, `BulkDelete`; update `ExportUsers` dengan filter
+
 ## [2.52.21] — 2026-05-19
 ### Changed
 - **Hapus ~415 dead Next.js API routes** — Semua `src/app/api/**` kecuali `auth/[...nextauth]/route.ts` dihapus. Nginx sudah routing semua `/api/` ke Go, sehingga file-file ini tidak pernah dieksekusi.
