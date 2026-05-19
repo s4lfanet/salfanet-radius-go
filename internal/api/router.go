@@ -233,16 +233,36 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	pppoe.Get("/profiles", pppoeH.ListProfiles)
 	pppoe.Post("/profiles", pppoeH.CreateProfile)
+	pppoe.Post("/profiles/sync-mikrotik", pppoeExtH.SyncProfilesMikrotik) // before :id
+	pppoe.Post("/profiles/sync-radius", pppoeExtH.SyncProfilesRadius)     // before :id
 	pppoe.Put("/profiles/:id", pppoeH.UpdateProfile)
 	pppoe.Delete("/profiles/:id", pppoeH.DeleteProfile)
 
 	pppoe.Get("/customers", pppoeH.ListCustomers)
 	pppoe.Post("/customers", pppoeH.CreateCustomer)
+	pppoe.Get("/customers/export", pppoeExtH.ExportCustomers)           // before :id
+	pppoe.Post("/customers/bulk-create", pppoeExtH.BulkCreateCustomers) // before :id
 	pppoe.Get("/customers/:id", pppoeH.GetCustomer)
 	pppoe.Put("/customers/:id", pppoeH.UpdateCustomer)
 
-	pppoe.Get("/users", pppoeH.ListUsers)
+	pppoe.Get("/users", pppoeExtH.ListUsersWithFilters)
 	pppoe.Post("/users", pppoeH.CreateUser)
+	// Static sub-paths — MUST be before /users/:id to prevent wildcard capture in Fiber v3 beta
+	pppoe.Get("/users/export", pppoeExtH.ExportUsers)
+	pppoe.Get("/users/bulk", pppoeExtH.BulkGet)
+	pppoe.Post("/users/bulk", pppoeExtH.BulkImport)
+	pppoe.Delete("/users/bulk-delete", pppoeExtH.BulkDelete)
+	pppoe.Post("/users/bulk-create", pppoeExtH.BulkCreateUsers)
+	pppoe.Get("/users/bulk-status", pppoeExtH.BulkStatus)
+	pppoe.Put("/users/bulk-status", pppoeExtH.BulkStatus)
+	pppoe.Post("/users/bulk-status", pppoeExtH.BulkStatus)
+	pppoe.Get("/users/check-isolation", miscH.CheckIsolationGlobal)
+	pppoe.Post("/users/status", miscH.PppoeBatchStatus)
+	pppoe.Put("/users/status", miscH.PppoeBatchStatus)
+	pppoe.Post("/users/send-notification", miscH.PppoeBatchNotification)
+	pppoe.Post("/users/sync-mikrotik", miscH.SyncAllMikrotik)
+	pppoe.Get("/users/search", miscH.PppoeSearch)
+	// Parameterized user routes — after all static routes
 	pppoe.Get("/users/:id", pppoeH.GetUser)
 	pppoe.Put("/users/:id", pppoeH.UpdateUser)
 	pppoe.Delete("/users/:id", pppoeH.DeleteUser)
@@ -252,7 +272,16 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	pppoe.Post("/users/:id/unisolate", pppoeH.UnisolateUser)
 	pppoe.Get("/users/:id/sessions", pppoeH.GetUserSessions)
 	pppoe.Get("/users/:id/invoices", pppoeH.GetUserInvoices)
-	pppoe.Post("/users/:id/sync-radius", pppoeH.SyncToRadius)
+	pppoe.Post("/users/:id/sync-radius", pppoeExtH.SyncUserRadius)
+	pppoe.Get("/users/:id/status", pppoeExtH.UserStatus)
+	pppoe.Get("/users/:id/check-isolation", pppoeExtH.CheckIsolation)
+	pppoe.Post("/users/:id/send-notification", pppoeExtH.SendNotification)
+	pppoe.Post("/users/:id/sync-mikrotik", pppoeExtH.SyncMikrotik)
+	pppoe.Get("/users/:id/activity", pppoeExtH.UserActivity)
+	pppoe.Post("/users/:id/extend", pppoeExtH.ExtendUser)
+	pppoe.Post("/users/:id/mark-paid", pppoeExtH.MarkPaid)
+	pppoe.Get("/users/:id/available-profiles", miscH.PppoeAvailableProfiles)
+	pppoe.Get("/users/:id/traffic", miscH.PppoeUserTraffic)
 
 	pppoe.Get("/registrations", pppoeH.ListRegistrations)
 	pppoe.Post("/registrations/:id/approve", pppoeH.ApproveRegistration)
@@ -644,25 +673,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/olt/alerts/:id", oltExtH.GetAlert)
 	api.Put("/olt/alerts/:id/resolve", oltExtH.ResolveAlert)
 
-	// PPPoE extended routes
-	api.Get("/pppoe/users/:id/status", pppoeExtH.UserStatus)
-	api.Get("/pppoe/users/export", pppoeExtH.ExportUsers)
-	api.Post("/pppoe/users/bulk-create", pppoeExtH.BulkCreateUsers)
-	api.Get("/pppoe/users/bulk-status", pppoeExtH.BulkStatus)
-	api.Put("/pppoe/users/bulk-status", pppoeExtH.BulkStatus)  // frontend sends PUT
-	api.Post("/pppoe/users/bulk-status", pppoeExtH.BulkStatus) // POST alias
-	api.Get("/pppoe/users/:id/check-isolation", pppoeExtH.CheckIsolation)
-	api.Post("/pppoe/users/:id/send-notification", pppoeExtH.SendNotification)
-	api.Post("/pppoe/users/:id/sync-mikrotik", pppoeExtH.SyncMikrotik)
-	api.Get("/pppoe/users/:id/activity", pppoeExtH.UserActivity)
-	api.Post("/pppoe/users/:id/extend", pppoeExtH.ExtendUser)
-	api.Post("/pppoe/users/:id/mark-paid", pppoeExtH.MarkPaid)
-	api.Get("/pppoe/customers/export", pppoeExtH.ExportCustomers)
-	api.Post("/pppoe/customers/bulk-create", pppoeExtH.BulkCreateCustomers)
-	api.Post("/pppoe/profiles/sync-mikrotik", pppoeExtH.SyncProfilesMikrotik)
-	api.Post("/pppoe/profiles/sync-radius", pppoeExtH.SyncProfilesRadius)
-	api.Post("/pppoe/users/:id/sync-radius", pppoeExtH.SyncUserRadius)
-	api.Get("/pppoe/users", pppoeExtH.ListUsersWithFilters)
+	// PPPoE extended routes — now consolidated in the pppoe group above (order-safe)
 
 	// Technician portal — protected routes with own JWT check (techFromHeader)
 	tech := app.Group("/api/technician")
@@ -861,16 +872,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	app.Post("/api/radius/authorize", miscH.RadiusAuthorize)
 	app.Post("/api/radius/post-auth", miscH.RadiusPostAuth)
 	app.Post("/api/radius/coa", miscH.RadiusCOA)
-	api.Get("/pppoe/users/search", miscH.PppoeSearch)
 	api.Post("/pppoe/upload-photo", miscH.PppoeUploadPhoto)
-	api.Get("/pppoe/users/:id/available-profiles", miscH.PppoeAvailableProfiles)
-	api.Get("/pppoe/users/:id/traffic", miscH.PppoeUserTraffic)
-	api.Post("/pppoe/users/bulk", miscH.PppoeBulk)
-	api.Get("/pppoe/users/check-isolation", miscH.CheckIsolationGlobal)
-	api.Post("/pppoe/users/status", miscH.PppoeBatchStatus)
-	api.Put("/pppoe/users/status", miscH.PppoeBatchStatus) // frontend sends PUT
-	api.Post("/pppoe/users/send-notification", miscH.PppoeBatchNotification)
-	api.Post("/pppoe/users/sync-mikrotik", miscH.SyncAllMikrotik)
 	api.Get("/public/homepage", miscH.PublicHomepage)
 	api.Get("/company/info", miscH.CompanyInfo)
 	api.Get("/admin/nas", miscH.ListNAS)

@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -32,10 +33,25 @@ func (h *PppoeExtHandler) UserStatus(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "data": rows})
 }
 
-// GET /api/pppoe/users/export — export users CSV
+// GET /api/pppoe/users/export — export users (CSV or Excel-compatible CSV)
 func (h *PppoeExtHandler) ExportUsers(c fiber.Ctx) error {
+	profileID := c.Query("profileId")
+	routerID := c.Query("routerId")
+	status := c.Query("status")
+	format := c.Query("format", "csv")
+
 	var users []models.PppoeUser
-	h.db.Preload("Profile").Preload("Area").Find(&users)
+	q := h.db.Preload("Profile").Preload("Area").Preload("Router")
+	if profileID != "" {
+		q = q.Where("profileId = ?", profileID)
+	}
+	if routerID != "" {
+		q = q.Where("routerId = ?", routerID)
+	}
+	if status != "" {
+		q = q.Where("status = ?", status)
+	}
+	q.Find(&users)
 
 	var buf bytes.Buffer
 	w := csv.NewWriter(&buf)
@@ -57,9 +73,211 @@ func (h *PppoeExtHandler) ExportUsers(c fiber.Ctx) error {
 	}
 	w.Flush()
 
-	c.Set("Content-Type", "text/csv")
-	c.Set("Content-Disposition", "attachment; filename=pppoe-users.csv")
+	filename := "pppoe-users.csv"
+	if format == "excel" || format == "xlsx" {
+		filename = "pppoe-users.xlsx"
+	}
+	c.Set("Content-Type", "text/csv; charset=utf-8")
+	c.Set("Content-Disposition", "attachment; filename="+filename)
 	return c.Send(buf.Bytes())
+}
+
+// GET /api/pppoe/users/bulk — template download or CSV export
+func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
+	t := c.Query("type", "template")
+	format := c.Query("format", "csv")
+
+	var buf bytes.Buffer
+	w := csv.NewWriter(&buf)
+
+	if t == "template" {
+		// Return template with example row
+		_ = w.Write([]string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "expiredAt"})
+		_ = w.Write([]string{"user001", "pass123", "John Doe", "08123456789", "", "", "", "Paket 10 Mbps", "Router 1", "2025-12-31"})
+		w.Flush()
+		filename := "pppoe-template.csv"
+		if format == "xlsx" {
+			filename = "pppoe-template.xlsx"
+		}
+		c.Set("Content-Type", "text/csv; charset=utf-8")
+		c.Set("Content-Disposition", "attachment; filename="+filename)
+		return c.Send(buf.Bytes())
+	}
+
+	// type=export: full CSV export with all fields for re-import
+	paymentStatus := c.Query("paymentStatus")
+	var users []models.PppoeUser
+	q := h.db.Preload("Profile").Preload("Area").Preload("Router")
+	if paymentStatus == "paid" {
+		q = q.Where("id IN (SELECT userId FROM Invoice WHERE status = 'PAID')")
+	} else if paymentStatus == "unpaid" {
+		q = q.Where("id IN (SELECT userId FROM Invoice WHERE status IN ('PENDING','OVERDUE'))")
+	}
+	q.Find(&users)
+
+	_ = w.Write([]string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "status", "expiredAt"})
+	for _, u := range users {
+		expStr := ""
+		if u.ExpiredAt != nil {
+			expStr = u.ExpiredAt.Format("2006-01-02")
+		}
+		routerName := ""
+		if u.Router != nil {
+			routerName = u.Router.Name
+		}
+		emailStr := ""
+		if u.Email != nil {
+			emailStr = *u.Email
+		}
+		addrStr := ""
+		if u.Address != nil {
+			addrStr = *u.Address
+		}
+		ipStr := ""
+		if u.IPAddress != nil {
+			ipStr = *u.IPAddress
+		}
+		_ = w.Write([]string{u.Username, u.Password, u.Name, u.Phone, emailStr, addrStr, ipStr, u.Profile.Name, routerName, u.Status, expStr})
+	}
+	w.Flush()
+	c.Set("Content-Type", "text/csv; charset=utf-8")
+	c.Set("Content-Disposition", "attachment; filename=pppoe-export.csv")
+	return c.Send(buf.Bytes())
+}
+
+// POST /api/pppoe/users/bulk — import users from CSV/Excel file upload
+func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
+	file, err := c.FormFile("file")
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "no file uploaded"})
+	}
+	f, err := file.Open()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to open file"})
+	}
+	defer f.Close()
+
+	r := csv.NewReader(f)
+	r.FieldsPerRecord = -1 // allow variable fields
+	records, err := r.ReadAll()
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "failed to parse CSV: " + err.Error()})
+	}
+
+	if len(records) < 2 {
+		return c.Status(400).JSON(fiber.Map{"error": "file is empty or has no data rows"})
+	}
+
+	// Build header index map (case-insensitive)
+	headers := records[0]
+	idx := map[string]int{}
+	for i, h2 := range headers {
+		idx[strings.ToLower(strings.TrimSpace(h2))] = i
+	}
+	col := func(row []string, key string) string {
+		i, ok := idx[key]
+		if !ok || i >= len(row) {
+			return ""
+		}
+		return strings.TrimSpace(row[i])
+	}
+
+	successCount, failedCount := 0, 0
+	type failRow struct {
+		Row   int    `json:"row"`
+		Error string `json:"error"`
+	}
+	var failures []failRow
+
+	for rowIdx, row := range records[1:] {
+		username := col(row, "username")
+		password := col(row, "password")
+		name := col(row, "name")
+		phone := col(row, "phone")
+		if username == "" || password == "" || name == "" || phone == "" {
+			failedCount++
+			failures = append(failures, failRow{Row: rowIdx + 2, Error: "missing required fields"})
+			continue
+		}
+
+		// Look up profile by name
+		profileName := col(row, "profilename")
+		var profile models.PppoeProfile
+		if profileName != "" {
+			h.db.Where("name = ?", profileName).First(&profile)
+		}
+
+		// Look up router by name
+		routerName := col(row, "routername")
+		var router models.Router
+		routerID := (*string)(nil)
+		if routerName != "" {
+			if err2 := h.db.Where("name = ?", routerName).First(&router).Error; err2 == nil {
+				routerID = &router.ID
+			}
+		}
+
+		emailStr := col(row, "email")
+		addrStr := col(row, "address")
+		ipStr := col(row, "ipaddress")
+		expiredAtStr := col(row, "expiredat")
+
+		user := models.PppoeUser{
+			ID:        generateID(),
+			Username:  username,
+			Password:  password,
+			Name:      name,
+			Phone:     phone,
+			Status:    "active",
+			ProfileID: profile.ID,
+			RouterID:  routerID,
+		}
+		if emailStr != "" {
+			user.Email = &emailStr
+		}
+		if addrStr != "" {
+			user.Address = &addrStr
+		}
+		if ipStr != "" {
+			user.IPAddress = &ipStr
+		}
+		if expiredAtStr != "" {
+			if t2, err2 := time.Parse("2006-01-02", expiredAtStr); err2 == nil {
+				user.ExpiredAt = &t2
+			}
+		}
+
+		if err2 := h.db.Create(&user).Error; err2 != nil {
+			failedCount++
+			failures = append(failures, failRow{Row: rowIdx + 2, Error: err2.Error()})
+		} else {
+			successCount++
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"results": fiber.Map{
+			"success":  successCount,
+			"failed":   failedCount,
+			"failures": failures,
+		},
+	})
+}
+
+// DELETE /api/pppoe/users/bulk-delete — bulk delete users (for stopped/terminated users)
+func (h *PppoeExtHandler) BulkDelete(c fiber.Ctx) error {
+	var body struct {
+		UserIDs []string `json:"userIds"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if len(body.UserIDs) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "userIds required"})
+	}
+	result := h.db.Where("id IN ?", body.UserIDs).Delete(&models.PppoeUser{})
+	return c.JSON(fiber.Map{"success": true, "deleted": result.RowsAffected})
 }
 
 // POST /api/pppoe/users/bulk — bulk create users (stub — requires radius sync)
