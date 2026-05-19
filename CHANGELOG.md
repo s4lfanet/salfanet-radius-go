@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.31] — 2026-05-20
+### Fixed
+- **400 Error saat Tambah/Edit Router** — Field `port`, `apiPort`, `ports` dikirim sebagai string dari form state, tapi Go struct `Router` expect `int`. Fix: konversi ke `parseInt()` di `handleSubmit`. Juga fix: PUT URL edit sekarang `/api/network/routers/:id` (sebelumnya tidak ada `:id`). Router model ditambah field `Server`, `Community`, `VpnClientId` yang ada di tabel `nas` tapi belum ada di struct. `CreateRouter` kini menggunakan `routerBody` struct agar `password` dan `secret` (yang punya `json:"-"` di `Router` struct) tetap bisa dibaca dari request body.
+### Files
+- `src/app/admin/network/routers/page.tsx` — `handleSubmit`: `parseInt` untuk port fields, fix PUT URL ke `/api/network/routers/:id`
+- `internal/api/handlers/network.go` — Tambah `routerBody` struct, fix `CreateRouter` untuk handle `password`/`secret`
+- `internal/db/models/models.go` — `Router` struct: tambah field `Server`, `Community`, `VpnClientId`
+
 ## [2.52.30] — 2026-05-20
 ### Fixed
 - **vps_peers terhapus saat deploy** — `updater.sh` kini mem-backup data tabel `vps_peers` sebelum `prisma db push` dan merestore-nya setelahnya (seperti GenieACS tables). Go API juga di-restart ulang setelah Prisma selesai agar `runMigrations` memastikan tabel selalu ada.
