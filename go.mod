@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	github.com/fasthttp/websocket v1.5.8
+	github.com/go-routeros/routeros/v3 v3.0.1
 	github.com/gofiber/fiber/v3 v3.0.0-beta.4
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0

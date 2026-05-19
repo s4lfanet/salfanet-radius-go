@@ -16,13 +16,13 @@ package handlers
 // GET/POST /api/network/vps-wg-peer
 
 import (
-	"bytes"
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"regexp"
@@ -30,8 +30,10 @@ import (
 	"strings"
 	"time"
 
+	ros "github.com/go-routeros/routeros/v3"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/curve25519"
 	"gorm.io/gorm"
 )
 
@@ -346,24 +348,270 @@ func wgRandomAlphanumeric(n int) string {
 	return string(b)
 }
 
+// decryptVPNPassword decrypts an AES-256-CBC encrypted password stored in vpn_servers.
+// Format: "ivHex:encryptedHex". Returns plaintext as-is if not encrypted or on error.
+func decryptVPNPassword(encrypted string) string {
+	parts := strings.SplitN(encrypted, ":", 2)
+	if len(parts) != 2 {
+		return encrypted
+	}
+	encKey := os.Getenv("ENCRYPTION_KEY")
+	if encKey == "" {
+		encKey = "default-encryption-key-change-this-32"
+	}
+	keyBytes := make([]byte, 32)
+	copy(keyBytes, []byte(encKey))
+
+	iv, err := hex.DecodeString(parts[0])
+	if err != nil || len(iv) != 16 {
+		return encrypted
+	}
+	ciphertext, err := hex.DecodeString(parts[1])
+	if err != nil || len(ciphertext) == 0 || len(ciphertext)%aes.BlockSize != 0 {
+		return encrypted
+	}
+	block, err := aes.NewCipher(keyBytes)
+	if err != nil {
+		return encrypted
+	}
+	plaintext := make([]byte, len(ciphertext))
+	cipher.NewCBCDecrypter(block, iv).CryptBlocks(plaintext, ciphertext)
+	// PKCS7 unpad
+	if padLen := int(plaintext[len(plaintext)-1]); padLen > 0 && padLen <= aes.BlockSize {
+		plaintext = plaintext[:len(plaintext)-padLen]
+	}
+	return string(plaintext)
+}
+
+// nextAvailableVPNClientIP finds the first unused IP in the VPN server's pool.
+func nextAvailableVPNClientIP(db *gorm.DB, vpnServerId, subnet string, poolStart, poolEnd int) (string, error) {
+	network := strings.Split(subnet, "/")[0]
+	parts := strings.Split(network, ".")
+	if len(parts) != 4 {
+		return "", fmt.Errorf("invalid subnet: %s", subnet)
+	}
+	baseNetwork := strings.Join(parts[:3], ".")
+	if poolStart < 2 {
+		poolStart = 10
+	}
+	if poolEnd < poolStart {
+		poolEnd = 254
+	}
+
+	var rows []struct {
+		VpnIp string `gorm:"column:vpnIp"`
+	}
+	db.Table("vpn_clients").Select("vpnIp").Where("vpnServerId = ?", vpnServerId).Find(&rows)
+	usedIPs := make(map[string]bool)
+	for _, r := range rows {
+		usedIPs[r.VpnIp] = true
+	}
+	for i := poolStart; i <= poolEnd; i++ {
+		ip := fmt.Sprintf("%s.%d", baseNetwork, i)
+		if !usedIPs[ip] {
+			return ip, nil
+		}
+	}
+	return "", fmt.Errorf("tidak ada IP tersedia di pool (%s.%d–%s.%d)", baseNetwork, poolStart, baseNetwork, poolEnd)
+}
+
+// nextAvailableWinboxPort finds the next free Winbox port (10000–10100) for the server.
+func nextAvailableWinboxPort(db *gorm.DB, vpnServerId string) (int, error) {
+	const minPort, maxPort = 10000, 10100
+	var rows []struct {
+		WinboxPort *int `gorm:"column:winboxPort"`
+	}
+	db.Table("vpn_clients").Select("winboxPort").
+		Where("vpnServerId = ? AND winboxPort IS NOT NULL", vpnServerId).Find(&rows)
+	used := make(map[int]bool)
+	for _, r := range rows {
+		if r.WinboxPort != nil {
+			used[*r.WinboxPort] = true
+		}
+	}
+	for port := minPort; port <= maxPort; port++ {
+		if !used[port] {
+			return port, nil
+		}
+	}
+	return 0, fmt.Errorf("tidak ada port Winbox tersedia di range %d-%d", minPort, maxPort)
+}
+
+// generateX25519KeyPair generates a WireGuard-compatible X25519 key pair (base64-encoded).
+func generateX25519KeyPair() (privateKeyB64, publicKeyB64 string, err error) {
+	var privRaw [32]byte
+	if _, err = rand.Read(privRaw[:]); err != nil {
+		return
+	}
+	// Clamp per WireGuard spec
+	privRaw[0] &= 248
+	privRaw[31] &= 127
+	privRaw[31] |= 64
+
+	pubRaw, kerr := curve25519.X25519(privRaw[:], curve25519.Basepoint)
+	if kerr != nil {
+		err = kerr
+		return
+	}
+	privateKeyB64 = base64.StdEncoding.EncodeToString(privRaw[:])
+	publicKeyB64 = base64.StdEncoding.EncodeToString(pubRaw)
+	return
+}
+
+// buildNasSetupScript generates the RouterOS setup script for a VPN client.
+func buildNasSetupScript(name, vpnType, serverHost, vpnIp, username, password, apiUsername, apiPassword string,
+	winboxPort *int, clientPrivateKey *string, serverWgPublicKey string, wgPort int, nasSecret, radiusServerVpnIp string) string {
+
+	var radiusSection string
+	if radiusServerVpnIp != "" {
+		radiusSection = fmt.Sprintf(`
+# --- Setup RADIUS Server via VPN ---
+/radius remove [find where comment~"SALFANET"]
+/radius add address=%s secret=%s service=ppp,hotspot src-address=%s authentication-port=1812 accounting-port=1813 timeout=3s comment="SALFANET RADIUS via VPN"
+
+# --- Enable RADIUS ---
+/ppp aaa set use-radius=yes accounting=yes
+/radius incoming set accept=yes port=3799
+
+# --- Firewall - Allow CoA dari RADIUS Server via VPN ---
+/ip firewall filter remove [find where comment~"SALFANET-RADIUS"]
+/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=3799 action=accept comment="SALFANET-RADIUS CoA" place-before=0
+/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=1812,1813 action=accept comment="SALFANET-RADIUS Auth" place-before=0
+
+# --- Enable RADIUS untuk Hotspot ---
+/ip hotspot profile set [find] use-radius=yes`, radiusServerVpnIp, nasSecret, vpnIp, radiusServerVpnIp, radiusServerVpnIp)
+	} else {
+		radiusSection = fmt.Sprintf(`
+# --- RADIUS Server belum dikonfigurasi ---
+# Tandai salah satu VPN Client sebagai "RADIUS Server" di panel admin
+# kemudian setup RADIUS manual:
+# /radius add address=<RADIUS_VPN_IP> secret=%s service=ppp,hotspot src-address=%s`, nasSecret, vpnIp)
+	}
+
+	now := time.Now().UTC().Format(time.RFC3339)
+
+	if vpnType == "wireguard" {
+		privKey := ""
+		if clientPrivateKey != nil {
+			privKey = *clientPrivateKey
+		}
+		return strings.TrimSpace(fmt.Sprintf(`
+# ============================================
+# SALFANET WireGuard VPN Client + RADIUS Setup Script
+# NAS: %s
+# VPN Server: %s
+# VPN IP: %s
+# Generated: %s
+# NOTE: Requires RouterOS 7+ with WireGuard support
+# ============================================
+
+# --- STEP 1: Create WireGuard Interface ---
+/interface wireguard add listen-port=0 name=wg0-salfanet comment="SALFANET WireGuard"
+
+# --- STEP 2: Set Client Private Key ---
+/interface wireguard set wg0-salfanet private-key="%s"
+
+# --- STEP 3: Add Peer (VPN Server CHR) ---
+/interface wireguard peers add interface=wg0-salfanet public-key="%s" endpoint-address=%s endpoint-port=%d allowed-address=0.0.0.0/0 persistent-keepalive=25 comment="SALFANET VPN Server"
+
+# --- STEP 4: Assign VPN IP ---
+/ip address add address=%s/24 interface=wg0-salfanet comment="SALFANET VPN IP"
+
+# --- STEP 5: Tunggu koneksi (5 detik) ---
+:delay 5s
+%s
+
+# ============================================
+# SELESAI! Verifikasi:
+# /interface wireguard print
+# /interface wireguard peers print
+# /ip address print where interface=wg0-salfanet
+# ============================================`,
+			name, serverHost, vpnIp, now, privKey, serverWgPublicKey, serverHost, wgPort, vpnIp, radiusSection))
+	}
+
+	vpnTypeUpper := strings.ToUpper(vpnType)
+	interfaceType := "l2tp-client"
+	if vpnType == "pptp" {
+		interfaceType = "pptp-client"
+	} else if vpnType == "sstp" {
+		interfaceType = "sstp-client"
+	}
+	ipsecLine := ""
+	if vpnType == "l2tp" {
+		ipsecLine = " use-ipsec=yes ipsec-secret=salfanet-vpn-secret"
+	}
+	authLine := " allow=mschap2"
+	if vpnType != "l2tp" {
+		authLine = " authentication=mschap2"
+	}
+	portLine := ""
+	if vpnType == "sstp" {
+		portLine = " port=992"
+	}
+
+	return strings.TrimSpace(fmt.Sprintf(`
+# ============================================
+# SALFANET %s VPN Client + RADIUS Setup Script
+# NAS: %s
+# VPN Server: %s
+# VPN IP: %s
+# Generated: %s
+# ============================================
+
+# --- STEP 1: Create API User Group ---
+/user group add name=api-users policy=read,write,policy,test,sensitive,api comment="Limited API Access Group"
+
+# --- STEP 2: Create API User ---
+/user add name=%s group=api-users password=%s comment="API User for Remote Access"
+
+# --- STEP 3: Setup %s Client ---
+/interface %s add name=%s-salfanet connect-to=%s user=%s password=%s%s%s disabled=no%s add-default-route=no comment="SALFANET VPN"
+
+# --- STEP 4: Tunggu koneksi (10 detik) ---
+:delay 10s
+
+# --- STEP 5: Verifikasi koneksi VPN ---
+:if ([/interface %s get [find name="%s-salfanet"] running] = true) do={
+    :put "VPN Connected! IP: %s"
+} else={
+    :put "VPN belum terkoneksi, cek log: /log print where topics~\"%s\""
+}
+%s
+
+# ============================================
+# SELESAI! Verifikasi:
+# /interface %s print
+# /radius print
+# /ip firewall filter print where comment~"SALFANET"
+# ============================================`,
+		vpnTypeUpper, name, serverHost, vpnIp, now,
+		apiUsername, apiPassword,
+		vpnTypeUpper, interfaceType, interfaceType, serverHost, username, password, ipsecLine, portLine, authLine,
+		interfaceType, interfaceType, vpnIp, vpnType,
+		radiusSection,
+		interfaceType))
+}
+
 // prismaVpnClient maps to the "vpn_clients" table managed by Prisma.
 // Prisma stores column names in camelCase — explicit gorm:"column:..." tags required.
 type prismaVpnClient struct {
-	ID              string    `gorm:"primaryKey;column:id" json:"id"`
-	Name            string    `gorm:"column:name" json:"name"`
-	VpnServerId     string    `gorm:"column:vpnServerId" json:"vpnServerId"`
-	VpnIp           string    `gorm:"column:vpnIp" json:"vpnIp"`
-	Username        string    `gorm:"column:username" json:"username"`
-	Password        string    `gorm:"column:password" json:"password"`
-	VpnType         string    `gorm:"column:vpnType" json:"vpnType"`
-	Description     *string   `gorm:"column:description" json:"description"`
-	WinboxPort      *int      `gorm:"column:winboxPort" json:"winboxPort"`
-	ApiUsername     *string   `gorm:"column:apiUsername" json:"apiUsername"`
-	ApiPassword     *string   `gorm:"column:apiPassword" json:"apiPassword"`
-	ClientPublicKey *string   `gorm:"column:clientPublicKey" json:"clientPublicKey"`
-	IsActive        bool      `gorm:"column:isActive" json:"isActive"`
-	IsRadiusServer  bool      `gorm:"column:isRadiusServer" json:"isRadiusServer"`
-	CreatedAt       time.Time `gorm:"column:createdAt" json:"createdAt"`
+	ID               string    `gorm:"primaryKey;column:id" json:"id"`
+	Name             string    `gorm:"column:name" json:"name"`
+	VpnServerId      string    `gorm:"column:vpnServerId" json:"vpnServerId"`
+	VpnIp            string    `gorm:"column:vpnIp" json:"vpnIp"`
+	Username         string    `gorm:"column:username" json:"username"`
+	Password         string    `gorm:"column:password" json:"password"`
+	VpnType          string    `gorm:"column:vpnType" json:"vpnType"`
+	Description      *string   `gorm:"column:description" json:"description"`
+	WinboxPort       *int      `gorm:"column:winboxPort" json:"winboxPort"`
+	ApiUsername      *string   `gorm:"column:apiUsername" json:"apiUsername"`
+	ApiPassword      *string   `gorm:"column:apiPassword" json:"apiPassword"`
+	ClientPublicKey  *string   `gorm:"column:clientPublicKey" json:"clientPublicKey"`
+	ClientPrivateKey *string   `gorm:"column:clientPrivateKey" json:"-"` // sensitive — never expose in API
+	IsActive         bool      `gorm:"column:isActive" json:"isActive"`
+	IsRadiusServer   bool      `gorm:"column:isRadiusServer" json:"isRadiusServer"`
+	CreatedAt        time.Time `gorm:"column:createdAt" json:"createdAt"`
 }
 
 func (prismaVpnClient) TableName() string { return "vpn_clients" }
@@ -373,7 +621,12 @@ type prismaVpnServer struct {
 	ID          string  `gorm:"primaryKey;column:id" json:"id"`
 	Name        string  `gorm:"column:name" json:"name"`
 	Host        string  `gorm:"column:host" json:"host"`
+	Username    string  `gorm:"column:username" json:"username"`
+	Password    string  `gorm:"column:password" json:"-"`
+	ApiPort     int     `gorm:"column:apiPort" json:"apiPort"`
 	Subnet      string  `gorm:"column:subnet" json:"subnet"`
+	PoolStart   int     `gorm:"column:poolStart" json:"poolStart"`
+	PoolEnd     int     `gorm:"column:poolEnd" json:"poolEnd"`
 	L2tpEnabled bool    `gorm:"column:l2tpEnabled" json:"l2tpEnabled"`
 	SstpEnabled bool    `gorm:"column:sstpEnabled" json:"sstpEnabled"`
 	PptpEnabled bool    `gorm:"column:pptpEnabled" json:"pptpEnabled"`
@@ -473,51 +726,361 @@ func (h *NetworkVPNHandler) SSTPControl(c fiber.Ctx) error {
 
 // ─── VPN Client ──────────────────────────────────────────────────────────────
 
-// proxyToNextJS forwards a request to the Next.js API at localhost:3000.
-// Cookies and Authorization headers are forwarded so session auth works.
-func (h *NetworkVPNHandler) proxyToNextJS(c fiber.Ctx, method string) error {
-	targetURL := "http://localhost:3000" + string(c.Request().URI().Path())
-	if qs := c.Request().URI().QueryString(); len(qs) > 0 {
-		targetURL += "?" + string(qs)
+// POST /api/network/vpn-client — create MikroTik CHR VPN client
+func (h *NetworkVPNHandler) CreateVPNClient(c fiber.Ctx) error {
+	var body struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+		VpnServerId string `json:"vpnServerId"`
+		VpnType     string `json:"vpnType"`
+		CustomVpnIp string `json:"customVpnIp"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.Name == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Nama client wajib diisi"})
+	}
+	if body.VpnServerId == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "VPN Server wajib dipilih"})
+	}
+	// VPS peers have their own dedicated endpoints
+	if body.VpnServerId == "__vps_wg_server__" || body.VpnServerId == "__vps_l2tp_server__" {
+		return c.Status(400).JSON(fiber.Map{"error": "Gunakan /api/network/vps-wg-peer atau /api/network/vps-l2tp-peer untuk VPS peers"})
 	}
 
-	var bodyReader io.Reader
-	if body := c.Body(); len(body) > 0 {
-		bodyReader = bytes.NewReader(body)
+	// Find VPN server
+	var server prismaVpnServer
+	if err := h.db.Where("id = ?", body.VpnServerId).First(&server).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "VPN Server tidak ditemukan"})
 	}
 
-	req, err := http.NewRequest(method, targetURL, bodyReader)
+	// Normalize vpn type
+	vpnType := strings.ToLower(body.VpnType)
+	if vpnType != "pptp" && vpnType != "sstp" && vpnType != "wireguard" {
+		vpnType = "l2tp"
+	}
+
+	// Generate credentials
+	spacesRe := regexp.MustCompile(`\s+`)
+	nameLower := strings.ToLower(spacesRe.ReplaceAllString(body.Name, "-"))
+	username := fmt.Sprintf("vpn-%s-%s", nameLower, wgRandomAlphanumeric(4))
+	password := wgRandomAlphanumeric(12)
+	apiUsername := fmt.Sprintf("api-%s", nameLower)
+	apiPassword := wgRandomAlphanumeric(16)
+
+	// Assign IP
+	poolStart := server.PoolStart
+	if poolStart < 2 {
+		poolStart = 10
+	}
+	poolEnd := server.PoolEnd
+	if poolEnd < poolStart {
+		poolEnd = 254
+	}
+
+	var vpnIp string
+	if body.CustomVpnIp != "" {
+		ip := strings.TrimSpace(body.CustomVpnIp)
+		if matched, _ := regexp.MatchString(`^(\d{1,3}\.){3}\d{1,3}$`, ip); !matched {
+			return c.Status(400).JSON(fiber.Map{"error": "Format IP tidak valid"})
+		}
+		var conflict prismaVpnClient
+		if h.db.Where("vpnServerId = ? AND vpnIp = ?", body.VpnServerId, ip).First(&conflict).Error == nil {
+			return c.Status(409).JSON(fiber.Map{"error": fmt.Sprintf("IP %s sudah digunakan client lain", ip)})
+		}
+		vpnIp = ip
+	} else {
+		var err error
+		vpnIp, err = nextAvailableVPNClientIP(h.db, body.VpnServerId, server.Subnet, poolStart, poolEnd)
+		if err != nil {
+			return c.Status(409).JSON(fiber.Map{"error": err.Error()})
+		}
+	}
+
+	// Winbox port (non-WG only)
+	var winboxPort *int
+	if vpnType != "wireguard" {
+		if port, err := nextAvailableWinboxPort(h.db, body.VpnServerId); err == nil {
+			winboxPort = &port
+		}
+	}
+
+	// Connect to MikroTik CHR
+	routerPass := decryptVPNPassword(server.Password)
+	apiPort := server.ApiPort
+	if apiPort == 0 {
+		apiPort = 8728
+	}
+	mtAddr := fmt.Sprintf("%s:%d", server.Host, apiPort)
+	mtClient, err := ros.DialTimeout(mtAddr, server.Username, routerPass, 15*time.Second)
 	if err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "proxy: failed to build request"})
+		return c.Status(502).JSON(fiber.Map{"error": "Tidak bisa konek ke VPN server: " + err.Error()})
 	}
-	req.Host = "localhost"
-	req.Header.Set("Content-Type", "application/json")
-	if cookie := c.Get("Cookie"); cookie != "" {
-		// Strip __Secure- prefix so NextAuth validates correctly on HTTP localhost
-		cookie = strings.ReplaceAll(cookie, "__Secure-next-auth.", "next-auth.")
-		req.Header.Set("Cookie", cookie)
-	}
-	if auth := c.Get("Authorization"); auth != "" {
-		req.Header.Set("Authorization", auth)
+	defer mtClient.Close()
+
+	var clientPrivateKey, clientPublicKey *string
+
+	if vpnType == "wireguard" {
+		priv, pub, kerr := generateX25519KeyPair()
+		if kerr != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Gagal generate WireGuard keys: " + kerr.Error()})
+		}
+		clientPrivateKey = &priv
+		clientPublicKey = &pub
+
+		// Remove existing peer with same comment (best-effort)
+		if existing, _ := mtClient.Run("/interface/wireguard/peers/print", "?comment=SALFANET-"+body.Name); existing != nil {
+			for _, re := range existing.Re {
+				if id, ok := re.Map[".id"]; ok {
+					_, _ = mtClient.Run("/interface/wireguard/peers/remove", "=.id="+id)
+				}
+			}
+		}
+		// Add WG peer on CHR
+		if _, merr := mtClient.Run("/interface/wireguard/peers/add",
+			"=interface=wg0",
+			"=public-key="+pub,
+			"=allowed-address="+vpnIp+"/32",
+			"=persistent-keepalive=25",
+			"=comment=SALFANET-"+body.Name,
+		); merr != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Gagal tambah WireGuard peer di CHR: " + merr.Error()})
+		}
+	} else {
+		// PPP secret
+		if _, merr := mtClient.Run("/ppp/secret/add",
+			"=name="+username,
+			"=password="+password,
+			"=service=any",
+			"=profile=vpn-profile",
+			"=remote-address="+vpnIp,
+			"=comment=SALFANET-"+body.Name,
+		); merr != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Gagal buat PPP secret di CHR: " + merr.Error()})
+		}
+		// Winbox NAT
+		if winboxPort != nil {
+			_, _ = mtClient.Run("/ip/firewall/nat/add",
+				"=chain=dstnat",
+				"=protocol=tcp",
+				fmt.Sprintf("=dst-port=%d", *winboxPort),
+				"=action=dst-nat",
+				"=to-addresses="+vpnIp,
+				"=to-ports=8291",
+				"=comment=Winbox-"+body.Name,
+			)
+		}
 	}
 
-	client := &http.Client{Timeout: 45 * time.Second}
-	resp, err := client.Do(req)
-	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": "upstream unavailable"})
+	// Save to vpn_clients
+	var descPtr *string
+	if body.Description != "" {
+		descPtr = &body.Description
 	}
-	defer resp.Body.Close()
+	newClient := prismaVpnClient{
+		ID:               uuid.New().String(),
+		Name:             body.Name,
+		VpnServerId:      body.VpnServerId,
+		VpnIp:            vpnIp,
+		Username:         username,
+		Password:         password,
+		VpnType:          strings.ToUpper(vpnType),
+		Description:      descPtr,
+		WinboxPort:       winboxPort,
+		ApiUsername:      &apiUsername,
+		ApiPassword:      &apiPassword,
+		ClientPublicKey:  clientPublicKey,
+		ClientPrivateKey: clientPrivateKey,
+		IsActive:         true,
+		CreatedAt:        time.Now(),
+	}
+	if err := h.db.Create(&newClient).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal simpan ke database: " + err.Error()})
+	}
 
-	respBody, _ := io.ReadAll(resp.Body)
-	ct := resp.Header.Get("Content-Type")
-	if ct == "" {
-		ct = "application/json"
+	// Auto-create or reuse NAS entry in "nas" table
+	nasSecret := wgRandomAlphanumeric(16)
+	type nasRow struct {
+		ID     string `gorm:"column:id"`
+		Secret string `gorm:"column:secret"`
 	}
-	c.Set("Content-Type", ct)
-	return c.Status(resp.StatusCode).Send(respBody)
+	var existingNas nasRow
+	if h.db.Table("nas").Select("id, secret").Where("nasname = ?", vpnIp).First(&existingNas).Error == nil {
+		nasSecret = existingNas.Secret
+		h.db.Table("nas").Where("id = ?", existingNas.ID).Update("vpnClientId", newClient.ID)
+	} else {
+		shortName := body.Name
+		if len(shortName) > 32 {
+			shortName = shortName[:32]
+		}
+		h.db.Table("nas").Create(map[string]any{
+			"id":          uuid.New().String(),
+			"name":        body.Name,
+			"nasname":     vpnIp,
+			"shortname":   shortName,
+			"type":        "mikrotik",
+			"ipAddress":   vpnIp,
+			"username":    apiUsername,
+			"password":    apiPassword,
+			"secret":      nasSecret,
+			"ports":       1812,
+			"vpnClientId": newClient.ID,
+			"description": fmt.Sprintf("Auto-created NAS for VPN client '%s' (%s)", body.Name, strings.ToUpper(vpnType)),
+		})
+	}
+
+	// Find RADIUS server VPN IP
+	radiusServerVpnIp := ""
+	var radiusClient prismaVpnClient
+	if h.db.Where("isRadiusServer = ?", true).First(&radiusClient).Error == nil {
+		radiusServerVpnIp = radiusClient.VpnIp
+	}
+
+	serverWgPublicKey := ""
+	if server.WgPublicKey != nil {
+		serverWgPublicKey = *server.WgPublicKey
+	}
+	wgPort := 51820
+	if server.WgPort != nil {
+		wgPort = *server.WgPort
+	}
+
+	nasSetupScript := buildNasSetupScript(body.Name, vpnType, server.Host, vpnIp,
+		username, password, apiUsername, apiPassword,
+		winboxPort, clientPrivateKey, serverWgPublicKey, wgPort, nasSecret, radiusServerVpnIp)
+
+	// Build credentials map
+	creds := fiber.Map{
+		"server":      server.Host,
+		"username":    username,
+		"password":    password,
+		"vpnIp":       vpnIp,
+		"apiUsername": apiUsername,
+		"apiPassword": apiPassword,
+		"vpnType":     vpnType,
+		"nasSecret":   nasSecret,
+	}
+	if winboxPort != nil {
+		creds["winboxPort"] = *winboxPort
+		creds["winboxRemote"] = fmt.Sprintf("%s:%d", server.Host, *winboxPort)
+	}
+	if vpnType == "wireguard" && clientPrivateKey != nil {
+		creds["clientPrivateKey"] = *clientPrivateKey
+		creds["clientPublicKey"] = clientPublicKey
+		creds["serverPublicKey"] = serverWgPublicKey
+		creds["wgPort"] = wgPort
+	}
+	if radiusServerVpnIp != "" {
+		creds["radiusServerIp"] = radiusServerVpnIp
+	}
+
+	return c.JSON(fiber.Map{
+		"success":        true,
+		"client":         newClient,
+		"credentials":    creds,
+		"nasSetupScript": nasSetupScript,
+	})
 }
 
-// GET /api/network/vpn-client — list VPN clients (vpn_clients table + WG VPS peers)
+// PATCH /api/network/vpn-client — update VPN client IP address
+func (h *NetworkVPNHandler) PatchVPNClient(c fiber.Ctx) error {
+	var body struct {
+		ID    string `json:"id"`
+		VpnIp string `json:"vpnIp"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.ID == "" || body.VpnIp == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "id dan vpnIp wajib diisi"})
+	}
+	newIp := strings.TrimSpace(body.VpnIp)
+	if matched, _ := regexp.MatchString(`^(\d{1,3}\.){3}\d{1,3}$`, newIp); !matched {
+		return c.Status(400).JSON(fiber.Map{"error": "Format IP tidak valid"})
+	}
+
+	var client prismaVpnClient
+	if err := h.db.Where("id = ?", body.ID).First(&client).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Client tidak ditemukan"})
+	}
+
+	// Check IP conflict on same server
+	var conflict prismaVpnClient
+	if h.db.Where("vpnServerId = ? AND vpnIp = ? AND id != ?", client.VpnServerId, newIp, body.ID).
+		First(&conflict).Error == nil {
+		return c.Status(409).JSON(fiber.Map{"error": fmt.Sprintf("IP %s sudah digunakan oleh \"%s\"", newIp, conflict.Name)})
+	}
+
+	// Update MikroTik (non-WireGuard only — best effort, non-fatal)
+	if strings.ToLower(client.VpnType) != "wireguard" {
+		var server prismaVpnServer
+		if h.db.Where("id = ?", client.VpnServerId).First(&server).Error == nil {
+			routerPass := decryptVPNPassword(server.Password)
+			apiPort := server.ApiPort
+			if apiPort == 0 {
+				apiPort = 8728
+			}
+			if mtClient, merr := ros.DialTimeout(
+				fmt.Sprintf("%s:%d", server.Host, apiPort),
+				server.Username, routerPass, 10*time.Second,
+			); merr == nil {
+				defer mtClient.Close()
+				// Update PPP secret remote-address
+				if secrets, _ := mtClient.Run("/ppp/secret/print", "?name="+client.Username); secrets != nil {
+					for _, re := range secrets.Re {
+						if id, ok := re.Map[".id"]; ok {
+							_, _ = mtClient.Run("/ppp/secret/set", "=.id="+id, "=remote-address="+newIp)
+						}
+					}
+				}
+				// Update Winbox NAT rules (comment pattern: SALFANET-VPN-<username>)
+				if nats, _ := mtClient.Run("/ip/firewall/nat/print", "?comment=SALFANET-VPN-"+client.Username); nats != nil {
+					for _, re := range nats.Re {
+						if id, ok := re.Map[".id"]; ok {
+							_, _ = mtClient.Run("/ip/firewall/nat/set", "=.id="+id, "=to-addresses="+newIp)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Update DB
+	if err := h.db.Table("vpn_clients").Where("id = ?", body.ID).Update("vpnIp", newIp).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal update database: " + err.Error()})
+	}
+	client.VpnIp = newIp
+	return c.JSON(fiber.Map{"success": true, "client": client, "newIp": newIp})
+}
+
+// PUT /api/network/vpn-client — toggle RADIUS server flag on a VPN client
+func (h *NetworkVPNHandler) PutVPNClient(c fiber.Ctx) error {
+	var body struct {
+		ID             string `json:"id"`
+		IsRadiusServer bool   `json:"isRadiusServer"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.ID == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Client ID wajib diisi"})
+	}
+
+	// Unset all others first if marking as RADIUS server
+	if body.IsRadiusServer {
+		h.db.Table("vpn_clients").Where("isRadiusServer = ?", true).Update("isRadiusServer", false)
+	}
+
+	if err := h.db.Table("vpn_clients").Where("id = ?", body.ID).
+		Update("isRadiusServer", body.IsRadiusServer).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal update: " + err.Error()})
+	}
+
+	var client prismaVpnClient
+	h.db.Where("id = ?", body.ID).First(&client)
+	return c.JSON(fiber.Map{"success": true, "client": client})
+}
 func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
 	var prismaClients []prismaVpnClient
 	h.db.Order("createdAt desc").Find(&prismaClients)
@@ -623,21 +1186,6 @@ func (h *NetworkVPNHandler) ListVPNClients(c fiber.Ctx) error {
 	})
 }
 
-// POST /api/network/vpn-client — create VPN client (proxied to Next.js)
-func (h *NetworkVPNHandler) CreateVPNClient(c fiber.Ctx) error {
-	return h.proxyToNextJS(c, "POST")
-}
-
-// PATCH /api/network/vpn-client — update VPN client IP (proxied to Next.js)
-func (h *NetworkVPNHandler) PatchVPNClient(c fiber.Ctx) error {
-	return h.proxyToNextJS(c, "PATCH")
-}
-
-// PUT /api/network/vpn-client — update VPN client (proxied to Next.js)
-func (h *NetworkVPNHandler) PutVPNClient(c fiber.Ctx) error {
-	return h.proxyToNextJS(c, "PUT")
-}
-
 // DELETE /api/network/vpn-client — delete VPN client from DB
 // Handles both vps_peers (WireGuard/L2TP VPS) and Prisma vpn_clients (MikroTik).
 // Not proxied to Next.js because session cookie forwarding fails for DELETE from domain context.
@@ -716,7 +1264,6 @@ func removeL2TPUserFromChapSecrets(username string) {
 	}
 	_ = os.WriteFile(chapFile, []byte(strings.Join(kept, "\n")), 0600)
 }
-
 
 // ─── VPN Routing ─────────────────────────────────────────────────────────────
 
