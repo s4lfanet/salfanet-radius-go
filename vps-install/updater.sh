@@ -426,18 +426,29 @@ if [ -n "$USE_BRANCH" ]; then
         fi
     fi
 
-    # ── Patch systemd service if ReadWritePaths is missing /uploads ───────
+    # ── Patch systemd service if ReadWritePaths is missing /uploads or /backups ─
     # (Fixed in v2.47.13 — ProtectSystem=strict blocked writes to /uploads)
+    # (Fixed in v2.52.16 — ProtectSystem=strict blocked writes to /backups)
     SVC_FILE="/etc/systemd/system/salfanet-api.service"
     if [ -f "$SVC_FILE" ]; then
+        PATCHED=0
         if grep -q "ReadWritePaths" "$SVC_FILE" && ! grep "ReadWritePaths" "$SVC_FILE" | grep -q "uploads"; then
             print_info "Patching salfanet-api.service: adding /uploads to ReadWritePaths..."
             sed -i "s|ReadWritePaths=\(.*\)|ReadWritePaths=\1 ${APP_DIR}/uploads|" "$SVC_FILE"
-            systemctl daemon-reload
-            print_success "Systemd service patched — uploads now writable"
+            PATCHED=1
         fi
-        # Ensure uploads dir exists
+        if grep -q "ReadWritePaths" "$SVC_FILE" && ! grep "ReadWritePaths" "$SVC_FILE" | grep -q "backups"; then
+            print_info "Patching salfanet-api.service: adding /backups to ReadWritePaths..."
+            sed -i "s|ReadWritePaths=\(.*\)|ReadWritePaths=\1 ${APP_DIR}/backups|" "$SVC_FILE"
+            PATCHED=1
+        fi
+        if [ "$PATCHED" = "1" ]; then
+            systemctl daemon-reload
+            print_success "Systemd service patched — uploads and backups now writable"
+        fi
+        # Ensure writable dirs exist
         mkdir -p "${APP_DIR}/uploads/logos" "${APP_DIR}/uploads/payment-proofs" "${APP_DIR}/uploads/customer-photos"
+        mkdir -p "${APP_DIR}/backups"
     fi
 
     # ── Build Go backend binary ────────────────────────────────────────────
