@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.23] — 2026-05-19
+### Fixed
+- **`POST /api/pppoe/users/bulk` 400 saat import** — Root cause: `c.FormFile()` di Fiber v3 beta tidak selalu berhasil parse multipart. Diganti dengan `c.MultipartForm()` yang lebih eksplisit. Ditambah juga deteksi file `.xlsx/.xls` (binary Excel) yang tidak bisa di-parse sebagai CSV, mengembalikan error yang jelas: *"Simpan file sebagai CSV terlebih dahulu"*.
+- **Template download selalu `.csv`** — `GET /api/pppoe/users/bulk?type=template&format=xlsx` sebelumnya mengirim CSV dengan nama file `.xlsx`, membingungkan pengguna agar menyimpan ulang sebagai Excel lalu import gagal. Sekarang selalu menggunakan ekstensi `.csv`.
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `BulkImport`: pakai `MultipartForm()`, deteksi xlsx, pesan error bahasa Indonesia; `BulkGet`: template selalu `.csv`
+
 ## [2.52.22] — 2026-05-20
 ### Fixed
 - **404 pada `GET /api/pppoe/users/export`** — Di Fiber v3 beta, route parametrik `/users/:id` menangkap path statis seperti `/users/export`. Semua static sub-path `/pppoe/users/*` dipindah ke dalam `pppoe` group **sebelum** `/users/:id`, sehingga Fiber menggunakan static route yang tepat.
