@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.30] — 2026-05-20
+### Fixed
+- **vps_peers terhapus saat deploy** — `updater.sh` kini mem-backup data tabel `vps_peers` sebelum `prisma db push` dan merestore-nya setelahnya (seperti GenieACS tables). Go API juga di-restart ulang setelah Prisma selesai agar `runMigrations` memastikan tabel selalu ada.
+- **VPN Client dropdown tidak menampilkan VPS WireGuard/L2TP peers** — `ListRouters` sebelumnya hanya fetch dari `vpn_clients`. Kini juga fetch dari `vps_peers` (tabel Go-managed), sehingga peer WireGuard/L2TP yang didaftarkan via halaman VPN Clients ikut muncul di dropdown.
+### Files
+- `vps-install/updater.sh` — Tambah `backup_vps_peers_data` / `restore_vps_peers_data` + restart Go setelah Prisma (Mode A & B)
+- `internal/api/handlers/network.go` — `ListRouters`: tambah fetch dari `vps_peers` dan gabungkan ke hasil `vpnClients`
+
 ## [2.52.29] — 2026-05-20
 ### Fixed
 - **VPN Client dropdown kosong di modal "Tambah Router Baru"** — `GET /api/network/routers` sebelumnya hanya mengembalikan array router mentah. Frontend mengharapkan `{ routers: [...], vpnClients: [...] }`, sehingga `data.routers` dan `data.vpnClients` keduanya `undefined` → `[]`. Fix: handler `ListRouters` kini fetch VPN clients dari tabel `vpn_clients` (beserta NAS secret dari tabel `nas`) dan mengembalikan response dalam format yang benar.

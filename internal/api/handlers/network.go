@@ -139,6 +139,19 @@ func (h *NetworkHandler) ListRouters(c fiber.Ctx) error {
 	var vpnClientRows []vpnClientRow
 	h.db.Table("vpn_clients").Order("name").Find(&vpnClientRows)
 
+	// Also include VPS WireGuard/L2TP peers from vps_peers (Go-managed table)
+	type vpsPeerRow struct {
+		ID          string  `gorm:"column:id"`
+		PeerName    string  `gorm:"column:peer_name"`
+		PeerIp      string  `gorm:"column:peer_ip"`
+		NasSecret   *string `gorm:"column:nas_secret"`
+		ApiUsername *string `gorm:"column:api_username"`
+		ApiPassword *string `gorm:"column:api_password"`
+	}
+	var vpsPeerRows []vpsPeerRow
+	// Use Exec-safe query: vps_peers is always created by runMigrations at startup
+	h.db.Table("vps_peers").Where("is_active = ?", 1).Order("peer_name").Find(&vpsPeerRows)
+
 	// Build NAS secret map
 	type nasSecretRow struct {
 		VpnClientId string `gorm:"column:vpnClientId"`
@@ -168,9 +181,9 @@ func (h *NetworkHandler) ListRouters(c fiber.Ctx) error {
 		ApiPassword    *string `json:"apiPassword"`
 		NasSecret      *string `json:"nasSecret"`
 	}
-	vpnClientResult := make([]vpnClientResp, len(vpnClientRows))
-	for i, cl := range vpnClientRows {
-		vpnClientResult[i] = vpnClientResp{
+	vpnClientResult := make([]vpnClientResp, 0, len(vpnClientRows)+len(vpsPeerRows))
+	for _, cl := range vpnClientRows {
+		vpnClientResult = append(vpnClientResult, vpnClientResp{
 			ID:             cl.ID,
 			Name:           cl.Name,
 			VpnIp:          cl.VpnIp,
@@ -178,7 +191,18 @@ func (h *NetworkHandler) ListRouters(c fiber.Ctx) error {
 			ApiUsername:    cl.ApiUsername,
 			ApiPassword:    cl.ApiPassword,
 			NasSecret:      secretMap[cl.ID],
-		}
+		})
+	}
+	// Append VPS peers (WireGuard/L2TP) — these use peer_name and peer_ip
+	for _, p := range vpsPeerRows {
+		vpnClientResult = append(vpnClientResult, vpnClientResp{
+			ID:          p.ID,
+			Name:        p.PeerName,
+			VpnIp:       p.PeerIp,
+			ApiUsername: p.ApiUsername,
+			ApiPassword: p.ApiPassword,
+			NasSecret:   p.NasSecret,
+		})
 	}
 
 	return c.JSON(fiber.Map{

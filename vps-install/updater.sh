@@ -97,6 +97,35 @@ restore_genieacs_data() {
     rm -f "$GENIEACS_BACKUP_SQL"
 }
 
+# vps_peers: backup data sebelum prisma db push (Go mengelola tabel ini via runMigrations,
+# tapi Prisma bisa saja menghapus tabelnya jika ada perubahan schema yang signifikan).
+VPS_PEERS_BACKUP_SQL="/tmp/vps-peers-backup-$$.sql"
+
+backup_vps_peers_data() {
+    command -v mysqldump &>/dev/null || return 0
+    _parse_db_parts || return 0
+
+    mysqldump -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" \
+        --no-create-info --replace --single-transaction \
+        "$_DB_NAME" vps_peers \
+        > "$VPS_PEERS_BACKUP_SQL" 2>/dev/null \
+        && print_success "vps_peers data backed up ($(wc -l < "$VPS_PEERS_BACKUP_SQL" 2>/dev/null || echo 0) lines)" \
+        || { print_info "vps_peers backup skipped (table may not exist yet)"; rm -f "$VPS_PEERS_BACKUP_SQL"; }
+}
+
+restore_vps_peers_data() {
+    [ -f "$VPS_PEERS_BACKUP_SQL" ] && [ -s "$VPS_PEERS_BACKUP_SQL" ] || return 0
+    command -v mysql &>/dev/null || return 0
+    _parse_db_parts || return 0
+
+    # Pastikan tabel vps_peers ada sebelum restore (Go restart akan membuatnya jika belum ada)
+    mysql -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" "$_DB_NAME" \
+        < "$VPS_PEERS_BACKUP_SQL" 2>/dev/null \
+        && print_success "vps_peers data restored from backup" \
+        || print_info "vps_peers restore: check manually if data is missing"
+    rm -f "$VPS_PEERS_BACKUP_SQL"
+}
+
 # Apply flat SQL migration files from prisma/migrations/*.sql
 # Tracks applied files in /var/lib/salfanet-applied-migrations.txt
 # Safe to run multiple times — already-applied files are skipped.
@@ -502,9 +531,18 @@ if [ -n "$USE_BRANCH" ]; then
 
     print_step "Running database migrations"
     backup_genieacs_data
+    backup_vps_peers_data
     node_modules/.bin/prisma db push --accept-data-loss 2>/dev/null || node_modules/.bin/prisma db push
     restore_genieacs_data
+    restore_vps_peers_data
     apply_sql_migrations || true
+    # Restart Go API setelah Prisma selesai agar runMigrations di db.go dapat
+    # (re)membuat tabel yang dikelola Go (vps_peers, dll.) yang mungkin terpengaruh.
+    if systemctl is-active --quiet salfanet-api 2>/dev/null; then
+        systemctl restart salfanet-api
+        sleep 2
+        print_success "Go API restarted after Prisma migrations"
+    fi
     # Migrate legacy admin_user -> admin_users if needed and ensure
     # at least one active SUPER_ADMIN exists.
     if [ -f "$APP_DIR/vps-install/fix-auth-after-update.sh" ]; then
@@ -806,11 +844,19 @@ fi
 
 node_modules/.bin/prisma generate 2>/dev/null || true
 backup_genieacs_data
+backup_vps_peers_data
 node_modules/.bin/prisma db push --accept-data-loss 2>/dev/null || \
     node_modules/.bin/prisma db push || \
     print_info "DB push skipped (check manually)"
 restore_genieacs_data
+restore_vps_peers_data
 apply_sql_migrations || true
+# Restart Go API setelah Prisma agar runMigrations dapat membuat ulang tabel Go-managed
+if systemctl is-active --quiet salfanet-api 2>/dev/null; then
+    systemctl restart salfanet-api
+    sleep 2
+    print_success "Go API restarted after Prisma migrations"
+fi
 
 print_step "Applying seed data (new templates & config)"
 npm run db:seed 2>/dev/null || print_info "Seed skipped (check manually)"
