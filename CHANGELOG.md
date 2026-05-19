@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.33] — 2026-05-20
+### Fixed
+- **500 Error saat Tambah Router dengan VPN Client dari vps_peers** — `nas.vpnClientId` punya FK constraint ke `vpn_clients(id)`, tapi entry dari `vps_peers` ID-nya tidak ada di `vpn_clients` sehingga MySQL error 1452 FK constraint fails. Fix: hapus `@relation` dari Prisma schema (kolom tetap ada sebagai nullable string) dan tambah migration SQL untuk drop FK constraint di DB. `vpnClientId` sekarang bisa menyimpan ID dari `vpn_clients` maupun `vps_peers` tanpa FK enforcement.
+### Files
+- `prisma/schema.prisma` — Hapus `routers router[]` dari `vpnClient` model dan `vpnClient @relation(...)` dari `router` model
+- `prisma/migrations/drop_nas_vpnclientid_fkey.sql` — `ALTER TABLE nas DROP FOREIGN KEY nas_vpnClientId_fkey`
+
 ## [2.52.32] — 2026-05-20
 ### Fixed
 - **VPN Client data hilang setiap update** — `vpn_servers` dan `vpn_clients` adalah tabel Prisma, tapi saat `prisma db push --accept-data-loss` berjalan dengan perubahan schema, datanya bisa DROP. Fix: `updater.sh` kini mem-backup kedua tabel ini sebelum Prisma berjalan dan merestore-nya sesudah (dengan `SET FOREIGN_KEY_CHECKS=0` agar urutan restore tidak masalah).

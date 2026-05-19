@@ -312,7 +312,7 @@ model vpnClient {
   updatedAt        DateTime   @updatedAt
 
   vpnServer        vpnServer  @relation(fields: [vpnServerId], references: [id], onDelete: Cascade)
-  routers          router[]
+  // routers relation removed — vpnClientId on nas can reference vpn_clients OR vps_peers
 
   @@unique([vpnServerId, vpnIp])
   @@map("vpn_clients")
@@ -336,7 +336,7 @@ model router {
   description    String?
   latitude       Float?             // GPS latitude for map display
   longitude      Float?             // GPS longitude for map display
-  vpnClientId    String?            // Optional: Connect via VPN Client
+  vpnClientId    String?            // Optional: Connect via VPN Client (vpn_clients.id OR vps_peers.id, no FK)
   isActive       Boolean            @default(true)
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt
@@ -345,7 +345,7 @@ model router {
   vouchers       hotspotVoucher[]
   agents         agent[]            // Agents assigned to this router
   oltRouters     networkOLTRouter[] // OLT router assignments
-  vpnClient      vpnClient?         @relation(fields: [vpnClientId], references: [id], onDelete: SetNull)
+  // vpnClient relation removed — no FK so we can reference either vpn_clients or vps_peers
 
   @@unique([nasname, ports, secret]) // Allow same IP with different port/secret
   @@index([nasname])
