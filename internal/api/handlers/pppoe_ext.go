@@ -238,6 +238,15 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 	fileHeader := fileHeaders[0]
 	filename := strings.ToLower(fileHeader.Filename)
 
+	// Optional fallback profileId from form field (like old Next.js system)
+	var fallbackProfile *models.PppoeProfile
+	if pids, has := mf.Value["profileId"]; has && len(pids) > 0 && pids[0] != "" {
+		var fp models.PppoeProfile
+		if h.db.Where("id = ?", pids[0]).First(&fp).Error == nil {
+			fallbackProfile = &fp
+		}
+	}
+
 	f, err := fileHeader.Open()
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "gagal membuka file"})
@@ -352,9 +361,13 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 		if profileName != "" {
 			h.db.Where("LOWER(name) = LOWER(?)", profileName).First(&profile)
 		}
+		// Fallback to the profile selected in UI if file profile not found
+		if profile.ID == "" && fallbackProfile != nil {
+			profile = *fallbackProfile
+		}
 		if profile.ID == "" {
 			failedCount++
-			failures = append(failures, failRow{Line: rowIdx + 2, Username: username, Error: fmt.Sprintf("profile '%s' tidak ditemukan", profileName)})
+			failures = append(failures, failRow{Line: rowIdx + 2, Username: username, Error: fmt.Sprintf("profile '%s' tidak ditemukan — pilih Profile Default di dialog import", profileName)})
 			continue
 		}
 
