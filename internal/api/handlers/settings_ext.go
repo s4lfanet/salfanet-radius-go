@@ -59,6 +59,23 @@ func (h *SettingsExtHandler) GetTimezone(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "timezone": tz})
 }
 
+// POST /api/settings/timezone — save timezone to company settings
+func (h *SettingsExtHandler) SetTimezone(c fiber.Ctx) error {
+	var body struct {
+		Timezone string `json:"timezone"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.Timezone == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "timezone required"})
+	}
+	if err := h.db.Model(&models.Company{}).Where("1 = 1").Update("timezone", body.Timezone).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to save timezone"})
+	}
+	return c.JSON(fiber.Map{"success": true, "timezone": body.Timezone})
+}
+
 // GET /api/settings/map
 func (h *SettingsExtHandler) GetMapSettings(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "lat": -6.2, "lng": 106.816, "zoom": 13})

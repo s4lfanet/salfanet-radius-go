@@ -537,6 +537,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Put("/admin/referrals/config", refH.UpdateConfig)
 	api.Get("/admin/referrals", refH.List)
 	api.Put("/admin/referrals/:id", refH.UpdateStatus)
+	api.Post("/admin/referrals/:id", refH.UpdateStatus) // frontend sends POST
 	api.Delete("/admin/referrals/:id", refH.Delete)
 
 	// Admin Users
@@ -566,6 +567,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	hotspot.Post("/voucher/send-whatsapp", hotspotExtH.SendWhatsapp)
 	hotspot.Delete("/voucher/delete-expired", hotspotExtH.DeleteExpired)
 	hotspot.Get("/vouchers/validate", hotspotExtH.ValidateVoucher)
+	hotspot.Post("/vouchers/validate", hotspotExtH.ValidateVoucher) // frontend sends POST
 	hotspot.Get("/voucher/:id", hotspotExtH.GetVoucher)
 	hotspot.Delete("/voucher/:id", hotspotExtH.DeleteVoucher)
 	hotspot.Get("/rekap-voucher/export", hotspotExtH.ExportRekap)
@@ -591,6 +593,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Put("/settings/email/templates/:type", settingsExtH.UpdateEmailTemplate)
 	api.Post("/settings/email/test", settingsExtH.TestEmail)
 	api.Get("/settings/timezone", settingsExtH.GetTimezone)
+	api.Post("/settings/timezone", settingsExtH.SetTimezone) // save timezone
 	api.Get("/settings/map", settingsExtH.GetMapSettings)
 	api.Put("/settings/map", settingsExtH.UpdateMapSettings)
 	api.Get("/email/history", settingsExtH.EmailHistory)
@@ -607,6 +610,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// Telegram
 	api.Get("/telegram/settings", telegramH.GetSettings)
 	api.Put("/telegram/settings", telegramH.UpdateSettings)
+	api.Post("/telegram/settings", telegramH.UpdateSettings) // frontend sends POST
 	api.Post("/telegram/test", telegramH.Test)
 	api.Post("/telegram/send-backup", telegramH.SendBackup)
 	api.Post("/telegram/test-backup", telegramH.TestBackup)
@@ -617,13 +621,16 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/push/send", pushH.Send)
 	api.Post("/push/subscribe", pushH.Subscribe)
 	api.Delete("/push/unsubscribe", pushH.Unsubscribe)
+	api.Post("/push/unsubscribe", pushH.Unsubscribe) // frontend sends POST
 	api.Get("/push/vapid-public-key", pushH.GetVapidKey)
 
 	// Push extended (agent & technician subscriptions)
 	api.Post("/push/agent-subscribe", pushExtH.AgentSubscribe)
 	api.Delete("/push/agent-unsubscribe", pushExtH.AgentUnsubscribe)
+	api.Post("/push/agent-unsubscribe", pushExtH.AgentUnsubscribe) // frontend sends POST
 	api.Post("/push/technician-subscribe", pushExtH.TechnicianSubscribe)
 	api.Delete("/push/technician-unsubscribe", pushExtH.TechnicianUnsubscribe)
+	api.Post("/push/technician-unsubscribe", pushExtH.TechnicianUnsubscribe) // frontend sends POST
 
 	// OLT extensions (alert management, monitoring, metrics)
 	api.Get("/olt/alerts", oltExtH.ListAlerts)
@@ -637,6 +644,8 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/pppoe/users/export", pppoeExtH.ExportUsers)
 	api.Post("/pppoe/users/bulk-create", pppoeExtH.BulkCreateUsers)
 	api.Get("/pppoe/users/bulk-status", pppoeExtH.BulkStatus)
+	api.Put("/pppoe/users/bulk-status", pppoeExtH.BulkStatus) // frontend sends PUT
+	api.Post("/pppoe/users/bulk-status", pppoeExtH.BulkStatus) // POST alias
 	api.Get("/pppoe/users/:id/check-isolation", pppoeExtH.CheckIsolation)
 	api.Post("/pppoe/users/:id/send-notification", pppoeExtH.SendNotification)
 	api.Post("/pppoe/users/:id/sync-mikrotik", pppoeExtH.SyncMikrotik)
@@ -748,6 +757,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// ─── Batch 7: Network Extended ────────────────────────────────────────────
 	api.Get("/network/routers/status", networkH.RouterStatus)
+	api.Post("/network/routers/status", networkH.RouterStatus) // frontend sends POST
 	api.Post("/network/routers/import", networkH.ImportRouters)
 	api.Get("/network/routers/template", networkH.RouterImportTemplate)
 	api.Get("/network/routers/:id/detail", networkH.GetRouter)
@@ -848,6 +858,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/pppoe/users/bulk", miscH.PppoeBulk)
 	api.Get("/pppoe/users/check-isolation", miscH.CheckIsolationGlobal)
 	api.Post("/pppoe/users/status", miscH.PppoeBatchStatus)
+	api.Put("/pppoe/users/status", miscH.PppoeBatchStatus) // frontend sends PUT
 	api.Post("/pppoe/users/send-notification", miscH.PppoeBatchNotification)
 	api.Post("/pppoe/users/sync-mikrotik", miscH.SyncAllMikrotik)
 	api.Get("/public/homepage", miscH.PublicHomepage)
@@ -1115,6 +1126,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// Cloudflare tunnel
 	api.Get("/admin/cloudflare-tunnel", adminMiscH.GetCloudflareTunnel)
 	api.Put("/admin/cloudflare-tunnel", adminMiscH.UpdateCloudflareTunnel)
+	api.Post("/admin/cloudflare-tunnel", adminMiscH.UpdateCloudflareTunnel) // frontend sends POST
 	// System info
 	api.Get("/admin/system/info", adminMiscH.SystemInfo)
 	// FreeRADIUS backup
@@ -1184,6 +1196,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Put("/admin/settings/isolation", miscH.AdminUpdateIsolationSettings)
 	api.Get("/admin/settings/isolation/mikrotik-script", miscH.AdminGetMikrotikScript)
 	api.Get("/admin/users/:id/renewal", pppoeExtH.ExtendUser)
+	api.Post("/admin/users/:id/renewal", pppoeExtH.ExtendUser) // frontend sends POST
 
 	// ─── Batch 12: Cron extras ────────────────────────────────────────────────
 	api.Get("/cron/olt-poll", miscH.CronOLTPoll)
@@ -1246,6 +1259,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 12: Customer portal extras ────────────────────────────────────
 	customer.Get("/wifi", custExt2H.GetWifi)
 	customer.Put("/wifi", custExt2H.UpdateWifiSettings)
+	customer.Post("/wifi", custExt2H.UpdateWifiSettings) // frontend sends POST
 	customer.Post("/ont/reboot", custExt2H.RebootONT)
 	customer.Post("/invoice/regenerate-payment", custExt2H.RegeneratePayment)
 	customer.Get("/invoices/payment", custExt2H.InvoicePayment)
@@ -1264,6 +1278,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// ─── Batch 13: Network OLTs status ───────────────────────────────────────
 	api.Get("/network/olts/status", miscH.NetworkOLTStatus)
+	api.Post("/network/olts/status", miscH.NetworkOLTStatus) // frontend sends POST
 
 	// ─── Batch 14: Audit fixes ────────────────────────────────────────────────
 	// POST /api/olt/test-connection (non-admin alias; same handler as /admin/olt/test-connection)
