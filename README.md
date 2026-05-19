@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.12 — 2026-05-20
+
+### Fixed
+- **Gagal memuat history (root cause)** — `waH.ListHistory` (route terdaftar pertama, line 341) mengembalikan raw array tanpa `success: true`; Fiber v3 selalu menggunakan handler pertama yang terdaftar, sehingga fix di `waCrudH.ListHistory` (line 752) tidak pernah dipanggil. Fix: update `waH.ListHistory` langsung dengan response format `{success, data, pagination, stats}` beserta pagination, search, dan status filter.
+- **WhatsApp sidebar double menu** — Hapus sub-item dropdown (Riwayat, Template, Kirim, Notifikasi, Penyedia) dari sidebar; WhatsApp kini langsung menuju `/admin/settings/whatsapp` yang sudah memiliki semua tab.
+### Files
+- `internal/api/handlers/whatsapp.go` — fix `ListHistory`: full response format `{success, data, pagination, stats}` + pagination + search + stats; tambah `strconv` import
+- `src/app/admin/AdminClientLayout.tsx` — WhatsApp nav: hapus children dropdown, direct href ke `/admin/settings/whatsapp`
+
 ### v2.52.11 — 2026-05-20
 
 ### Fixed
@@ -547,29 +556,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/router.go` — tambah 14 method alias untuk fix 405 errors
 - `internal/api/handlers/settings_ext.go` — tambah `SetTimezone` POST handler
-
-### v2.52.7 — 2026-05-19
-
-### Changed
-- **Audit & migrasi semua proxy ke Next.js → Go native** — 3 endpoint tersisa yang masih `proxyToNextJS` (POST/PATCH/PUT `/api/network/vpn-client`) sekarang ditangani sepenuhnya di Go. Next.js sekarang hanya melayani frontend, tidak ada lagi API call yang di-proxy.
-- **POST /api/network/vpn-client (CreateVPNClient)** — Go sekarang: generate credentials, assign IP dari pool, connect ke MikroTik CHR via RouterOS API, buat PPP secret / WireGuard peer, buat Winbox NAT rule, simpan ke `vpn_clients`, auto-create NAS entry di tabel `nas`, generate `nasSetupScript` RouterOS, return credentials lengkap.
-- **PATCH /api/network/vpn-client (PatchVPNClient)** — Go sekarang: validasi IP format & conflict, update PPP secret `remote-address` + NAT rules di MikroTik (best-effort non-fatal), update DB.
-- **PUT /api/network/vpn-client (PutVPNClient)** — Go sekarang: toggle `isRadiusServer` flag, unset semua yang lain jika set, update DB.
-### Added
-- Dependency `github.com/go-routeros/routeros/v3` — RouterOS API client untuk connect ke MikroTik CHR
-- `decryptVPNPassword()` — AES-256-CBC decrypt untuk password VPN server (format `ivHex:encHex`)
-- `nextAvailableVPNClientIP()` — cari IP berikutnya yang tersedia dari pool VPN server
-- `nextAvailableWinboxPort()` — cari Winbox port berikutnya (10000–10100)
-- `generateX25519KeyPair()` — generate WireGuard X25519 key pair (base64)
-- `buildNasSetupScript()` — generate RouterOS setup script untuk semua tipe VPN (L2TP, PPTP, SSTP, WireGuard)
-### Removed
-- `proxyToNextJS()` — dihapus, tidak ada lagi proxy ke Next.js dari Go backend
-### Updated
-- `prismaVpnServer` struct — tambah field `Username`, `Password`, `ApiPort`, `PoolStart`, `PoolEnd`
-- `prismaVpnClient` struct — tambah field `ClientPrivateKey`
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — full migration 3 endpoints + helpers + hapus proxy
-- `go.mod` / `go.sum` — tambah `github.com/go-routeros/routeros/v3 v3.0.1`
 
 <!-- AUTO-CHANGELOG:END -->
 
