@@ -126,6 +126,39 @@ restore_vps_peers_data() {
     rm -f "$VPS_PEERS_BACKUP_SQL"
 }
 
+# vpn_servers + vpn_clients: backup data sebelum prisma db push agar data VPN Client
+# yang ditambahkan via UI tidak hilang ketika schema berubah (prisma --accept-data-loss
+# bisa DROP TABLE pada kolom yang berubah tipe/constraint-nya).
+VPN_DATA_BACKUP_SQL="/tmp/vpn-data-backup-$$.sql"
+
+backup_vpn_data() {
+    command -v mysqldump &>/dev/null || return 0
+    _parse_db_parts || return 0
+
+    mysqldump -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" \
+        --no-create-info --replace --single-transaction \
+        "$_DB_NAME" vpn_servers vpn_clients \
+        > "$VPN_DATA_BACKUP_SQL" 2>/dev/null \
+        && print_success "vpn_servers + vpn_clients data backed up ($(wc -l < "$VPN_DATA_BACKUP_SQL" 2>/dev/null || echo 0) lines)" \
+        || { print_info "VPN data backup skipped (tables may not exist yet)"; rm -f "$VPN_DATA_BACKUP_SQL"; }
+}
+
+restore_vpn_data() {
+    [ -f "$VPN_DATA_BACKUP_SQL" ] && [ -s "$VPN_DATA_BACKUP_SQL" ] || return 0
+    command -v mysql &>/dev/null || return 0
+    _parse_db_parts || return 0
+
+    # Disable FK checks agar urutan restore tidak masalah
+    {
+        echo "SET FOREIGN_KEY_CHECKS=0;"
+        cat "$VPN_DATA_BACKUP_SQL"
+        echo "SET FOREIGN_KEY_CHECKS=1;"
+    } | mysql -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" "$_DB_NAME" 2>/dev/null \
+        && print_success "vpn_servers + vpn_clients data restored from backup" \
+        || print_info "VPN data restore: check manually if data is missing"
+    rm -f "$VPN_DATA_BACKUP_SQL"
+}
+
 # Apply flat SQL migration files from prisma/migrations/*.sql
 # Tracks applied files in /var/lib/salfanet-applied-migrations.txt
 # Safe to run multiple times — already-applied files are skipped.
@@ -532,9 +565,11 @@ if [ -n "$USE_BRANCH" ]; then
     print_step "Running database migrations"
     backup_genieacs_data
     backup_vps_peers_data
+    backup_vpn_data
     node_modules/.bin/prisma db push --accept-data-loss 2>/dev/null || node_modules/.bin/prisma db push
     restore_genieacs_data
     restore_vps_peers_data
+    restore_vpn_data
     apply_sql_migrations || true
     # Restart Go API setelah Prisma selesai agar runMigrations di db.go dapat
     # (re)membuat tabel yang dikelola Go (vps_peers, dll.) yang mungkin terpengaruh.
@@ -845,11 +880,13 @@ fi
 node_modules/.bin/prisma generate 2>/dev/null || true
 backup_genieacs_data
 backup_vps_peers_data
+backup_vpn_data
 node_modules/.bin/prisma db push --accept-data-loss 2>/dev/null || \
     node_modules/.bin/prisma db push || \
     print_info "DB push skipped (check manually)"
 restore_genieacs_data
 restore_vps_peers_data
+restore_vpn_data
 apply_sql_migrations || true
 # Restart Go API setelah Prisma agar runMigrations dapat membuat ulang tabel Go-managed
 if systemctl is-active --quiet salfanet-api 2>/dev/null; then

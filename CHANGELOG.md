@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.32] — 2026-05-20
+### Fixed
+- **VPN Client data hilang setiap update** — `vpn_servers` dan `vpn_clients` adalah tabel Prisma, tapi saat `prisma db push --accept-data-loss` berjalan dengan perubahan schema, datanya bisa DROP. Fix: `updater.sh` kini mem-backup kedua tabel ini sebelum Prisma berjalan dan merestore-nya sesudah (dengan `SET FOREIGN_KEY_CHECKS=0` agar urutan restore tidak masalah).
+### Files
+- `vps-install/updater.sh` — Tambah `backup_vpn_data` / `restore_vpn_data`, dipanggil di Mode A dan Mode B sekitar `prisma db push`
+
 ## [2.52.31] — 2026-05-20
 ### Fixed
 - **400 Error saat Tambah/Edit Router** — Field `port`, `apiPort`, `ports` dikirim sebagai string dari form state, tapi Go struct `Router` expect `int`. Fix: konversi ke `parseInt()` di `handleSubmit`. Juga fix: PUT URL edit sekarang `/api/network/routers/:id` (sebelumnya tidak ada `:id`). Router model ditambah field `Server`, `Community`, `VpnClientId` yang ada di tabel `nas` tapi belum ada di struct. `CreateRouter` kini menggunakan `routerBody` struct agar `password` dan `secret` (yang punya `json:"-"` di `Router` struct) tetap bisa dibaca dari request body.
