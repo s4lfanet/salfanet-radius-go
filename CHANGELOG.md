@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.15] — 2026-05-19
+### Fixed
+- **Backup Create HTTP 500** — handler menggunakan `DB_HOST`/`DB_USER`/`DB_PASSWORD`/`DB_NAME` yang tidak ada di VPS (hanya ada `DATABASE_URL`). Fix: `parseDBCredentials()` parse `DATABASE_URL` Prisma format dengan `net/url`. Gunakan `MYSQL_PWD` env var (bukan flag `-p`) agar password dengan karakter spesial aman dari shell escaping.
+- **Backup Restore gagal** — sama, credentials parsing salah. Fixed bersama dengan fix backup create.
+- **Backup history 0 items** — konsekuensi dari backup create yang selalu gagal; otomatis teratasi setelah create diperbaiki.
+- **Telegram settings tidak tersimpan** — `GetTelegramSettings`/`UpdateTelegramSettings` di kedua handler adalah stub hardcoded. Fix: baca/tulis ke tabel `telegram_backup_settings` di DB. Tambah model `TelegramBackupSettings` di Go.
+- **Telegram send/test-backup tidak berfungsi** — semua endpoint Telegram selalu return stub success tanpa mengirim apapun. Fix: implementasi penuh dengan Telegram Bot API (`sendMessage` untuk teks, `sendDocument` untuk file backup via multipart upload).
+- **ERR_CONNECTION_CLOSED saat idle** — Fiber `IdleTimeout=270s` sedangkan nginx `keepalive_timeout` default 75s. Race condition: nginx tutup koneksi lebih dulu, browser coba reuse → `ERR_CONNECTION_CLOSED`. Fix: turunkan Fiber `IdleTimeout` ke 60s + tambah `keepalive_timeout 65;` ke semua server block di nginx.
+### Files
+- `internal/db/models/extra.go` — tambah model `TelegramBackupSettings` (tabel `telegram_backup_settings`)
+- `internal/api/handlers/backup_handler.go` — rewrite: `parseDBCredentials()`, `doMysqlDump()`, `doMysqlRestore()`, `sendTelegramMessage()`, `sendTelegramDocument()`, semua handler implementasi penuh
+- `internal/api/handlers/telegram_handler.go` — rewrite: `GetSettings`/`UpdateSettings` baca/tulis DB, `Test`/`SendBackup`/`TestBackup`/`SendHealth` panggil Telegram API sungguhan
+- `internal/api/router.go` — `IdleTimeout`: 270s → 60s; fix route `/backup/telegram/test` ke `telegramH.TestBackup`
+- `nginx /etc/nginx/sites-enabled/salfanet-radius` — tambah `keepalive_timeout 65;` di semua server block (VPS only)
+
 ## [2.52.14] — 2026-05-19
 ### Fixed
 - **Email settings dark mode** — code block "App name" dan "Device" di tutorial Gmail SMTP tidak terlihat di dark mode karena typo class Tailwind `dark:bg-inputpx-1` (harusnya `dark:bg-gray-700 px-1`). Teks putih di atas background abu terang → invisible.

@@ -715,6 +715,24 @@ type BackupHistory struct {
 
 func (BackupHistory) TableName() string { return "backup_history" }
 
+// ─── TelegramBackupSettings ───────────────────────────────────────────────────
+
+type TelegramBackupSettings struct {
+	ID            string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Enabled       bool      `gorm:"default:false" json:"enabled"`
+	BotToken      string    `json:"botToken"`
+	ChatId        string    `json:"chatId"`
+	BackupTopicId *string   `json:"backupTopicId"`
+	HealthTopicId *string   `json:"healthTopicId"`
+	Schedule      string    `gorm:"default:daily" json:"schedule"`
+	ScheduleTime  string    `gorm:"default:02:00" json:"scheduleTime"`
+	KeepLastN     int       `gorm:"default:7" json:"keepLastN"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
+func (TelegramBackupSettings) TableName() string { return "telegram_backup_settings" }
+
 // ─── EmailTemplate ───────────────────────────────────────────────────────────
 
 type EmailTemplate struct {
@@ -745,24 +763,6 @@ type IsolationTemplate struct {
 }
 
 func (IsolationTemplate) TableName() string { return "isolation_templates" }
-
-// ─── TelegramBackupSettings ───────────────────────────────────────────────────
-
-type TelegramBackupSettings struct {
-	ID            string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Enabled       bool      `gorm:"default:false" json:"enabled"`
-	BotToken      string    `json:"botToken"`
-	ChatID        string    `json:"chatId"`
-	BackupTopicID *string   `json:"backupTopicId"`
-	HealthTopicID *string   `json:"healthTopicId"`
-	Schedule      string    `gorm:"default:daily" json:"schedule"`
-	ScheduleTime  string    `gorm:"default:02:00" json:"scheduleTime"`
-	KeepLastN     int       `gorm:"default:7" json:"keepLastN"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-}
-
-func (TelegramBackupSettings) TableName() string { return "telegram_backup_settings" }
 
 // ─── WorkOrder ────────────────────────────────────────────────────────────────
 

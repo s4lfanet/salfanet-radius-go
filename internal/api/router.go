@@ -31,7 +31,7 @@ var wsUpgrader = fws.FastHTTPUpgrader{
 func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched *cron.Scheduler) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      "Salfanet RADIUS API",
-		IdleTimeout:  270 * time.Second, // slightly below Nginx keepalive_timeout 300s
+		IdleTimeout:  60 * time.Second,  // close idle keep-alive connections before nginx's keepalive_timeout
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
 	})
@@ -749,18 +749,18 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/whatsapp/providers/:id/detail", waCrudH.GetProvider)
 	api.Put("/whatsapp/providers/:id/update", waCrudH.UpdateProvider)
 	api.Delete("/whatsapp/providers/:id/remove", waCrudH.DeleteProvider)
-	api.Delete("/whatsapp/providers/:id", waCrudH.DeleteProvider)       // REST alias: frontend calls DELETE /providers/:id
-	api.Get("/whatsapp/history", waCrudH.ListHistory)                   // primary route used by frontend
-	api.Get("/whatsapp/history-list", waCrudH.ListHistory)              // legacy alias
+	api.Delete("/whatsapp/providers/:id", waCrudH.DeleteProvider) // REST alias: frontend calls DELETE /providers/:id
+	api.Get("/whatsapp/history", waCrudH.ListHistory)             // primary route used by frontend
+	api.Get("/whatsapp/history-list", waCrudH.ListHistory)        // legacy alias
 	api.Delete("/whatsapp/history/delete", waCrudH.DeleteHistory)
 	api.Get("/whatsapp/templates-list", waCrudH.ListTemplates)
-	api.Get("/whatsapp/templates", waCrudH.ListTemplates)               // REST alias: overrides waH.ListTemplates (wrong format)
+	api.Get("/whatsapp/templates", waCrudH.ListTemplates) // REST alias: overrides waH.ListTemplates (wrong format)
 	api.Post("/whatsapp/templates-create", waCrudH.CreateTemplate)
 	api.Get("/whatsapp/templates/:id/detail", waCrudH.GetTemplate)
 	api.Put("/whatsapp/templates/:id/update", waCrudH.UpdateTemplate)
-	api.Put("/whatsapp/templates/:id", waCrudH.UpdateTemplate)          // REST alias: overrides waH.UpdateTemplate (type vs id mismatch)
+	api.Put("/whatsapp/templates/:id", waCrudH.UpdateTemplate) // REST alias: overrides waH.UpdateTemplate (type vs id mismatch)
 	api.Delete("/whatsapp/templates/:id/remove", waCrudH.DeleteTemplate)
-	api.Delete("/whatsapp/templates/:id", waCrudH.DeleteTemplate)       // REST alias
+	api.Delete("/whatsapp/templates/:id", waCrudH.DeleteTemplate) // REST alias
 	api.Get("/whatsapp/reminder-settings-ext", waCrudH.GetReminderSettings)
 	api.Put("/whatsapp/reminder-settings-ext", waCrudH.UpdateReminderSettings)
 	api.Post("/whatsapp/send-ext", waCrudH.Send)
@@ -995,7 +995,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 9: Backup info routes ─────────────────────────────────────────
 	api.Get("/backup", backupH.ListBackups)
 	api.Get("/backup/health", backupH.Health)
-	api.Post("/backup/telegram/test", backupH.TelegramTest)
+	api.Post("/backup/telegram/test", telegramH.TestBackup)
 
 	// ─── Batch 9: Cron info routes ───────────────────────────────────────────
 	api.Get("/cron", cronH.Info)
