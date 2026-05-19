@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.14 — 2026-05-19
+
+### Fixed
+- **Email settings dark mode** — code block "App name" dan "Device" di tutorial Gmail SMTP tidak terlihat di dark mode karena typo class Tailwind `dark:bg-inputpx-1` (harusnya `dark:bg-gray-700 px-1`). Teks putih di atas background abu terang → invisible.
+- **Email templates tidak tampil** — Go handler `ListEmailTemplates` mengembalikan 3 stub hardcoded (INVOICE, PAYMENT_CONFIRM, ISOLATION_NOTICE) bukan dari database. Frontend tidak menemukan type yang cocok → semua tab template menampilkan "Template belum dibuat". Fix: baca dari tabel `email_templates` di DB. Tambah model `EmailTemplate` di Go.
+- **Update template tidak tersimpan** — `UpdateEmailTemplate` selalu return stub success tanpa benar-benar update DB. Fix: update ke tabel `email_templates` by `type`, return 404 bila tidak ada.
+### Files
+- `src/app/admin/settings/email/page.tsx` — fix class Tailwind `dark:bg-inputpx-1` → `dark:bg-gray-700 px-1`
+- `internal/db/models/extra.go` — tambah model `EmailTemplate` (tabel `email_templates`)
+- `internal/api/handlers/settings_ext.go` — fix `ListEmailTemplates` (baca dari DB) dan `UpdateEmailTemplate` (update ke DB)
+
 ### v2.52.13 — 2026-05-19
 
 ### Fixed
@@ -531,14 +542,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/router.go` — tambah `GET /whatsapp/history` (alias ke `waCrudH.ListHistory`)
 - `internal/api/handlers/whatsapp_crud.go` — fix `ListHistory`: response format (data+stats), search param, status=all, empty array not null
-
-### v2.52.9 — 2026-05-19
-
-### Fixed
-- **ERR_CONNECTION_CLOSED setelah idle lama** — Nginx `keepalive_timeout` global hanya 65s; browser throttle `setInterval` saat tab di background menjadi >65s sehingga koneksi terputus sebelum poll berikutnya. Fix: tambah `keepalive_timeout 300; keepalive_requests 10000;` di Nginx site config `radius.hotspotapp.net`, dan set `IdleTimeout: 270s`, `ReadTimeout: 60s`, `WriteTimeout: 60s` di Go Fiber. Ini memperbaiki error berulang pada semua polling request: `GET /api/notifications`, `GET /api/admin/registrations?status=PENDING`, `GET /api/manual-payments?status=PENDING`.
-### Files
-- `internal/api/router.go` — tambah `IdleTimeout`, `ReadTimeout`, `WriteTimeout` di `fiber.Config`
-- `/etc/nginx/sites-enabled/radius.hotspotapp.net` (VPS) — tambah `keepalive_timeout 300; keepalive_requests 10000;`
 
 <!-- AUTO-CHANGELOG:END -->
 
