@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.25] — 2026-05-19
+### Fixed
+- **Import xlsx fallback** — Jika file `.xlsx` yang diupload ternyata berisi konten CSV (format export lama sebelum v2.52.24), import akan otomatis fallback ke parser CSV sehingga tetap berhasil diimport tanpa error "zip: not a valid zip file".
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `BulkImport`: tambah CSV fallback saat excelize gagal parse xlsx
+
 ## [2.52.24] — 2026-05-19
 ### Added
 - **Export real `.xlsx`** — `GET /api/pppoe/users/export?format=excel` sekarang menghasilkan file Excel binary asli (`.xlsx`) menggunakan library `excelize v2.10.1`, bukan CSV yang di-rename. Begitu juga `GET /api/pppoe/users/bulk?type=template&format=xlsx` menghasilkan template Excel asli.
