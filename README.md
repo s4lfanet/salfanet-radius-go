@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.24 — 2026-05-19
+
+### Added
+- **Export real `.xlsx`** — `GET /api/pppoe/users/export?format=excel` sekarang menghasilkan file Excel binary asli (`.xlsx`) menggunakan library `excelize v2.10.1`, bukan CSV yang di-rename. Begitu juga `GET /api/pppoe/users/bulk?type=template&format=xlsx` menghasilkan template Excel asli.
+- **Import dari `.xlsx`** — `POST /api/pppoe/users/bulk` kini menerima file `.xlsx` maupun `.xls` selain `.csv`. File Excel di-parse menggunakan excelize, baris data diproses sama seperti CSV.
+### Changed
+- **Dependency baru** — `github.com/xuri/excelize/v2 v2.10.1` ditambahkan ke `go.mod`.
+### Files
+- `internal/api/handlers/pppoe_ext.go` — tambah `writeXLSX()` helper, update `ExportUsers`, `BulkGet`, `BulkImport`
+- `go.mod`, `go.sum` — tambah excelize dan dependensi turunannya
+
 ### v2.52.23 — 2026-05-19
 
 ### Fixed
@@ -539,15 +550,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `vps-install/install-nginx.sh` — hapus 2 blok `location = /api/push/send → Next.js` dari server block 2 & 3
 - `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — hapus blok yang sama, nginx reload
-
-### v2.52.19 — 2026-05-19
-
-### Fixed
-- **ERR_CONNECTION_CLOSED pada idle API connections** — Root cause: nginx `keepalive_timeout 65s` terlalu pendek, Cloudflare mempertahankan koneksi ke origin ~90s. Jika nginx tutup koneksi duluan, Cloudflare mencoba kirim request ke koneksi yang sudah tutup → browser mendapat `ERR_CONNECTION_CLOSED`. Fix: naikkan nginx `keepalive_timeout` 65→120s dan Fiber `IdleTimeout` 60→150s agar server tidak menutup koneksi sebelum Cloudflare.
-- **Duplicate nginx config** — File `/etc/nginx/sites-enabled/radius.hotspotapp.net` (lama) konflik dengan `salfanet-radius`, menyebabkan warning "conflicting server name". Dihapus dari sites-enabled.
-### Files
-- `internal/api/router.go` — `IdleTimeout` 60s → 150s
-- `vps-install/install-nginx.sh` — `keepalive_timeout` 65 → 120 (4 lokasi)
 
 <!-- AUTO-CHANGELOG:END -->
 
