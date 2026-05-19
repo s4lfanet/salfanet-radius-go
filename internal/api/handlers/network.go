@@ -126,7 +126,65 @@ func (h *NetworkHandler) CreateOTB(c fiber.Ctx) error {
 func (h *NetworkHandler) ListRouters(c fiber.Ctx) error {
 	var routers []models.Router
 	h.db.Order("name").Find(&routers)
-	return c.JSON(routers)
+
+	// Fetch VPN clients for the "Tambah Router Baru" dropdown
+	type vpnClientRow struct {
+		ID             string  `gorm:"column:id"`
+		Name           string  `gorm:"column:name"`
+		VpnIp          string  `gorm:"column:vpnIp"`
+		IsRadiusServer bool    `gorm:"column:isRadiusServer"`
+		ApiUsername    *string `gorm:"column:apiUsername"`
+		ApiPassword    *string `gorm:"column:apiPassword"`
+	}
+	var vpnClientRows []vpnClientRow
+	h.db.Table("vpn_clients").Order("name").Find(&vpnClientRows)
+
+	// Build NAS secret map
+	type nasSecretRow struct {
+		VpnClientId string `gorm:"column:vpnClientId"`
+		Secret      string `gorm:"column:secret"`
+	}
+	secretMap := make(map[string]*string)
+	if len(vpnClientRows) > 0 {
+		ids := make([]string, len(vpnClientRows))
+		for i, cl := range vpnClientRows {
+			ids[i] = cl.ID
+		}
+		var nasRows []nasSecretRow
+		h.db.Table("nas").Select("vpnClientId, secret").
+			Where("vpnClientId IN ?", ids).Find(&nasRows)
+		for _, row := range nasRows {
+			s := row.Secret
+			secretMap[row.VpnClientId] = &s
+		}
+	}
+
+	type vpnClientResp struct {
+		ID             string  `json:"id"`
+		Name           string  `json:"name"`
+		VpnIp          string  `json:"vpnIp"`
+		IsRadiusServer bool    `json:"isRadiusServer"`
+		ApiUsername    *string `json:"apiUsername"`
+		ApiPassword    *string `json:"apiPassword"`
+		NasSecret      *string `json:"nasSecret"`
+	}
+	vpnClientResult := make([]vpnClientResp, len(vpnClientRows))
+	for i, cl := range vpnClientRows {
+		vpnClientResult[i] = vpnClientResp{
+			ID:             cl.ID,
+			Name:           cl.Name,
+			VpnIp:          cl.VpnIp,
+			IsRadiusServer: cl.IsRadiusServer,
+			ApiUsername:    cl.ApiUsername,
+			ApiPassword:    cl.ApiPassword,
+			NasSecret:      secretMap[cl.ID],
+		}
+	}
+
+	return c.JSON(fiber.Map{
+		"routers":    routers,
+		"vpnClients": vpnClientResult,
+	})
 }
 
 func (h *NetworkHandler) CreateRouter(c fiber.Ctx) error {
