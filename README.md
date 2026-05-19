@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.33 — 2026-05-20
+
+### Fixed
+- **500 Error saat Tambah Router dengan VPN Client dari vps_peers** — `nas.vpnClientId` punya FK constraint ke `vpn_clients(id)`, tapi entry dari `vps_peers` ID-nya tidak ada di `vpn_clients` sehingga MySQL error 1452 FK constraint fails. Fix: hapus `@relation` dari Prisma schema (kolom tetap ada sebagai nullable string) dan tambah migration SQL untuk drop FK constraint di DB. `vpnClientId` sekarang bisa menyimpan ID dari `vpn_clients` maupun `vps_peers` tanpa FK enforcement.
+### Files
+- `prisma/schema.prisma` — Hapus `routers router[]` dari `vpnClient` model dan `vpnClient @relation(...)` dari `router` model
+- `prisma/migrations/drop_nas_vpnclientid_fkey.sql` — `ALTER TABLE nas DROP FOREIGN KEY nas_vpnClientId_fkey`
+
 ### v2.52.32 — 2026-05-20
 
 ### Fixed
@@ -522,16 +530,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **VPN Client dropdown kosong di modal "Tambah Router Baru"** — `GET /api/network/routers` sebelumnya hanya mengembalikan array router mentah. Frontend mengharapkan `{ routers: [...], vpnClients: [...] }`, sehingga `data.routers` dan `data.vpnClients` keduanya `undefined` → `[]`. Fix: handler `ListRouters` kini fetch VPN clients dari tabel `vpn_clients` (beserta NAS secret dari tabel `nas`) dan mengembalikan response dalam format yang benar.
 ### Files
 - `internal/api/handlers/network.go` — `ListRouters`: ganti `c.JSON(routers)` dengan `c.JSON({ routers, vpnClients })`
-
-### v2.52.28 — 2026-05-19
-
-### Fixed / Added
-- **Import: Profile Default Fallback** — Dialog import kini memiliki dropdown **Profile Default** (opsional). Jika nama profile di file tidak cocok dengan DB (atau DB profile kosong), profile default yang dipilih di UI dipakai — persis seperti sistem Next.js lama.
-- **Detail error import tampil** — Backend kini mengembalikan key `errors` (bukan `failures`) dengan field `line`, `username`, `error` sehingga detail kegagalan per-baris tampil di dialog import.
-- **Root cause 75 gagal** — `pppoe_profiles` tabel kosong (0 row); semua baris gagal karena profile tidak ditemukan. Kini bisa diatasi dengan memilih Profile Default di dialog import.
-### Files
-- `internal/api/handlers/pppoe_ext.go` — BulkImport: baca `profileId` form field sebagai fallback; ganti `failures`→`errors`, tambah field `line`/`username`
-- `src/app/admin/pppoe/users/page.tsx` — Import dialog: tambah state `importProfileId`, dropdown profile, kirim `profileId` ke backend
 
 <!-- AUTO-CHANGELOG:END -->
 
