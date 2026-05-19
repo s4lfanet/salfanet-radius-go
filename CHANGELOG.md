@@ -11,7 +11,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **WhatsApp History gagal dimuat** — Go router mendaftarkan `/whatsapp/history-list` tapi frontend memanggil `/whatsapp/history`; response format juga salah (`history` vs `data`, tidak ada field `stats`). Fix: tambah route `GET /api/whatsapp/history`, ubah response menjadi `data` + `stats` (total/sent/failed/last24Hours), dan handle `search` + `status=all` dengan benar.
 ### Files
 - `internal/api/router.go` — tambah `GET /whatsapp/history` (alias ke `waCrudH.ListHistory`)
-- `internal/api/handlers/whatsapp_crud.go` — fix `ListHistory`: response format, stats, search param, status=all handling
+- `internal/api/handlers/whatsapp_crud.go` — fix `ListHistory`: response format (data+stats), search param, status=all, empty array not null
 
 ## [2.52.9] — 2026-05-19
 ### Fixed
