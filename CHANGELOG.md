@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.21] — 2026-05-19
+### Changed
+- **Hapus ~415 dead Next.js API routes** — Semua `src/app/api/**` kecuali `auth/[...nextauth]/route.ts` dihapus. Nginx sudah routing semua `/api/` ke Go, sehingga file-file ini tidak pernah dieksekusi.
+- **Ganti Prisma di 4 layout.tsx dengan Go API** — `admin/layout.tsx`, `customer/layout.tsx`, `agent/layout.tsx`, `technician/layout.tsx` sebelumnya pakai `prisma.company.findFirst()` untuk page title. Diganti dengan `fetch('http://127.0.0.1:8080/api/public/company')`.
+- **Fix nginx: `/api/auth/logout-log` route ke Go** — Sebelumnya Next.js menangani endpoint ini via `src/app/api/auth/logout-log/route.ts`. Go sudah memiliki handler (`router.go:1200`), nginx kini memiliki `location = /api/auth/logout-log` di semua 3 server block yang mengarah ke Go. File Next.js dihapus bersama dead routes.
+### Files
+- `src/app/api/**` — hapus semua kecuali `auth/[...nextauth]/route.ts` (415+ file dihapus)
+- `src/app/admin/layout.tsx` — ganti Prisma → Go API fetch
+- `src/app/customer/layout.tsx` — ganti Prisma → Go API fetch
+- `src/app/agent/layout.tsx` — ganti Prisma → Go API fetch
+- `src/app/technician/layout.tsx` — ganti Prisma → Go API fetch
+- `vps-install/install-nginx.sh` — tambah `location = /api/auth/logout-log → Go` di 2 server block functions
+- `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — tambah logout-log block di 3 server block, nginx reload
+
 ## [2.52.20] — 2026-05-19
 ### Fixed
 - **`/api/push/send` masih route ke Next.js di server block 2 & 3** — Setelah Go sudah memiliki handler `pushH.Send`, nginx di server block 2 (IP direct) dan block 3 (HTTPS default_server) masih memiliki `location = /api/push/send { proxy_pass 127.0.0.1:3000 }`. Server block 1 (Cloudflare/main) sudah benar. Block 2 & 3 kini konsisten: rule dihapus, request jatuh ke catch-all `/api/ → Go`.
