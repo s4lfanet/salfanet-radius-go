@@ -491,6 +491,29 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.7 — 2026-05-19
+
+### Changed
+- **Audit & migrasi semua proxy ke Next.js → Go native** — 3 endpoint tersisa yang masih `proxyToNextJS` (POST/PATCH/PUT `/api/network/vpn-client`) sekarang ditangani sepenuhnya di Go. Next.js sekarang hanya melayani frontend, tidak ada lagi API call yang di-proxy.
+- **POST /api/network/vpn-client (CreateVPNClient)** — Go sekarang: generate credentials, assign IP dari pool, connect ke MikroTik CHR via RouterOS API, buat PPP secret / WireGuard peer, buat Winbox NAT rule, simpan ke `vpn_clients`, auto-create NAS entry di tabel `nas`, generate `nasSetupScript` RouterOS, return credentials lengkap.
+- **PATCH /api/network/vpn-client (PatchVPNClient)** — Go sekarang: validasi IP format & conflict, update PPP secret `remote-address` + NAT rules di MikroTik (best-effort non-fatal), update DB.
+- **PUT /api/network/vpn-client (PutVPNClient)** — Go sekarang: toggle `isRadiusServer` flag, unset semua yang lain jika set, update DB.
+### Added
+- Dependency `github.com/go-routeros/routeros/v3` — RouterOS API client untuk connect ke MikroTik CHR
+- `decryptVPNPassword()` — AES-256-CBC decrypt untuk password VPN server (format `ivHex:encHex`)
+- `nextAvailableVPNClientIP()` — cari IP berikutnya yang tersedia dari pool VPN server
+- `nextAvailableWinboxPort()` — cari Winbox port berikutnya (10000–10100)
+- `generateX25519KeyPair()` — generate WireGuard X25519 key pair (base64)
+- `buildNasSetupScript()` — generate RouterOS setup script untuk semua tipe VPN (L2TP, PPTP, SSTP, WireGuard)
+### Removed
+- `proxyToNextJS()` — dihapus, tidak ada lagi proxy ke Next.js dari Go backend
+### Updated
+- `prismaVpnServer` struct — tambah field `Username`, `Password`, `ApiPort`, `PoolStart`, `PoolEnd`
+- `prismaVpnClient` struct — tambah field `ClientPrivateKey`
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — full migration 3 endpoints + helpers + hapus proxy
+- `go.mod` / `go.sum` — tambah `github.com/go-routeros/routeros/v3 v3.0.1`
+
 ### v2.52.6 — 2026-05-19
 
 ### Fixed
@@ -528,21 +551,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **vps_peers table hilang / tidak persisten** — Migration via SQL file gagal karena BOM (byte-order mark) di file. Solusi: pindahkan pembuatan tabel ke Go code (`runMigrations` di `db.Init`) menggunakan `db.Exec("CREATE TABLE IF NOT EXISTS ...")`, sehingga tabel dibuat otomatis setiap startup — tidak perlu manual migration lagi.
 ### Files
 - `internal/db/db.go` — Tambah fungsi `runMigrations` yang membuat tabel `vps_peers` via raw SQL saat startup
-
-### v2.52.2 — 2026-05-19
-
-### Fixed
-- **VPS WireGuard peer tidak muncul di VPN Client list** — `CreateWGPeer` sebelumnya adalah stub yang tidak generate keypair, tidak assign IP, dan menyimpan ke tabel `vps_peers` yang belum ada. Rewrite penuh: generate WireGuard keypair (`wg genkey`/`wg pubkey`), alokasi IP dari pool, tambah `[Peer]` ke wg0.conf, apply live via `wg set`, generate nasSecret/apiUsername/apiPassword, simpan ke DB.
-- **Script NAS IP undefined, API User api-undefined, CLIENT_PRIVATE_KEY placeholder** — `CreateWGPeer` tidak return `vpnIp`, `apiUsername`, `apiPassword`, `clientPrivateKey`, dll. Sekarang return semua field yang dibutuhkan frontend.
-- **vps_peers table tidak ada** — Dibuat via migration SQL baru.
-- **WG VPS peers tidak muncul di list** — `ListVPNClients` sekarang include entries dari `vps_peers` (type=wireguard), dimapping ke format VpnClient dengan `vpnServerId = "__vps_wg__"`.
-### Added
-- Migration `prisma/migrations/20260520_add_vps_peers_table.sql` — Create table `vps_peers` dengan kolom credentials
-- Helper functions: `nextAvailableWGIP`, `wgRandomHex`, `wgRandomAlphanumeric`
-- Struct `vpnClientResponse` — unified response format untuk `vpn_clients` dan `vps_peers`
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — Rewrite `CreateWGPeer`, update `ListVPNClients`, tambah struct + helpers baru
-- `prisma/migrations/20260520_add_vps_peers_table.sql` — New migration
 
 <!-- AUTO-CHANGELOG:END -->
 
