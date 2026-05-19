@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.29 — 2026-05-20
+
+### Fixed
+- **VPN Client dropdown kosong di modal "Tambah Router Baru"** — `GET /api/network/routers` sebelumnya hanya mengembalikan array router mentah. Frontend mengharapkan `{ routers: [...], vpnClients: [...] }`, sehingga `data.routers` dan `data.vpnClients` keduanya `undefined` → `[]`. Fix: handler `ListRouters` kini fetch VPN clients dari tabel `vpn_clients` (beserta NAS secret dari tabel `nas`) dan mengembalikan response dalam format yang benar.
+### Files
+- `internal/api/handlers/network.go` — `ListRouters`: ganti `c.JSON(routers)` dengan `c.JSON({ routers, vpnClients })`
+
 ### v2.52.28 — 2026-05-19
 
 ### Fixed / Added
@@ -529,14 +536,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/pppoe_ext.go` — tambah `writeXLSX()` helper, update `ExportUsers`, `BulkGet`, `BulkImport`
 - `go.mod`, `go.sum` — tambah excelize dan dependensi turunannya
-
-### v2.52.23 — 2026-05-19
-
-### Fixed
-- **`POST /api/pppoe/users/bulk` 400 saat import** — Root cause: `c.FormFile()` di Fiber v3 beta tidak selalu berhasil parse multipart. Diganti dengan `c.MultipartForm()` yang lebih eksplisit. Ditambah juga deteksi file `.xlsx/.xls` (binary Excel) yang tidak bisa di-parse sebagai CSV, mengembalikan error yang jelas: *"Simpan file sebagai CSV terlebih dahulu"*.
-- **Template download selalu `.csv`** — `GET /api/pppoe/users/bulk?type=template&format=xlsx` sebelumnya mengirim CSV dengan nama file `.xlsx`, membingungkan pengguna agar menyimpan ulang sebagai Excel lalu import gagal. Sekarang selalu menggunakan ekstensi `.csv`.
-### Files
-- `internal/api/handlers/pppoe_ext.go` — `BulkImport`: pakai `MultipartForm()`, deteksi xlsx, pesan error bahasa Indonesia; `BulkGet`: template selalu `.csv`
 
 <!-- AUTO-CHANGELOG:END -->
 
