@@ -180,7 +180,7 @@ func (h *WhatsappCrudHandler) Send(c fiber.Ctx) error {
 func (h *WhatsappCrudHandler) ListTemplates(c fiber.Ctx) error {
 	var templates []models.WhatsappTemplate
 	h.db.Order("type asc").Find(&templates)
-	return c.JSON(fiber.Map{"success": true, "templates": templates})
+	return c.JSON(fiber.Map{"success": true, "data": templates})
 }
 
 // POST /api/whatsapp/templates

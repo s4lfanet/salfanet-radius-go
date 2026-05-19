@@ -6,6 +6,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.11] — 2026-05-20
+### Fixed
+- **Template WhatsApp tidak muncul** — `waH.ListTemplates` mengembalikan raw array; frontend mengecek `data.success` → templates tidak pernah dimuat. Fix: wrap response jadi `{success: true, data: [...]}`.
+- **Update template gagal** — `waH.UpdateTemplate` lookup by "type" string, tapi frontend mengirim UUID → tidak ketemu, membuat record salah. Fix: lookup by UUID dulu, fallback ke type string. Response kini `{success: true}`.
+- **Kirim pesan tunggal selalu error** — `waH.SendMessage` mengembalikan `{message:"sent"}` tanpa `success: true` → frontend selalu masuk blok error. Fix: return `{success: true, message:"sent", provider:"whatsapp"}`.
+- **Broadcast tidak mengirim pesan** — `Broadcast` handler hanya membuat record QUEUED tanpa benar-benar mengirim ke WA service. Fix: panggil WA service untuk setiap user, track sukses/gagal, return `{total, successCount, failCount}`.
+- **Hapus provider gagal (404)** — tidak ada route `DELETE /api/whatsapp/providers/:id`. Fix: tambah route.
+- **REST alias untuk templates** — tambah `GET /whatsapp/templates`, `PUT /whatsapp/templates/:id`, `DELETE /whatsapp/templates/:id` dan `DELETE /whatsapp/providers/:id` sebagai override dari route lama.
+- **`ListTemplates` key salah** — `waCrudH.ListTemplates` mengembalikan key `templates`, frontend mengecek `data.data`. Fix: ganti key menjadi `data`.
+
+### Files
+- `internal/api/handlers/whatsapp.go` — fix `ListTemplates`, `UpdateTemplate`, `SendMessage` response format
+- `internal/api/handlers/whatsapp_crud.go` — fix `ListTemplates` key: `templates` → `data`
+- `internal/api/handlers/whatsapp_ext.go` — add `httpClient`, fix `Broadcast` untuk benar-benar kirim ke WA service + response format `{total, successCount, failCount}`
+- `internal/api/router.go` — tambah REST alias: `DELETE /whatsapp/providers/:id`, `GET /whatsapp/templates`, `PUT /whatsapp/templates/:id`, `DELETE /whatsapp/templates/:id`
+
 ## [2.52.10] — 2026-05-19
 ### Fixed
 - **WhatsApp History gagal dimuat** — Go router mendaftarkan `/whatsapp/history-list` tapi frontend memanggil `/whatsapp/history`; response format juga salah (`history` vs `data`, tidak ada field `stats`). Fix: tambah route `GET /api/whatsapp/history`, ubah response menjadi `data` + `stats` (total/sent/failed/last24Hours), dan handle `search` + `status=all` dengan benar.

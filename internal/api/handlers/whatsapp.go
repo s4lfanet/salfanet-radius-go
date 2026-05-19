@@ -66,27 +66,23 @@ func (h *WhatsappHandler) UpdateProvider(c fiber.Ctx) error {
 func (h *WhatsappHandler) ListTemplates(c fiber.Ctx) error {
 	var templates []models.WhatsappTemplate
 	h.db.Order("type").Find(&templates)
-	return c.JSON(templates)
+	return c.JSON(fiber.Map{"success": true, "data": templates})
 }
 
 func (h *WhatsappHandler) UpdateTemplate(c fiber.Ctx) error {
-	tmplType := c.Params("type")
+	id := c.Params("type") // frontend sends UUID via :id, route param is named :type
 	var tmpl models.WhatsappTemplate
-	if err := h.db.Where("type = ?", tmplType).First(&tmpl).Error; err != nil {
-		// Create if not exists
-		if err := c.Bind().JSON(&tmpl); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	// Try lookup by UUID first, then by type string (legacy)
+	if err := h.db.First(&tmpl, "id = ?", id).Error; err != nil {
+		if err2 := h.db.Where("type = ?", id).First(&tmpl).Error; err2 != nil {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "template not found"})
 		}
-		tmpl.ID = uuid.New().String()
-		tmpl.Type = tmplType
-		h.db.Create(&tmpl)
-		return c.Status(fiber.StatusCreated).JSON(tmpl)
 	}
 	if err := c.Bind().JSON(&tmpl); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	h.db.Save(&tmpl)
-	return c.JSON(tmpl)
+	return c.JSON(fiber.Map{"success": true, "template": tmpl})
 }
 
 // ─── Send Manual ─────────────────────────────────────────────────────────────
@@ -134,7 +130,7 @@ func (h *WhatsappHandler) SendMessage(c fiber.Ctx) error {
 	if resp.StatusCode >= 400 {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": string(respBody)})
 	}
-	return c.JSON(fiber.Map{"message": "sent"})
+	return c.JSON(fiber.Map{"success": true, "message": "sent", "provider": "whatsapp"})
 }
 
 // ─── History ─────────────────────────────────────────────────────────────────

@@ -1,20 +1,30 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 
+	"github.com/s4lfanet/salfanet-radius-go/internal/config"
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 )
 
-type WhatsappExtHandler struct{ db *gorm.DB }
+type WhatsappExtHandler struct {
+	db         *gorm.DB
+	httpClient *http.Client
+}
 
 func NewWhatsappExtHandler(db *gorm.DB) *WhatsappExtHandler {
-	return &WhatsappExtHandler{db: db}
+	return &WhatsappExtHandler{
+		db:         db,
+		httpClient: &http.Client{Timeout: 15 * time.Second},
+	}
 }
 
 // POST /api/whatsapp/broadcast — send broadcast message to multiple users
@@ -23,6 +33,7 @@ func (h *WhatsappExtHandler) Broadcast(c fiber.Ctx) error {
 		Message  string   `json:"message"`
 		UserIDs  []string `json:"userIds"`
 		Template string   `json:"template"`
+		Delay    int      `json:"delay"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
@@ -39,24 +50,55 @@ func (h *WhatsappExtHandler) Broadcast(c fiber.Ctx) error {
 		h.db.Where("status = ?", "active").Find(&users)
 	}
 
-	// Record history entries (actual WA sending done by WA service)
-	sent := 0
+	successCount := 0
+	failCount := 0
+
 	for _, u := range users {
 		msg := strings.ReplaceAll(body.Message, "{name}", u.Name)
 		msg = strings.ReplaceAll(msg, "{phone}", u.Phone)
+
+		status := "sent"
+		var errStr *string
+
+		// Call WA service to actually send
+		payload, _ := json.Marshal(map[string]string{"phone": u.Phone, "message": msg})
+		resp, err := h.httpClient.Post(config.C.WAServiceURL+"/send", "application/json", bytes.NewReader(payload))
+		if err != nil {
+			status = "failed"
+			e := err.Error()
+			errStr = &e
+			failCount++
+		} else {
+			resp.Body.Close()
+			if resp.StatusCode >= 400 {
+				status = "failed"
+				e := fmt.Sprintf("wa service error: %d", resp.StatusCode)
+				errStr = &e
+				failCount++
+			} else {
+				successCount++
+			}
+		}
+
 		history := models.WhatsappHistory{
 			ID:         generateID(),
 			Phone:      u.Phone,
 			Message:    msg,
-			Status:     "QUEUED",
+			Status:     status,
 			TemplateID: nil,
+			Error:      errStr,
 			SentAt:     time.Now(),
 		}
 		h.db.Create(&history)
-		sent++
 	}
 
-	return c.JSON(fiber.Map{"success": true, "queued": sent})
+	total := successCount + failCount
+	return c.JSON(fiber.Map{
+		"success":      true,
+		"total":        total,
+		"successCount": successCount,
+		"failCount":    failCount,
+	})
 }
 
 // POST /api/whatsapp/broadcast-invoice — send invoice reminders

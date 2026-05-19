@@ -749,14 +749,18 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/whatsapp/providers/:id/detail", waCrudH.GetProvider)
 	api.Put("/whatsapp/providers/:id/update", waCrudH.UpdateProvider)
 	api.Delete("/whatsapp/providers/:id/remove", waCrudH.DeleteProvider)
-	api.Get("/whatsapp/history", waCrudH.ListHistory)      // primary route used by frontend
-	api.Get("/whatsapp/history-list", waCrudH.ListHistory) // legacy alias
+	api.Delete("/whatsapp/providers/:id", waCrudH.DeleteProvider)       // REST alias: frontend calls DELETE /providers/:id
+	api.Get("/whatsapp/history", waCrudH.ListHistory)                   // primary route used by frontend
+	api.Get("/whatsapp/history-list", waCrudH.ListHistory)              // legacy alias
 	api.Delete("/whatsapp/history/delete", waCrudH.DeleteHistory)
 	api.Get("/whatsapp/templates-list", waCrudH.ListTemplates)
+	api.Get("/whatsapp/templates", waCrudH.ListTemplates)               // REST alias: overrides waH.ListTemplates (wrong format)
 	api.Post("/whatsapp/templates-create", waCrudH.CreateTemplate)
 	api.Get("/whatsapp/templates/:id/detail", waCrudH.GetTemplate)
 	api.Put("/whatsapp/templates/:id/update", waCrudH.UpdateTemplate)
+	api.Put("/whatsapp/templates/:id", waCrudH.UpdateTemplate)          // REST alias: overrides waH.UpdateTemplate (type vs id mismatch)
 	api.Delete("/whatsapp/templates/:id/remove", waCrudH.DeleteTemplate)
+	api.Delete("/whatsapp/templates/:id", waCrudH.DeleteTemplate)       // REST alias
 	api.Get("/whatsapp/reminder-settings-ext", waCrudH.GetReminderSettings)
 	api.Put("/whatsapp/reminder-settings-ext", waCrudH.UpdateReminderSettings)
 	api.Post("/whatsapp/send-ext", waCrudH.Send)
