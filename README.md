@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.9 — 2026-05-19
+
+### Fixed
+- **ERR_CONNECTION_CLOSED setelah idle lama** — Nginx `keepalive_timeout` global hanya 65s; browser throttle `setInterval` saat tab di background menjadi >65s sehingga koneksi terputus sebelum poll berikutnya. Fix: tambah `keepalive_timeout 300; keepalive_requests 10000;` di Nginx site config `radius.hotspotapp.net`, dan set `IdleTimeout: 270s`, `ReadTimeout: 60s`, `WriteTimeout: 60s` di Go Fiber. Ini memperbaiki error berulang pada semua polling request: `GET /api/notifications`, `GET /api/admin/registrations?status=PENDING`, `GET /api/manual-payments?status=PENDING`.
+### Files
+- `internal/api/router.go` — tambah `IdleTimeout`, `ReadTimeout`, `WriteTimeout` di `fiber.Config`
+- `/etc/nginx/sites-enabled/radius.hotspotapp.net` (VPS) — tambah `keepalive_timeout 300; keepalive_requests 10000;`
+
 ### v2.52.8 — 2026-05-19
 
 ### Fixed
@@ -556,18 +564,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **SERVER VPN tampil "N/A" di list VPN client** — Go backend mengirim `vpnServerId = "__vps_wg__"` dan `"__vps_l2tp__"` untuk VPS peers, tapi frontend `resolveServer()` memeriksa `"__vps_wg_server__"` dan `"__vps_l2tp_server__"` (dengan suffix `_server`). Akibatnya server name selalu null → tampil "N/A", dan tombol "Lihat" tidak berfungsi (`if (!server) return`). Fix: ubah nilai `vpnServerId` di `ListVPNClients` sesuai yang diharapkan frontend.
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — `vpnServerId` VPS peers: `__vps_wg__` → `__vps_wg_server__`, `__vps_l2tp__` → `__vps_l2tp_server__`
-
-### v2.52.4 — 2026-05-19
-
-### Fixed
-- **vps_peers table tidak pernah terbuat** — Root cause: GORM dengan `PrepareStmt: true` tidak bisa menjalankan DDL (`CREATE TABLE`) karena MySQL tidak support prepared statement untuk DDL. `runMigrations` sekarang pakai raw `sqlDB.Exec` (dari `db.DB()`) yang bypass PrepareStmt.
-- **VPN Client list kosong (Total Klien: 0)** — `ListVPNClients` sekarang include semua tipe peer dari `vps_peers` (WireGuard dan L2TP), bukan hanya WireGuard.
-- **L2TP VPS peer creation — username/password/vpnIp undefined** — `CreateL2TPPeer` sebelumnya stub yang hanya bind body ke struct kosong. Sekarang fully implemented: baca info server, cari IP berikutnya dari pool, generate credentials (username, password, nasSecret, apiUsername, apiPassword), tambah user ke `/etc/ppp/chap-secrets`, simpan ke `vps_peers`, return semua field yang dibutuhkan frontend.
-### Added
-- Helper `nextAvailableL2TPIP` — find next unused L2TP pool IP dari `vps_peers` table
-### Files
-- `internal/db/db.go` — `runMigrations` pakai `sqlDB.Exec` bukan `db.Exec`
-- `internal/api/handlers/network_vpn_ext_handler.go` — `ListVPNClients` include semua vps_peers, `CreateL2TPPeer` implemented, tambah `nextAvailableL2TPIP`
 
 <!-- AUTO-CHANGELOG:END -->
 
