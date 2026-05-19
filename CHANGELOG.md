@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.24] — 2026-05-19
+### Added
+- **Export real `.xlsx`** — `GET /api/pppoe/users/export?format=excel` sekarang menghasilkan file Excel binary asli (`.xlsx`) menggunakan library `excelize v2.10.1`, bukan CSV yang di-rename. Begitu juga `GET /api/pppoe/users/bulk?type=template&format=xlsx` menghasilkan template Excel asli.
+- **Import dari `.xlsx`** — `POST /api/pppoe/users/bulk` kini menerima file `.xlsx` maupun `.xls` selain `.csv`. File Excel di-parse menggunakan excelize, baris data diproses sama seperti CSV.
+### Changed
+- **Dependency baru** — `github.com/xuri/excelize/v2 v2.10.1` ditambahkan ke `go.mod`.
+### Files
+- `internal/api/handlers/pppoe_ext.go` — tambah `writeXLSX()` helper, update `ExportUsers`, `BulkGet`, `BulkImport`
+- `go.mod`, `go.sum` — tambah excelize dan dependensi turunannya
+
 ## [2.52.23] — 2026-05-19
 ### Fixed
 - **`POST /api/pppoe/users/bulk` 400 saat import** — Root cause: `c.FormFile()` di Fiber v3 beta tidak selalu berhasil parse multipart. Diganti dengan `c.MultipartForm()` yang lebih eksplisit. Ditambah juga deteksi file `.xlsx/.xls` (binary Excel) yang tidak bisa di-parse sebagai CSV, mengembalikan error yang jelas: *"Simpan file sebagai CSV terlebih dahulu"*.
