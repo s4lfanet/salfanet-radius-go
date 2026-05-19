@@ -50,7 +50,11 @@ func writeXLSX(headers []string, rows [][]string) ([]byte, error) {
 	if err = sw.Flush(); err != nil {
 		return nil, err
 	}
-	return f.WriteToBuffer()
+	buf, err := f.WriteToBuffer()
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }
 
 // GET /api/pppoe/users/status — count by status
