@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.19 — 2026-05-19
+
+### Fixed
+- **ERR_CONNECTION_CLOSED pada idle API connections** — Root cause: nginx `keepalive_timeout 65s` terlalu pendek, Cloudflare mempertahankan koneksi ke origin ~90s. Jika nginx tutup koneksi duluan, Cloudflare mencoba kirim request ke koneksi yang sudah tutup → browser mendapat `ERR_CONNECTION_CLOSED`. Fix: naikkan nginx `keepalive_timeout` 65→120s dan Fiber `IdleTimeout` 60→150s agar server tidak menutup koneksi sebelum Cloudflare.
+- **Duplicate nginx config** — File `/etc/nginx/sites-enabled/radius.hotspotapp.net` (lama) konflik dengan `salfanet-radius`, menyebabkan warning "conflicting server name". Dihapus dari sites-enabled.
+### Files
+- `internal/api/router.go` — `IdleTimeout` 60s → 150s
+- `vps-install/install-nginx.sh` — `keepalive_timeout` 65 → 120 (4 lokasi)
+
 ### v2.52.18 — 2026-05-19
 
 ### Fixed
@@ -532,17 +541,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/telegram_handler.go` — rewrite: `GetSettings`/`UpdateSettings` baca/tulis DB, `Test`/`SendBackup`/`TestBackup`/`SendHealth` panggil Telegram API sungguhan
 - `internal/api/router.go` — `IdleTimeout`: 270s → 60s; fix route `/backup/telegram/test` ke `telegramH.TestBackup`
 - `nginx /etc/nginx/sites-enabled/salfanet-radius` — tambah `keepalive_timeout 65;` di semua server block (VPS only)
-
-### v2.52.14 — 2026-05-19
-
-### Fixed
-- **Email settings dark mode** — code block "App name" dan "Device" di tutorial Gmail SMTP tidak terlihat di dark mode karena typo class Tailwind `dark:bg-inputpx-1` (harusnya `dark:bg-gray-700 px-1`). Teks putih di atas background abu terang → invisible.
-- **Email templates tidak tampil** — Go handler `ListEmailTemplates` mengembalikan 3 stub hardcoded (INVOICE, PAYMENT_CONFIRM, ISOLATION_NOTICE) bukan dari database. Frontend tidak menemukan type yang cocok → semua tab template menampilkan "Template belum dibuat". Fix: baca dari tabel `email_templates` di DB. Tambah model `EmailTemplate` di Go.
-- **Update template tidak tersimpan** — `UpdateEmailTemplate` selalu return stub success tanpa benar-benar update DB. Fix: update ke tabel `email_templates` by `type`, return 404 bila tidak ada.
-### Files
-- `src/app/admin/settings/email/page.tsx` — fix class Tailwind `dark:bg-inputpx-1` → `dark:bg-gray-700 px-1`
-- `internal/db/models/extra.go` — tambah model `EmailTemplate` (tabel `email_templates`)
-- `internal/api/handlers/settings_ext.go` — fix `ListEmailTemplates` (baca dari DB) dan `UpdateEmailTemplate` (update ke DB)
 
 <!-- AUTO-CHANGELOG:END -->
 
