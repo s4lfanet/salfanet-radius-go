@@ -268,9 +268,14 @@ export default function RouterPage() {
     setCreating(true)
 
     try {
-      const url = '/api/network/routers'
       const method = editingRouter ? 'PUT' : 'POST'
-      const body = editingRouter ? { ...formData, id: editingRouter.id } : formData
+      const url = editingRouter ? `/api/network/routers/${editingRouter.id}` : '/api/network/routers'
+      const body = {
+        ...formData,
+        port: parseInt(formData.port) || 8728,
+        apiPort: parseInt(formData.apiPort) || 8729,
+        ports: parseInt(formData.ports) || 1812,
+      }
 
       const response = await fetch(url, {
         method,

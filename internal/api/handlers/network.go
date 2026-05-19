@@ -211,14 +211,25 @@ func (h *NetworkHandler) ListRouters(c fiber.Ctx) error {
 	})
 }
 
+// routerBody is the request body for create/update router.
+// Separate from models.Router so that password and secret can be written
+// (models.Router has json:"-" on these fields to keep them out of responses).
+type routerBody struct {
+	models.Router
+	Password string `json:"password"`
+	Secret   string `json:"secret"`
+}
+
 func (h *NetworkHandler) CreateRouter(c fiber.Ctx) error {
-	var body models.Router
+	var body routerBody
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	body.ID = uuid.New().String()
-	if err := h.db.Create(&body).Error; err != nil {
+	body.Router.ID = uuid.New().String()
+	body.Router.Password = body.Password
+	body.Router.Secret = body.Secret
+	if err := h.db.Create(&body.Router).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(fiber.StatusCreated).JSON(body)
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"router": body.Router})
 }

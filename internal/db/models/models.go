@@ -205,11 +205,14 @@ type Router struct {
 	Type        string    `gorm:"default:mikrotik" json:"type"`
 	IPAddress   string    `json:"ipAddress"`
 	Username    string    `json:"username"`
-	Password    string    `json:"-"`
+	Password    string    `json:"-"` // omit from responses; use routerBody to read from requests
 	Port        int       `gorm:"default:8728" json:"port"`
 	APIPort     int       `gorm:"default:8729" json:"apiPort"`
-	Secret      string    `gorm:"default:secret123" json:"-"`
+	Secret      string    `gorm:"default:secret123" json:"-"` // omit from responses
 	Ports       int       `gorm:"default:1812" json:"ports"`
+	Server      *string   `json:"server"`
+	Community   *string   `json:"community"`
+	VpnClientId *string   `gorm:"column:vpnClientId" json:"vpnClientId"`
 	Description *string   `json:"description"`
 	Latitude    *float64  `json:"latitude"`
 	Longitude   *float64  `json:"longitude"`
