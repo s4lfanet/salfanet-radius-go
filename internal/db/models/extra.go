@@ -715,6 +715,21 @@ type BackupHistory struct {
 
 func (BackupHistory) TableName() string { return "backup_history" }
 
+// ─── EmailTemplate ───────────────────────────────────────────────────────────
+
+type EmailTemplate struct {
+	ID        string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Name      string    `json:"name"`
+	Type      string    `gorm:"unique;index" json:"type"`
+	Subject   string    `json:"subject"`
+	HtmlBody  string    `gorm:"type:text" json:"htmlBody"`
+	IsActive  bool      `gorm:"default:true" json:"isActive"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+func (EmailTemplate) TableName() string { return "email_templates" }
+
 // ─── IsolationTemplate ────────────────────────────────────────────────────────
 
 type IsolationTemplate struct {

@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.14] — 2026-05-19
+### Fixed
+- **Email settings dark mode** — code block "App name" dan "Device" di tutorial Gmail SMTP tidak terlihat di dark mode karena typo class Tailwind `dark:bg-inputpx-1` (harusnya `dark:bg-gray-700 px-1`). Teks putih di atas background abu terang → invisible.
+- **Email templates tidak tampil** — Go handler `ListEmailTemplates` mengembalikan 3 stub hardcoded (INVOICE, PAYMENT_CONFIRM, ISOLATION_NOTICE) bukan dari database. Frontend tidak menemukan type yang cocok → semua tab template menampilkan "Template belum dibuat". Fix: baca dari tabel `email_templates` di DB. Tambah model `EmailTemplate` di Go.
+- **Update template tidak tersimpan** — `UpdateEmailTemplate` selalu return stub success tanpa benar-benar update DB. Fix: update ke tabel `email_templates` by `type`, return 404 bila tidak ada.
+### Files
+- `src/app/admin/settings/email/page.tsx` — fix class Tailwind `dark:bg-inputpx-1` → `dark:bg-gray-700 px-1`
+- `internal/db/models/extra.go` — tambah model `EmailTemplate` (tabel `email_templates`)
+- `internal/api/handlers/settings_ext.go` — fix `ListEmailTemplates` (baca dari DB) dan `UpdateEmailTemplate` (update ke DB)
+
 ## [2.52.13] — 2026-05-19
 ### Fixed
 - **Crash di tab Kirim/Broadcast (`Cannot read properties of undefined (reading 'map')`)** — data list dari API (`users`, `templates`, dan `filters.*`) bisa datang `undefined` pada kondisi tertentu dan langsung dipakai di `.map(...)`. Fix: normalisasi semua payload list ke array aman sebelum disimpan ke state agar UI tidak crash.

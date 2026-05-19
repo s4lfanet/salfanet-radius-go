@@ -17,18 +17,48 @@ func NewSettingsExtHandler(db *gorm.DB) *SettingsExtHandler {
 
 // GET /api/settings/email/templates
 func (h *SettingsExtHandler) ListEmailTemplates(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"success": true,
-		"data": []fiber.Map{
-			{"type": "INVOICE", "subject": "Invoice #{invoiceNumber}", "body": "Dear {customerName},..."},
-			{"type": "PAYMENT_CONFIRM", "subject": "Payment Confirmed", "body": "Dear {customerName},..."},
-			{"type": "ISOLATION_NOTICE", "subject": "Service Suspended", "body": "Dear {customerName},..."},
-		},
-	})
+	var templates []models.EmailTemplate
+	if err := h.db.Find(&templates).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "error": "failed to fetch templates"})
+	}
+	return c.JSON(fiber.Map{"success": true, "data": templates})
 }
 
 // PUT /api/settings/email/templates/:type
 func (h *SettingsExtHandler) UpdateEmailTemplate(c fiber.Ctx) error {
+	templateType := c.Params("type")
+	var body struct {
+		Name     string `json:"name"`
+		Subject  string `json:"subject"`
+		HtmlBody string `json:"htmlBody"`
+		IsActive *bool  `json:"isActive"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	updates := map[string]interface{}{}
+	if body.Subject != "" {
+		updates["subject"] = body.Subject
+	}
+	if body.HtmlBody != "" {
+		updates["htmlBody"] = body.HtmlBody
+	}
+	if body.Name != "" {
+		updates["name"] = body.Name
+	}
+	if body.IsActive != nil {
+		updates["isActive"] = *body.IsActive
+	}
+	if len(updates) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "no fields to update"})
+	}
+	result := h.db.Model(&models.EmailTemplate{}).Where("type = ?", templateType).Updates(updates)
+	if result.Error != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to update template"})
+	}
+	if result.RowsAffected == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "template not found"})
+	}
 	return c.JSON(fiber.Map{"success": true, "message": "template updated"})
 }
 
