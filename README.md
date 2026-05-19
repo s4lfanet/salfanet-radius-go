@@ -491,6 +491,21 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.21 — 2026-05-19
+
+### Changed
+- **Hapus ~415 dead Next.js API routes** — Semua `src/app/api/**` kecuali `auth/[...nextauth]/route.ts` dihapus. Nginx sudah routing semua `/api/` ke Go, sehingga file-file ini tidak pernah dieksekusi.
+- **Ganti Prisma di 4 layout.tsx dengan Go API** — `admin/layout.tsx`, `customer/layout.tsx`, `agent/layout.tsx`, `technician/layout.tsx` sebelumnya pakai `prisma.company.findFirst()` untuk page title. Diganti dengan `fetch('http://127.0.0.1:8080/api/public/company')`.
+- **Fix nginx: `/api/auth/logout-log` route ke Go** — Sebelumnya Next.js menangani endpoint ini via `src/app/api/auth/logout-log/route.ts`. Go sudah memiliki handler (`router.go:1200`), nginx kini memiliki `location = /api/auth/logout-log` di semua 3 server block yang mengarah ke Go. File Next.js dihapus bersama dead routes.
+### Files
+- `src/app/api/**` — hapus semua kecuali `auth/[...nextauth]/route.ts` (415+ file dihapus)
+- `src/app/admin/layout.tsx` — ganti Prisma → Go API fetch
+- `src/app/customer/layout.tsx` — ganti Prisma → Go API fetch
+- `src/app/agent/layout.tsx` — ganti Prisma → Go API fetch
+- `src/app/technician/layout.tsx` — ganti Prisma → Go API fetch
+- `vps-install/install-nginx.sh` — tambah `location = /api/auth/logout-log → Go` di 2 server block functions
+- `/etc/nginx/sites-enabled/salfanet-radius` (VPS) — tambah logout-log block di 3 server block, nginx reload
+
 ### v2.52.20 — 2026-05-19
 
 ### Fixed
@@ -524,15 +539,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `/etc/systemd/system/salfanet-api.service` (VPS) — tambah `${APP_DIR}/backups` ke `ReadWritePaths`
 - `vps-install/install-go.sh` — `ReadWritePaths` ditambah `${_APP_DIR}/backups`
 - `vps-install/updater.sh` — patch `ReadWritePaths` untuk `/backups` jika belum ada; `mkdir -p backups`
-
-### v2.52.16 — 2026-05-19
-
-### Fixed
-- **Backup Create 500 (lanjutan)** — `mysqldump` gagal dengan "Access denied; you need PROCESS privilege" saat dump tablespaces. User `salfanet_user` tidak punya privilege tersebut. Fix: tambah flag `--no-tablespaces` ke perintah mysqldump.
-- **Backup Delete 404** — Route terdaftar sebagai `DELETE /api/backup/:id` tapi frontend memanggil `DELETE /api/backup/delete/{id}`. Fix: ubah route ke `/api/backup/delete/:id`.
-### Files
-- `internal/api/handlers/backup_handler.go` — tambah `--no-tablespaces` ke perintah mysqldump
-- `internal/api/router.go` — route DELETE dari `/backup/:id` → `/backup/delete/:id`
 
 <!-- AUTO-CHANGELOG:END -->
 
