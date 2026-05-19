@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.10 — 2026-05-19
+
+### Fixed
+- **WhatsApp History gagal dimuat** — Go router mendaftarkan `/whatsapp/history-list` tapi frontend memanggil `/whatsapp/history`; response format juga salah (`history` vs `data`, tidak ada field `stats`). Fix: tambah route `GET /api/whatsapp/history`, ubah response menjadi `data` + `stats` (total/sent/failed/last24Hours), dan handle `search` + `status=all` dengan benar.
+### Files
+- `internal/api/router.go` — tambah `GET /whatsapp/history` (alias ke `waCrudH.ListHistory`)
+- `internal/api/handlers/whatsapp_crud.go` — fix `ListHistory`: response format, stats, search param, status=all handling
+
 ### v2.52.9 — 2026-05-19
 
 ### Fixed
@@ -557,13 +565,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `removeL2TPUserFromChapSecrets(username)` — helper hapus user dari chap-secrets
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — `DeleteVPNClient` rewrite + 2 helper functions
-
-### v2.52.5 — 2026-05-19
-
-### Fixed
-- **SERVER VPN tampil "N/A" di list VPN client** — Go backend mengirim `vpnServerId = "__vps_wg__"` dan `"__vps_l2tp__"` untuk VPS peers, tapi frontend `resolveServer()` memeriksa `"__vps_wg_server__"` dan `"__vps_l2tp_server__"` (dengan suffix `_server`). Akibatnya server name selalu null → tampil "N/A", dan tombol "Lihat" tidak berfungsi (`if (!server) return`). Fix: ubah nilai `vpnServerId` di `ListVPNClients` sesuai yang diharapkan frontend.
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — `vpnServerId` VPS peers: `__vps_wg__` → `__vps_wg_server__`, `__vps_l2tp__` → `__vps_l2tp_server__`
 
 <!-- AUTO-CHANGELOG:END -->
 
