@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.18] — 2026-05-19
+### Fixed
+- **Telegram settings tidak tampil setelah save** — `loadSettings()` melakukan `setTelegramSettings(data)` padahal API return `{ success: true, settings: {...} }`. Akibatnya seluruh field (botToken, chatId, dll) jadi `undefined` setelah reload. Data sebenarnya sudah tersimpan di DB, tapi UI tidak menampilkannya. Fix: ganti ke `setTelegramSettings(data.settings)` dengan fallback untuk tiap field.
+### Files
+- `src/app/admin/settings/telegram/page.tsx` — fix `loadSettings`: `setTelegramSettings(data)` → `setTelegramSettings(data.settings)` dengan field defaults
+
 ## [2.52.17] — 2026-05-19
 ### Fixed
 - **Backup Create 500 (lanjutan 2)** — `ProtectSystem=strict` di systemd membuat `/backups` read-only karena tidak ada di `ReadWritePaths`. Meski `MkdirAll` berhasil (berjalan sebagai root), `sh -c "... > file.gz"` tetap diblokir oleh kernel sandboxing. Fix: tambah `/var/www/salfanet-radius/backups` ke `ReadWritePaths` di `/etc/systemd/system/salfanet-api.service`, daemon-reload, restart.
