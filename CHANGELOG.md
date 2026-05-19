@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.5] — 2026-05-19
+### Fixed
+- **SERVER VPN tampil "N/A" di list VPN client** — Go backend mengirim `vpnServerId = "__vps_wg__"` dan `"__vps_l2tp__"` untuk VPS peers, tapi frontend `resolveServer()` memeriksa `"__vps_wg_server__"` dan `"__vps_l2tp_server__"` (dengan suffix `_server`). Akibatnya server name selalu null → tampil "N/A", dan tombol "Lihat" tidak berfungsi (`if (!server) return`). Fix: ubah nilai `vpnServerId` di `ListVPNClients` sesuai yang diharapkan frontend.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — `vpnServerId` VPS peers: `__vps_wg__` → `__vps_wg_server__`, `__vps_l2tp__` → `__vps_l2tp_server__`
+
+---
+
 ## [2.52.4] — 2026-05-19
 ### Fixed
 - **vps_peers table tidak pernah terbuat** — Root cause: GORM dengan `PrepareStmt: true` tidak bisa menjalankan DDL (`CREATE TABLE`) karena MySQL tidak support prepared statement untuk DDL. `runMigrations` sekarang pakai raw `sqlDB.Exec` (dari `db.DB()`) yang bypass PrepareStmt.
