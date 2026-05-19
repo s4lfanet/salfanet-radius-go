@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.34] — 2026-05-21
+### Fixed
+- **TypeError: Cannot read properties of undefined (reading 'radiusServer')** — `SetupRadiusOnRouter` Go handler adalah stub kosong (hanya return `success: true` tanpa `config`, `script`, dll). Setelah router disimpan, frontend otomatis memanggil `handleSetupRadius` → `setScriptModalData({ config: result.config })` → `config` = `undefined` → modal crash saat render `scriptModalData.config.radiusServer`. Fix: implementasikan handler yang benar (lookup router, generate script RouterOS 6 + 7, return `config` object lengkap) dan tambah optional chaining `?.` di frontend sebagai safety guard.
+### Files
+- `internal/api/handlers/misc_handler.go` — Implementasi nyata `SetupRadiusOnRouter`: lookup router, baca `APP_BASE_URL`/`RADIUS_SERVER_IP` env untuk server IP, generate script MikroTik ROS6+ROS7, return `config` + `script` + `scriptRos6` + `scriptRos7`
+- `src/app/admin/network/routers/page.tsx` — Optional chaining `?.` pada `scriptModalData.config?.radiusServer` dll agar tidak crash bila `config` undefined
+
 ## [2.52.33] — 2026-05-20
 ### Fixed
 - **500 Error saat Tambah Router dengan VPN Client dari vps_peers** — `nas.vpnClientId` punya FK constraint ke `vpn_clients(id)`, tapi entry dari `vps_peers` ID-nya tidak ada di `vpn_clients` sehingga MySQL error 1452 FK constraint fails. Fix: hapus `@relation` dari Prisma schema (kolom tetap ada sebagai nullable string) dan tambah migration SQL untuk drop FK constraint di DB. `vpnClientId` sekarang bisa menyimpan ID dari `vpn_clients` maupun `vps_peers` tanpa FK enforcement.

@@ -433,10 +433,10 @@ export default function RouterPage() {
               <div className="mt-4 bg-[#0f0a1e] border border-[#334155] rounded-lg p-3 text-sm">
                 <div className="font-semibold text-[#00f7ff] mb-2">{t('network.configuration')}:</div>
                 <div className="text-gray-400 space-y-1">
-                  <div>{t('network.server')}: <b className="text-foreground">{scriptModalData.config.radiusServer}</b> ({scriptModalData.config.connectionType})</div>
-                  <div>{t('network.authAcct')}: <b className="text-foreground">{scriptModalData.config.authPort}/{scriptModalData.config.acctPort}</b></div>
-                  <div>{t('network.coa')}: <b className="text-foreground">{scriptModalData.config.coaPort}</b></div>
-                  <div>{t('network.secret')}: <b className="text-foreground">{scriptModalData.config.radiusSecret}</b></div>
+                  <div>{t('network.server')}: <b className="text-foreground">{scriptModalData.config?.radiusServer}</b> ({scriptModalData.config?.connectionType})</div>
+                  <div>{t('network.authAcct')}: <b className="text-foreground">{scriptModalData.config?.authPort}/{scriptModalData.config?.acctPort}</b></div>
+                  <div>{t('network.coa')}: <b className="text-foreground">{scriptModalData.config?.coaPort}</b></div>
+                  <div>{t('network.secret')}: <b className="text-foreground">{scriptModalData.config?.radiusSecret}</b></div>
                 </div>
               </div>
             </div>

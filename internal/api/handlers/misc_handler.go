@@ -4,6 +4,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"math/rand"
+	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -959,13 +961,75 @@ func (h *MiscHandler) TicketDispatchData(c fiber.Ctx) error {
 	})
 }
 
-// POST /api/network/routers/:id/setup-radius — configure RADIUS on MikroTik router
+// POST /api/network/routers/:id/setup-radius — generate RADIUS script for MikroTik router
 func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 	routerID := c.Params("id")
+
+	// Look up the router
+	var router models.Router
+	if err := h.db.First(&router, "id = ?", routerID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "router not found"})
+	}
+
+	// Determine RADIUS server IP
+	// Priority: RADIUS_SERVER_IP env → extract host from APP_BASE_URL → fallback
+	radiusServerIP := os.Getenv("RADIUS_SERVER_IP")
+	if radiusServerIP == "" {
+		if baseURL := os.Getenv("APP_BASE_URL"); baseURL != "" {
+			if parsed, err := url.Parse(baseURL); err == nil {
+				host := parsed.Hostname()
+				if host != "" && host != "localhost" && host != "127.0.0.1" {
+					radiusServerIP = host
+				}
+			}
+		}
+	}
+	if radiusServerIP == "" {
+		radiusServerIP = "YOUR_RADIUS_SERVER_IP"
+	}
+
+	// If router uses a VPN client, the RADIUS server accessible from router is the VPN IP
+	connectionType := "Direct"
+	if router.VpnClientId != nil && *router.VpnClientId != "" {
+		connectionType = "VPN"
+	}
+
+	secret := router.Secret
+	if secret == "" {
+		secret = "secret123"
+	}
+	authPort := router.Ports
+	if authPort == 0 {
+		authPort = 1812
+	}
+	acctPort := authPort + 1 // typically 1813
+	coaPort := 3799
+
+	// RouterOS 7.x script
+	scriptRos7 := fmt.Sprintf(`/radius add address=%s secret="%s" authentication-port=%d accounting-port=%d timeout=2s service=ppp,hotspot,login comment="Salfanet RADIUS"
+/ip hotspot profile set [find] use-radius=yes
+/ppp profile set [find] use-radius=yes
+/ip radius incoming set accept=yes port=%d`, radiusServerIP, secret, authPort, acctPort, coaPort)
+
+	// RouterOS 6.x script (slightly different syntax)
+	scriptRos6 := fmt.Sprintf(`/radius add address=%s secret="%s" authentication-port=%d accounting-port=%d timeout=2 service=ppp,hotspot,login comment="Salfanet RADIUS"
+/ip hotspot profile set [find] use-radius=yes
+/ppp profile set [find] use-radius=yes
+/ip radius incoming set accept=yes port=%d`, radiusServerIP, secret, authPort, acctPort, coaPort)
+
 	return c.JSON(fiber.Map{
-		"success":  true,
-		"message":  "RADIUS setup queued for router " + routerID,
-		"routerId": routerID,
+		"success":   true,
+		"script":    scriptRos7,
+		"scriptRos7": scriptRos7,
+		"scriptRos6": scriptRos6,
+		"config": fiber.Map{
+			"radiusServer":   radiusServerIP,
+			"connectionType": connectionType,
+			"authPort":       authPort,
+			"acctPort":       acctPort,
+			"coaPort":        coaPort,
+			"radiusSecret":   secret,
+		},
 	})
 }
 
