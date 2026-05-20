@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.45 — 2026-05-20
+
+### Fixed
+- **Edit Admin User 500 Internal Server Error** — Handler `PUT /api/admin/users/:id` meneruskan seluruh body JSON ke GORM `Updates()` termasuk field `permissions` (array) yang bukan kolom di tabel `admin_users`, menyebabkan SQL error. Fix: whitelist hanya field valid (`username`, `email`, `phone`, `name`, `role`, `isActive`, `twoFactorEnabled`, `password`), dan proses field `permissions` secara terpisah via tabel `user_permissions`.
+### Files
+- `internal/api/handlers/admin_users.go` — `Update`: whitelist kolom valid, handle permissions array secara terpisah
+
 ### v2.52.44 — 2026-05-20
 
 ### Fixed
@@ -529,13 +536,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
   10. Tambah blok verifikasi di akhir script
 ### Files
 - `internal/api/handlers/misc_handler.go` — Rewrite `SetupRadiusOnRouter`: VPN client IP lookup, complete ROS6+ROS7 scripts, proper PPP AAA, hotspot accounting, firewall rules, idempotent remove, correct timeout syntax
-
-### v2.52.40 — 2026-05-21
-
-### Fixed
-- **L2TP VPN putus setiap update (install-l2tp-server.sh overwrite ipsec.conf)** — Script installer menulis `/etc/ipsec.conf` dengan proposal IKE/ESP terlalu sempit dan flag strict (`!`), sehingga MikroTik gagal phase1 ("phase1 negotiation failed due to time up"). Dua masalah: (1) `ike=` hanya berisi `aes256-sha256-modp2048,aes256-sha1-modp1024!` — MikroTik default mengirim `aes128-sha1-modp1024` yang ditolak. (2) `esp=aes256-sha256,aes256-sha1!` tanpa modp1024, padahal MikroTik default ESP pakai PFS modp1024. Fix: perluas `ike=` dan `esp=` mencakup semua varian AES-128/192/256 + SHA1 + modp1024, hapus flag strict `!`. Juga fix `auth` → `noauth` di pppd options (Ubuntu 22.04 pppd 2.4.9 tidak support MSCHAPv2 natively; autentikasi sudah dijamin IPsec PSK phase 1).
-### Files
-- `vps-install/install-l2tp-server.sh` — Perluas `ike=` dan `esp=` proposals; hapus flag strict `!`; ganti `auth` → `noauth` di pppd options; hapus em dash (`—`) dari baris komentar di heredoc ipsec.conf (em dash menyebabkan strongSwan 5.9.5 diam-diam gagal parse file sehingga `Connections:` tetap kosong meski syntax benar)
 
 <!-- AUTO-CHANGELOG:END -->
 
