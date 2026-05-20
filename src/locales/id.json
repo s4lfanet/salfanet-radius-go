@@ -277,7 +277,10 @@
     "yourLocation": "Lokasi Anda",
     "damaged": "Rusak",
     "list": "Daftar",
-    "clickAdd": "Klik tombol tambah"
+    "clickAdd": "Klik tombol tambah",
+    "coordinates": "Koordinat",
+    "done": "Selesai",
+    "subtract": "Kurangi"
   },
   "auth": {
     "login": "Masuk",
@@ -861,7 +864,22 @@
     "syncPppoeDesc": "Sinkronisasi data PPPoE dari MikroTik ke sistem",
     "syncPppoeTitle": "Sinkronisasi PPPoE",
     "totalBilling": "Total Tagihan",
-    "uploadCsvOrExcel": "Upload CSV atau Excel"
+    "uploadCsvOrExcel": "Upload CSV atau Excel",
+    "eWallet": "E-Wallet",
+    "monthlyDueDateDesc": "Hari jatuh tempo tagihan bulanan",
+    "profileMikrotik": "Profil MikroTik",
+    "balance": {
+      "autoRenewalLabel": "Perpanjang Otomatis",
+      "csvMethod": "Metode",
+      "csvAmount": "Jumlah",
+      "csvStatus": "Status",
+      "csvDate": "Tanggal",
+      "csvType": "Tipe",
+      "csvDescription": "Deskripsi",
+      "topUp": "Top Up",
+      "topUpButton": "Top Up Saldo",
+      "topUpVia": "Top Up via {method}"
+    }
   },
   "hotspot": {
     "title": "Voucher Hotspot",
@@ -1005,7 +1023,9 @@
     "usageDurationLabel": "Durasi Penggunaan",
     "userPassDiff": "Username & Password Berbeda",
     "userPassSame": "Username = Password",
-    "voucherLabel": "Voucher"
+    "voucherLabel": "Voucher",
+    "autoGenerate": "Buat Otomatis",
+    "of": "dari"
   },
   "agent": {
     "title": "Manajemen Agen",
@@ -1264,7 +1284,11 @@
     "pdfNo": "No.",
     "pdfPaid": "LUNAS",
     "pdfPaidOn": "Dibayar Pada",
-    "pdfStatus": "Status"
+    "pdfStatus": "Status",
+    "pdfBillTo": "Kepada",
+    "pdfHeaderPrice": "Harga",
+    "pdfHeaderQty": "Qty",
+    "pdfHeaderTotal": "Total"
   },
   "keuangan": {
     "title": "Transaksi",
@@ -1304,7 +1328,11 @@
     "pdfIncome": "Pendapatan",
     "pdfTitle": "Laporan Keuangan",
     "pppoeLabel": "PPPoE",
-    "searchPlaceholder": "Cari transaksi..."
+    "searchPlaceholder": "Cari transaksi...",
+    "pdfAmount": "Jumlah",
+    "pdfCategory": "Kategori",
+    "pdfDescription": "Deskripsi",
+    "pdfType": "Tipe"
   },
   "sessions": {
     "title": "Sesi Aktif",
@@ -2004,6 +2032,7 @@
     },
     "oltSelectLabel": "Pilih OLT",
     "routerUpdated": "Router berhasil diperbarui",
+    "routerCreated": "Router berhasil dibuat",
     "vpsRoutingNote": "Catatan Routing VPS",
     "vpsRoutingSetup": "Setup Routing VPS",
     "vpsRoutingSetupDesc": "Konfigurasi routing VPS untuk jaringan PPPoE",
@@ -2017,7 +2046,8 @@
       "ratio": "Rasio",
       "signal": "Sinyal",
       "status": "Status",
-      "to": "Ke"
+      "to": "Ke",
+      "nodes": "Node"
     },
     "messages": {
       "noData": "Tidak ada data"
@@ -2035,7 +2065,8 @@
       "port": "Port",
       "splitter": "Splitter",
       "splitterRatio": "Rasio Splitter",
-      "utilization": "Utilisasi"
+      "utilization": "Utilisasi",
+      "output": "Output"
     },
     "olt": {
       "code": "Kode",
@@ -2249,6 +2280,7 @@
     "lastBackup": "Backup Terakhir",
     "restartManually": "Restart Manual",
     "servicesRestarting": "Layanan sedang direstart...",
+    "pageWillReload": "Halaman akan dimuat ulang dalam 5 detik...",
     "tablesLabel": "Tabel",
     "timezoneApplied": "Timezone berhasil diterapkan",
     "uptimeLabel": "Uptime",
@@ -3341,7 +3373,10 @@
     },
     "categoryCreated": "Kategori berhasil dibuat!",
     "categoryUpdated": "Kategori berhasil diperbarui!",
-    "categoryDeleted": "Kategori berhasil dihapus!"
+    "categoryDeleted": "Kategori berhasil dihapus!",
+    "replySent": "Balasan berhasil dikirim",
+    "statusUpdated": "Status berhasil diperbarui",
+    "priorityUpdated": "Prioritas berhasil diperbarui"
   },
   "profile": {
     "loadError": "Gagal memuat profil",
@@ -4549,5 +4584,48 @@
     "requestsTitle": "Permintaan Top-Up",
     "time": "Waktu",
     "viewProof": "Lihat Bukti"
+  },
+  "payment": {
+    "tokenNotFound": "Token tidak ditemukan",
+    "paymentNotFound": "Pembayaran tidak ditemukan",
+    "checkStatusFailed": "Gagal mengecek status",
+    "depositNotFound": "Deposit tidak ditemukan",
+    "invoiceNotFound": "Invoice tidak ditemukan",
+    "checkingStatus": "Mengecek status...",
+    "dataNotFound": "Data tidak ditemukan",
+    "depositSuccess": "Deposit Berhasil! 🎉",
+    "balanceAdded": "Saldo telah ditambahkan",
+    "processing": "Sedang diproses",
+    "agentDepositBalance": "Deposit Saldo Agent",
+    "depositSuccessStatus": "BERHASIL",
+    "depositAmount": "Jumlah Deposit",
+    "agent": "Agent",
+    "paymentDate": "Tanggal Pembayaran",
+    "currentBalanceNow": "Saldo Sekarang",
+    "balanceAddedToAccount": "Saldo telah ditambahkan ke akun Anda",
+    "toDashboard": "Ke Dashboard",
+    "thankYouDeposit": "Terima kasih atas deposit Anda!",
+    "paymentSuccess": "Pembayaran Berhasil! 🎉",
+    "invoicePaid": "Invoice telah terbayar",
+    "totalPayment": "Total Pembayaran",
+    "customer": "Pelanggan",
+    "activeUntil": "Masa Aktif Sampai",
+    "serviceActivated": "Layanan telah diaktifkan kembali",
+    "viewInvoice": "Lihat Invoice",
+    "thankYouPayment": "Terima kasih atas pembayaran Anda!",
+    "loadingInfo": "Memuat informasi...",
+    "paymentFailed": "Pembayaran Gagal",
+    "transactionNotCompleted": "Transaksi tidak dapat diselesaikan",
+    "possibleCauses": "Kemungkinan Penyebab:",
+    "cause1": "Saldo atau limit kartu tidak mencukupi",
+    "cause2": "Pembayaran dibatalkan oleh pengguna",
+    "cause3": "Transaksi ditolak oleh bank",
+    "cause4": "Waktu pembayaran telah habis",
+    "cause5": "Koneksi internet terputus",
+    "noCharge": "Tidak ada biaya yang dikenakan.",
+    "tryAgainOrContact": "Silakan coba lagi atau hubungi kami.",
+    "tryAgain": "Coba Lagi",
+    "needHelp": "Butuh bantuan?",
+    "contactCS": "Hubungi CS via WhatsApp"
   }
 }

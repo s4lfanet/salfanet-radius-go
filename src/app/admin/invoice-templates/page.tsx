@@ -246,7 +246,7 @@ export default function InvoiceTemplatesPage() {
           </div>
         </ModalBody>
         <ModalFooter>
-          <ModalButton variant="ghost" onClick={() => setIsOpen(false)}>Batal</ModalButton>
+          <ModalButton variant="secondary" onClick={() => setIsOpen(false)}>Batal</ModalButton>
           <ModalButton onClick={handleSave}>Simpan</ModalButton>
         </ModalFooter>
       </SimpleModal>
@@ -263,7 +263,7 @@ export default function InvoiceTemplatesPage() {
           />
         </ModalBody>
         <ModalFooter>
-          <ModalButton variant="ghost" onClick={() => setIsPreviewOpen(false)}>Tutup</ModalButton>
+          <ModalButton variant="secondary" onClick={() => setIsPreviewOpen(false)}>Tutup</ModalButton>
         </ModalFooter>
       </SimpleModal>
     </div>

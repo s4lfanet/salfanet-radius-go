@@ -41,7 +41,7 @@ export default function PaymentPage() {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [paymentGateways, setPaymentGateways] = useState<PaymentGateway[]>([]);
   const [company, setCompany] = useState<CompanySetting | null>(null);
-  const [qrisOwn, setQrisOwn] = useState<{ enabled: boolean; merchantName: string } | null>(null);
+  const [qrisOwn, setQrisOwn] = useState<{ enabled: boolean; merchantName: string; hasListener?: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
   const [duitkuMethods, setDuitkuMethods] = useState<{ code: string; name: string; group: string }[]>([]);

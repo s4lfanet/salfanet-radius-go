@@ -93,8 +93,8 @@ async function initSchedules() {
   // Load DB overrides (cron_schedule_config table)
   let overrideMap: Record<string, { schedule: string; enabled: boolean }> = {};
   try {
-    const overrides = await prisma.cronScheduleConfig.findMany();
-    overrideMap = Object.fromEntries(overrides.map(o => [o.jobType, { schedule: o.schedule, enabled: o.enabled }]));
+    const overrides = await (prisma as any).cronScheduleConfig.findMany();
+    overrideMap = Object.fromEntries(overrides.map((o: { jobType: string; schedule: string; enabled: boolean }) => [o.jobType, { schedule: o.schedule, enabled: o.enabled }]));
     if (Object.keys(overrideMap).length > 0) {
       console.log(`[CRON RUNNER] Loaded ${Object.keys(overrideMap).length} schedule override(s) from DB`);
     }

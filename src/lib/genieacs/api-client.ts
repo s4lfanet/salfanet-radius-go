@@ -14,7 +14,7 @@
  */
 
 import 'server-only';
-import { getGenieACSCredentials } from '@/app/api/settings/genieacs/route';
+import { getGenieACSCredentials } from './credentials';
 import { basicAuthHeader } from './helpers';
 import type {
   GenieDevice,

@@ -262,11 +262,11 @@ export default function LaporanAnalitikPage() {
           />
           <KpiCard
             label={t('laporanAnalitik.avgChurnRate')}
-            value={`${s.avgChurnRate}%`}
+            value={`${s.avgChurnRate ?? 0}%`}
             sub={t('laporanAnalitik.retention', { n: String(s.avgRetentionRate) })}
             icon={UserX}
             color="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"
-            trend={s.avgChurnRate > 5 ? 'down' : 'neutral'}
+            trend={(s.avgChurnRate ?? 0) > 5 ? 'down' : 'neutral'}
           />
           <KpiCard
             label={t('laporanAnalitik.activeCustomers')}
