@@ -592,6 +592,21 @@ function NavItem({ item, pendingCount, manualPaymentsCount, unreadNotifications,
   );
 }
 
+// Retry fetch once on network errors (ERR_CONNECTION_CLOSED, Failed to fetch).
+// Keepalive connections can be closed by the browser/Cloudflare during idle periods;
+// a single automatic retry eliminates the visible error for polling requests.
+async function fetchWithRetry(input: RequestInfo, init?: RequestInit, retries = 1): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch (err) {
+    if (retries > 0) {
+      await new Promise((r) => setTimeout(r, 1000));
+      return fetchWithRetry(input, init, retries - 1);
+    }
+    throw err;
+  }
+}
+
 function AdminLayoutContent({
   children,
 }: {
@@ -804,12 +819,12 @@ function AdminLayoutContent({
     if (status !== 'authenticated') return;
 
     const loadPending = () => {
-      fetch('/api/admin/registrations?status=PENDING')
+      fetchWithRetry('/api/admin/registrations?status=PENDING')
         .then((res) => res.json())
         .then((data) => {
           if (data.stats) setPendingRegistrations(data.stats.pending || 0);
         })
-        .catch(console.error);
+        .catch(() => { /* silently ignore — retried once already */ });
     };
 
     loadPending();
@@ -822,12 +837,12 @@ function AdminLayoutContent({
     if (status !== 'authenticated') return;
 
     const loadPendingPayments = () => {
-      fetch('/api/manual-payments?status=PENDING')
+      fetchWithRetry('/api/manual-payments?status=PENDING')
         .then((res) => res.json())
         .then((data) => {
           if (data.success) setPendingManualPayments(data.data?.length || 0);
         })
-        .catch(console.error);
+        .catch(() => { /* silently ignore — retried once already */ });
     };
 
     loadPendingPayments();
@@ -842,13 +857,13 @@ function AdminLayoutContent({
     const pollNotifications = async () => {
       try {
         // Get unread count (badge)
-        const countRes = await fetch('/api/notifications?limit=1');
+        const countRes = await fetchWithRetry('/api/notifications?limit=1');
         const countData = await countRes.json();
         if (countData.success) setUnreadNotifications(countData.unreadCount || 0);
 
         // Get new notifications since last check (for toasts)
         const since = encodeURIComponent(adminNotifLastCheckedRef.current);
-        const newRes = await fetch(`/api/notifications?since=${since}&limit=20`);
+        const newRes = await fetchWithRetry(`/api/notifications?since=${since}&limit=20`);
         const newData = await newRes.json();
         if (newData.success && Array.isArray(newData.notifications) && newData.notifications.length > 0) {
           adminNotifLastCheckedRef.current = new Date().toISOString();
