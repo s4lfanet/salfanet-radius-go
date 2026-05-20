@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.53 — 2026-05-22
+
+### Fixed
+- **OLT Management page — list selalu kosong** — `GET /api/network/olts` memanggil `ListOLTsForMap` yang mengembalikan array mentah, sedangkan frontend mengharapkan `{olts: [...]}`. Fix: ubah `ListOLTsForMap` mengembalikan `fiber.Map{"olts": olts}`.
+- **OLT Detail page — crash `Cannot read properties of undefined (reading 'vendor')`** — `GET /api/olt/:id` mengembalikan model mentah, sedangkan `fetchOLT` di frontend mengharapkan `{olt: ...}` (wrapped). Akibatnya `data.olt` undefined → akses `o.vendor` crash. Fix: ubah `GetOLT` mengembalikan `fiber.Map{"olt": olt}` dan tambah preload `Alerts`.
+### Files
+- `internal/api/handlers/network.go` — `ListOLTsForMap`: return `{olts: olts}` bukan array mentah
+- `internal/api/handlers/olt.go` — `GetOLT`: return `{olt: olt}`, tambah `Preload("Alerts")`
+
 ### v2.52.52 — 2026-05-21
 
 ### Fixed
@@ -541,13 +550,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `src/app/admin/AdminClientLayout.tsx` — Payment parent permission guard, Payroll Templates + HR Management permission guards
 - `internal/api/handlers/admin_users.go` — Create handler: tambah field `Permissions`, loop simpan ke `user_permissions` table
-
-### v2.52.47 — 2026-05-20
-
-### Fixed
-- **Tambah user admin 400 Bad Request** — Handler `POST /api/admin/users` memvalidasi field `name` wajib tidak kosong, tapi form frontend (`management/page.tsx`) tidak memiliki input `name`. Fix: jika `name` tidak dikirim (kosong), otomatis di-default ke nilai `username`.
-### Files
-- `internal/api/handlers/admin_users.go` — `Create`: hapus `name` dari required validation, fallback `body.Name = body.Username`
 
 <!-- AUTO-CHANGELOG:END -->
 
