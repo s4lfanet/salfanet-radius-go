@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.40 — 2026-05-21
+
+### Fixed
+- **L2TP VPN putus setiap update (install-l2tp-server.sh overwrite ipsec.conf)** — Script installer menulis `/etc/ipsec.conf` dengan proposal IKE/ESP terlalu sempit dan flag strict (`!`), sehingga MikroTik gagal phase1 ("phase1 negotiation failed due to time up"). Dua masalah: (1) `ike=` hanya berisi `aes256-sha256-modp2048,aes256-sha1-modp1024!` — MikroTik default mengirim `aes128-sha1-modp1024` yang ditolak. (2) `esp=aes256-sha256,aes256-sha1!` tanpa modp1024, padahal MikroTik default ESP pakai PFS modp1024. Fix: perluas `ike=` dan `esp=` mencakup semua varian AES-128/192/256 + SHA1 + modp1024, hapus flag strict `!`. Juga fix `auth` → `noauth` di pppd options (Ubuntu 22.04 pppd 2.4.9 tidak support MSCHAPv2 natively; autentikasi sudah dijamin IPsec PSK phase 1).
+### Files
+- `vps-install/install-l2tp-server.sh` — Perluas `ike=` dan `esp=` proposals; hapus flag strict `!`; ganti `auth` → `noauth` di pppd options
+
 ### v2.52.39 — 2026-05-21
 
 ### Fixed
@@ -526,14 +533,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **VPN Client data masih hilang setelah updater.sh** — Root cause: `mysqldump --no-create-info` hanya meng-export INSERT statements (data), tanpa `CREATE TABLE`. Saat Prisma DROP tabel saat `prisma db push`, restore berjalan tapi INSERT gagal karena tabel tidak ada → data hilang diam-diam. Fix: hapus `--no-create-info`, ganti dengan `--add-drop-table` (default mysqldump) di semua fungsi backup (`backup_vpn_data`, `backup_vps_peers_data`, `backup_genieacs_data`). Sekarang backup menyertakan `DROP TABLE IF EXISTS` + `CREATE TABLE` + `INSERT`, jadi restore recreate tabel dari nol bahkan jika Prisma menghapusnya. Juga tambah `SET FOREIGN_KEY_CHECKS=0` di restore GenieACS untuk konsistensi.
 ### Files
 - `vps-install/updater.sh` — `backup_vpn_data`, `backup_vps_peers_data`, `backup_genieacs_data`: hapus `--no-create-info`, tambah `--add-drop-table`; `restore_genieacs_data`: tambah `SET FOREIGN_KEY_CHECKS=0/1`
-
-### v2.52.35 — 2026-05-20
-
-### Fixed
-- **VPN Client data selalu hilang setiap deploy (permanen fix)** — Root cause: `vpn_servers` dan `vpn_clients` masih dikelola Prisma. Saat `prisma db push --accept-data-loss` berjalan dengan schema change (misal: hapus FK di v2.52.33), Prisma DROP + RECREATE tabel sehingga data hilang. Backup/restore di updater.sh tidak cukup reliable. Fix permanen: tambah `@@ignore` ke kedua model di Prisma schema → Prisma tidak pernah menyentuh tabel ini lagi. Tambah `CREATE TABLE IF NOT EXISTS vpn_servers` dan `CREATE TABLE IF NOT EXISTS vpn_clients` ke `runMigrations` di `db.go` → Go yang create dan manage kedua tabel ini (sama seperti `vps_peers`).
-### Files
-- `prisma/schema.prisma` — Tambah `@@ignore` ke model `vpnServer` dan `vpnClient`
-- `internal/db/db.go` — Tambah `CREATE TABLE IF NOT EXISTS vpn_servers` dan `vpn_clients` ke `runMigrations`
 
 <!-- AUTO-CHANGELOG:END -->
 
