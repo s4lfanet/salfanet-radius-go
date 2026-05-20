@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.58] — 2026-05-21
+### Fixed
+- **GET /api/olt/:id — 404** — Root cause: `GetOLT` handler uses `Preload("MonitoringLogs", Order("created_at DESC"))` dan `Preload("PerformanceMetrics", Order("recorded_at DESC"))`. DB columns are camelCase (`createdAt`, `recordedAt`), bukan snake_case. MySQL error "Unknown column 'created_at'" membuat seluruh query gagal → handler return 404.
+- **`NetworkOLT` model — tidak ada column tags** — Semua field compound (`ipAddress`, `snmpEnabled`, `isOnline`, `totalOnu`, dst.) dipetakan GORM sebagai snake_case (`ip_address`, `snmp_enabled`, `is_online`, `total_onu`, dst.) tapi DB pakai camelCase. CREATE/UPDATE/SELECT semua salah.
+- **`olt_ext.go` Monitoring SELECT — snake_case columns** — `Select("id,name,ip_address,status,is_online,total_onu,online_onu,offline_onu")` → MySQL error "Unknown column". Diganti ke `"id,name,ipAddress,status,isOnline,totalOnu,onlineOnu,offlineOnu"`.
+### Files
+- `internal/db/models/olt.go` — tambah `gorm:"column:..."` camelCase ke semua field `NetworkOLT`: `ipAddress`, `followRoad`, `firmwareVersion`, `snmpEnabled`, `snmpCommunity`, `snmpPort`, `telnetEnabled`, `telnetPort`, `sshEnabled`, `sshPort`, `monitoringEnabled`, `pollingInterval`, `lastPollAt`, `isOnline`, `totalOnu`, `onlineOnu`, `offlineOnu`, `createdAt`, `updatedAt`
+- `internal/api/handlers/olt.go` — fix `GetOLT` preload order: `created_at` → `createdAt`, `recorded_at` → `recordedAt`
+- `internal/api/handlers/olt_ext.go` — fix `Monitoring` SELECT ke camelCase column names
+
 ## [2.52.57] — 2026-05-22
 ### Fixed
 - **TSC Errors (9 errors → 0)** — Semua TypeScript compile error diperbaiki:
