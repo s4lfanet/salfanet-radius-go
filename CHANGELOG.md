@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.44] — 2026-05-20
+### Fixed
+- **RADIUS script NAS IP kosong + RADIUS IP masih public** — Root cause: tabel `vpn_clients` kosong di DB, sehingga lookup `h.db.First(&vpnClient, "id = ?", vpnClientId)` gagal dan `nasSrcAddress` tetap kosong → `radiusServerIP` tidak pernah di-override dari public IP. Fix: tambah fallback `nasSrcAddress = router.IPAddress` saat VPN client tidak ditemukan. Untuk VPN router, `nas.ipAddress` IS the VPN IP (mis. `10.201.0.10`), sehingga `radiusServerIP` bisa di-derive dengan benar ke `10.201.0.1`.
+### Files
+- `internal/api/handlers/misc_handler.go` — `SetupRadiusOnRouter`: fallback ke `router.IPAddress` saat `vpn_clients` lookup gagal
+
+---
+
 ## [2.52.43] — 2026-05-20
 ### Fixed
 - **RADIUS setup script pakai IP publik saat router via VPN** — Sebelumnya `SetupRadiusOnRouter` selalu pakai `RADIUS_SERVER_IP` env (103.151.140.110) bahkan saat router terhubung via VPN. Seharusnya pakai IP VPN internal (mis. 10.201.0.1). Fix: saat `vpnClientId` ada, lookup VPN client `isRadiusServer=true` untuk RADIUS IP, atau derive dari VPN IP NAS (replace last octet dengan .1). Juga ditambahkan: gateway masquerade entry, `require-message-auth=no` (ROS7), PPP pool `pool-radius-default`, PPP profile `salfanetradius`, netwatch monitoring, `wireless` di service list, `interim-update=5m`.
