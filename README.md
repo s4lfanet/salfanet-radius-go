@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.35 — 2026-05-20
+
+### Fixed
+- **VPN Client data selalu hilang setiap deploy (permanen fix)** — Root cause: `vpn_servers` dan `vpn_clients` masih dikelola Prisma. Saat `prisma db push --accept-data-loss` berjalan dengan schema change (misal: hapus FK di v2.52.33), Prisma DROP + RECREATE tabel sehingga data hilang. Backup/restore di updater.sh tidak cukup reliable. Fix permanen: tambah `@@ignore` ke kedua model di Prisma schema → Prisma tidak pernah menyentuh tabel ini lagi. Tambah `CREATE TABLE IF NOT EXISTS vpn_servers` dan `CREATE TABLE IF NOT EXISTS vpn_clients` ke `runMigrations` di `db.go` → Go yang create dan manage kedua tabel ini (sama seperti `vps_peers`).
+### Files
+- `prisma/schema.prisma` — Tambah `@@ignore` ke model `vpnServer` dan `vpnClient`
+- `internal/db/db.go` — Tambah `CREATE TABLE IF NOT EXISTS vpn_servers` dan `vpn_clients` ke `runMigrations`
+
 ### v2.52.34 — 2026-05-21
 
 ### Fixed
@@ -522,15 +530,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/admin/network/routers/page.tsx` — `handleSubmit`: `parseInt` untuk port fields, fix PUT URL ke `/api/network/routers/:id`
 - `internal/api/handlers/network.go` — Tambah `routerBody` struct, fix `CreateRouter` untuk handle `password`/`secret`
 - `internal/db/models/models.go` — `Router` struct: tambah field `Server`, `Community`, `VpnClientId`
-
-### v2.52.30 — 2026-05-20
-
-### Fixed
-- **vps_peers terhapus saat deploy** — `updater.sh` kini mem-backup data tabel `vps_peers` sebelum `prisma db push` dan merestore-nya setelahnya (seperti GenieACS tables). Go API juga di-restart ulang setelah Prisma selesai agar `runMigrations` memastikan tabel selalu ada.
-- **VPN Client dropdown tidak menampilkan VPS WireGuard/L2TP peers** — `ListRouters` sebelumnya hanya fetch dari `vpn_clients`. Kini juga fetch dari `vps_peers` (tabel Go-managed), sehingga peer WireGuard/L2TP yang didaftarkan via halaman VPN Clients ikut muncul di dropdown.
-### Files
-- `vps-install/updater.sh` — Tambah `backup_vps_peers_data` / `restore_vps_peers_data` + restart Go setelah Prisma (Mode A & B)
-- `internal/api/handlers/network.go` — `ListRouters`: tambah fetch dari `vps_peers` dan gabungkan ke hasil `vpnClients`
 
 <!-- AUTO-CHANGELOG:END -->
 
