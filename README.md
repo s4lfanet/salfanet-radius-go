@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.48 — 2026-05-20
+
+### Fixed
+- **Visibilitas menu per role** — 3 bug fixes:
+  1. Parent menu "Payment" pakai `requiredPermission: 'settings.payment'` → diubah ke `'invoices.view'` agar role FINANCE, CUSTOMER_SERVICE, dan VIEWER bisa melihat menu Manual Payments
+  2. Payroll Templates + HR Management (attendance, cash advances, commissions, payroll) pakai `settings.view` → diubah ke `keuangan.view` agar role FINANCE bisa akses menu payroll/HR
+  3. Handler `POST /api/admin/users` tidak menyimpan array `permissions` dari form → diperbaiki, permissions kini disimpan ke tabel `user_permissions` saat create user
+- **DB role_permissions** — Tambah permission `sessions.view` ke role FINANCE, tambah `routers.view` ke role VIEWER (via SQL INSERT IGNORE)
+### Files
+- `src/app/admin/AdminClientLayout.tsx` — Payment parent permission guard, Payroll Templates + HR Management permission guards
+- `internal/api/handlers/admin_users.go` — Create handler: tambah field `Permissions`, loop simpan ke `user_permissions` table
+
 ### v2.52.47 — 2026-05-20
 
 ### Fixed
@@ -520,13 +532,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **RADIUS script NAS IP kosong + RADIUS IP masih public** — Root cause: tabel `vpn_clients` kosong di DB, sehingga lookup `h.db.First(&vpnClient, "id = ?", vpnClientId)` gagal dan `nasSrcAddress` tetap kosong → `radiusServerIP` tidak pernah di-override dari public IP. Fix: tambah fallback `nasSrcAddress = router.IPAddress` saat VPN client tidak ditemukan. Untuk VPN router, `nas.ipAddress` IS the VPN IP (mis. `10.201.0.10`), sehingga `radiusServerIP` bisa di-derive dengan benar ke `10.201.0.1`.
 ### Files
 - `internal/api/handlers/misc_handler.go` — `SetupRadiusOnRouter`: fallback ke `router.IPAddress` saat `vpn_clients` lookup gagal
-
-### v2.52.43 — 2026-05-20
-
-### Fixed
-- **RADIUS setup script pakai IP publik saat router via VPN** — Sebelumnya `SetupRadiusOnRouter` selalu pakai `RADIUS_SERVER_IP` env (103.151.140.110) bahkan saat router terhubung via VPN. Seharusnya pakai IP VPN internal (mis. 10.201.0.1). Fix: saat `vpnClientId` ada, lookup VPN client `isRadiusServer=true` untuk RADIUS IP, atau derive dari VPN IP NAS (replace last octet dengan .1). Juga ditambahkan: gateway masquerade entry, `require-message-auth=no` (ROS7), PPP pool `pool-radius-default`, PPP profile `salfanetradius`, netwatch monitoring, `wireless` di service list, `interim-update=5m`.
-### Files
-- `internal/api/handlers/misc_handler.go` — `SetupRadiusOnRouter`: full rewrite VPN IP logic + tambah gateway masquerade, pool/profile PPP, netwatch
 
 <!-- AUTO-CHANGELOG:END -->
 
