@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.47] — 2026-05-20
+### Fixed
+- **Tambah user admin 400 Bad Request** — Handler `POST /api/admin/users` memvalidasi field `name` wajib tidak kosong, tapi form frontend (`management/page.tsx`) tidak memiliki input `name`. Fix: jika `name` tidak dikirim (kosong), otomatis di-default ke nilai `username`.
+### Files
+- `internal/api/handlers/admin_users.go` — `Create`: hapus `name` dari required validation, fallback `body.Name = body.Username`
+
+---
+
 ## [2.52.46] — 2026-05-20
 ### Fixed
 - **ERR_CONNECTION_CLOSED pada polling admin (setelah idle)** — Tiga fungsi polling di `AdminClientLayout.tsx` (`loadPending`, `loadPendingPayments`, `pollNotifications`) menggunakan `fetch()` tanpa retry. Saat koneksi keepalive di-drop oleh browser/Cloudflare setelah beberapa menit idle, request berikutnya gagal dengan `ERR_CONNECTION_CLOSED`. Fix: tambah helper `fetchWithRetry` (1x retry setelah 1 detik) di level modul dan ganti semua `fetch()` di polling dengan `fetchWithRetry()`.
