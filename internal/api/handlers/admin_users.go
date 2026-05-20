@@ -39,12 +39,13 @@ func (h *AdminUserHandler) List(c fiber.Ctx) error {
 // POST /api/admin/users
 func (h *AdminUserHandler) Create(c fiber.Ctx) error {
 	var body struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
-		Name     string `json:"name"`
-		Role     string `json:"role"`
-		Phone    string `json:"phone"`
+		Username    string   `json:"username"`
+		Email       string   `json:"email"`
+		Password    string   `json:"password"`
+		Name        string   `json:"name"`
+		Role        string   `json:"role"`
+		Phone       string   `json:"phone"`
+		Permissions []string `json:"permissions"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
@@ -79,6 +80,18 @@ func (h *AdminUserHandler) Create(c fiber.Ctx) error {
 	}
 	if err := h.db.Create(&u).Error; err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "username or email already exists"})
+	}
+	// Save permissions if provided in the request body
+	for _, permKey := range body.Permissions {
+		var perm models.Permission
+		if err := h.db.Where("`key` = ?", permKey).First(&perm).Error; err != nil {
+			continue
+		}
+		h.db.Create(&models.UserPermission{
+			ID:           generateID(),
+			UserID:       u.ID,
+			PermissionID: perm.ID,
+		})
 	}
 	u.Password = ""
 	return c.Status(201).JSON(fiber.Map{"success": true, "user": u})

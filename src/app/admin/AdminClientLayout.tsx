@@ -152,7 +152,7 @@ const menuGroups: MenuGroup[] = [
       {
         titleKey: 'nav.payment',
         icon: <CreditCard className="w-4 h-4" />,
-        requiredPermission: 'settings.payment',
+        requiredPermission: 'invoices.view',
         children: [
           { titleKey: 'nav.paymentGateway', href: '/admin/payment-gateway', requiredPermission: 'settings.payment' },
           { titleKey: 'nav.manualPayments', href: '/admin/manual-payments', badge: 'manualPayments', requiredPermission: 'invoices.view' },
@@ -326,17 +326,17 @@ const menuGroups: MenuGroup[] = [
         titleKey: 'nav.payrollTemplates',
         icon: <FileText className="w-4 h-4" />,
         href: '/admin/payroll-templates',
-        requiredPermission: 'settings.view',
+        requiredPermission: 'keuangan.view',
       },
       {
         titleKey: 'nav.hrManagement',
         icon: <UserCheck className="w-4 h-4" />,
-        requiredPermission: 'settings.view',
+        requiredPermission: 'keuangan.view',
         children: [
-          { titleKey: 'nav.attendance', href: '/admin/attendance', requiredPermission: 'settings.view' },
-          { titleKey: 'nav.cashAdvances', href: '/admin/cash-advances', requiredPermission: 'settings.view' },
-          { titleKey: 'nav.commissions', href: '/admin/commissions', requiredPermission: 'settings.view' },
-          { titleKey: 'nav.payroll', href: '/admin/payroll', requiredPermission: 'settings.view' },
+          { titleKey: 'nav.attendance', href: '/admin/attendance', requiredPermission: 'keuangan.view' },
+          { titleKey: 'nav.cashAdvances', href: '/admin/cash-advances', requiredPermission: 'keuangan.view' },
+          { titleKey: 'nav.commissions', href: '/admin/commissions', requiredPermission: 'keuangan.view' },
+          { titleKey: 'nav.payroll', href: '/admin/payroll', requiredPermission: 'keuangan.view' },
         ],
       },
       {
