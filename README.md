@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.38 — 2026-05-20
+
+### Fixed
+- **DELETE router 405 Method Not Allowed** — Frontend mengirim `DELETE /api/network/routers?id=xxx` (query param) tapi Go router hanya mendaftarkan `DELETE /network/routers/:id` (path param). Semua request DELETE ke URL lama diterima oleh route `GET/POST /network/routers` yang tidak punya handler DELETE → 405. Fix: ubah URL delete dari `?id=${id}` ke `/${id}`.
+- **Router status selalu offline setelah simpan** — Handler `RouterStatus` (Go) mengembalikan `{ routers: [{id, name, status: "UNKNOWN"}] }` sedangkan frontend mengharapkan `{ statusMap: { [id]: { online, identity } } }`. Karena `data.statusMap` selalu `undefined`, `setStatusMap({})` dipanggil dan semua router tampil offline. Fix: rewrite handler untuk menerima `{ routerIds }`, lakukan TCP ping ke port API router secara paralel (goroutine), dan kembalikan `statusMap` dengan format yang benar.
+- **Short name tidak muncul** — Form modal tidak memiliki input `shortname`, sehingga selalu tersimpan sebagai string kosong. Fix: tambah input shortname di modal dengan auto-generate dari nama router (lowercase, replace spasi/karakter ke `-`, max 20 char).
+- **TestGateway/TestRouterGeneric selalu return sukses** — Kedua handler sebelumnya adalah stub yang selalu mengembalikan `success: true` tanpa melakukan koneksi nyata. Akibatnya test VPN selalu "berhasil" meski VPN tidak terhubung. Fix: implementasi TCP check nyata — `TestGateway` mencoba port 8728/22/80/443; `TestRouterGeneric` mencoba port API plain lalu SSL dengan timeout 3 detik.
+### Files
+- `src/app/admin/network/routers/page.tsx` — Fix DELETE URL (`?id=` → `/${id}`); tambah shortname input field dengan auto-generate; update handler `onChange` nama router
+- `internal/api/handlers/network_ext.go` — Rewrite `RouterStatus`: terima `{ routerIds }`, TCP ping paralel via `tcpPing()`, kembalikan `{ statusMap: { [id]: { online, identity } } }`; tambah helper `tcpPing()`; tambah import `fmt`, `net`, `sync`
+- `internal/api/handlers/misc_handler.go` — Rewrite `TestRouterGeneric` dan `TestGateway` dengan TCP connectivity check nyata; tambah import `net`
+
 ### v2.52.37 — 2026-05-20
 
 ### Fixed
@@ -520,14 +532,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/misc_handler.go` — Implementasi nyata `SetupRadiusOnRouter`: lookup router, baca `APP_BASE_URL`/`RADIUS_SERVER_IP` env untuk server IP, generate script MikroTik ROS6+ROS7, return `config` + `script` + `scriptRos6` + `scriptRos7`
 - `src/app/admin/network/routers/page.tsx` — Optional chaining `?.` pada `scriptModalData.config?.radiusServer` dll agar tidak crash bila `config` undefined
-
-### v2.52.33 — 2026-05-20
-
-### Fixed
-- **500 Error saat Tambah Router dengan VPN Client dari vps_peers** — `nas.vpnClientId` punya FK constraint ke `vpn_clients(id)`, tapi entry dari `vps_peers` ID-nya tidak ada di `vpn_clients` sehingga MySQL error 1452 FK constraint fails. Fix: hapus `@relation` dari Prisma schema (kolom tetap ada sebagai nullable string) dan tambah migration SQL untuk drop FK constraint di DB. `vpnClientId` sekarang bisa menyimpan ID dari `vpn_clients` maupun `vps_peers` tanpa FK enforcement.
-### Files
-- `prisma/schema.prisma` — Hapus `routers router[]` dari `vpnClient` model dan `vpnClient @relation(...)` dari `router` model
-- `prisma/migrations/drop_nas_vpnclientid_fkey.sql` — `ALTER TABLE nas DROP FOREIGN KEY nas_vpnClientId_fkey`
 
 <!-- AUTO-CHANGELOG:END -->
 
