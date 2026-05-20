@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.49 — 2026-05-20
+
+### Fixed
+- **Tambah OLT di admin/network/olts — 405 Method Not Allowed** — `POST /api/network/olts` tidak ada route-nya. Backend hanya punya route CRUD di `/api/olt/*` bukan `/api/network/olts`. Fix: tambah `POST`, `PUT`, `DELETE` di network group + 3 handler baru di `NetworkHandler` yang handle ID dari request body (bukan URL param).
+- **OLT Test Connection — TypeError: Cannot read properties of undefined (reading 'tests')** — Dua root cause: (1) Frontend memanggil `POST /api/olt/test-connection` yang tidak ada route-nya. Fix: tambah `olt.Post("/test-connection", oltH.TestConnection)`. (2) Handler `TestOLTConnection` di AdminMiscHandler hanya stub tanpa field `results.tests`. Fix: buat handler baru di `OLTHandler.TestConnection` yang melakukan TCP check ke port SSH (dan Telnet jika enabled) lalu return `{success, results: {tests: [{method, success, message, time}]}}`. (3) Frontend tidak memproteksi akses `result.results.tests.map(...)` saat field undefined → fix dengan optional chaining + fallback.
+### Files
+- `internal/api/handlers/network_ext.go` — Tambah `CreateOLT`, `UpdateOLT`, `DeleteOLT` ke `NetworkHandler`; tambah import `strconv`
+- `internal/api/handlers/olt.go` — Tambah `TestConnection` ke `OLTHandler`; tambah import `net`
+- `internal/api/router.go` — Tambah `POST/PUT/DELETE /network/olts` + `POST /olt/test-connection`
+- `src/app/admin/network/olts/page.tsx` — Fix unsafe `result.results.tests.map()` → optional chaining + fallback string
+
 ### v2.52.48 — 2026-05-20
 
 ### Fixed
@@ -525,13 +536,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Edit Admin User 500 Internal Server Error** — Handler `PUT /api/admin/users/:id` meneruskan seluruh body JSON ke GORM `Updates()` termasuk field `permissions` (array) yang bukan kolom di tabel `admin_users`, menyebabkan SQL error. Fix: whitelist hanya field valid (`username`, `email`, `phone`, `name`, `role`, `isActive`, `twoFactorEnabled`, `password`), dan proses field `permissions` secara terpisah via tabel `user_permissions`.
 ### Files
 - `internal/api/handlers/admin_users.go` — `Update`: whitelist kolom valid, handle permissions array secara terpisah
-
-### v2.52.44 — 2026-05-20
-
-### Fixed
-- **RADIUS script NAS IP kosong + RADIUS IP masih public** — Root cause: tabel `vpn_clients` kosong di DB, sehingga lookup `h.db.First(&vpnClient, "id = ?", vpnClientId)` gagal dan `nasSrcAddress` tetap kosong → `radiusServerIP` tidak pernah di-override dari public IP. Fix: tambah fallback `nasSrcAddress = router.IPAddress` saat VPN client tidak ditemukan. Untuk VPN router, `nas.ipAddress` IS the VPN IP (mis. `10.201.0.10`), sehingga `radiusServerIP` bisa di-derive dengan benar ke `10.201.0.1`.
-### Files
-- `internal/api/handlers/misc_handler.go` — `SetupRadiusOnRouter`: fallback ke `router.IPAddress` saat `vpn_clients` lookup gagal
 
 <!-- AUTO-CHANGELOG:END -->
 
