@@ -276,8 +276,8 @@ type QrisPending struct {
 	BaseAmount   int        `gorm:"column:baseAmount" json:"baseAmount"`
 	UniqueAmount int        `gorm:"index;column:uniqueAmount" json:"uniqueAmount"` // BaseAmount + random 1-999 (untuk pencocokan notif)
 	QrString     string     `gorm:"type:longtext;column:qrString" json:"qrString"`
-	Status       string     `gorm:"default:pending;index" json:"status"` // pending | paid | expired
-	SourceApp    string     `gorm:"type:varchar(100);column:sourceApp" json:"sourceApp"`  // id.dana, com.gojek.app, dll
+	Status       string     `gorm:"default:pending;index" json:"status"`                 // pending | paid | expired
+	SourceApp    string     `gorm:"type:varchar(100);column:sourceApp" json:"sourceApp"` // id.dana, com.gojek.app, dll
 	ExpiresAt    time.Time  `gorm:"index;column:expiresAt" json:"expiresAt"`
 	PaidAt       *time.Time `gorm:"column:paidAt" json:"paidAt"`
 	CreatedAt    time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
