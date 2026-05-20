@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.36 — 2026-05-20
+
+### Fixed
+- **VPN Client data masih hilang setelah updater.sh** — Root cause: `mysqldump --no-create-info` hanya meng-export INSERT statements (data), tanpa `CREATE TABLE`. Saat Prisma DROP tabel saat `prisma db push`, restore berjalan tapi INSERT gagal karena tabel tidak ada → data hilang diam-diam. Fix: hapus `--no-create-info`, ganti dengan `--add-drop-table` (default mysqldump) di semua fungsi backup (`backup_vpn_data`, `backup_vps_peers_data`, `backup_genieacs_data`). Sekarang backup menyertakan `DROP TABLE IF EXISTS` + `CREATE TABLE` + `INSERT`, jadi restore recreate tabel dari nol bahkan jika Prisma menghapusnya. Juga tambah `SET FOREIGN_KEY_CHECKS=0` di restore GenieACS untuk konsistensi.
+### Files
+- `vps-install/updater.sh` — `backup_vpn_data`, `backup_vps_peers_data`, `backup_genieacs_data`: hapus `--no-create-info`, tambah `--add-drop-table`; `restore_genieacs_data`: tambah `SET FOREIGN_KEY_CHECKS=0/1`
+
 ### v2.52.35 — 2026-05-20
 
 ### Fixed
@@ -521,15 +528,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **VPN Client data hilang setiap update** — `vpn_servers` dan `vpn_clients` adalah tabel Prisma, tapi saat `prisma db push --accept-data-loss` berjalan dengan perubahan schema, datanya bisa DROP. Fix: `updater.sh` kini mem-backup kedua tabel ini sebelum Prisma berjalan dan merestore-nya sesudah (dengan `SET FOREIGN_KEY_CHECKS=0` agar urutan restore tidak masalah).
 ### Files
 - `vps-install/updater.sh` — Tambah `backup_vpn_data` / `restore_vpn_data`, dipanggil di Mode A dan Mode B sekitar `prisma db push`
-
-### v2.52.31 — 2026-05-20
-
-### Fixed
-- **400 Error saat Tambah/Edit Router** — Field `port`, `apiPort`, `ports` dikirim sebagai string dari form state, tapi Go struct `Router` expect `int`. Fix: konversi ke `parseInt()` di `handleSubmit`. Juga fix: PUT URL edit sekarang `/api/network/routers/:id` (sebelumnya tidak ada `:id`). Router model ditambah field `Server`, `Community`, `VpnClientId` yang ada di tabel `nas` tapi belum ada di struct. `CreateRouter` kini menggunakan `routerBody` struct agar `password` dan `secret` (yang punya `json:"-"` di `Router` struct) tetap bisa dibaca dari request body.
-### Files
-- `src/app/admin/network/routers/page.tsx` — `handleSubmit`: `parseInt` untuk port fields, fix PUT URL ke `/api/network/routers/:id`
-- `internal/api/handlers/network.go` — Tambah `routerBody` struct, fix `CreateRouter` untuk handle `password`/`secret`
-- `internal/db/models/models.go` — `Router` struct: tambah field `Server`, `Community`, `VpnClientId`
 
 <!-- AUTO-CHANGELOG:END -->
 
