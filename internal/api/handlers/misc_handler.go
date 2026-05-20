@@ -7,6 +7,8 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 
@@ -1019,8 +1021,8 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 /ip radius incoming set accept=yes port=%d`, radiusServerIP, secret, authPort, acctPort, coaPort)
 
 	return c.JSON(fiber.Map{
-		"success":   true,
-		"script":    scriptRos7,
+		"success":    true,
+		"script":     scriptRos7,
 		"scriptRos7": scriptRos7,
 		"scriptRos6": scriptRos6,
 		"config": fiber.Map{
@@ -1063,11 +1065,11 @@ func (h *MiscHandler) TestRouterGeneric(c fiber.Ctx) error {
 	if err == nil {
 		conn.Close()
 		return c.JSON(fiber.Map{
-			"success":  true,
+			"success":   true,
 			"reachable": true,
-			"host":     host,
-			"usedPort": port,
-			"identity": host,
+			"host":      host,
+			"usedPort":  port,
+			"identity":  host,
 		})
 	}
 	// Try SSL port
@@ -1075,12 +1077,12 @@ func (h *MiscHandler) TestRouterGeneric(c fiber.Ctx) error {
 	if err == nil {
 		conn.Close()
 		return c.JSON(fiber.Map{
-			"success":  true,
+			"success":   true,
 			"reachable": true,
-			"host":     host,
-			"usedPort": apiPort,
-			"usedTls":  true,
-			"identity": host,
+			"host":      host,
+			"usedPort":  apiPort,
+			"usedTls":   true,
+			"identity":  host,
 		})
 	}
 	return c.JSON(fiber.Map{
@@ -1090,6 +1092,19 @@ func (h *MiscHandler) TestRouterGeneric(c fiber.Ctx) error {
 		"message":   fmt.Sprintf("Tidak dapat terhubung ke %s port %d atau %d", host, port, apiPort),
 		"diagnosis": "port_refused",
 	})
+}
+
+// getLocalIPForDest returns the VPS source IP used to route to dest (reads from `ip route get`).
+func getLocalIPForDest(dest string) string {
+	out, err := exec.Command("ip", "route", "get", dest).Output()
+	if err != nil {
+		return ""
+	}
+	re := regexp.MustCompile(`src\s+(\d+\.\d+\.\d+\.\d+)`)
+	if m := re.FindSubmatch(out); m != nil {
+		return string(m[1])
+	}
+	return ""
 }
 
 // POST /api/network/routers/test-gateway — test gateway reachability via TCP
@@ -1115,17 +1130,32 @@ func (h *MiscHandler) TestGateway(c fiber.Ctx) error {
 		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, p), 2*time.Second)
 		if err == nil {
 			conn.Close()
+			localIp := getLocalIPForDest(ip)
 			return c.JSON(fiber.Map{
-				"success":  true,
+				"success":   true,
 				"reachable": true,
-				"message":  fmt.Sprintf("Terhubung ke %s (port %d terbuka)", ip, p),
+				"localIp":   localIp,
+				"message":   fmt.Sprintf("Terhubung ke %s (port %d terbuka)", ip, p),
 			})
 		}
 	}
+
+	// TCP probes failed — try ICMP ping as fallback (VPN tunnel may block TCP but allow ICMP)
+	if pingErr := exec.Command("ping", "-c", "1", "-W", "2", ip).Run(); pingErr == nil {
+		localIp := getLocalIPForDest(ip)
+		return c.JSON(fiber.Map{
+			"success":   true,
+			"reachable": true,
+			"icmpOnly":  true,
+			"localIp":   localIp,
+			"message":   fmt.Sprintf("VPN terhubung ke %s (ICMP ping berhasil, port TCP tertutup — tambahkan firewall rule di MikroTik untuk mengizinkan koneksi API dari VPS)", ip),
+		})
+	}
+
 	return c.JSON(fiber.Map{
-		"success":  false,
+		"success":   false,
 		"reachable": false,
-		"message":  fmt.Sprintf("Tidak dapat terhubung ke %s", ip),
+		"message":   fmt.Sprintf("Tidak dapat terhubung ke %s", ip),
 	})
 }
 

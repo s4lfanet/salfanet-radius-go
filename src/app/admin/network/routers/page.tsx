@@ -189,6 +189,7 @@ export default function RouterPage() {
 
       // Jika menggunakan VPN client, lakukan ping test terlebih dahulu
       // API test mungkin gagal jika MikroTik belum mengizinkan koneksi API dari VPN
+      let vpnGatewayIp = '10.201.0.1' // default VPS VPN gateway IP (pppd local IP)
       if (formData.vpnClientId) {
         const pingRes = await fetch('/api/network/routers/test-gateway', {
           method: 'POST',
@@ -196,6 +197,8 @@ export default function RouterPage() {
           body: JSON.stringify({ ipAddress: formData.ipAddress }),
         })
         const pingResult = await pingRes.json()
+        // Capture actual VPS local IP returned by the backend (from `ip route get`)
+        if (pingResult.localIp) vpnGatewayIp = pingResult.localIp
         if (!pingResult.success) {
           setTestResult({ success: false, message: `VPN tidak terhubung: ${pingResult.message}` })
           showError(`VPN tidak terhubung ke ${formData.ipAddress}`)
@@ -235,7 +238,7 @@ export default function RouterPage() {
         // VPN client: ping sudah berhasil, API gagal = MikroTik firewall memblokir
         const apiPort = parseInt(formData.port) || 8728
         const apiSslPort = parseInt(formData.apiPort) || 8729
-        const firewallCmd = `/ip firewall filter add chain=input src-address=172.16.212.1 protocol=tcp dst-port=${apiPort},${apiSslPort} action=accept place-before=0 comment="Allow VPS API"`
+        const firewallCmd = `/ip firewall filter add chain=input src-address=${vpnGatewayIp} protocol=tcp dst-port=${apiPort},${apiSslPort} action=accept place-before=0 comment="Allow VPS API"`
         setTestResult({ success: true, message: result.message, identity: 'VPN (ping OK, API pending)' })
         showSuccess(`VPN terhubung ✓\n\nAPI port ${apiPort} diblokir firewall MikroTik. Jalankan perintah ini di terminal MikroTik:\n\n${firewallCmd}`)
       } else {
