@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.46] — 2026-05-20
+### Fixed
+- **ERR_CONNECTION_CLOSED pada polling admin (setelah idle)** — Tiga fungsi polling di `AdminClientLayout.tsx` (`loadPending`, `loadPendingPayments`, `pollNotifications`) menggunakan `fetch()` tanpa retry. Saat koneksi keepalive di-drop oleh browser/Cloudflare setelah beberapa menit idle, request berikutnya gagal dengan `ERR_CONNECTION_CLOSED`. Fix: tambah helper `fetchWithRetry` (1x retry setelah 1 detik) di level modul dan ganti semua `fetch()` di polling dengan `fetchWithRetry()`.
+- **Nginx `proxy_next_upstream`** — Tambah `proxy_next_upstream error timeout` + `proxy_next_upstream_tries 2` + `proxy_next_upstream_timeout 5s` ke semua blok `location /api/` (catch-all) di 3 server block nginx untuk auto-retry di level proxy jika backend terputus.
+### Files
+- `src/app/admin/AdminClientLayout.tsx` — tambah `fetchWithRetry` helper, ganti `fetch()` di 3 polling useEffect
+- `/etc/nginx/sites-enabled/salfanet-radius` — tambah `proxy_next_upstream` ke blok `/api/`
+
+---
+
 ## [2.52.45] — 2026-05-20
 ### Fixed
 - **Edit Admin User 500 Internal Server Error** — Handler `PUT /api/admin/users/:id` meneruskan seluruh body JSON ke GORM `Updates()` termasuk field `permissions` (array) yang bukan kolom di tabel `admin_users`, menyebabkan SQL error. Fix: whitelist hanya field valid (`username`, `email`, `phone`, `name`, `role`, `isActive`, `twoFactorEnabled`, `password`), dan proses field `permissions` secara terpisah via tabel `user_permissions`.
