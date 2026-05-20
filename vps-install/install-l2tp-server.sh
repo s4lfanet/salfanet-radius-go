@@ -112,11 +112,8 @@ echo "${L2TP_PSK}" > "${L2TP_CONF_DIR}/ipsec.psk"
 chmod 600 "${L2TP_CONF_DIR}/ipsec.psk"
 
 cat > /etc/ipsec.conf << IPSECEOF
-# SALFANET RADIUS — strongSwan L2TP/IPsec Server
+# SALFANET RADIUS - strongSwan L2TP/IPsec Server
 # managed by salfanet-radius app
-
-config setup
-  uniqueIDs=no
 
 conn %default
   ikelifetime=60m
@@ -124,9 +121,7 @@ conn %default
   rekeymargin=3m
   keyingtries=1
   authby=secret
-  # IKE phase-1: broad proposal list, no strict (!) — MikroTik negotiates aes128/256 + sha1 + modp1024
   ike=aes256-sha256-modp2048,aes256-sha1-modp1024,aes128-sha1-modp1024,3des-sha1-modp1024,aes256-sha256,aes256-sha1,aes128-sha1
-  # ESP phase-2: include modp1024 PFS variants matching MikroTik default proposal
   esp=aes256-sha1-modp1024,aes128-sha1-modp1024,3des-sha1-modp1024,aes256-sha256-modp2048,aes256-sha256,aes256-sha1,aes128-sha1
 
 conn L2TP-PSK
@@ -139,9 +134,9 @@ conn L2TP-PSK
   auto=add
 IPSECEOF
 
-# IPsec secrets (PSK wildcard — berlaku untuk IP mana pun)
+# IPsec secrets (PSK wildcard - berlaku untuk IP mana pun)
 cat > /etc/ipsec.secrets << SECREOF
-# SALFANET RADIUS — IPsec PSK
+# SALFANET RADIUS - IPsec PSK
 # Format: local remote : PSK "secret"
 %any  %any  : PSK "${L2TP_PSK}"
 SECREOF
