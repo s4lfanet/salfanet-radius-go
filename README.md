@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.58 — 2026-05-21
+
+### Fixed
+- **GET /api/olt/:id — 404** — Root cause: `GetOLT` handler uses `Preload("MonitoringLogs", Order("created_at DESC"))` dan `Preload("PerformanceMetrics", Order("recorded_at DESC"))`. DB columns are camelCase (`createdAt`, `recordedAt`), bukan snake_case. MySQL error "Unknown column 'created_at'" membuat seluruh query gagal → handler return 404.
+- **`NetworkOLT` model — tidak ada column tags** — Semua field compound (`ipAddress`, `snmpEnabled`, `isOnline`, `totalOnu`, dst.) dipetakan GORM sebagai snake_case (`ip_address`, `snmp_enabled`, `is_online`, `total_onu`, dst.) tapi DB pakai camelCase. CREATE/UPDATE/SELECT semua salah.
+- **`olt_ext.go` Monitoring SELECT — snake_case columns** — `Select("id,name,ip_address,status,is_online,total_onu,online_onu,offline_onu")` → MySQL error "Unknown column". Diganti ke `"id,name,ipAddress,status,isOnline,totalOnu,onlineOnu,offlineOnu"`.
+### Files
+- `internal/db/models/olt.go` — tambah `gorm:"column:..."` camelCase ke semua field `NetworkOLT`: `ipAddress`, `followRoad`, `firmwareVersion`, `snmpEnabled`, `snmpCommunity`, `snmpPort`, `telnetEnabled`, `telnetPort`, `sshEnabled`, `sshPort`, `monitoringEnabled`, `pollingInterval`, `lastPollAt`, `isOnline`, `totalOnu`, `onlineOnu`, `offlineOnu`, `createdAt`, `updatedAt`
+- `internal/api/handlers/olt.go` — fix `GetOLT` preload order: `created_at` → `createdAt`, `recorded_at` → `recordedAt`
+- `internal/api/handlers/olt_ext.go` — fix `Monitoring` SELECT ke camelCase column names
+
 ### v2.52.57 — 2026-05-22
 
 ### Fixed
@@ -580,15 +591,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/misc_handler.go` — `NetworkOLTStatus`: rewrite untuk query `network_olts`, TCP check concurrent, return `{statusMap}`
 - `internal/api/handlers/network.go` — `ListOLTsForMap`: tambah `Preload("Routers.Router")`
 - `internal/db/models/olt.go` — `NetworkOLT`: tambah relasi `Routers`; `NetworkOLTRouter`: tambah nested `Router`
-
-### v2.52.53 — 2026-05-22
-
-### Fixed
-- **OLT Management page — list selalu kosong** — `GET /api/network/olts` memanggil `ListOLTsForMap` yang mengembalikan array mentah, sedangkan frontend mengharapkan `{olts: [...]}`. Fix: ubah `ListOLTsForMap` mengembalikan `fiber.Map{"olts": olts}`.
-- **OLT Detail page — crash `Cannot read properties of undefined (reading 'vendor')`** — `GET /api/olt/:id` mengembalikan model mentah, sedangkan `fetchOLT` di frontend mengharapkan `{olt: ...}` (wrapped). Akibatnya `data.olt` undefined → akses `o.vendor` crash. Fix: ubah `GetOLT` mengembalikan `fiber.Map{"olt": olt}` dan tambah preload `Alerts`.
-### Files
-- `internal/api/handlers/network.go` — `ListOLTsForMap`: return `{olts: olts}` bukan array mentah
-- `internal/api/handlers/olt.go` — `GetOLT`: return `{olt: olt}`, tambah `Preload("Alerts")`
 
 <!-- AUTO-CHANGELOG:END -->
 
