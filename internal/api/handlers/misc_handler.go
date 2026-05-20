@@ -1003,19 +1003,23 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 		var vpnClient prismaVpnClient
 		if h.db.First(&vpnClient, "id = ?", *router.VpnClientId).Error == nil {
 			nasSrcAddress = vpnClient.VpnIp
+		}
+		// Fallback: vpn_clients table may be empty; for VPN routers, router.IPAddress IS the VPN IP
+		if nasSrcAddress == "" && router.IPAddress != "" {
+			nasSrcAddress = router.IPAddress
+		}
 
+		if nasSrcAddress != "" {
 			// 1. Try to find VPN client explicitly marked as RADIUS server
 			var radiusVpnClient prismaVpnClient
 			if h.db.Where("isRadiusServer = ?", true).First(&radiusVpnClient).Error == nil && radiusVpnClient.VpnIp != "" {
 				radiusServerIP = radiusVpnClient.VpnIp
-			} else if nasSrcAddress != "" {
+			} else {
 				// 2. Derive VPN gateway from NAS VPN IP: 10.201.0.10 → 10.201.0.1
 				if idx := strings.LastIndex(nasSrcAddress, "."); idx != -1 {
 					radiusServerIP = nasSrcAddress[:idx] + ".1"
 				}
 			}
-		}
-		if nasSrcAddress != "" {
 			connectionType = fmt.Sprintf("VPN Tunnel (NAS: %s → RADIUS: %s)", nasSrcAddress, radiusServerIP)
 		} else {
 			connectionType = "VPN Tunnel"
