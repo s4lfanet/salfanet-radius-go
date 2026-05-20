@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.53] — 2026-05-22
+### Fixed
+- **OLT Management page — list selalu kosong** — `GET /api/network/olts` memanggil `ListOLTsForMap` yang mengembalikan array mentah, sedangkan frontend mengharapkan `{olts: [...]}`. Fix: ubah `ListOLTsForMap` mengembalikan `fiber.Map{"olts": olts}`.
+- **OLT Detail page — crash `Cannot read properties of undefined (reading 'vendor')`** — `GET /api/olt/:id` mengembalikan model mentah, sedangkan `fetchOLT` di frontend mengharapkan `{olt: ...}` (wrapped). Akibatnya `data.olt` undefined → akses `o.vendor` crash. Fix: ubah `GetOLT` mengembalikan `fiber.Map{"olt": olt}` dan tambah preload `Alerts`.
+### Files
+- `internal/api/handlers/network.go` — `ListOLTsForMap`: return `{olts: olts}` bukan array mentah
+- `internal/api/handlers/olt.go` — `GetOLT`: return `{olt: olt}`, tambah `Preload("Alerts")`
+
+---
+
 ## [2.52.52] — 2026-05-21
 ### Fixed
 - **L2TP delete VPN client — tidak membersihkan peer-routes.conf dan kernel routes** — Saat VPN client L2TP dihapus dari web, entri di `/etc/salfanet/l2tp/peer-routes.conf` tidak dihapus dan kernel routes (`ip route del`) tidak dijalankan. Fix: tambah `removeL2TPPeerRoutes(peer.PeerIP)` yang membaca peer-routes.conf, menghapus kernel routes semua subnet yang terdaftar, lalu menghapus baris dari file.
