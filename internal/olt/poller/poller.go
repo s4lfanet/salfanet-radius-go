@@ -255,7 +255,7 @@ func (p *Poller) knownPONPorts(ctx context.Context, oltID string) [][2]int {
 	var rows []portRow
 	if err := p.db.WithContext(ctx).
 		Model(&models.OLTONUStatus{}).
-		Where("olt_id = ?", oltID).
+		Where("oltId = ?", oltID).
 		Select("DISTINCT frame, port").
 		Find(&rows).Error; err != nil || len(rows) == 0 {
 		return nil
@@ -274,7 +274,7 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 			// Check if an unresolved alert already exists for this ONU
 			var existing models.OLTAlert
 			err := p.db.WithContext(ctx).Where(
-				"olt_id = ? AND onu_id = ? AND alert_type = ? AND is_resolved = ?",
+				"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
 				olt.ID, s.ID, models.AlertONUOffline, false,
 			).First(&existing).Error
 			if err == nil {
