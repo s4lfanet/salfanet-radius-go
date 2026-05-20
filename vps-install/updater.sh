@@ -508,9 +508,10 @@ if [ -n "$USE_BRANCH" ]; then
         fi
     fi
 
-    # ── Patch systemd service if ReadWritePaths is missing /uploads or /backups ─
+    # ── Patch systemd service if ReadWritePaths is missing /uploads, /backups, /etc/ppp, /etc/salfanet ─
     # (Fixed in v2.47.13 — ProtectSystem=strict blocked writes to /uploads)
     # (Fixed in v2.52.16 — ProtectSystem=strict blocked writes to /backups)
+    # (Fixed in v2.52.51 — ProtectSystem=strict blocked writes to /etc/ppp and /etc/salfanet)
     SVC_FILE="/etc/systemd/system/salfanet-api.service"
     if [ -f "$SVC_FILE" ]; then
         PATCHED=0
@@ -522,6 +523,11 @@ if [ -n "$USE_BRANCH" ]; then
         if grep -q "ReadWritePaths" "$SVC_FILE" && ! grep "ReadWritePaths" "$SVC_FILE" | grep -q "backups"; then
             print_info "Patching salfanet-api.service: adding /backups to ReadWritePaths..."
             sed -i "s|ReadWritePaths=\(.*\)|ReadWritePaths=\1 ${APP_DIR}/backups|" "$SVC_FILE"
+            PATCHED=1
+        fi
+        if grep -q "ReadWritePaths" "$SVC_FILE" && ! grep "ReadWritePaths" "$SVC_FILE" | grep -q "/etc/ppp"; then
+            print_info "Patching salfanet-api.service: adding /etc/ppp /etc/salfanet /etc/wireguard to ReadWritePaths..."
+            sed -i "s|ReadWritePaths=\(.*\)|ReadWritePaths=\1 /etc/ppp /etc/salfanet /etc/wireguard|" "$SVC_FILE"
             PATCHED=1
         fi
         if [ "$PATCHED" = "1" ]; then

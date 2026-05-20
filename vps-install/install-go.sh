@@ -128,7 +128,7 @@ SyslogIdentifier=${GO_SERVICE_NAME}
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
-ReadWritePaths=${_APP_DIR}/logs ${_APP_DIR}/uploads ${_APP_DIR}/backups
+ReadWritePaths=${_APP_DIR}/logs ${_APP_DIR}/uploads ${_APP_DIR}/backups /etc/ppp /etc/salfanet /etc/wireguard
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
