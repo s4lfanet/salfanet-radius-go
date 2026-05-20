@@ -106,16 +106,55 @@ func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
+
+	// Only whitelist columns that exist on admin_users table.
+	// Unknown fields (e.g. "permissions" array from frontend) cause GORM SQL errors.
+	allowed := map[string]bool{
+		"username": true, "email": true, "phone": true,
+		"name": true, "role": true, "isActive": true,
+		"twoFactorEnabled": true,
+	}
+	updates := make(map[string]interface{})
+	for k, v := range body {
+		if allowed[k] {
+			updates[k] = v
+		}
+	}
+
+	// Hash password if provided and non-empty
 	if pw, ok := body["password"].(string); ok && pw != "" {
 		hashed, _ := bcrypt.GenerateFromPassword([]byte(pw), 10)
-		body["password"] = string(hashed)
-	} else {
-		delete(body, "password")
+		updates["password"] = string(hashed)
 	}
-	delete(body, "id")
-	if err := h.db.Model(&models.AdminUser{}).Where("id = ?", id).Updates(body).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": "update failed"})
+
+	if len(updates) > 0 {
+		if err := h.db.Model(&models.AdminUser{}).Where("id = ?", id).Updates(updates).Error; err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "update failed"})
+		}
 	}
+
+	// Handle permissions if sent alongside the update
+	if rawPerms, ok := body["permissions"]; ok {
+		if permsSlice, ok := rawPerms.([]interface{}); ok {
+			h.db.Where("userId = ?", id).Delete(&models.UserPermission{})
+			for _, p := range permsSlice {
+				permKey, _ := p.(string)
+				if permKey == "" {
+					continue
+				}
+				var perm models.Permission
+				if err := h.db.Where("key = ?", permKey).First(&perm).Error; err != nil {
+					continue
+				}
+				h.db.Create(&models.UserPermission{
+					ID:           generateID(),
+					UserID:       id,
+					PermissionID: perm.ID,
+				})
+			}
+		}
+	}
+
 	return c.JSON(fiber.Map{"success": true})
 }
 
