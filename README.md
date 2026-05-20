@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.39 — 2026-05-21
+
+### Fixed
+- **Router/NAS test connection gagal saat VPN client dipilih** — Dua bug:
+  1. `TestGateway` hanya mencoba TCP probe (port 8728/22/80/443). Jika MikroTik firewall memblokir semua port TCP dari subnet VPN, ping test gagal meski VPN tunnel aktif. Fix: tambah ICMP ping fallback menggunakan `ping -c 1 -W 2` setelah TCP probe gagal.
+  2. Perintah firewall MikroTik yang ditampilkan saat API test gagal menggunakan IP hardcoded salah `172.16.212.1` sebagai `src-address`. Fix: backend `TestGateway` sekarang mengembalikan `localIp` (IP VPS di tunnel, contoh `10.201.0.1`) via `ip route get`, dan frontend menggunakannya di firewall command.
+### Files
+- `internal/api/handlers/misc_handler.go` — `TestGateway`: tambah ICMP ping fallback; tambah helper `getLocalIPForDest()` menggunakan `ip route get`; tambah `localIp` ke semua response sukses
+- `src/app/admin/network/routers/page.tsx` — Capture `pingResult.localIp` → simpan ke `vpnGatewayIp`; ganti hardcoded `172.16.212.1` dengan `${vpnGatewayIp}` di firewall command
+
 ### v2.52.38 — 2026-05-20
 
 ### Fixed
@@ -524,14 +534,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `prisma/schema.prisma` — Tambah `@@ignore` ke model `vpnServer` dan `vpnClient`
 - `internal/db/db.go` — Tambah `CREATE TABLE IF NOT EXISTS vpn_servers` dan `vpn_clients` ke `runMigrations`
-
-### v2.52.34 — 2026-05-21
-
-### Fixed
-- **TypeError: Cannot read properties of undefined (reading 'radiusServer')** — `SetupRadiusOnRouter` Go handler adalah stub kosong (hanya return `success: true` tanpa `config`, `script`, dll). Setelah router disimpan, frontend otomatis memanggil `handleSetupRadius` → `setScriptModalData({ config: result.config })` → `config` = `undefined` → modal crash saat render `scriptModalData.config.radiusServer`. Fix: implementasikan handler yang benar (lookup router, generate script RouterOS 6 + 7, return `config` object lengkap) dan tambah optional chaining `?.` di frontend sebagai safety guard.
-### Files
-- `internal/api/handlers/misc_handler.go` — Implementasi nyata `SetupRadiusOnRouter`: lookup router, baca `APP_BASE_URL`/`RADIUS_SERVER_IP` env untuk server IP, generate script MikroTik ROS6+ROS7, return `config` + `script` + `scriptRos6` + `scriptRos7`
-- `src/app/admin/network/routers/page.tsx` — Optional chaining `?.` pada `scriptModalData.config?.radiusServer` dll agar tidak crash bila `config` undefined
 
 <!-- AUTO-CHANGELOG:END -->
 
