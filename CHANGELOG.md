@@ -6,6 +6,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.41] — 2026-05-20
+### Fixed
+- **RADIUS script ROS6/ROS7 tidak lengkap** — Script yang di-generate tombol "RADIUS Script" hanya berisi 4 baris minimal. Banyak perintah penting hilang dibanding versi Next.js sebelumnya. Fix komprehensif:
+  1. Tambah header berisi nama NAS, IP RADIUS, jenis koneksi, tanggal generate
+  2. Idempotent: `/radius remove [find ... comment~"Salfanet"]` sebelum add (ROS7 pakai `where`, ROS6 tanpa `where`)
+  3. Timeout benar: ROS7 = `timeout=3s`, ROS6 = `timeout=3` (tanpa 's')
+  4. Tambah `/ppp aaa set use-radius=yes accounting=yes interim-update=00:10:00` (sebelumnya hilang)
+  5. Tambah `radius-accounting=yes radius-interim-update=00:10:00` di hotspot profile (sebelumnya hilang)
+  6. Ganti `/ppp profile set [find] use-radius=yes` (salah) → `/ppp aaa set use-radius=yes` (benar)
+  7. Ganti `/ip radius incoming` (salah) → `/radius incoming` (benar)
+  8. Tambah firewall rules untuk allow CoA (3799) dan Auth/Acct (1812/1813) dari RADIUS server
+  9. Untuk router via VPN: lookup VPN client IP → tambah `src-address={vpnIp}` ke `/radius add`, derive RADIUS server IP dari VPN gateway (replace last octet jadi .1)
+  10. Tambah blok verifikasi di akhir script
+### Files
+- `internal/api/handlers/misc_handler.go` — Rewrite `SetupRadiusOnRouter`: VPN client IP lookup, complete ROS6+ROS7 scripts, proper PPP AAA, hotspot accounting, firewall rules, idempotent remove, correct timeout syntax
+
 ## [2.52.40] — 2026-05-21
 ### Fixed
 - **L2TP VPN putus setiap update (install-l2tp-server.sh overwrite ipsec.conf)** — Script installer menulis `/etc/ipsec.conf` dengan proposal IKE/ESP terlalu sempit dan flag strict (`!`), sehingga MikroTik gagal phase1 ("phase1 negotiation failed due to time up"). Dua masalah: (1) `ike=` hanya berisi `aes256-sha256-modp2048,aes256-sha1-modp1024!` — MikroTik default mengirim `aes128-sha1-modp1024` yang ditolak. (2) `esp=aes256-sha256,aes256-sha1!` tanpa modp1024, padahal MikroTik default ESP pakai PFS modp1024. Fix: perluas `ike=` dan `esp=` mencakup semua varian AES-128/192/256 + SHA1 + modp1024, hapus flag strict `!`. Juga fix `auth` → `noauth` di pppd options (Ubuntu 22.04 pppd 2.4.9 tidak support MSCHAPv2 natively; autentikasi sudah dijamin IPsec PSK phase 1).
