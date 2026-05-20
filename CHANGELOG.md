@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.43] — 2026-05-20
+### Fixed
+- **RADIUS setup script pakai IP publik saat router via VPN** — Sebelumnya `SetupRadiusOnRouter` selalu pakai `RADIUS_SERVER_IP` env (103.151.140.110) bahkan saat router terhubung via VPN. Seharusnya pakai IP VPN internal (mis. 10.201.0.1). Fix: saat `vpnClientId` ada, lookup VPN client `isRadiusServer=true` untuk RADIUS IP, atau derive dari VPN IP NAS (replace last octet dengan .1). Juga ditambahkan: gateway masquerade entry, `require-message-auth=no` (ROS7), PPP pool `pool-radius-default`, PPP profile `salfanetradius`, netwatch monitoring, `wireless` di service list, `interim-update=5m`.
+### Files
+- `internal/api/handlers/misc_handler.go` — `SetupRadiusOnRouter`: full rewrite VPN IP logic + tambah gateway masquerade, pool/profile PPP, netwatch
+
+---
+
 ## [2.52.42] — 2026-05-20
 ### Fixed
 - **Password & RADIUS secret kosong saat edit router** — Saat tombol edit router diklik, field password MikroTik dan RADIUS secret selalu kosong karena `models.Router` punya `json:"-"` pada kedua field tersebut sehingga tidak ikut di-return API list. Fix: `GetRouter` endpoint (`GET /api/network/routers/:id/detail`) sekarang me-return password & secret secara eksplisit via `fiber.Map`; `handleEdit` di frontend di-refactor jadi `async` dan fetch credential dari endpoint detail setelah modal terbuka, lalu patch `formData` dengan nilai yang didapat.
