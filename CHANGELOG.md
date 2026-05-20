@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.48] — 2026-05-20
+### Fixed
+- **Visibilitas menu per role** — 3 bug fixes:
+  1. Parent menu "Payment" pakai `requiredPermission: 'settings.payment'` → diubah ke `'invoices.view'` agar role FINANCE, CUSTOMER_SERVICE, dan VIEWER bisa melihat menu Manual Payments
+  2. Payroll Templates + HR Management (attendance, cash advances, commissions, payroll) pakai `settings.view` → diubah ke `keuangan.view` agar role FINANCE bisa akses menu payroll/HR
+  3. Handler `POST /api/admin/users` tidak menyimpan array `permissions` dari form → diperbaiki, permissions kini disimpan ke tabel `user_permissions` saat create user
+- **DB role_permissions** — Tambah permission `sessions.view` ke role FINANCE, tambah `routers.view` ke role VIEWER (via SQL INSERT IGNORE)
+### Files
+- `src/app/admin/AdminClientLayout.tsx` — Payment parent permission guard, Payroll Templates + HR Management permission guards
+- `internal/api/handlers/admin_users.go` — Create handler: tambah field `Permissions`, loop simpan ke `user_permissions` table
+
+---
+
 ## [2.52.47] — 2026-05-20
 ### Fixed
 - **Tambah user admin 400 Bad Request** — Handler `POST /api/admin/users` memvalidasi field `name` wajib tidak kosong, tapi form frontend (`management/page.tsx`) tidak memiliki input `name`. Fix: jika `name` tidak dikirim (kosong), otomatis di-default ke nilai `username`.
