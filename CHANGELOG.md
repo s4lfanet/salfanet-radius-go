@@ -10,7 +10,7 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - **L2TP VPN putus setiap update (install-l2tp-server.sh overwrite ipsec.conf)** — Script installer menulis `/etc/ipsec.conf` dengan proposal IKE/ESP terlalu sempit dan flag strict (`!`), sehingga MikroTik gagal phase1 ("phase1 negotiation failed due to time up"). Dua masalah: (1) `ike=` hanya berisi `aes256-sha256-modp2048,aes256-sha1-modp1024!` — MikroTik default mengirim `aes128-sha1-modp1024` yang ditolak. (2) `esp=aes256-sha256,aes256-sha1!` tanpa modp1024, padahal MikroTik default ESP pakai PFS modp1024. Fix: perluas `ike=` dan `esp=` mencakup semua varian AES-128/192/256 + SHA1 + modp1024, hapus flag strict `!`. Juga fix `auth` → `noauth` di pppd options (Ubuntu 22.04 pppd 2.4.9 tidak support MSCHAPv2 natively; autentikasi sudah dijamin IPsec PSK phase 1).
 ### Files
-- `vps-install/install-l2tp-server.sh` — Perluas `ike=` dan `esp=` proposals; hapus flag strict `!`; ganti `auth` → `noauth` di pppd options
+- `vps-install/install-l2tp-server.sh` — Perluas `ike=` dan `esp=` proposals; hapus flag strict `!`; ganti `auth` → `noauth` di pppd options; hapus em dash (`—`) dari baris komentar di heredoc ipsec.conf (em dash menyebabkan strongSwan 5.9.5 diam-diam gagal parse file sehingga `Connections:` tetap kosong meski syntax benar)
 
 ## [2.52.39] — 2026-05-21
 ### Fixed
