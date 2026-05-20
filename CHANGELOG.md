@@ -6,7 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.52.49] — 2026-05-20
+## [2.52.50] — 2026-05-21
+### Added
+- **L2TP VPN Client — input IP lokal dan auto-routing VPS** — Form tambah VPN client sekarang menampilkan field "IP Lokal / Subnet di Balik NAS" untuk tipe L2TP (VPS L2TP server) sama seperti WireGuard. Saat VPN client L2TP dibuat dengan `localNetworks` diisi, Go handler akan: (1) menulis entri ke `/etc/salfanet/l2tp/peer-routes.conf`, (2) memasang hook `/etc/ppp/ip-up.d/99-salfanet-routes.sh` yang otomatis menambahkan route ke subnet lokal NAS setiap kali tunnel L2TP tersambung, (3) mencoba `ip route replace` langsung (best-effort jika PPP sudah aktif). Script MikroTik yang dihasilkan juga menyertakan perintah route dan firewall untuk routing balik ke subnet VPN.
+- **WireGuard VPN Peer — localNetworks benar-benar digunakan** — `CreateWGPeer` sebelumnya menerima `localNetworks` tapi mengabaikannya. Sekarang subnet lokal disertakan di `AllowedIPs` peer di `wg0.conf` dan live via `wg set`, serta `ip route replace` langsung diterapkan di VPS.
+### Files
+- `src/app/admin/network/vpn-client/page.tsx` — Field "IP Lokal" kini tampil juga untuk L2TP VPS; label hint disesuaikan per tipe VPN
+- `internal/api/handlers/network_vpn_ext_handler.go` — `CreateL2TPPeer`: handle `localNetworks` → peer-routes.conf + ip-up.d hook + immediate routes + script; `CreateWGPeer`: build `allowedIPs` dari localNetworks + `ip route replace`
+
 ### Fixed
 - **Tambah OLT di admin/network/olts — 405 Method Not Allowed** — `POST /api/network/olts` tidak ada route-nya. Backend hanya punya route CRUD di `/api/olt/*` bukan `/api/network/olts`. Fix: tambah `POST`, `PUT`, `DELETE` di network group + 3 handler baru di `NetworkHandler` yang handle ID dari request body (bukan URL param).
 - **OLT Test Connection — TypeError: Cannot read properties of undefined (reading 'tests')** — Dua root cause: (1) Frontend memanggil `POST /api/olt/test-connection` yang tidak ada route-nya. Fix: tambah `olt.Post("/test-connection", oltH.TestConnection)`. (2) Handler `TestOLTConnection` di AdminMiscHandler hanya stub tanpa field `results.tests`. Fix: buat handler baru di `OLTHandler.TestConnection` yang melakukan TCP check ke port SSH (dan Telnet jika enabled) lalu return `{success, results: {tests: [{method, success, message, time}]}}`. (3) Frontend tidak memproteksi akses `result.results.tests.map(...)` saat field undefined → fix dengan optional chaining + fallback.

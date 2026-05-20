@@ -1455,11 +1455,83 @@ func (h *NetworkVPNHandler) CreateL2TPPeer(c fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Gagal simpan peer: " + err.Error()})
 	}
 
-	// Build MikroTik RouterOS script
+	// Build MikroTik RouterOS script (base: create L2TP client interface)
+	l2tpIfaceName := fmt.Sprintf("l2tp-%s", safeLabel)
 	routerosScript := fmt.Sprintf(
-		`/interface l2tp-client add name="l2tp-%s" connect-to=%s user=%s password="%s" ipsec-secret="%s" use-ipsec=yes disabled=no`,
-		safeLabel, publicIP, username, password, ipsecPsk,
+		`/interface l2tp-client add name="%s" connect-to=%s user=%s password="%s" ipsec-secret="%s" use-ipsec=yes disabled=no`,
+		l2tpIfaceName, publicIP, username, password, ipsecPsk,
 	)
+
+	// Handle localNetworks — persist VPS routes + install ip-up.d hook
+	var l2tpLocalNets []string
+	if body.LocalNetworks != nil {
+		for _, n := range strings.Split(*body.LocalNetworks, ",") {
+			n = strings.TrimSpace(n)
+			if n != "" && strings.Contains(n, ".") {
+				l2tpLocalNets = append(l2tpLocalNets, n)
+			}
+		}
+	}
+
+	if len(l2tpLocalNets) > 0 {
+		// 1. Write /etc/salfanet/l2tp/peer-routes.conf
+		routeConf := "/etc/salfanet/l2tp/peer-routes.conf"
+		_ = os.MkdirAll("/etc/salfanet/l2tp", 0755)
+		// Load existing content, strip old entry for this vpnIP
+		existingLines := []string{}
+		if raw, err := os.ReadFile(routeConf); err == nil {
+			for _, line := range strings.Split(string(raw), "\n") {
+				trimmed := strings.TrimSpace(line)
+				if trimmed == "" || strings.HasPrefix(trimmed, vpnIP+" ") {
+					continue
+				}
+				existingLines = append(existingLines, line)
+			}
+		}
+		// Append new entry: <vpnIP> <net1> <net2> ...
+		existingLines = append(existingLines, fmt.Sprintf("%s %s", vpnIP, strings.Join(l2tpLocalNets, " ")))
+		_ = os.WriteFile(routeConf, []byte(strings.Join(existingLines, "\n")+"\n"), 0644)
+
+		// 2. Install /etc/ppp/ip-up.d/99-salfanet-routes.sh hook
+		hookScript := "#!/bin/bash\n" +
+			"# Auto-configure L2TP local network routing on PPP connect (by Salfanet)\n" +
+			"# Called by pppd: $1=iface $4=local_ip $5=remote_ip(peer)\n" +
+			"PEER_IP=\"$5\"\n" +
+			"IFACE=\"$1\"\n" +
+			"CONF=\"/etc/salfanet/l2tp/peer-routes.conf\"\n" +
+			"[ -f \"$CONF\" ] || exit 0\n" +
+			"while IFS= read -r line; do\n" +
+			"  [[ \"$line\" =~ ^# ]] && continue\n" +
+			"  [[ -z \"$line\" ]] && continue\n" +
+			"  peer=$(echo \"$line\" | awk '{print $1}')\n" +
+			"  [ \"$peer\" = \"$PEER_IP\" ] || continue\n" +
+			"  nets=$(echo \"$line\" | cut -d' ' -f2-)\n" +
+			"  for net in $nets; do\n" +
+			"    ip route replace \"$net\" via \"$PEER_IP\" dev \"$IFACE\" 2>/dev/null && \\\n" +
+			"      logger -t salfanet-vpn \"Route added: $net via $PEER_IP ($IFACE)\"\n" +
+			"  done\n" +
+			"done < \"$CONF\"\n"
+		hookPath := "/etc/ppp/ip-up.d/99-salfanet-routes.sh"
+		_ = os.MkdirAll("/etc/ppp/ip-up.d", 0755)
+		_ = os.WriteFile(hookPath, []byte(hookScript), 0755)
+
+		// 3. Try immediate route add (best-effort; PPP must already be up)
+		for _, net := range l2tpLocalNets {
+			_ = exec.Command("ip", "route", "replace", net, "via", vpnIP).Run()
+		}
+
+		// 4. Append routing instructions to routerosScript
+		routeNotes := "\n\n# ── Routing (MikroTik → VPS) ───────────────────────────────\n"
+		routeNotes += fmt.Sprintf("# Route ke subnet VPN agar MikroTik bisa menjangkau RADIUS server\n/ip/route/add dst-address=%s gateway=%s comment=\"SALFANET-VPN\"\n", subnet, l2tpIfaceName)
+		routeNotes += fmt.Sprintf("# Izinkan forward dari/ke interface L2TP\n/ip/firewall/filter/add chain=forward in-interface=%s action=accept comment=\"SALFANET VPN fwd in\"\n/ip/firewall/filter/add chain=forward out-interface=%s action=accept comment=\"SALFANET VPN fwd out\"\n", l2tpIfaceName, l2tpIfaceName)
+		routeNotes += "\n# ── VPS routes (otomatis via ip-up.d) ──────────────────────\n"
+		routeNotes += "# Jaringan lokal berikut sudah terdaftar di VPS. Route akan\n"
+		routeNotes += "# ditambahkan otomatis setiap kali tunnel L2TP tersambung:\n"
+		for _, net := range l2tpLocalNets {
+			routeNotes += fmt.Sprintf("# %s → via %s (VPN IP NAS)\n", net, vpnIP)
+		}
+		routerosScript += routeNotes
+	}
 
 	return c.Status(201).JSON(fiber.Map{
 		"success":        true,
@@ -1472,6 +1544,7 @@ func (h *NetworkVPNHandler) CreateL2TPPeer(c fiber.Ctx) error {
 		"apiPassword":    apiPassword,
 		"ipsecPsk":       ipsecPsk,
 		"serverPublicIp": publicIP,
+		"localNetworks":  l2tpLocalNets,
 		"routerosScript": routerosScript,
 	})
 }
@@ -1595,15 +1668,35 @@ func (h *NetworkVPNHandler) CreateWGPeer(c fiber.Ctx) error {
 	}
 	clientPubKey := strings.TrimSpace(string(pubKeyOut))
 
+	// Build AllowedIPs = vpnIp/32 + any localNetworks behind the NAS
+	var wgLocalNets []string
+	if body.LocalNetworks != nil {
+		for _, n := range strings.Split(*body.LocalNetworks, ",") {
+			n = strings.TrimSpace(n)
+			if n != "" && strings.Contains(n, ".") {
+				wgLocalNets = append(wgLocalNets, n)
+			}
+		}
+	}
+	allowedIPs := vpnIp + "/32"
+	if len(wgLocalNets) > 0 {
+		allowedIPs += "," + strings.Join(wgLocalNets, ",")
+	}
+
 	// Add [Peer] block to wg0.conf
-	peerBlock := fmt.Sprintf("\n\n[Peer]\n# %s\nPublicKey = %s\nAllowedIPs = %s/32\n",
-		nasName, clientPubKey, vpnIp)
+	peerBlock := fmt.Sprintf("\n\n[Peer]\n# %s\nPublicKey = %s\nAllowedIPs = %s\n",
+		nasName, clientPubKey, allowedIPs)
 	if confRaw, readErr := os.ReadFile(wgConfFile); readErr == nil {
 		_ = os.WriteFile(wgConfFile, append(confRaw, []byte(peerBlock)...), 0600)
 	}
 
 	// Apply peer to running WireGuard interface (no restart needed)
-	_ = exec.Command("wg", "set", "wg0", "peer", clientPubKey, "allowed-ips", vpnIp+"/32").Run()
+	_ = exec.Command("wg", "set", "wg0", "peer", clientPubKey, "allowed-ips", allowedIPs).Run()
+
+	// Add VPS-side routes for local networks via vpnIp (best-effort; WG interface must be up)
+	for _, localNet := range wgLocalNets {
+		_ = exec.Command("ip", "route", "replace", localNet, "via", vpnIp).Run()
+	}
 
 	// Generate credentials
 	nasSecret := wgRandomHex(16)
@@ -1654,6 +1747,7 @@ func (h *NetworkVPNHandler) CreateWGPeer(c fiber.Ctx) error {
 		"nasSecret":        nasSecret,
 		"apiUsername":      apiUsername,
 		"apiPassword":      apiPassword,
+		"localNetworks":    wgLocalNets,
 	})
 }
 

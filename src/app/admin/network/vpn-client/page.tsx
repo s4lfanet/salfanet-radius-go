@@ -1541,8 +1541,8 @@ ${vpnCmd}
                   />
                 </div>
 
-                {/* Local Networks — for any WireGuard peer (VPS routes to local subnets behind NAS) */}
-                {formData.vpnType === 'wireguard' && (
+                {/* Local Networks — for WireGuard and VPS L2TP peers */}
+                {(formData.vpnType === 'wireguard' || (formData.vpnType === 'l2tp' && formData.vpnServerId === '__vps_l2tp__')) && (
                   <div>
                     <label className="block text-sm font-medium text-[#00f7ff] mb-2">
                       IP Lokal / Subnet di Balik NAS <span className="text-muted-foreground font-normal">(opsional)</span>
@@ -1555,7 +1555,10 @@ ${vpnCmd}
                       placeholder="cth: 192.168.75.0/24,136.1.1.100/32"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Pisahkan dengan koma. IP/subnet ini akan ditambahkan ke <span className="text-[#00f7ff] font-mono">AllowedIPs</span> peer WireGuard di VPS sehingga VPS bisa menjangkau jaringan lokal di balik NAS (Mikrotik).
+                      {formData.vpnType === 'wireguard'
+                        ? <>Pisahkan dengan koma. IP/subnet ini akan ditambahkan ke <span className="text-[#00f7ff] font-mono">AllowedIPs</span> peer WireGuard di VPS sehingga VPS bisa menjangkau jaringan lokal di balik NAS.</>
+                        : <>Pisahkan dengan koma. VPS akan otomatis menambahkan route ke subnet ini via IP VPN NAS, dan script ip-up.d akan dipasang agar route kembali setiap L2TP terhubung.</>
+                      }
                     </p>
                   </div>
                 )}
