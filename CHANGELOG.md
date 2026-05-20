@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.54] — 2026-05-22
+### Fixed
+- **OLT Edit — router tidak tersimpan** — `UpdateOLT` menghapus `routerIds` dari body sebelum update sehingga relasi ke `network_olt_routers` tidak pernah disimpan. Fix: ekstrak `routerIds` terlebih dahulu, hapus baris lama, lalu insert ulang ke `network_olt_routers`.
+- **OLT Create — router tidak tersimpan** — `CreateOLT` tidak memiliki field `routerIds` di struct body. Fix: tambah `RouterIDs []string` ke struct dan create `NetworkOLTRouter` records setelah OLT dibuat.
+- **OLT Edit — password terhapus jika dikosongkan** — GORM `Updates` dengan map menyertakan empty string sebagai nilai update. Jika user tidak mengisi ulang password di form edit, password lama terhapus. Fix: hapus key `password` dari map jika nilainya kosong.
+- **OLT list — Status selalu "Checking" / tidak muncul** — `NetworkOLTStatus` query tabel `olts` lama (legacy) dan mengembalikan `{olts, count}` sedangkan frontend mengharapkan `{statusMap: {[id]: {online, details}}}`. Fix: query tabel `network_olts`, lakukan TCP check ke SSH/Telnet port secara concurrent, kembalikan format yang benar.
+- **OLT Edit form — router tidak ter-preload** — `ListOLTsForMap` tidak preload router associations, sehingga form Edit selalu menampilkan checklist kosong. Fix: tambah `Preload("Routers.Router")` dan tambah relasi `Routers` + nested `Router` ke model.
+### Files
+- `internal/api/handlers/network_ext.go` — `UpdateOLT`: save router associations, skip empty password; `CreateOLT`: tambah `RouterIDs` + create associations
+- `internal/api/handlers/misc_handler.go` — `NetworkOLTStatus`: rewrite untuk query `network_olts`, TCP check concurrent, return `{statusMap}`
+- `internal/api/handlers/network.go` — `ListOLTsForMap`: tambah `Preload("Routers.Router")`
+- `internal/db/models/olt.go` — `NetworkOLT`: tambah relasi `Routers`; `NetworkOLTRouter`: tambah nested `Router`
+
+---
+
 ## [2.52.53] — 2026-05-22
 ### Fixed
 - **OLT Management page — list selalu kosong** — `GET /api/network/olts` memanggil `ListOLTsForMap` yang mengembalikan array mentah, sedangkan frontend mengharapkan `{olts: [...]}`. Fix: ubah `ListOLTsForMap` mengembalikan `fiber.Map{"olts": olts}`.
