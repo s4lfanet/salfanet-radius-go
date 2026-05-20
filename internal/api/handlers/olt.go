@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"net"
 	"strconv"
 	"time"
 
@@ -111,6 +112,88 @@ func (h *OLTHandler) DeleteOLT(c fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"message": "deleted"})
+}
+
+// TestConnection godoc
+// POST /api/olt/test-connection
+func (h *OLTHandler) TestConnection(c fiber.Ctx) error {
+	var body struct {
+		IPAddress     string `json:"ipAddress"`
+		SSHEnabled    bool   `json:"sshEnabled"`
+		TelnetEnabled bool   `json:"telnetEnabled"`
+		SSHPort       string `json:"sshPort"`
+		TelnetPort    string `json:"telnetPort"`
+		OltID         string `json:"oltId"`
+	}
+	c.Bind().JSON(&body)
+
+	ip := body.IPAddress
+	if ip == "" && body.OltID != "" {
+		var olt models.NetworkOLT
+		if err := h.db.First(&olt, "id = ?", body.OltID).Error; err == nil {
+			ip = olt.IPAddress
+		}
+	}
+	if ip == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "ipAddress required"})
+	}
+
+	sshPort, _ := strconv.Atoi(body.SSHPort)
+	if sshPort == 0 {
+		sshPort = 22
+	}
+	telnetPort, _ := strconv.Atoi(body.TelnetPort)
+	if telnetPort == 0 {
+		telnetPort = 23
+	}
+
+	type testResult struct {
+		Method  string `json:"method"`
+		Success bool   `json:"success"`
+		Message string `json:"message"`
+		Time    int    `json:"time"`
+	}
+	var tests []testResult
+	anySuccess := false
+
+	// SSH TCP check
+	{
+		start := time.Now()
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, sshPort), 5*time.Second)
+		elapsed := int(time.Since(start).Milliseconds())
+		if err == nil {
+			conn.Close()
+			tests = append(tests, testResult{Method: "SSH", Success: true, Message: fmt.Sprintf("Port %d reachable", sshPort), Time: elapsed})
+			anySuccess = true
+		} else {
+			tests = append(tests, testResult{Method: "SSH", Success: false, Message: fmt.Sprintf("Port %d unreachable", sshPort), Time: elapsed})
+		}
+	}
+
+	// Telnet TCP check (if enabled)
+	if body.TelnetEnabled {
+		start := time.Now()
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, telnetPort), 5*time.Second)
+		elapsed := int(time.Since(start).Milliseconds())
+		if err == nil {
+			conn.Close()
+			tests = append(tests, testResult{Method: "Telnet", Success: true, Message: fmt.Sprintf("Port %d reachable", telnetPort), Time: elapsed})
+			anySuccess = true
+		} else {
+			tests = append(tests, testResult{Method: "Telnet", Success: false, Message: fmt.Sprintf("Port %d unreachable", telnetPort), Time: elapsed})
+		}
+	}
+
+	if body.OltID != "" {
+		h.db.Model(&models.NetworkOLT{}).Where("id = ?", body.OltID).Update("isOnline", anySuccess)
+	}
+
+	return c.JSON(fiber.Map{
+		"success": anySuccess,
+		"results": fiber.Map{
+			"tests": tests,
+		},
+	})
 }
 
 // SyncOLT godoc

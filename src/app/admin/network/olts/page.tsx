@@ -284,24 +284,19 @@ export default function OLTsPage() {
       const result = await response.json();
       setConnectionTestResult(result);
 
+      const formatTests = (r: any) =>
+        (r?.results?.tests || []).map((test: any) =>
+          `${test.method}: ${test.success ? '✓' : '✗'} ${test.message} (${test.time}ms)`
+        ).join('\n') || r?.message || 'No details available';
+
       if (result.success) {
-        showSuccess(
-          'Connection Test Successful!',
-          result.results.tests.map((test: any) => 
-            `${test.method}: ${test.success ? '✓' : '✗'} ${test.message} (${test.time}ms)`
-          ).join('\n')
-        );
+        showSuccess('Connection Test Successful!', formatTests(result));
         // Refresh OLTs to update is_online status
         if (editingOlt) {
           loadData();
         }
       } else {
-        showError(
-          'Connection Test Failed',
-          result.results.tests.map((test: any) => 
-            `${test.method}: ${test.success ? '✓' : '✗'} ${test.message} (${test.time}ms)`
-          ).join('\n')
-        );
+        showError('Connection Test Failed', formatTests(result));
       }
     } catch (error) {
       console.error('Connection test error:', error);

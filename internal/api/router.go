@@ -206,6 +206,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	olt.Get("/", oltH.ListOLTs)
 	olt.Post("/", oltH.CreateOLT)
 	// Monitoring dashboard & global alerts (must be before /:id)
+	olt.Post("/test-connection", oltH.TestConnection) // before /:id
 	olt.Get("/monitoring", oltH.MonitoringList)
 	olt.Post("/monitoring", oltH.MonitoringPoll)
 	olt.Get("/alerts", oltH.ListAllAlerts)
@@ -346,6 +347,9 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// Network Map
 	network := api.Group("/network")
 	network.Get("/olts", networkH.ListOLTsForMap)
+	network.Post("/olts", networkH.CreateOLT)
+	network.Put("/olts", networkH.UpdateOLT)
+	network.Delete("/olts", networkH.DeleteOLT)
 	network.Get("/odcs", networkH.ListODCs)
 	network.Post("/odcs", networkH.CreateODC)
 	network.Put("/odcs/:id", networkH.UpdateODC)

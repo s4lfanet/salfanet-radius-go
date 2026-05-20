@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"sync"
 	"time"
 
@@ -198,6 +199,122 @@ func (h *NetworkHandler) ImportOLTs(c fiber.Ctx) error {
 // GET /api/network/olts/template
 func (h *NetworkHandler) OLTImportTemplate(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "message": "template stub"})
+}
+
+// POST /api/network/olts — Create OLT (ID from body, ports as strings from form)
+func (h *NetworkHandler) CreateOLT(c fiber.Ctx) error {
+	var body struct {
+		Name            string `json:"name"`
+		IPAddress       string `json:"ipAddress"`
+		Vendor          string `json:"vendor"`
+		Model           string `json:"model"`
+		FirmwareVersion string `json:"firmwareVersion"`
+		Username        string `json:"username"`
+		Password        string `json:"password"`
+		SNMPCommunity   string `json:"snmpCommunity"`
+		SSHEnabled      bool   `json:"sshEnabled"`
+		TelnetEnabled   bool   `json:"telnetEnabled"`
+		SSHPort         string `json:"sshPort"`
+		TelnetPort      string `json:"telnetPort"`
+		SNMPPort        string `json:"snmpPort"`
+		Latitude        string `json:"latitude"`
+		Longitude       string `json:"longitude"`
+		Status          string `json:"status"`
+		FollowRoad      bool   `json:"followRoad"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.Status == "" {
+		body.Status = "active"
+	}
+	if body.SNMPCommunity == "" {
+		body.SNMPCommunity = "public"
+	}
+	sshPort, _ := strconv.Atoi(body.SSHPort)
+	if sshPort == 0 {
+		sshPort = 22
+	}
+	telnetPort, _ := strconv.Atoi(body.TelnetPort)
+	if telnetPort == 0 {
+		telnetPort = 23
+	}
+	snmpPort, _ := strconv.Atoi(body.SNMPPort)
+	if snmpPort == 0 {
+		snmpPort = 161
+	}
+	lat, _ := strconv.ParseFloat(body.Latitude, 64)
+	lon, _ := strconv.ParseFloat(body.Longitude, 64)
+
+	vendor := body.Vendor
+	model := body.Model
+	fw := body.FirmwareVersion
+	username := body.Username
+	password := body.Password
+
+	olt := models.NetworkOLT{
+		ID:              uuid.NewString(),
+		Name:            body.Name,
+		IPAddress:       body.IPAddress,
+		Latitude:        lat,
+		Longitude:       lon,
+		Status:          body.Status,
+		FollowRoad:      body.FollowRoad,
+		Vendor:          &vendor,
+		Model:           &model,
+		FirmwareVersion: &fw,
+		Username:        &username,
+		Password:        &password,
+		SNMPCommunity:   body.SNMPCommunity,
+		SSHEnabled:      body.SSHEnabled,
+		TelnetEnabled:   body.TelnetEnabled,
+		SSHPort:         sshPort,
+		TelnetPort:      telnetPort,
+		SNMPPort:        snmpPort,
+	}
+	if err := h.db.Create(&olt).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.Status(201).JSON(fiber.Map{"success": true, "olt": olt})
+}
+
+// PUT /api/network/olts — Update OLT (ID in body)
+func (h *NetworkHandler) UpdateOLT(c fiber.Ctx) error {
+	var body map[string]interface{}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	id, _ := body["id"].(string)
+	if id == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "id required"})
+	}
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", id).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "OLT not found"})
+	}
+	delete(body, "id")
+	delete(body, "routerIds")
+	body["updatedAt"] = time.Now()
+	if err := h.db.Model(&olt).Updates(body).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	h.db.First(&olt, "id = ?", id)
+	return c.JSON(fiber.Map{"success": true, "olt": olt})
+}
+
+// DELETE /api/network/olts — Delete OLT (ID in body)
+func (h *NetworkHandler) DeleteOLT(c fiber.Ctx) error {
+	var body struct {
+		ID string `json:"id"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || body.ID == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "id required"})
+	}
+	h.db.Exec("UPDATE network_otbs SET oltId = NULL WHERE oltId = ?", body.ID)
+	if err := h.db.Delete(&models.NetworkOLT{}, "id = ?", body.ID).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"success": true})
 }
 
 // ─── ODC extended ─────────────────────────────────────────────────────────────
