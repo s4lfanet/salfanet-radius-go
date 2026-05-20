@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.37] — 2026-05-20
+### Fixed
+- **Updater.sh tidak update kode terbaru (self-overwrite bug)** — Root cause: saat updater.sh berjalan, `rsync` menyalin file baru dari `/root/salfanet-radius/` ke `/var/www/salfanet-radius/` termasuk `vps-install/updater.sh` yang SEDANG BERJALAN. Bash membaca script dalam blok/chunk, sehingga overwrite di tengah eksekusi menyebabkan bash membaca konten campur lama+baru → step penting terlewat. Fix: tambah bootstrap pattern di awal script — copy diri sendiri ke `/tmp/` dan re-exec sekali sebelum apapun berjalan (`_UPDATER_BOOTSTRAP` env flag mencegah loop).
+### Files
+- `vps-install/updater.sh` — Tambah bootstrap self-copy ke `/tmp/` via `_UPDATER_BOOTSTRAP` flag di awal script
+
 ## [2.52.36] — 2026-05-20
 ### Fixed
 - **VPN Client data masih hilang setelah updater.sh** — Root cause: `mysqldump --no-create-info` hanya meng-export INSERT statements (data), tanpa `CREATE TABLE`. Saat Prisma DROP tabel saat `prisma db push`, restore berjalan tapi INSERT gagal karena tabel tidak ada → data hilang diam-diam. Fix: hapus `--no-create-info`, ganti dengan `--add-drop-table` (default mysqldump) di semua fungsi backup (`backup_vpn_data`, `backup_vps_peers_data`, `backup_genieacs_data`). Sekarang backup menyertakan `DROP TABLE IF EXISTS` + `CREATE TABLE` + `INSERT`, jadi restore recreate tabel dari nol bahkan jika Prisma menghapusnya. Juga tambah `SET FOREIGN_KEY_CHECKS=0` di restore GenieACS untuk konsistensi.

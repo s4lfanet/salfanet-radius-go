@@ -14,6 +14,18 @@
 set -e
 set -o pipefail
 
+# ─── Bootstrap: copy self to /tmp to survive git-pull overwrite ────────────
+# When updater runs, git reset + rsync can overwrite this running script file.
+# Bash reads scripts in chunks, so a mid-execution overwrite causes corrupt reads.
+# Solution: copy to /tmp and re-exec once, then continue normally.
+if [ -z "${_UPDATER_BOOTSTRAP:-}" ]; then
+    export _UPDATER_BOOTSTRAP=1
+    _TMP_SCRIPT=$(mktemp /tmp/updater-XXXXXX.sh)
+    cp "$0" "$_TMP_SCRIPT"
+    chmod +x "$_TMP_SCRIPT"
+    exec bash "$_TMP_SCRIPT" "$@"
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ─── Colors ────────────────────────────────────────────────────────────────
