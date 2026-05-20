@@ -1396,14 +1396,14 @@ func (h *MiscHandler) NetworkOLTStatus(c fiber.Ctx) error {
 
 	type oltRow struct {
 		ID            string `gorm:"column:id"`
-		IPAddress     string `gorm:"column:ip_address"`
-		SSHEnabled    bool   `gorm:"column:ssh_enabled"`
-		SSHPort       int    `gorm:"column:ssh_port"`
-		TelnetEnabled bool   `gorm:"column:telnet_enabled"`
-		TelnetPort    int    `gorm:"column:telnet_port"`
+		IPAddress     string `gorm:"column:ipAddress"`
+		SSHEnabled    bool   `gorm:"column:sshEnabled"`
+		SSHPort       int    `gorm:"column:sshPort"`
+		TelnetEnabled bool   `gorm:"column:telnetEnabled"`
+		TelnetPort    int    `gorm:"column:telnetPort"`
 	}
 	var olts []oltRow
-	q := h.db.Table("network_olts").Select("id, ip_address, ssh_enabled, ssh_port, telnet_enabled, telnet_port")
+	q := h.db.Table("network_olts").Select("id, ipAddress, sshEnabled, sshPort, telnetEnabled, telnetPort")
 	if len(body.OltIDs) > 0 {
 		q = q.Where("id IN ?", body.OltIDs)
 	}
@@ -1455,7 +1455,7 @@ func (h *MiscHandler) NetworkOLTStatus(c fiber.Ctx) error {
 			entry.Details.Telnet = telnetOK
 			mu.Lock()
 			results[row.ID] = entry
-			h.db.Table("network_olts").Where("id = ?", row.ID).Update("is_online", online)
+			h.db.Table("network_olts").Where("id = ?", row.ID).Update("isOnline", online)
 			mu.Unlock()
 		}(o)
 	}

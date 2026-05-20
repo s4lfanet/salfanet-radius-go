@@ -325,7 +325,7 @@ func (h *NetworkHandler) UpdateOLT(c fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	// Sync router associations: delete old, insert new
-	h.db.Where("olt_id = ?", id).Delete(&models.NetworkOLTRouter{})
+	h.db.Where("oltId = ?", id).Delete(&models.NetworkOLTRouter{})
 	for _, routerID := range routerIDs {
 		h.db.Create(&models.NetworkOLTRouter{
 			ID:       uuid.NewString(),

@@ -2602,7 +2602,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
           <Card>
             <CardContent className="pt-4">
               <div className="space-y-2">
-                {olt.monitoringLogs.map((log: any) => (
+                {(olt.monitoringLogs ?? []).map((log: any) => (
                   <div key={log.id} className="flex items-start gap-3 py-2 border-b last:border-0">
                     <div className={`text-xs font-mono px-1.5 py-0.5 rounded ${
                       log.severity === 'error' ? 'bg-red-100 text-red-700' :
@@ -2619,7 +2619,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                     </div>
                   </div>
                 ))}
-                {olt.monitoringLogs.length === 0 && (
+                {(olt.monitoringLogs ?? []).length === 0 && (
                   <p className="text-center text-gray-400 py-8">No logs yet</p>
                 )}
               </div>

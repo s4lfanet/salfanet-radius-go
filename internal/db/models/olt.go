@@ -72,9 +72,11 @@ type NetworkOLT struct {
 	OfflineONU        int        `gorm:"default:0" json:"offlineOnu"`
 
 	// Relations
-	ONUStatuses []OLTONUStatus    `gorm:"foreignKey:OltID" json:"onuStatuses,omitempty"`
-	Alerts      []OLTAlert        `gorm:"foreignKey:OltID" json:"alerts,omitempty"`
-	Routers     []NetworkOLTRouter `gorm:"foreignKey:OltID" json:"routers,omitempty"`
+	ONUStatuses        []OLTONUStatus         `gorm:"foreignKey:OltID" json:"onuStatuses,omitempty"`
+	Alerts             []OLTAlert             `gorm:"foreignKey:OltID" json:"alerts,omitempty"`
+	Routers            []NetworkOLTRouter     `gorm:"foreignKey:OltID" json:"routers,omitempty"`
+	MonitoringLogs     []OLTMonitoringLog     `gorm:"foreignKey:OltID" json:"monitoringLogs,omitempty"`
+	PerformanceMetrics []OLTPerformanceMetric `gorm:"foreignKey:OltID" json:"performanceMetrics,omitempty"`
 }
 
 func (NetworkOLT) TableName() string { return "network_olts" }
@@ -160,14 +162,14 @@ func (OLTPerformanceMetric) TableName() string { return "olt_performance_metrics
 // ─── NetworkOLTRouter ─────────────────────────────────────────────────────────
 
 type NetworkOLTRouter struct {
-	ID         string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	OltID      string    `gorm:"not null;index" json:"oltId"`
-	RouterID   string    `gorm:"not null;index" json:"routerId"`
-	UplinkPort *string   `json:"uplinkPort"`
-	Priority   int       `gorm:"default:0" json:"priority"`
-	IsActive   bool      `gorm:"default:true" json:"isActive"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	ID         string    `gorm:"primaryKey;type:varchar(191);column:id" json:"id"`
+	OltID      string    `gorm:"not null;index;column:oltId" json:"oltId"`
+	RouterID   string    `gorm:"not null;index;column:routerId" json:"routerId"`
+	UplinkPort *string   `gorm:"column:uplinkPort" json:"uplinkPort"`
+	Priority   int       `gorm:"default:0;column:priority" json:"priority"`
+	IsActive   bool      `gorm:"default:true;column:isActive" json:"isActive"`
+	CreatedAt  time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt  time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 	Router     *Router   `gorm:"foreignKey:RouterID;references:ID" json:"router,omitempty"`
 }
 

@@ -69,7 +69,17 @@ func (h *OLTHandler) CreateOLT(c fiber.Ctx) error {
 func (h *OLTHandler) GetOLT(c fiber.Ctx) error {
 	id := c.Params("id")
 	var olt models.NetworkOLT
-	if err := h.db.Preload("ONUStatuses").Preload("Alerts").First(&olt, "id = ?", id).Error; err != nil {
+	if err := h.db.
+		Preload("ONUStatuses").
+		Preload("Alerts").
+		Preload("Routers.Router").
+		Preload("MonitoringLogs", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC").Limit(100)
+		}).
+		Preload("PerformanceMetrics", func(db *gorm.DB) *gorm.DB {
+			return db.Order("recorded_at DESC").Limit(100)
+		}).
+		First(&olt, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
 	}
 	return c.JSON(fiber.Map{"olt": olt})
@@ -79,28 +89,59 @@ func (h *OLTHandler) GetOLT(c fiber.Ctx) error {
 // PUT /api/olt/:id
 func (h *OLTHandler) UpdateOLT(c fiber.Ctx) error {
 	id := c.Params("id")
-	var olt models.NetworkOLT
-	if err := h.db.First(&olt, "id = ?", id).Error; err != nil {
+	var existing models.NetworkOLT
+	if err := h.db.First(&existing, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
 	}
 
-	var body models.NetworkOLT
+	var body map[string]interface{}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
-	body.ID = id
 
-	if err := h.db.Save(&body).Error; err != nil {
+	// Extract routerIds before removing from update map
+	var routerIDs []string
+	if raw, ok := body["routerIds"]; ok {
+		if arr, ok := raw.([]interface{}); ok {
+			for _, v := range arr {
+				if s, ok := v.(string); ok && s != "" {
+					routerIDs = append(routerIDs, s)
+				}
+			}
+		}
+	}
+	delete(body, "routerIds")
+	delete(body, "id")
+	// Skip password if blank (API never returns the stored password)
+	if pw, ok := body["password"].(string); ok && pw == "" {
+		delete(body, "password")
+	}
+	body["updatedAt"] = time.Now()
+
+	if err := h.db.Model(&existing).Updates(body).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// Restart poller if monitoring settings changed
-	h.poller.Stop(id)
-	if body.MonitoringEnabled {
-		h.poller.Start(&body)
+	// Sync router associations
+	h.db.Where("oltId = ?", id).Delete(&models.NetworkOLTRouter{})
+	for _, routerID := range routerIDs {
+		h.db.Create(&models.NetworkOLTRouter{
+			ID:       uuid.NewString(),
+			OltID:    id,
+			RouterID: routerID,
+		})
 	}
 
-	return c.JSON(body)
+	// Reload updated OLT
+	h.db.First(&existing, "id = ?", id)
+
+	// Restart poller if monitoring settings changed
+	h.poller.Stop(id)
+	if existing.MonitoringEnabled {
+		h.poller.Start(&existing)
+	}
+
+	return c.JSON(existing)
 }
 
 // DeleteOLT godoc
