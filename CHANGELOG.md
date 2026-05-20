@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.52] — 2026-05-21
+### Fixed
+- **L2TP delete VPN client — tidak membersihkan peer-routes.conf dan kernel routes** — Saat VPN client L2TP dihapus dari web, entri di `/etc/salfanet/l2tp/peer-routes.conf` tidak dihapus dan kernel routes (`ip route del`) tidak dijalankan. Fix: tambah `removeL2TPPeerRoutes(peer.PeerIP)` yang membaca peer-routes.conf, menghapus kernel routes semua subnet yang terdaftar, lalu menghapus baris dari file.
+- **vpn-watchdog — L2TP route parsing format salah** — Watchdog CHECK E membaca peer-routes.conf dengan format `<net> via <ip>` (salah). Format sebenarnya adalah `<peerVpnIP> <net1> [net2]...`. Fix: parsing diubah — field pertama sebagai gateway IP, field 2+ sebagai CIDR network yang perlu ada di routing table.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `removeL2TPPeerRoutes()`, panggil saat delete L2TP peer
+- `vpn-watchdog.sh` — Fix parsing peer-routes.conf di CHECK E (L2TP route restore)
+
+---
+
 ## [2.52.51] — 2026-05-21
 ### Fixed
 - **L2TP chap-secrets write — tidak lagi silent fail** — Go handler `CreateL2TPPeer` sebelumnya mengabaikan error saat menulis ke `/etc/ppp/chap-secrets` (`_, _ = ...`). Sekarang error dikembalikan sebagai HTTP 500 sehingga user tahu jika kredensial VPN gagal disimpan.
