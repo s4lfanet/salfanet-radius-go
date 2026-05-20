@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -1388,13 +1389,76 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 
 // GET /api/network/olts/status — return connectivity status of all OLTs
 func (h *MiscHandler) NetworkOLTStatus(c fiber.Ctx) error {
-	type oltRow struct {
-		ID     uint   `json:"id"`
-		Name   string `json:"name"`
-		Host   string `json:"host"`
-		Status string `json:"status"`
+	var body struct {
+		OltIDs []string `json:"oltIds"`
 	}
-	var rows []oltRow
-	h.db.Raw(`SELECT id, name, host, COALESCE(status, 'unknown') AS status FROM olts WHERE deleted_at IS NULL ORDER BY id`).Scan(&rows)
-	return c.JSON(fiber.Map{"olts": rows, "count": len(rows)})
+	c.Bind().JSON(&body)
+
+	type oltRow struct {
+		ID            string `gorm:"column:id"`
+		IPAddress     string `gorm:"column:ip_address"`
+		SSHEnabled    bool   `gorm:"column:ssh_enabled"`
+		SSHPort       int    `gorm:"column:ssh_port"`
+		TelnetEnabled bool   `gorm:"column:telnet_enabled"`
+		TelnetPort    int    `gorm:"column:telnet_port"`
+	}
+	var olts []oltRow
+	q := h.db.Table("network_olts").Select("id, ip_address, ssh_enabled, ssh_port, telnet_enabled, telnet_port")
+	if len(body.OltIDs) > 0 {
+		q = q.Where("id IN ?", body.OltIDs)
+	}
+	q.Find(&olts)
+
+	type statusEntry struct {
+		ID      string `json:"id"`
+		Online  bool   `json:"online"`
+		Details struct {
+			SSH    bool `json:"ssh"`
+			Telnet bool `json:"telnet"`
+			HTTP   bool `json:"http"`
+			ICMP   bool `json:"icmp"`
+		} `json:"details"`
+	}
+
+	results := make(map[string]statusEntry, len(olts))
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	for _, o := range olts {
+		wg.Add(1)
+		go func(row oltRow) {
+			defer wg.Done()
+			sshOK, telnetOK := false, false
+			sshPort := row.SSHPort
+			if sshPort == 0 {
+				sshPort = 22
+			}
+			telnetPort := row.TelnetPort
+			if telnetPort == 0 {
+				telnetPort = 23
+			}
+			conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", row.IPAddress, sshPort), 3*time.Second)
+			if err == nil {
+				conn.Close()
+				sshOK = true
+			}
+			if !sshOK {
+				conn2, err2 := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", row.IPAddress, telnetPort), 3*time.Second)
+				if err2 == nil {
+					conn2.Close()
+					telnetOK = true
+				}
+			}
+			online := sshOK || telnetOK
+			entry := statusEntry{ID: row.ID, Online: online}
+			entry.Details.SSH = sshOK
+			entry.Details.Telnet = telnetOK
+			mu.Lock()
+			results[row.ID] = entry
+			h.db.Table("network_olts").Where("id = ?", row.ID).Update("is_online", online)
+			mu.Unlock()
+		}(o)
+	}
+	wg.Wait()
+	return c.JSON(fiber.Map{"statusMap": results})
 }

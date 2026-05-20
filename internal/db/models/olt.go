@@ -72,8 +72,9 @@ type NetworkOLT struct {
 	OfflineONU        int        `gorm:"default:0" json:"offlineOnu"`
 
 	// Relations
-	ONUStatuses []OLTONUStatus `gorm:"foreignKey:OltID" json:"onuStatuses,omitempty"`
-	Alerts      []OLTAlert     `gorm:"foreignKey:OltID" json:"alerts,omitempty"`
+	ONUStatuses []OLTONUStatus    `gorm:"foreignKey:OltID" json:"onuStatuses,omitempty"`
+	Alerts      []OLTAlert        `gorm:"foreignKey:OltID" json:"alerts,omitempty"`
+	Routers     []NetworkOLTRouter `gorm:"foreignKey:OltID" json:"routers,omitempty"`
 }
 
 func (NetworkOLT) TableName() string { return "network_olts" }
@@ -167,6 +168,7 @@ type NetworkOLTRouter struct {
 	IsActive   bool      `gorm:"default:true" json:"isActive"`
 	CreatedAt  time.Time `json:"createdAt"`
 	UpdatedAt  time.Time `json:"updatedAt"`
+	Router     *Router   `gorm:"foreignKey:RouterID;references:ID" json:"router,omitempty"`
 }
 
 func (NetworkOLTRouter) TableName() string { return "network_olt_routers" }

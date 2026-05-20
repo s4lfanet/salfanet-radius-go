@@ -204,23 +204,24 @@ func (h *NetworkHandler) OLTImportTemplate(c fiber.Ctx) error {
 // POST /api/network/olts — Create OLT (ID from body, ports as strings from form)
 func (h *NetworkHandler) CreateOLT(c fiber.Ctx) error {
 	var body struct {
-		Name            string `json:"name"`
-		IPAddress       string `json:"ipAddress"`
-		Vendor          string `json:"vendor"`
-		Model           string `json:"model"`
-		FirmwareVersion string `json:"firmwareVersion"`
-		Username        string `json:"username"`
-		Password        string `json:"password"`
-		SNMPCommunity   string `json:"snmpCommunity"`
-		SSHEnabled      bool   `json:"sshEnabled"`
-		TelnetEnabled   bool   `json:"telnetEnabled"`
-		SSHPort         string `json:"sshPort"`
-		TelnetPort      string `json:"telnetPort"`
-		SNMPPort        string `json:"snmpPort"`
-		Latitude        string `json:"latitude"`
-		Longitude       string `json:"longitude"`
-		Status          string `json:"status"`
-		FollowRoad      bool   `json:"followRoad"`
+		Name            string   `json:"name"`
+		IPAddress       string   `json:"ipAddress"`
+		Vendor          string   `json:"vendor"`
+		Model           string   `json:"model"`
+		FirmwareVersion string   `json:"firmwareVersion"`
+		Username        string   `json:"username"`
+		Password        string   `json:"password"`
+		SNMPCommunity   string   `json:"snmpCommunity"`
+		SSHEnabled      bool     `json:"sshEnabled"`
+		TelnetEnabled   bool     `json:"telnetEnabled"`
+		SSHPort         string   `json:"sshPort"`
+		TelnetPort      string   `json:"telnetPort"`
+		SNMPPort        string   `json:"snmpPort"`
+		Latitude        string   `json:"latitude"`
+		Longitude       string   `json:"longitude"`
+		Status          string   `json:"status"`
+		FollowRoad      bool     `json:"followRoad"`
+		RouterIDs       []string `json:"routerIds"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
@@ -275,6 +276,16 @@ func (h *NetworkHandler) CreateOLT(c fiber.Ctx) error {
 	if err := h.db.Create(&olt).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
+	// Save router associations
+	for _, routerID := range body.RouterIDs {
+		if routerID != "" {
+			h.db.Create(&models.NetworkOLTRouter{
+				ID:       uuid.NewString(),
+				OltID:    olt.ID,
+				RouterID: routerID,
+			})
+		}
+	}
 	return c.Status(201).JSON(fiber.Map{"success": true, "olt": olt})
 }
 
@@ -292,11 +303,35 @@ func (h *NetworkHandler) UpdateOLT(c fiber.Ctx) error {
 	if err := h.db.First(&olt, "id = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "OLT not found"})
 	}
+	// Extract routerIds before removing from update map
+	var routerIDs []string
+	if raw, ok := body["routerIds"]; ok {
+		if arr, ok := raw.([]interface{}); ok {
+			for _, v := range arr {
+				if s, ok := v.(string); ok && s != "" {
+					routerIDs = append(routerIDs, s)
+				}
+			}
+		}
+	}
 	delete(body, "id")
 	delete(body, "routerIds")
+	// Skip password update if user left it blank (API never returns the stored password)
+	if pw, ok := body["password"].(string); ok && pw == "" {
+		delete(body, "password")
+	}
 	body["updatedAt"] = time.Now()
 	if err := h.db.Model(&olt).Updates(body).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	// Sync router associations: delete old, insert new
+	h.db.Where("olt_id = ?", id).Delete(&models.NetworkOLTRouter{})
+	for _, routerID := range routerIDs {
+		h.db.Create(&models.NetworkOLTRouter{
+			ID:       uuid.NewString(),
+			OltID:    id,
+			RouterID: routerID,
+		})
 	}
 	h.db.First(&olt, "id = ?", id)
 	return c.JSON(fiber.Map{"success": true, "olt": olt})

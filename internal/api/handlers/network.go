@@ -19,7 +19,7 @@ func NewNetworkHandler(db *gorm.DB) *NetworkHandler { return &NetworkHandler{db:
 
 func (h *NetworkHandler) ListOLTsForMap(c fiber.Ctx) error {
 	var olts []models.NetworkOLT
-	h.db.Find(&olts)
+	h.db.Preload("Routers.Router").Find(&olts)
 	return c.JSON(fiber.Map{"olts": olts})
 }
 
