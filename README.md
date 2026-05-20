@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.42 — 2026-05-20
+
+### Fixed
+- **Password & RADIUS secret kosong saat edit router** — Saat tombol edit router diklik, field password MikroTik dan RADIUS secret selalu kosong karena `models.Router` punya `json:"-"` pada kedua field tersebut sehingga tidak ikut di-return API list. Fix: `GetRouter` endpoint (`GET /api/network/routers/:id/detail`) sekarang me-return password & secret secara eksplisit via `fiber.Map`; `handleEdit` di frontend di-refactor jadi `async` dan fetch credential dari endpoint detail setelah modal terbuka, lalu patch `formData` dengan nilai yang didapat.
+### Files
+- `internal/api/handlers/network_ext.go` — `GetRouter`: return explicit `fiber.Map` dengan field `password` dan `secret`
+- `src/app/admin/network/routers/page.tsx` — `handleEdit`: ubah ke `async`, fetch `/api/network/routers/:id/detail`, patch `password` & `secret` ke form state
+
 ### v2.52.41 — 2026-05-20
 
 ### Fixed
@@ -536,13 +544,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/admin/network/routers/page.tsx` — Fix DELETE URL (`?id=` → `/${id}`); tambah shortname input field dengan auto-generate; update handler `onChange` nama router
 - `internal/api/handlers/network_ext.go` — Rewrite `RouterStatus`: terima `{ routerIds }`, TCP ping paralel via `tcpPing()`, kembalikan `{ statusMap: { [id]: { online, identity } } }`; tambah helper `tcpPing()`; tambah import `fmt`, `net`, `sync`
 - `internal/api/handlers/misc_handler.go` — Rewrite `TestRouterGeneric` dan `TestGateway` dengan TCP connectivity check nyata; tambah import `net`
-
-### v2.52.37 — 2026-05-20
-
-### Fixed
-- **Updater.sh tidak update kode terbaru (self-overwrite bug)** — Root cause: saat updater.sh berjalan, `rsync` menyalin file baru dari `/root/salfanet-radius/` ke `/var/www/salfanet-radius/` termasuk `vps-install/updater.sh` yang SEDANG BERJALAN. Bash membaca script dalam blok/chunk, sehingga overwrite di tengah eksekusi menyebabkan bash membaca konten campur lama+baru → step penting terlewat. Fix: tambah bootstrap pattern di awal script — copy diri sendiri ke `/tmp/` dan re-exec sekali sebelum apapun berjalan (`_UPDATER_BOOTSTRAP` env flag mencegah loop).
-### Files
-- `vps-install/updater.sh` — Tambah bootstrap self-copy ke `/tmp/` via `_UPDATER_BOOTSTRAP` flag di awal script
 
 <!-- AUTO-CHANGELOG:END -->
 
