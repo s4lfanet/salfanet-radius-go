@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.56] — 2026-05-22
+### Fixed
+- **GET /api/olt/:id — 404 meskipun route terdaftar** — `GetOLT` handler melakukan preload `ONUStatuses`, `Alerts`, `MonitoringLogs`, dan `PerformanceMetrics` dengan GORM auto-naming. GORM mengubah `OltID` → `olt_id`, `OnuID` → `onu_id`, dst., padahal kolom DB (Prisma) adalah camelCase (`oltId`, `onuId`). MySQL melempar error "Unknown column 'olt_id'" yang diperlakukan sebagai 404. Fix: tambah explicit `gorm:"column:..."` camelCase tags ke semua field di `OLTONUStatus`, `OLTAlert`, `OLTPerformanceMetric`, `OLTMonitoringLog`.
+- **ONU data selalu 0/0 di monitoring** — Poller `CreateInBatches` OLT ONU Status gagal karena INSERT menggunakan nama kolom snake_case (`olt_id`, `onu_id`, `mac_address`, dst.) yang tidak ada di DB. Dengan adanya column tags, INSERT sekarang menggunakan nama kolom yang benar (`oltId`, `onuId`, `macAddress`, dst.).
+- **Poller `knownPONPorts` — WHERE clause salah** — `Where("olt_id = ?", oltID)` diganti ke `Where("oltId = ?", oltID)`.
+- **Poller `checkAlerts` — WHERE clause salah** — raw SQL dengan `olt_id`, `onu_id`, `alert_type`, `is_resolved` diganti ke camelCase `oltId`, `onuId`, `alertType`, `isResolved`.
+### Files
+- `internal/db/models/olt.go` — `OLTONUStatus`, `OLTAlert`, `OLTPerformanceMetric`, `OLTMonitoringLog`: tambah `gorm:"column:camelCase"` tags ke semua field
+- `internal/olt/poller/poller.go` — fix `knownPONPorts` dan `checkAlerts` WHERE clause ke camelCase
+
 ## [2.52.55] — 2026-05-22
 ### Fixed
 - **OLT detail page — JS crash `Cannot read properties of undefined (reading 'length')`** — `olt.monitoringLogs` undefined karena `GetOLT` tidak me-preload `MonitoringLogs` / `PerformanceMetrics`. Fix: tambah preload dengan ORDER + LIMIT 100, serta null-safety `??[]` di frontend.
