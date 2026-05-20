@@ -1429,10 +1429,14 @@ func (h *NetworkVPNHandler) CreateL2TPPeer(c fiber.Ctx) error {
 	// Format: client  server  secret  IP-addresses
 	chapEntry := fmt.Sprintf("%s\t*\t%s\t%s\n", username, password, vpnIP)
 	chapFile, err := os.OpenFile("/etc/ppp/chap-secrets", os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err == nil {
-		_, _ = chapFile.WriteString(chapEntry)
-		chapFile.Close()
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal buka chap-secrets: " + err.Error()})
 	}
+	if _, werr := chapFile.WriteString(chapEntry); werr != nil {
+		chapFile.Close()
+		return c.Status(500).JSON(fiber.Map{"error": "Gagal tulis chap-secrets: " + werr.Error()})
+	}
+	chapFile.Close()
 
 	// Save to vps_peers table
 	nasSecretStr := nasSecret

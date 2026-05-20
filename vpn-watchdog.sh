@@ -24,7 +24,8 @@ LOG_FILE=/var/log/vpn-watchdog.log
 IFACE=ppp0
 L2TP_CTL=/var/run/xl2tpd/l2tp-control
 LAC=vpn-server
-PEER_IP=10.20.30.1     # IP MikroTik di VPN tunnel (side router)
+PEER_IP=$(ip route show dev ppp0 2>/dev/null | grep 'proto kernel' | awk '{print $1}' | head -1)
+PEER_IP=${PEER_IP:-10.201.0.10}  # fallback ke default VPS L2TP pool start
 RADIUS_PORT=1812       # FreeRADIUS auth port
 TS=$(date '+%Y-%m-%d %H:%M:%S')
 
