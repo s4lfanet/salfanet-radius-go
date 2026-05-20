@@ -22,7 +22,30 @@ func (h *NetworkHandler) GetRouter(c fiber.Ctx) error {
 	if err := h.db.First(&router, "id = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "router not found"})
 	}
-	return c.JSON(fiber.Map{"success": true, "router": router})
+	// Return explicit map so password & secret (json:"-" in model) are included for edit form
+	return c.JSON(fiber.Map{
+		"success": true,
+		"router": fiber.Map{
+			"id":          router.ID,
+			"name":        router.Name,
+			"nasname":     router.NASName,
+			"shortname":   router.ShortName,
+			"type":        router.Type,
+			"ipAddress":   router.IPAddress,
+			"username":    router.Username,
+			"password":    router.Password,
+			"port":        router.Port,
+			"apiPort":     router.APIPort,
+			"secret":      router.Secret,
+			"ports":       router.Ports,
+			"server":      router.Server,
+			"community":   router.Community,
+			"description": router.Description,
+			"vpnClientId": router.VpnClientId,
+			"isActive":    router.IsActive,
+			"createdAt":   router.CreatedAt,
+		},
+	})
 }
 
 // PUT /api/network/routers/:id

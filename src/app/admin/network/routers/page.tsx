@@ -318,18 +318,36 @@ export default function RouterPage() {
     setUseVpnClient(false)
   }
 
-  const handleEdit = (routerData: Router) => {
+  const handleEdit = async (routerData: Router) => {
     setEditingRouter(routerData)
+    setTestResult(null)
+    // Set form with list data first (password/secret will be empty — filled below)
     setFormData({
       name: routerData.name, nasname: routerData.nasname, shortname: routerData.shortname, type: routerData.type,
-      ipAddress: routerData.ipAddress, username: routerData.username, password: routerData.password,
-      port: routerData.port.toString(), apiPort: routerData.apiPort.toString(), secret: routerData.secret,
+      ipAddress: routerData.ipAddress, username: routerData.username, password: '',
+      port: routerData.port.toString(), apiPort: routerData.apiPort.toString(), secret: '',
       ports: routerData.ports.toString(), server: routerData.server || '', community: routerData.community || '',
       description: routerData.description || '', vpnClientId: routerData.vpnClientId || '',
     })
     setUseVpnClient(!!routerData.vpnClientId)
-    setTestResult(null)
     setShowModal(true)
+    // Fetch full credentials (password & secret) from detail endpoint
+    try {
+      const res = await fetch(`/api/network/routers/${routerData.id}/detail`)
+      if (res.ok) {
+        const data = await res.json()
+        const full = data.router
+        if (full) {
+          setFormData(prev => ({
+            ...prev,
+            password: full.password || '',
+            secret: full.secret || '',
+          }))
+        }
+      }
+    } catch {
+      // non-critical: user can re-enter credentials manually
+    }
   }
 
   const handleDelete = async (id: string, name: string) => {
