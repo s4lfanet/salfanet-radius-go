@@ -968,49 +968,64 @@ func (h *MiscHandler) TicketDispatchData(c fiber.Ctx) error {
 func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 	routerID := c.Params("id")
 
-	// Look up the router
 	var router models.Router
 	if err := h.db.First(&router, "id = ?", routerID).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "router not found"})
 	}
 
-	// Determine RADIUS server IP
-	// Priority: RADIUS_SERVER_IP env → extract host from APP_BASE_URL → fallback
-	radiusServerIP := os.Getenv("RADIUS_SERVER_IP")
-	if radiusServerIP == "" {
+	// Base public RADIUS IP from env (used for non-VPN routers only)
+	publicRadiusIP := os.Getenv("RADIUS_SERVER_IP")
+	if publicRadiusIP == "" {
 		if baseURL := os.Getenv("APP_BASE_URL"); baseURL != "" {
 			if parsed, err := url.Parse(baseURL); err == nil {
 				host := parsed.Hostname()
 				if host != "" && host != "localhost" && host != "127.0.0.1" {
-					radiusServerIP = host
+					publicRadiusIP = host
 				}
 			}
 		}
 	}
-	if radiusServerIP == "" {
-		radiusServerIP = "YOUR_RADIUS_SERVER_IP"
+	if publicRadiusIP == "" {
+		publicRadiusIP = "YOUR_RADIUS_SERVER_IP"
 	}
 
-	// If router uses a VPN client, get VPN client IP for src-address and derive gateway
-	connectionType := "Direct"
-	vpnClientIp := "" // MikroTik's VPN IP (e.g., 10.201.0.10)
+	// --- Determine RADIUS server IP based on connection type ---
+	// IMPORTANT: For VPN routers, ALWAYS use VPN internal IP (not public IP).
+	// This matches the old Next.js behaviour: VPN router → isRadiusServer VPN client IP
+	// → or derive from NAS VPN IP (replace last octet with .1).
+	radiusServerIP := publicRadiusIP
+	nasSrcAddress := "" // VPN IP of the NAS/MikroTik router
+	connectionType := "Direct (Public IP)"
+	isVpn := false
+
 	if router.VpnClientId != nil && *router.VpnClientId != "" {
-		connectionType = "VPN"
+		isVpn = true
 		var vpnClient prismaVpnClient
 		if h.db.First(&vpnClient, "id = ?", *router.VpnClientId).Error == nil {
-			vpnClientIp = vpnClient.VpnIp
-			// If RADIUS_SERVER_IP not set, derive VPN gateway from MikroTik's VPN IP
-			// e.g., 10.201.0.10 → 10.201.0.1 (VPS side)
-			if vpnClientIp != "" && radiusServerIP == "YOUR_RADIUS_SERVER_IP" {
-				parts := strings.Split(vpnClientIp, ".")
-				if len(parts) == 4 {
-					radiusServerIP = parts[0] + "." + parts[1] + "." + parts[2] + ".1"
+			nasSrcAddress = vpnClient.VpnIp
+
+			// 1. Try to find VPN client explicitly marked as RADIUS server
+			var radiusVpnClient prismaVpnClient
+			if h.db.Where("isRadiusServer = ?", true).First(&radiusVpnClient).Error == nil && radiusVpnClient.VpnIp != "" {
+				radiusServerIP = radiusVpnClient.VpnIp
+			} else if nasSrcAddress != "" {
+				// 2. Derive VPN gateway from NAS VPN IP: 10.201.0.10 → 10.201.0.1
+				if idx := strings.LastIndex(nasSrcAddress, "."); idx != -1 {
+					radiusServerIP = nasSrcAddress[:idx] + ".1"
 				}
 			}
 		}
-		if vpnClientIp != "" {
-			connectionType = fmt.Sprintf("VPN (MikroTik IP: %s → RADIUS: %s)", vpnClientIp, radiusServerIP)
+		if nasSrcAddress != "" {
+			connectionType = fmt.Sprintf("VPN Tunnel (NAS: %s → RADIUS: %s)", nasSrcAddress, radiusServerIP)
+		} else {
+			connectionType = "VPN Tunnel"
 		}
+	}
+
+	// VPN Gateway IP: for CoA masquerade (CoA packets may appear from gateway, not RADIUS server)
+	gatewayIP := radiusServerIP
+	if idx := strings.LastIndex(radiusServerIP, "."); idx != -1 {
+		gatewayIP = radiusServerIP[:idx] + ".1"
 	}
 
 	secret := router.Secret
@@ -1021,93 +1036,162 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 	if authPort == 0 {
 		authPort = 1812
 	}
-	acctPort := authPort + 1 // typically 1813
+	acctPort := authPort + 1
 	coaPort := 3799
 	now := time.Now().Format("2006-01-02")
 
-	// src-address line: added when MikroTik uses VPN (forces RADIUS packets through VPN tunnel)
 	srcAddr := ""
-	if vpnClientIp != "" {
-		srcAddr = " src-address=" + vpnClientIp
+	if nasSrcAddress != "" {
+		srcAddr = " src-address=" + nasSrcAddress
 	}
 
-	// Firewall section differs between ROS7 (uses "where") and ROS6 (without "where")
+	// Extra gateway entry (only when VPN and gateway differs from RADIUS server)
+	gatewayEntry7 := ""
+	gatewayEntry6 := ""
+	gatewayFwRule := ""
+	if isVpn && gatewayIP != radiusServerIP {
+		gatewayEntry7 = fmt.Sprintf(
+			"\n# 2b. Entry VPN Gateway (CoA masquerade)\n"+
+				"# Saat VPS kirim CoA, paket di-masquerade via gateway VPN\n"+
+				"/radius add address=%s secret=%s service=ppp,hotspot,login,wireless%s timeout=1100ms require-message-auth=no comment=\"SALFANET CoA via VPN gateway\"",
+			gatewayIP, secret, srcAddr)
+		gatewayEntry6 = fmt.Sprintf(
+			"\n# 2b. Entry VPN Gateway (CoA masquerade)\n"+
+				"/radius add address=%s secret=%s service=ppp,hotspot,login,wireless%s timeout=3 comment=\"SALFANET CoA via VPN gateway\"",
+			gatewayIP, secret, srcAddr)
+		gatewayFwRule = fmt.Sprintf(
+			"\n/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d action=accept comment=\"SALFANET-RADIUS CoA via gateway %s\"",
+			gatewayIP, coaPort, gatewayIP)
+	}
+
+	// Firewall rules
 	fwRos7 := fmt.Sprintf(
-		"# --- Firewall: izinkan traffic RADIUS dari server ---\n"+
-			"/ip firewall filter remove [find where comment~\"Salfanet-RADIUS\"]\n"+
-			"/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d action=accept comment=\"Salfanet-RADIUS CoA\" place-before=0\n"+
-			"/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d,%d action=accept comment=\"Salfanet-RADIUS Auth\" place-before=0",
-		radiusServerIP, coaPort, radiusServerIP, authPort, acctPort)
+		"# ============================================\n"+
+			"# FIREWALL — RADIUS & CoA\n"+
+			"# ============================================\n"+
+			"/ip firewall filter remove [find where comment~\"SALFANET-RADIUS\"]\n"+
+			"/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d action=accept comment=\"SALFANET-RADIUS CoA from %s\" place-before=0\n"+
+			"%s\n"+
+			"/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d,%d action=accept comment=\"SALFANET-RADIUS Auth/Acct\" place-before=0",
+		radiusServerIP, coaPort, radiusServerIP, gatewayFwRule, radiusServerIP, authPort, acctPort)
 
 	fwRos6 := fmt.Sprintf(
-		"# --- Firewall: izinkan traffic RADIUS dari server ---\n"+
-			"/ip firewall filter remove [find comment~\"Salfanet-RADIUS\"]\n"+
-			"/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d action=accept comment=\"Salfanet-RADIUS CoA\" place-before=0\n"+
-			"/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d,%d action=accept comment=\"Salfanet-RADIUS Auth\" place-before=0",
-		radiusServerIP, coaPort, radiusServerIP, authPort, acctPort)
+		"# ============================================\n"+
+			"# FIREWALL — RADIUS & CoA\n"+
+			"# ============================================\n"+
+			"/ip firewall filter remove [find comment~\"SALFANET-RADIUS\"]\n"+
+			"/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d action=accept comment=\"SALFANET-RADIUS CoA from %s\" place-before=0\n"+
+			"%s\n"+
+			"/ip firewall filter add chain=input protocol=udp src-address=%s dst-port=%d,%d action=accept comment=\"SALFANET-RADIUS Auth/Acct\" place-before=0",
+		radiusServerIP, coaPort, radiusServerIP, gatewayFwRule, radiusServerIP, authPort, acctPort)
 
-	// RouterOS 7.x script (timeout with 's', supports "where" in find)
+	// Netwatch monitoring block (same for ROS6/ROS7)
+	netwatch := fmt.Sprintf(
+		"# ============================================\n"+
+			"# NETWATCH — Monitor koneksi ke RADIUS server\n"+
+			"# ============================================\n"+
+			"/tool netwatch remove [find where comment~\"SALFANET\"]\n"+
+			"/tool netwatch add host=%s interval=30s timeout=5s \\\n"+
+			"    down-script=\"/log warning message=\\\"SALFANET: RADIUS %s tidak reachable\\\"\" \\\n"+
+			"    up-script=\"/log info message=\\\"SALFANET: RADIUS %s kembali online\\\"\" \\\n"+
+			"    comment=\"SALFANET RADIUS Monitor\"",
+		radiusServerIP, radiusServerIP, radiusServerIP)
+
+	// RouterOS 7.x script
 	scriptRos7 := fmt.Sprintf(
 		"# ============================================\n"+
-			"# SALFANET RADIUS Setup Script - RouterOS 7.x\n"+
-			"# NAS     : %s\n"+
-			"# RADIUS  : %s\n"+
-			"# Koneksi : %s\n"+
-			"# Dibuat  : %s\n"+
+			"# SALFANET RADIUS Setup Script (RouterOS 7.x)\n"+
+			"# Router      : %s\n"+
+			"# NAS IP      : %s\n"+
+			"# RADIUS IP   : %s\n"+
+			"# VPN Gateway : %s\n"+
+			"# Koneksi     : %s\n"+
+			"# Dibuat      : %s\n"+
 			"# ============================================\n\n"+
-			"# --- Hapus konfigurasi RADIUS lama (idempotent) ---\n"+
-			"/radius remove [find where comment~\"Salfanet\"]\n\n"+
-			"# --- Tambah RADIUS Server ---\n"+
-			"/radius add address=%s secret=\"%s\" authentication-port=%d accounting-port=%d timeout=3s service=ppp,hotspot,login%s comment=\"Salfanet RADIUS\"\n\n"+
-			"# --- Aktifkan RADIUS untuk PPPoE ---\n"+
-			"/ppp aaa set use-radius=yes accounting=yes interim-update=00:10:00\n\n"+
-			"# --- Aktifkan RADIUS untuk Hotspot ---\n"+
-			"/ip hotspot profile set [find] use-radius=yes radius-accounting=yes radius-interim-update=00:10:00\n\n"+
-			"# --- Aktifkan CoA/Disconnect ---\n"+
+			"# 1. Hapus RADIUS lama (idempotent)\n"+
+			"/radius remove [find where comment~\"SALFANET\" || comment~\"Salfanet\" || comment~\"Auto Setup\" || comment~\"gateway masquerade\"]\n\n"+
+			"# 2. Tambah RADIUS Server utama (auth/acct + CoA)\n"+
+			"# NOTE: src-address=%s wajib agar FreeRADIUS kenali NAS ini\n"+
+			"/radius add address=%s secret=%s%s service=ppp,hotspot,login,wireless authentication-port=%d accounting-port=%d timeout=3s require-message-auth=no comment=\"SALFANET RADIUS\"\n"+
+			"%s\n\n"+
+			"# 3. Enable RADIUS untuk PPP (PPPoE)\n"+
+			"/ppp aaa set use-radius=yes accounting=yes interim-update=5m\n\n"+
+			"# 4. Enable RADIUS Incoming (CoA/Disconnect)\n"+
 			"/radius incoming set accept=yes port=%d\n\n"+
+			"# 5. Buat PPP Pool jika belum ada\n"+
+			":if ([:len [/ip pool find name=\"pool-radius-default\"]] = 0) do={\n"+
+			"    /ip pool add name=pool-radius-default ranges=10.10.10.2-10.10.10.254 comment=\"SALFANET RADIUS\"\n"+
+			"}\n\n"+
+			"# 6. Buat PPP Profile jika belum ada\n"+
+			":if ([:len [/ppp profile find name=\"salfanetradius\"]] = 0) do={\n"+
+			"    /ppp profile add name=salfanetradius local-address=10.10.10.1 remote-address=pool-radius-default use-compression=no use-encryption=no comment=\"SALFANET RADIUS Profile\"\n"+
+			"}\n\n"+
+			"# 7. Enable RADIUS untuk semua Hotspot Server Profile\n"+
+			"/ip hotspot profile set [find] use-radius=yes\n\n"+
+			"%s\n\n"+
 			"%s\n\n"+
 			"# ============================================\n"+
 			"# Verifikasi:\n"+
 			"# /radius print\n"+
 			"# /ppp aaa print\n"+
-			"# /ip hotspot profile print\n"+
 			"# /radius incoming print\n"+
-			"# /ip firewall filter print where comment~\"Salfanet-RADIUS\"\n"+
+			"# /ip firewall filter print where comment~\"SALFANET-RADIUS\"\n"+
+			"# /tool netwatch print\n"+
 			"# ============================================",
-		router.Name, radiusServerIP, connectionType, now,
-		radiusServerIP, secret, authPort, acctPort, srcAddr,
-		coaPort, fwRos7)
+		router.Name, nasSrcAddress, radiusServerIP, gatewayIP, connectionType, now,
+		nasSrcAddress, radiusServerIP, secret, srcAddr, authPort, acctPort,
+		gatewayEntry7,
+		coaPort,
+		fwRos7,
+		netwatch)
 
-	// RouterOS 6.x script (timeout without 's', find without "where")
+	// RouterOS 6.x script (timeout without 's', find without "where", no require-message-auth)
 	scriptRos6 := fmt.Sprintf(
 		"# ============================================\n"+
-			"# SALFANET RADIUS Setup Script - RouterOS 6.x\n"+
-			"# NAS     : %s\n"+
-			"# RADIUS  : %s\n"+
-			"# Koneksi : %s\n"+
-			"# Dibuat  : %s\n"+
+			"# SALFANET RADIUS Setup Script (RouterOS 6.x)\n"+
+			"# Router      : %s\n"+
+			"# NAS IP      : %s\n"+
+			"# RADIUS IP   : %s\n"+
+			"# VPN Gateway : %s\n"+
+			"# Koneksi     : %s\n"+
+			"# Dibuat      : %s\n"+
 			"# ============================================\n\n"+
-			"# --- Hapus konfigurasi RADIUS lama (idempotent) ---\n"+
-			"/radius remove [find comment~\"Salfanet\"]\n\n"+
-			"# --- Tambah RADIUS Server ---\n"+
-			"/radius add address=%s secret=\"%s\" authentication-port=%d accounting-port=%d timeout=3 service=ppp,hotspot,login%s comment=\"Salfanet RADIUS\"\n\n"+
-			"# --- Aktifkan RADIUS untuk PPPoE ---\n"+
-			"/ppp aaa set use-radius=yes accounting=yes interim-update=00:10:00\n\n"+
-			"# --- Aktifkan RADIUS untuk Hotspot ---\n"+
-			"/ip hotspot profile set [find] use-radius=yes radius-accounting=yes radius-interim-update=00:10:00\n\n"+
-			"# --- Aktifkan CoA/Disconnect ---\n"+
+			"# 1. Hapus RADIUS lama (idempotent)\n"+
+			"/radius remove [find comment~\"SALFANET\" || comment~\"Salfanet\" || comment~\"Auto Setup\" || comment~\"gateway masquerade\"]\n\n"+
+			"# 2. Tambah RADIUS Server utama (auth/acct + CoA)\n"+
+			"# NOTE: src-address=%s wajib agar FreeRADIUS kenali NAS ini\n"+
+			"/radius add address=%s secret=%s%s service=ppp,hotspot,login,wireless authentication-port=%d accounting-port=%d timeout=3 comment=\"SALFANET RADIUS\"\n"+
+			"%s\n\n"+
+			"# 3. Enable RADIUS untuk PPP (PPPoE)\n"+
+			"/ppp aaa set use-radius=yes accounting=yes interim-update=5m\n\n"+
+			"# 4. Enable RADIUS Incoming (CoA/Disconnect)\n"+
 			"/radius incoming set accept=yes port=%d\n\n"+
+			"# 5. Buat PPP Pool jika belum ada\n"+
+			":if ([:len [/ip pool find name=\"pool-radius-default\"]] = 0) do={\n"+
+			"    /ip pool add name=pool-radius-default ranges=10.10.10.2-10.10.10.254 comment=\"SALFANET RADIUS\"\n"+
+			"}\n\n"+
+			"# 6. Buat PPP Profile jika belum ada\n"+
+			":if ([:len [/ppp profile find name=\"salfanetradius\"]] = 0) do={\n"+
+			"    /ppp profile add name=salfanetradius local-address=10.10.10.1 remote-address=pool-radius-default use-compression=no use-encryption=no comment=\"SALFANET RADIUS Profile\"\n"+
+			"}\n\n"+
+			"# 7. Enable RADIUS untuk semua Hotspot Server Profile\n"+
+			"/ip hotspot profile set [find] use-radius=yes\n\n"+
+			"%s\n\n"+
 			"%s\n\n"+
 			"# ============================================\n"+
 			"# Verifikasi:\n"+
 			"# /radius print\n"+
 			"# /ppp aaa print\n"+
-			"# /ip hotspot profile print\n"+
-			"# /ip firewall filter print where comment~\"Salfanet-RADIUS\"\n"+
+			"# /radius incoming print\n"+
+			"# /ip firewall filter print where comment~\"SALFANET-RADIUS\"\n"+
+			"# /tool netwatch print\n"+
 			"# ============================================",
-		router.Name, radiusServerIP, connectionType, now,
-		radiusServerIP, secret, authPort, acctPort, srcAddr,
-		coaPort, fwRos6)
+		router.Name, nasSrcAddress, radiusServerIP, gatewayIP, connectionType, now,
+		nasSrcAddress, radiusServerIP, secret, srcAddr, authPort, acctPort,
+		gatewayEntry6,
+		coaPort,
+		fwRos6,
+		netwatch)
 
 	return c.JSON(fiber.Map{
 		"success":    true,
@@ -1121,7 +1205,8 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 			"acctPort":       acctPort,
 			"coaPort":        coaPort,
 			"radiusSecret":   secret,
-			"vpnClientIp":    vpnClientIp,
+			"vpnClientIp":    nasSrcAddress,
+			"gatewayIp":      gatewayIP,
 		},
 	})
 }
