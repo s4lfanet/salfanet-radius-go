@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.37 — 2026-05-20
+
+### Fixed
+- **Updater.sh tidak update kode terbaru (self-overwrite bug)** — Root cause: saat updater.sh berjalan, `rsync` menyalin file baru dari `/root/salfanet-radius/` ke `/var/www/salfanet-radius/` termasuk `vps-install/updater.sh` yang SEDANG BERJALAN. Bash membaca script dalam blok/chunk, sehingga overwrite di tengah eksekusi menyebabkan bash membaca konten campur lama+baru → step penting terlewat. Fix: tambah bootstrap pattern di awal script — copy diri sendiri ke `/tmp/` dan re-exec sekali sebelum apapun berjalan (`_UPDATER_BOOTSTRAP` env flag mencegah loop).
+### Files
+- `vps-install/updater.sh` — Tambah bootstrap self-copy ke `/tmp/` via `_UPDATER_BOOTSTRAP` flag di awal script
+
 ### v2.52.36 — 2026-05-20
 
 ### Fixed
@@ -521,13 +528,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `prisma/schema.prisma` — Hapus `routers router[]` dari `vpnClient` model dan `vpnClient @relation(...)` dari `router` model
 - `prisma/migrations/drop_nas_vpnclientid_fkey.sql` — `ALTER TABLE nas DROP FOREIGN KEY nas_vpnClientId_fkey`
-
-### v2.52.32 — 2026-05-20
-
-### Fixed
-- **VPN Client data hilang setiap update** — `vpn_servers` dan `vpn_clients` adalah tabel Prisma, tapi saat `prisma db push --accept-data-loss` berjalan dengan perubahan schema, datanya bisa DROP. Fix: `updater.sh` kini mem-backup kedua tabel ini sebelum Prisma berjalan dan merestore-nya sesudah (dengan `SET FOREIGN_KEY_CHECKS=0` agar urutan restore tidak masalah).
-### Files
-- `vps-install/updater.sh` — Tambah `backup_vpn_data` / `restore_vpn_data`, dipanggil di Mode A dan Mode B sekitar `prisma db push`
 
 <!-- AUTO-CHANGELOG:END -->
 
