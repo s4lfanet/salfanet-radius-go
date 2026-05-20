@@ -1213,6 +1213,8 @@ func (h *NetworkVPNHandler) DeleteVPNClient(c fiber.Ctx) error {
 			if l2tpUser != "" {
 				removeL2TPUserFromChapSecrets(l2tpUser)
 			}
+			// Remove from peer-routes.conf and delete kernel routes
+			removeL2TPPeerRoutes(peer.PeerIP)
 		}
 		if err := h.db.Delete(&peer).Error; err != nil {
 			return c.Status(500).JSON(fiber.Map{"error": "Gagal hapus dari database: " + err.Error()})
@@ -1245,6 +1247,37 @@ func removeWGPeerFromConf(publicKey string) {
 	cleaned := re.ReplaceAllString(content, "")
 	cleaned = strings.TrimRight(cleaned, "\n") + "\n"
 	_ = os.WriteFile(wgConfFile, []byte(cleaned), 0600)
+}
+
+// removeL2TPPeerRoutes removes peer entry from peer-routes.conf and deletes the associated kernel routes.
+func removeL2TPPeerRoutes(vpnIP string) {
+	const confFile = "/etc/salfanet/l2tp/peer-routes.conf"
+	raw, err := os.ReadFile(confFile)
+	if err != nil {
+		return
+	}
+	var kept []string
+	for _, line := range strings.Split(string(raw), "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			kept = append(kept, line)
+			continue
+		}
+		// Format: "<vpnIP> <net1> [net2]..."
+		if strings.HasPrefix(trimmed, vpnIP+" ") || trimmed == vpnIP {
+			// Delete kernel routes for all networks in this line
+			parts := strings.Fields(trimmed)
+			for i, part := range parts {
+				if i == 0 {
+					continue // skip the vpnIP itself
+				}
+				_ = exec.Command("ip", "route", "del", part).Run()
+			}
+			continue // omit this line from kept
+		}
+		kept = append(kept, line)
+	}
+	_ = os.WriteFile(confFile, []byte(strings.Join(kept, "\n")), 0644)
 }
 
 // removeL2TPUserFromChapSecrets removes a user line from /etc/ppp/chap-secrets.

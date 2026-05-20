@@ -120,25 +120,25 @@ if ip link show "$IFACE" &>/dev/null && ip link show "$IFACE" | grep -q 'LOWER_U
     # VPN connected and peer reachable — restore any missing L2TP local-network routes
 
     # CHECK E: L2TP peer local-network routes (written by vps-l2tp-peer API)
+    # File format: "<peerVpnIP> <net1> [net2] ..."  e.g. "10.201.0.10 136.1.1.100/32 192.168.75.0/24"
     L2TP_ROUTES_FILE="/etc/salfanet/l2tp/peer-routes.conf"
     if [ -f "$L2TP_ROUTES_FILE" ]; then
-      # Resolve the PPP remote (Mikrotik-side) IP from the ppp0 route table
-      REMOTE_PPP_IP=$(ip route show dev "$IFACE" | awk '/via/{print $3; exit}')
       while IFS= read -r rline; do
         rline="${rline%%#*}"
         rline="${rline#"${rline%%[![:space:]]*}"}"
         rline="${rline%"${rline##*[![:space:]]}"}"
         [ -z "$rline" ] && continue
-        # Format: "192.168.1.0/24 via 10.201.0.2"
-        NET=$(echo "$rline" | awk '{print $1}')
-        VIA_IP=$(echo "$rline" | awk '{print $3}')
-        [ -z "$NET" ] || [ -z "$VIA_IP" ] && continue
-        if ! ip route show "$NET" 2>/dev/null | grep -q .; then
-          GW="${REMOTE_PPP_IP:-$VIA_IP}"
-          ip route replace "$NET" via "$GW" dev "$IFACE" metric 100 2>/dev/null || true
-          logger -t vpn-watchdog "L2TP route restored: $NET via $GW dev $IFACE"
-          echo "[$TS] L2TP route restored: $NET via $GW" >> "$LOG_FILE"
-        fi
+        PEER_VPN_IP=$(echo "$rline" | awk '{print $1}')
+        [ -z "$PEER_VPN_IP" ] && continue
+        NETS=$(echo "$rline" | cut -d' ' -f2-)
+        for NET in $NETS; do
+          [ -z "$NET" ] && continue
+          if ! ip route show "$NET" 2>/dev/null | grep -qv '^$'; then
+            ip route replace "$NET" via "$PEER_VPN_IP" dev "$IFACE" 2>/dev/null || true
+            logger -t vpn-watchdog "L2TP route restored: $NET via $PEER_VPN_IP dev $IFACE"
+            echo "[$TS] L2TP route restored: $NET via $PEER_VPN_IP" >> "$LOG_FILE"
+          fi
+        done
       done < "$L2TP_ROUTES_FILE"
     fi
 
