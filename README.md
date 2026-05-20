@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.43 — 2026-05-20
+
+### Fixed
+- **RADIUS setup script pakai IP publik saat router via VPN** — Sebelumnya `SetupRadiusOnRouter` selalu pakai `RADIUS_SERVER_IP` env (103.151.140.110) bahkan saat router terhubung via VPN. Seharusnya pakai IP VPN internal (mis. 10.201.0.1). Fix: saat `vpnClientId` ada, lookup VPN client `isRadiusServer=true` untuk RADIUS IP, atau derive dari VPN IP NAS (replace last octet dengan .1). Juga ditambahkan: gateway masquerade entry, `require-message-auth=no` (ROS7), PPP pool `pool-radius-default`, PPP profile `salfanetradius`, netwatch monitoring, `wireless` di service list, `interim-update=5m`.
+### Files
+- `internal/api/handlers/misc_handler.go` — `SetupRadiusOnRouter`: full rewrite VPN IP logic + tambah gateway masquerade, pool/profile PPP, netwatch
+
 ### v2.52.42 — 2026-05-20
 
 ### Fixed
@@ -532,18 +539,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/misc_handler.go` — `TestGateway`: tambah ICMP ping fallback; tambah helper `getLocalIPForDest()` menggunakan `ip route get`; tambah `localIp` ke semua response sukses
 - `src/app/admin/network/routers/page.tsx` — Capture `pingResult.localIp` → simpan ke `vpnGatewayIp`; ganti hardcoded `172.16.212.1` dengan `${vpnGatewayIp}` di firewall command
-
-### v2.52.38 — 2026-05-20
-
-### Fixed
-- **DELETE router 405 Method Not Allowed** — Frontend mengirim `DELETE /api/network/routers?id=xxx` (query param) tapi Go router hanya mendaftarkan `DELETE /network/routers/:id` (path param). Semua request DELETE ke URL lama diterima oleh route `GET/POST /network/routers` yang tidak punya handler DELETE → 405. Fix: ubah URL delete dari `?id=${id}` ke `/${id}`.
-- **Router status selalu offline setelah simpan** — Handler `RouterStatus` (Go) mengembalikan `{ routers: [{id, name, status: "UNKNOWN"}] }` sedangkan frontend mengharapkan `{ statusMap: { [id]: { online, identity } } }`. Karena `data.statusMap` selalu `undefined`, `setStatusMap({})` dipanggil dan semua router tampil offline. Fix: rewrite handler untuk menerima `{ routerIds }`, lakukan TCP ping ke port API router secara paralel (goroutine), dan kembalikan `statusMap` dengan format yang benar.
-- **Short name tidak muncul** — Form modal tidak memiliki input `shortname`, sehingga selalu tersimpan sebagai string kosong. Fix: tambah input shortname di modal dengan auto-generate dari nama router (lowercase, replace spasi/karakter ke `-`, max 20 char).
-- **TestGateway/TestRouterGeneric selalu return sukses** — Kedua handler sebelumnya adalah stub yang selalu mengembalikan `success: true` tanpa melakukan koneksi nyata. Akibatnya test VPN selalu "berhasil" meski VPN tidak terhubung. Fix: implementasi TCP check nyata — `TestGateway` mencoba port 8728/22/80/443; `TestRouterGeneric` mencoba port API plain lalu SSL dengan timeout 3 detik.
-### Files
-- `src/app/admin/network/routers/page.tsx` — Fix DELETE URL (`?id=` → `/${id}`); tambah shortname input field dengan auto-generate; update handler `onChange` nama router
-- `internal/api/handlers/network_ext.go` — Rewrite `RouterStatus`: terima `{ routerIds }`, TCP ping paralel via `tcpPing()`, kembalikan `{ statusMap: { [id]: { online, identity } } }`; tambah helper `tcpPing()`; tambah import `fmt`, `net`, `sync`
-- `internal/api/handlers/misc_handler.go` — Rewrite `TestRouterGeneric` dan `TestGateway` dengan TCP connectivity check nyata; tambah import `net`
 
 <!-- AUTO-CHANGELOG:END -->
 
