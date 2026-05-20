@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.42] — 2026-05-20
+### Fixed
+- **Password & RADIUS secret kosong saat edit router** — Saat tombol edit router diklik, field password MikroTik dan RADIUS secret selalu kosong karena `models.Router` punya `json:"-"` pada kedua field tersebut sehingga tidak ikut di-return API list. Fix: `GetRouter` endpoint (`GET /api/network/routers/:id/detail`) sekarang me-return password & secret secara eksplisit via `fiber.Map`; `handleEdit` di frontend di-refactor jadi `async` dan fetch credential dari endpoint detail setelah modal terbuka, lalu patch `formData` dengan nilai yang didapat.
+### Files
+- `internal/api/handlers/network_ext.go` — `GetRouter`: return explicit `fiber.Map` dengan field `password` dan `secret`
+- `src/app/admin/network/routers/page.tsx` — `handleEdit`: ubah ke `async`, fetch `/api/network/routers/:id/detail`, patch `password` & `secret` ke form state
+
+---
+
 ## [2.52.41] — 2026-05-20
 ### Fixed
 - **RADIUS script ROS6/ROS7 tidak lengkap** — Script yang di-generate tombol "RADIUS Script" hanya berisi 4 baris minimal. Banyak perintah penting hilang dibanding versi Next.js sebelumnya. Fix komprehensif:
