@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.52 — 2026-05-21
+
+### Fixed
+- **L2TP delete VPN client — tidak membersihkan peer-routes.conf dan kernel routes** — Saat VPN client L2TP dihapus dari web, entri di `/etc/salfanet/l2tp/peer-routes.conf` tidak dihapus dan kernel routes (`ip route del`) tidak dijalankan. Fix: tambah `removeL2TPPeerRoutes(peer.PeerIP)` yang membaca peer-routes.conf, menghapus kernel routes semua subnet yang terdaftar, lalu menghapus baris dari file.
+- **vpn-watchdog — L2TP route parsing format salah** — Watchdog CHECK E membaca peer-routes.conf dengan format `<net> via <ip>` (salah). Format sebenarnya adalah `<peerVpnIP> <net1> [net2]...`. Fix: parsing diubah — field pertama sebagai gateway IP, field 2+ sebagai CIDR network yang perlu ada di routing table.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `removeL2TPPeerRoutes()`, panggil saat delete L2TP peer
+- `vpn-watchdog.sh` — Fix parsing peer-routes.conf di CHECK E (L2TP route restore)
+
 ### v2.52.51 — 2026-05-21
 
 ### Fixed
@@ -539,15 +548,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Tambah user admin 400 Bad Request** — Handler `POST /api/admin/users` memvalidasi field `name` wajib tidak kosong, tapi form frontend (`management/page.tsx`) tidak memiliki input `name`. Fix: jika `name` tidak dikirim (kosong), otomatis di-default ke nilai `username`.
 ### Files
 - `internal/api/handlers/admin_users.go` — `Create`: hapus `name` dari required validation, fallback `body.Name = body.Username`
-
-### v2.52.46 — 2026-05-20
-
-### Fixed
-- **ERR_CONNECTION_CLOSED pada polling admin (setelah idle)** — Tiga fungsi polling di `AdminClientLayout.tsx` (`loadPending`, `loadPendingPayments`, `pollNotifications`) menggunakan `fetch()` tanpa retry. Saat koneksi keepalive di-drop oleh browser/Cloudflare setelah beberapa menit idle, request berikutnya gagal dengan `ERR_CONNECTION_CLOSED`. Fix: tambah helper `fetchWithRetry` (1x retry setelah 1 detik) di level modul dan ganti semua `fetch()` di polling dengan `fetchWithRetry()`.
-- **Nginx `proxy_next_upstream`** — Tambah `proxy_next_upstream error timeout` + `proxy_next_upstream_tries 2` + `proxy_next_upstream_timeout 5s` ke semua blok `location /api/` (catch-all) di 3 server block nginx untuk auto-retry di level proxy jika backend terputus.
-### Files
-- `src/app/admin/AdminClientLayout.tsx` — tambah `fetchWithRetry` helper, ganti `fetch()` di 3 polling useEffect
-- `/etc/nginx/sites-enabled/salfanet-radius` — tambah `proxy_next_upstream` ke blok `/api/`
 
 <!-- AUTO-CHANGELOG:END -->
 
