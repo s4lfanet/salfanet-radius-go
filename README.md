@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.47 — 2026-05-20
+
+### Fixed
+- **Tambah user admin 400 Bad Request** — Handler `POST /api/admin/users` memvalidasi field `name` wajib tidak kosong, tapi form frontend (`management/page.tsx`) tidak memiliki input `name`. Fix: jika `name` tidak dikirim (kosong), otomatis di-default ke nilai `username`.
+### Files
+- `internal/api/handlers/admin_users.go` — `Create`: hapus `name` dari required validation, fallback `body.Name = body.Username`
+
 ### v2.52.46 — 2026-05-20
 
 ### Fixed
@@ -520,14 +527,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **RADIUS setup script pakai IP publik saat router via VPN** — Sebelumnya `SetupRadiusOnRouter` selalu pakai `RADIUS_SERVER_IP` env (103.151.140.110) bahkan saat router terhubung via VPN. Seharusnya pakai IP VPN internal (mis. 10.201.0.1). Fix: saat `vpnClientId` ada, lookup VPN client `isRadiusServer=true` untuk RADIUS IP, atau derive dari VPN IP NAS (replace last octet dengan .1). Juga ditambahkan: gateway masquerade entry, `require-message-auth=no` (ROS7), PPP pool `pool-radius-default`, PPP profile `salfanetradius`, netwatch monitoring, `wireless` di service list, `interim-update=5m`.
 ### Files
 - `internal/api/handlers/misc_handler.go` — `SetupRadiusOnRouter`: full rewrite VPN IP logic + tambah gateway masquerade, pool/profile PPP, netwatch
-
-### v2.52.42 — 2026-05-20
-
-### Fixed
-- **Password & RADIUS secret kosong saat edit router** — Saat tombol edit router diklik, field password MikroTik dan RADIUS secret selalu kosong karena `models.Router` punya `json:"-"` pada kedua field tersebut sehingga tidak ikut di-return API list. Fix: `GetRouter` endpoint (`GET /api/network/routers/:id/detail`) sekarang me-return password & secret secara eksplisit via `fiber.Map`; `handleEdit` di frontend di-refactor jadi `async` dan fetch credential dari endpoint detail setelah modal terbuka, lalu patch `formData` dengan nilai yang didapat.
-### Files
-- `internal/api/handlers/network_ext.go` — `GetRouter`: return explicit `fiber.Map` dengan field `password` dan `secret`
-- `src/app/admin/network/routers/page.tsx` — `handleEdit`: ubah ke `async`, fetch `/api/network/routers/:id/detail`, patch `password` & `secret` ke form state
 
 <!-- AUTO-CHANGELOG:END -->
 
