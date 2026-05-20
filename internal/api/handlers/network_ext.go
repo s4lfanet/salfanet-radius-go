@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"fmt"
+	"net"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -88,17 +91,54 @@ func (h *NetworkHandler) RouterUplinks(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "uplinks": []fiber.Map{}})
 }
 
-// GET /api/network/routers/status
+// GET/POST /api/network/routers/status
 func (h *NetworkHandler) RouterStatus(c fiber.Ctx) error {
-	var routers []models.Router
-	h.db.Find(&routers)
-	result := make([]fiber.Map, 0, len(routers))
-	for _, r := range routers {
-		result = append(result, fiber.Map{
-			"id": r.ID, "name": r.Name, "host": r.NASName, "status": "UNKNOWN",
-		})
+	var body struct {
+		RouterIds []string `json:"routerIds"`
 	}
-	return c.JSON(fiber.Map{"success": true, "routers": result})
+	c.Bind().JSON(&body) // ignore parse error for GET requests
+
+	var routers []models.Router
+	if len(body.RouterIds) > 0 {
+		h.db.Where("id IN ?", body.RouterIds).Find(&routers)
+	} else {
+		h.db.Find(&routers)
+	}
+
+	statusMap := make(map[string]fiber.Map)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	for _, r := range routers {
+		wg.Add(1)
+		go func(router models.Router) {
+			defer wg.Done()
+			online := tcpPing(router.NASName, router.Port, 2*time.Second) ||
+				tcpPing(router.NASName, router.APIPort, 2*time.Second)
+			mu.Lock()
+			statusMap[router.ID] = fiber.Map{
+				"online":   online,
+				"identity": router.Name,
+			}
+			mu.Unlock()
+		}(r)
+	}
+	wg.Wait()
+
+	return c.JSON(fiber.Map{"success": true, "statusMap": statusMap})
+}
+
+// tcpPing checks if host:port is reachable within the given timeout.
+func tcpPing(host string, port int, timeout time.Duration) bool {
+	if host == "" || port == 0 {
+		return false
+	}
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), timeout)
+	if err != nil {
+		return false
+	}
+	conn.Close()
+	return true
 }
 
 // GET /api/network/routers/template

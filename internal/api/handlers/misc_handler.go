@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"math/rand"
+	"net"
 	"net/url"
 	"os"
 	"strings"
@@ -1036,22 +1037,96 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 // POST /api/network/routers/test — test MikroTik router connection (generic test)
 func (h *MiscHandler) TestRouterGeneric(c fiber.Ctx) error {
 	var body struct {
-		Host     string `json:"host"`
-		Port     int    `json:"port"`
-		Username string `json:"username"`
+		IPAddress string `json:"ipAddress"`
+		Host      string `json:"host"`
+		Port      int    `json:"port"`
+		ApiPort   int    `json:"apiPort"`
+		Username  string `json:"username"`
 	}
 	c.Bind().JSON(&body)
-	return c.JSON(fiber.Map{"success": true, "reachable": true, "host": body.Host})
+
+	host := body.IPAddress
+	if host == "" {
+		host = body.Host
+	}
+	port := body.Port
+	if port == 0 {
+		port = 8728
+	}
+	apiPort := body.ApiPort
+	if apiPort == 0 {
+		apiPort = 8729
+	}
+
+	// Try plain API port first
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), 3*time.Second)
+	if err == nil {
+		conn.Close()
+		return c.JSON(fiber.Map{
+			"success":  true,
+			"reachable": true,
+			"host":     host,
+			"usedPort": port,
+			"identity": host,
+		})
+	}
+	// Try SSL port
+	conn, err = net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, apiPort), 3*time.Second)
+	if err == nil {
+		conn.Close()
+		return c.JSON(fiber.Map{
+			"success":  true,
+			"reachable": true,
+			"host":     host,
+			"usedPort": apiPort,
+			"usedTls":  true,
+			"identity": host,
+		})
+	}
+	return c.JSON(fiber.Map{
+		"success":   false,
+		"reachable": false,
+		"host":      host,
+		"message":   fmt.Sprintf("Tidak dapat terhubung ke %s port %d atau %d", host, port, apiPort),
+		"diagnosis": "port_refused",
+	})
 }
 
-// POST /api/network/routers/test-gateway — test gateway reachability
+// POST /api/network/routers/test-gateway — test gateway reachability via TCP
 func (h *MiscHandler) TestGateway(c fiber.Ctx) error {
 	var body struct {
-		RouterID string `json:"routerId"`
-		Gateway  string `json:"gateway"`
+		IPAddress string `json:"ipAddress"`
+		RouterID  string `json:"routerId"`
+		Gateway   string `json:"gateway"`
 	}
 	c.Bind().JSON(&body)
-	return c.JSON(fiber.Map{"success": true, "reachable": true, "gateway": body.Gateway})
+
+	ip := body.IPAddress
+	if ip == "" {
+		ip = body.Gateway
+	}
+	if ip == "" {
+		return c.Status(400).JSON(fiber.Map{"success": false, "message": "IP address diperlukan"})
+	}
+
+	// Try common ports: MikroTik API, SSH, HTTP, HTTPS
+	ports := []int{8728, 22, 80, 443}
+	for _, p := range ports {
+		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, p), 2*time.Second)
+		if err == nil {
+			conn.Close()
+			return c.JSON(fiber.Map{
+				"success":  true,
+				"reachable": true,
+				"message":  fmt.Sprintf("Terhubung ke %s (port %d terbuka)", ip, p),
+			})
+		}
+	}
+	return c.JSON(fiber.Map{
+		"success":  false,
+		"reachable": false,
+		"message":  fmt.Sprintf("Tidak dapat terhubung ke %s", ip),
+	})
 }
 
 // POST /api/olt/:id/onus/:onuId/reboot — reboot a single ONU

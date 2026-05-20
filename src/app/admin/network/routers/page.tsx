@@ -335,7 +335,7 @@ export default function RouterPage() {
     if (!confirmed) return
 
     try {
-      const response = await fetch(`/api/network/routers?id=${id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/network/routers/${id}`, { method: 'DELETE' })
 
       if (response.ok) {
         showSuccess(t('network.routerDeleted'))
@@ -780,10 +780,33 @@ export default function RouterPage() {
                   <input
                     type="text"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => {
+                      const name = e.target.value
+                      setFormData(prev => ({
+                        ...prev,
+                        name,
+                        // Auto-generate shortname from name if shortname not manually set
+                        shortname: prev.shortname && prev.shortname !== prev.name.toLowerCase().replace(/\s+/g, '-').slice(0, 20)
+                          ? prev.shortname
+                          : name.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').slice(0, 20),
+                      }))
+                    }}
                     className="w-full px-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-gray-500 focus:border-[#00f7ff] focus:ring-2 focus:ring-[#00f7ff]/30 transition-all"
                     placeholder={t('network.mainRouterPlaceholder')}
                     required
+                  />
+                </div>
+
+                {/* Short Name */}
+                <div>
+                  <label className="block text-sm font-medium text-[#00f7ff] mb-1">{t('network.shortName')} <span className="text-muted-foreground text-xs">(NAS identifier)</span></label>
+                  <input
+                    type="text"
+                    value={formData.shortname}
+                    onChange={(e) => setFormData({ ...formData, shortname: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 20) })}
+                    className="w-full px-4 py-3 bg-input border border-border rounded-xl text-foreground placeholder-gray-500 focus:border-[#00f7ff] focus:ring-2 focus:ring-[#00f7ff]/30 transition-all"
+                    placeholder="router-01"
+                    maxLength={20}
                   />
                 </div>
 
