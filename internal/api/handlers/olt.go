@@ -69,10 +69,10 @@ func (h *OLTHandler) CreateOLT(c fiber.Ctx) error {
 func (h *OLTHandler) GetOLT(c fiber.Ctx) error {
 	id := c.Params("id")
 	var olt models.NetworkOLT
-	if err := h.db.Preload("ONUStatuses").First(&olt, "id = ?", id).Error; err != nil {
+	if err := h.db.Preload("ONUStatuses").Preload("Alerts").First(&olt, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
 	}
-	return c.JSON(olt)
+	return c.JSON(fiber.Map{"olt": olt})
 }
 
 // UpdateOLT godoc
