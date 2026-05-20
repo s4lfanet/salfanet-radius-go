@@ -78,7 +78,7 @@ backup_genieacs_data() {
     _parse_db_parts || return 0
 
     mysqldump -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" \
-        --no-create-info --replace --single-transaction \
+        --add-drop-table --replace --single-transaction \
         "$_DB_NAME" genieacs_provisions genieacs_presets genieacs_vp_scripts \
         > "$GENIEACS_BACKUP_SQL" 2>/dev/null \
         && print_success "GenieACS data backed up ($(wc -l < "$GENIEACS_BACKUP_SQL" 2>/dev/null || echo 0) lines)" \
@@ -90,8 +90,11 @@ restore_genieacs_data() {
     command -v mysql &>/dev/null || return 0
     _parse_db_parts || return 0
 
-    mysql -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" "$_DB_NAME" \
-        < "$GENIEACS_BACKUP_SQL" 2>/dev/null \
+    {
+        echo "SET FOREIGN_KEY_CHECKS=0;"
+        cat "$GENIEACS_BACKUP_SQL"
+        echo "SET FOREIGN_KEY_CHECKS=1;"
+    } | mysql -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" "$_DB_NAME" 2>/dev/null \
         && print_success "GenieACS data restored from backup" \
         || print_info "GenieACS restore: check manually if data is missing"
     rm -f "$GENIEACS_BACKUP_SQL"
@@ -106,7 +109,7 @@ backup_vps_peers_data() {
     _parse_db_parts || return 0
 
     mysqldump -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" \
-        --no-create-info --replace --single-transaction \
+        --add-drop-table --replace --single-transaction \
         "$_DB_NAME" vps_peers \
         > "$VPS_PEERS_BACKUP_SQL" 2>/dev/null \
         && print_success "vps_peers data backed up ($(wc -l < "$VPS_PEERS_BACKUP_SQL" 2>/dev/null || echo 0) lines)" \
@@ -119,8 +122,11 @@ restore_vps_peers_data() {
     _parse_db_parts || return 0
 
     # Pastikan tabel vps_peers ada sebelum restore (Go restart akan membuatnya jika belum ada)
-    mysql -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" "$_DB_NAME" \
-        < "$VPS_PEERS_BACKUP_SQL" 2>/dev/null \
+    {
+        echo "SET FOREIGN_KEY_CHECKS=0;"
+        cat "$VPS_PEERS_BACKUP_SQL"
+        echo "SET FOREIGN_KEY_CHECKS=1;"
+    } | mysql -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" "$_DB_NAME" 2>/dev/null \
         && print_success "vps_peers data restored from backup" \
         || print_info "vps_peers restore: check manually if data is missing"
     rm -f "$VPS_PEERS_BACKUP_SQL"
@@ -135,8 +141,10 @@ backup_vpn_data() {
     command -v mysqldump &>/dev/null || return 0
     _parse_db_parts || return 0
 
+    # Full backup WITH schema (drop+create+insert) bukan --no-create-info (insert only).
+    # Jika prisma DROP tabel ini, restore akan recreate tabel + insert data kembali.
     mysqldump -h"$_DB_HOST" -P"$_DB_PORT" -u"$_DB_USER" -p"$_DB_PASS" \
-        --no-create-info --replace --single-transaction \
+        --add-drop-table --replace --single-transaction \
         "$_DB_NAME" vpn_servers vpn_clients \
         > "$VPN_DATA_BACKUP_SQL" 2>/dev/null \
         && print_success "vpn_servers + vpn_clients data backed up ($(wc -l < "$VPN_DATA_BACKUP_SQL" 2>/dev/null || echo 0) lines)" \
