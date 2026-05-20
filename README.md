@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.46 — 2026-05-20
+
+### Fixed
+- **ERR_CONNECTION_CLOSED pada polling admin (setelah idle)** — Tiga fungsi polling di `AdminClientLayout.tsx` (`loadPending`, `loadPendingPayments`, `pollNotifications`) menggunakan `fetch()` tanpa retry. Saat koneksi keepalive di-drop oleh browser/Cloudflare setelah beberapa menit idle, request berikutnya gagal dengan `ERR_CONNECTION_CLOSED`. Fix: tambah helper `fetchWithRetry` (1x retry setelah 1 detik) di level modul dan ganti semua `fetch()` di polling dengan `fetchWithRetry()`.
+- **Nginx `proxy_next_upstream`** — Tambah `proxy_next_upstream error timeout` + `proxy_next_upstream_tries 2` + `proxy_next_upstream_timeout 5s` ke semua blok `location /api/` (catch-all) di 3 server block nginx untuk auto-retry di level proxy jika backend terputus.
+### Files
+- `src/app/admin/AdminClientLayout.tsx` — tambah `fetchWithRetry` helper, ganti `fetch()` di 3 polling useEffect
+- `/etc/nginx/sites-enabled/salfanet-radius` — tambah `proxy_next_upstream` ke blok `/api/`
+
 ### v2.52.45 — 2026-05-20
 
 ### Fixed
@@ -519,23 +528,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/network_ext.go` — `GetRouter`: return explicit `fiber.Map` dengan field `password` dan `secret`
 - `src/app/admin/network/routers/page.tsx` — `handleEdit`: ubah ke `async`, fetch `/api/network/routers/:id/detail`, patch `password` & `secret` ke form state
-
-### v2.52.41 — 2026-05-20
-
-### Fixed
-- **RADIUS script ROS6/ROS7 tidak lengkap** — Script yang di-generate tombol "RADIUS Script" hanya berisi 4 baris minimal. Banyak perintah penting hilang dibanding versi Next.js sebelumnya. Fix komprehensif:
-  1. Tambah header berisi nama NAS, IP RADIUS, jenis koneksi, tanggal generate
-  2. Idempotent: `/radius remove [find ... comment~"Salfanet"]` sebelum add (ROS7 pakai `where`, ROS6 tanpa `where`)
-  3. Timeout benar: ROS7 = `timeout=3s`, ROS6 = `timeout=3` (tanpa 's')
-  4. Tambah `/ppp aaa set use-radius=yes accounting=yes interim-update=00:10:00` (sebelumnya hilang)
-  5. Tambah `radius-accounting=yes radius-interim-update=00:10:00` di hotspot profile (sebelumnya hilang)
-  6. Ganti `/ppp profile set [find] use-radius=yes` (salah) → `/ppp aaa set use-radius=yes` (benar)
-  7. Ganti `/ip radius incoming` (salah) → `/radius incoming` (benar)
-  8. Tambah firewall rules untuk allow CoA (3799) dan Auth/Acct (1812/1813) dari RADIUS server
-  9. Untuk router via VPN: lookup VPN client IP → tambah `src-address={vpnIp}` ke `/radius add`, derive RADIUS server IP dari VPN gateway (replace last octet jadi .1)
-  10. Tambah blok verifikasi di akhir script
-### Files
-- `internal/api/handlers/misc_handler.go` — Rewrite `SetupRadiusOnRouter`: VPN client IP lookup, complete ROS6+ROS7 scripts, proper PPP AAA, hotspot accounting, firewall rules, idempotent remove, correct timeout syntax
 
 <!-- AUTO-CHANGELOG:END -->
 
