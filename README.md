@@ -491,6 +491,20 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.54 — 2026-05-22
+
+### Fixed
+- **OLT Edit — router tidak tersimpan** — `UpdateOLT` menghapus `routerIds` dari body sebelum update sehingga relasi ke `network_olt_routers` tidak pernah disimpan. Fix: ekstrak `routerIds` terlebih dahulu, hapus baris lama, lalu insert ulang ke `network_olt_routers`.
+- **OLT Create — router tidak tersimpan** — `CreateOLT` tidak memiliki field `routerIds` di struct body. Fix: tambah `RouterIDs []string` ke struct dan create `NetworkOLTRouter` records setelah OLT dibuat.
+- **OLT Edit — password terhapus jika dikosongkan** — GORM `Updates` dengan map menyertakan empty string sebagai nilai update. Jika user tidak mengisi ulang password di form edit, password lama terhapus. Fix: hapus key `password` dari map jika nilainya kosong.
+- **OLT list — Status selalu "Checking" / tidak muncul** — `NetworkOLTStatus` query tabel `olts` lama (legacy) dan mengembalikan `{olts, count}` sedangkan frontend mengharapkan `{statusMap: {[id]: {online, details}}}`. Fix: query tabel `network_olts`, lakukan TCP check ke SSH/Telnet port secara concurrent, kembalikan format yang benar.
+- **OLT Edit form — router tidak ter-preload** — `ListOLTsForMap` tidak preload router associations, sehingga form Edit selalu menampilkan checklist kosong. Fix: tambah `Preload("Routers.Router")` dan tambah relasi `Routers` + nested `Router` ke model.
+### Files
+- `internal/api/handlers/network_ext.go` — `UpdateOLT`: save router associations, skip empty password; `CreateOLT`: tambah `RouterIDs` + create associations
+- `internal/api/handlers/misc_handler.go` — `NetworkOLTStatus`: rewrite untuk query `network_olts`, TCP check concurrent, return `{statusMap}`
+- `internal/api/handlers/network.go` — `ListOLTsForMap`: tambah `Preload("Routers.Router")`
+- `internal/db/models/olt.go` — `NetworkOLT`: tambah relasi `Routers`; `NetworkOLTRouter`: tambah nested `Router`
+
 ### v2.52.53 — 2026-05-22
 
 ### Fixed
@@ -538,18 +552,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/olt.go` — Tambah `TestConnection` ke `OLTHandler`; tambah import `net`
 - `internal/api/router.go` — Tambah `POST/PUT/DELETE /network/olts` + `POST /olt/test-connection`
 - `src/app/admin/network/olts/page.tsx` — Fix unsafe `result.results.tests.map()` → optional chaining + fallback string
-
-### v2.52.48 — 2026-05-20
-
-### Fixed
-- **Visibilitas menu per role** — 3 bug fixes:
-  1. Parent menu "Payment" pakai `requiredPermission: 'settings.payment'` → diubah ke `'invoices.view'` agar role FINANCE, CUSTOMER_SERVICE, dan VIEWER bisa melihat menu Manual Payments
-  2. Payroll Templates + HR Management (attendance, cash advances, commissions, payroll) pakai `settings.view` → diubah ke `keuangan.view` agar role FINANCE bisa akses menu payroll/HR
-  3. Handler `POST /api/admin/users` tidak menyimpan array `permissions` dari form → diperbaiki, permissions kini disimpan ke tabel `user_permissions` saat create user
-- **DB role_permissions** — Tambah permission `sessions.view` ke role FINANCE, tambah `routers.view` ke role VIEWER (via SQL INSERT IGNORE)
-### Files
-- `src/app/admin/AdminClientLayout.tsx` — Payment parent permission guard, Payroll Templates + HR Management permission guards
-- `internal/api/handlers/admin_users.go` — Create handler: tambah field `Permissions`, loop simpan ke `user_permissions` table
 
 <!-- AUTO-CHANGELOG:END -->
 
