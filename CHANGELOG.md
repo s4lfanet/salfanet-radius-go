@@ -6,6 +6,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.49] — 2026-05-20
+### Fixed
+- **Tambah OLT di admin/network/olts — 405 Method Not Allowed** — `POST /api/network/olts` tidak ada route-nya. Backend hanya punya route CRUD di `/api/olt/*` bukan `/api/network/olts`. Fix: tambah `POST`, `PUT`, `DELETE` di network group + 3 handler baru di `NetworkHandler` yang handle ID dari request body (bukan URL param).
+- **OLT Test Connection — TypeError: Cannot read properties of undefined (reading 'tests')** — Dua root cause: (1) Frontend memanggil `POST /api/olt/test-connection` yang tidak ada route-nya. Fix: tambah `olt.Post("/test-connection", oltH.TestConnection)`. (2) Handler `TestOLTConnection` di AdminMiscHandler hanya stub tanpa field `results.tests`. Fix: buat handler baru di `OLTHandler.TestConnection` yang melakukan TCP check ke port SSH (dan Telnet jika enabled) lalu return `{success, results: {tests: [{method, success, message, time}]}}`. (3) Frontend tidak memproteksi akses `result.results.tests.map(...)` saat field undefined → fix dengan optional chaining + fallback.
+### Files
+- `internal/api/handlers/network_ext.go` — Tambah `CreateOLT`, `UpdateOLT`, `DeleteOLT` ke `NetworkHandler`; tambah import `strconv`
+- `internal/api/handlers/olt.go` — Tambah `TestConnection` ke `OLTHandler`; tambah import `net`
+- `internal/api/router.go` — Tambah `POST/PUT/DELETE /network/olts` + `POST /olt/test-connection`
+- `src/app/admin/network/olts/page.tsx` — Fix unsafe `result.results.tests.map()` → optional chaining + fallback string
+
+---
+
 ## [2.52.48] — 2026-05-20
 ### Fixed
 - **Visibilitas menu per role** — 3 bug fixes:
