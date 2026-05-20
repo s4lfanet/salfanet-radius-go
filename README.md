@@ -491,6 +491,56 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.57 — 2026-05-22
+
+### Fixed
+- **TSC Errors (9 errors → 0)** — Semua TypeScript compile error diperbaiki:
+  - `invoice-templates/page.tsx` — `variant="ghost"` → `variant="secondary"` (2 tempat, `ghost` tidak valid di `ModalButton`)
+  - `laporan/analitik/page.tsx` — `s.avgChurnRate` possibly undefined → `(s.avgChurnRate ?? 0)`
+  - `pay/[token]/page.tsx` — tambah `hasListener?: boolean` ke tipe state `qrisOwn`
+  - `cron/runner.ts` — `(prisma as any).cronScheduleConfig.findMany()` + tambah type untuk callback parameter
+  - `lib/genieacs/api-client.ts` — import dari route yang tidak ada → pindahkan `getGenieACSCredentials` ke `src/lib/genieacs/credentials.ts`
+  - `qrcode.react` — buat type declaration `src/types/qrcode.react.d.ts` (package tidak tersedia lokal)
+- **i18n — 72 missing translation keys** — Tambah semua key yang hilang ke `src/locales/id.json`:
+  - Top-level `payment.*` namespace (38 keys dari `customer.payment.*`)
+  - `pppoe.balance.*` (10 keys baru untuk halaman riwayat saldo)
+  - `pppoe.eWallet`, `pppoe.monthlyDueDateDesc`, `pppoe.profileMikrotik`
+  - `invoices.pdfBillTo/HeaderPrice/HeaderQty/HeaderTotal`
+  - `keuangan.pdfAmount/Category/Description/Type`
+  - `network.common.nodes`, `network.otb.output`, `network.routerCreated`
+  - `ticket.replySent/statusUpdated/priorityUpdated`
+  - `common.coordinates/done/subtract`
+  - `hotspot.autoGenerate/of`
+  - `settings.pageWillReload`
+- **Go Model Column Tags — Komprehensif** — Semua model Go di `internal/db/models/models.go` dan `olt.go` kini memiliki explicit `gorm:"column:camelCase"` tags agar INSERT/UPDATE/CREATE menggunakan nama kolom yang benar (Prisma default = camelCase, GORM default = snake_case):
+  - `PppoeProfile` — `downloadSpeed`, `uploadSpeed`, `rateLimit`, `groupName`, `mikrotikProfileName`, `ipPoolName`, `ipPoolRange`, `localAddress`, `ppnActive`, `ppnRate`, `isActive`, `validityUnit`, `validityValue`, `sharedUser`, `createdAt`, `updatedAt`
+  - `PppoeUser` — `profileId`, `areaId`, `ipAddress`, `macAddress`, `expiredAt`, `routerId`, `subscriptionType`, `lastPaymentDate`, `billingDay`, `autoIsolationEnabled`, `autoRenewal`, `connectionType`, `referralCode`, `syncedToRadius`, `createdAt`, `updatedAt`
+  - `PppoeCustomer` — `customerId`, `idCardNumber`, `idCardPhoto`, `isActive`, `areaId`, `createdAt`, `updatedAt`
+  - `Invoice` — `invoiceNumber`, `userId`, `dueDate`, `paidAt`, `paymentLink`, `paymentToken`, `customerName`, `customerPhone`, `customerEmail`, `customerUsername`, `sentReminders`, `invoiceType`, `baseAmount`, `createdAt`, `updatedAt`
+  - `Router` — `ipAddress`, `apiPort`, `isActive`, `createdAt`, `updatedAt`
+  - `Company` — semua compound fields: `adminPhone`, `baseUrl`, `poweredBy`, `customerIdPrefix`, `invoiceGenerateDays`, `gracePeriodDays`, `isolationEnabled`, dll. + `createdAt`, `updatedAt`
+  - `QrisPending` — `invoiceId`, `userId`, `orderId`, `baseAmount`, `uniqueAmount`, `qrString`, `sourceApp`, `expiresAt`, `paidAt`, `createdAt`, `updatedAt`
+  - `CustomerSession` — `userId`, `otpCode`, `otpExpiry`, `expiresAt`, `createdAt`, `updatedAt`
+  - `WhatsappProvider` — `apiKey`, `apiUrl`, `senderNumber`, `isActive`, `createdAt`, `updatedAt`
+  - `WhatsappTemplate` — `isActive`, `createdAt`, `updatedAt`
+  - `ManualPayment` — `createdAt`, `updatedAt`
+  - `Payment` — `invoiceId`, `gatewayId`, `paidAt`, `createdAt`
+  - `Ticket` — `ticketNumber`, `customerId`, `customerName`, `customerEmail`, `customerPhone`, `categoryId`, `assignedToId`, `assignedToType`, `closedAt`, `resolvedAt`, `createdAt`, `updatedAt`
+### Added
+- `src/lib/genieacs/credentials.ts` — standalone helper `getGenieACSCredentials()` yang membaca dari tabel `genieacsSettings` via Prisma
+- `src/types/qrcode.react.d.ts` — type declaration untuk `qrcode.react` (QRCodeSVG, QRCodeCanvas)
+### Files
+- `src/app/admin/invoice-templates/page.tsx` — ghost→secondary
+- `src/app/admin/laporan/analitik/page.tsx` — null coalescing untuk avgChurnRate
+- `src/app/pay/[token]/page.tsx` — tambah hasListener ke qrisOwn type
+- `src/cron/runner.ts` — type cast untuk cronScheduleConfig
+- `src/lib/genieacs/api-client.ts` — fix import credentials
+- `src/lib/genieacs/credentials.ts` — file baru
+- `src/types/qrcode.react.d.ts` — file baru
+- `src/locales/id.json` — tambah 72+ missing translation keys
+- `internal/db/models/models.go` — komprehensif camelCase column tags
+- `internal/db/models/olt.go` — sudah di-fix di [2.52.56]
+
 ### v2.52.56 — 2026-05-22
 
 ### Fixed
@@ -539,15 +589,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/network.go` — `ListOLTsForMap`: return `{olts: olts}` bukan array mentah
 - `internal/api/handlers/olt.go` — `GetOLT`: return `{olt: olt}`, tambah `Preload("Alerts")`
-
-### v2.52.52 — 2026-05-21
-
-### Fixed
-- **L2TP delete VPN client — tidak membersihkan peer-routes.conf dan kernel routes** — Saat VPN client L2TP dihapus dari web, entri di `/etc/salfanet/l2tp/peer-routes.conf` tidak dihapus dan kernel routes (`ip route del`) tidak dijalankan. Fix: tambah `removeL2TPPeerRoutes(peer.PeerIP)` yang membaca peer-routes.conf, menghapus kernel routes semua subnet yang terdaftar, lalu menghapus baris dari file.
-- **vpn-watchdog — L2TP route parsing format salah** — Watchdog CHECK E membaca peer-routes.conf dengan format `<net> via <ip>` (salah). Format sebenarnya adalah `<peerVpnIP> <net1> [net2]...`. Fix: parsing diubah — field pertama sebagai gateway IP, field 2+ sebagai CIDR network yang perlu ada di routing table.
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `removeL2TPPeerRoutes()`, panggil saat delete L2TP peer
-- `vpn-watchdog.sh` — Fix parsing peer-routes.conf di CHECK E (L2TP route restore)
 
 <!-- AUTO-CHANGELOG:END -->
 
