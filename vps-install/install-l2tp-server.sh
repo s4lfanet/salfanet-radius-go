@@ -124,8 +124,10 @@ conn %default
   rekeymargin=3m
   keyingtries=1
   authby=secret
-  ike=aes256-sha256-modp2048,aes256-sha1-modp1024!
-  esp=aes256-sha256,aes256-sha1!
+  # IKE phase-1: broad proposal list, no strict (!) — MikroTik negotiates aes128/256 + sha1 + modp1024
+  ike=aes256-sha256-modp2048,aes256-sha1-modp1024,aes128-sha1-modp1024,3des-sha1-modp1024,aes256-sha256,aes256-sha1,aes128-sha1
+  # ESP phase-2: include modp1024 PFS variants matching MikroTik default proposal
+  esp=aes256-sha1-modp1024,aes128-sha1-modp1024,3des-sha1-modp1024,aes256-sha256-modp2048,aes256-sha256,aes256-sha1,aes128-sha1
 
 conn L2TP-PSK
   keyexchange=ikev1
@@ -169,12 +171,14 @@ XEOF
 
 cat > /etc/ppp/options.xl2tpd.server << PPPEOF
 # PPP options for xl2tpd server (SALFANET RADIUS)
+# noauth: Ubuntu 22.04 pppd 2.4.9 does not support MSCHAPv2 natively;
+#         authentication is handled by IPsec PSK (phase 1) instead.
 ipcp-accept-local
 ipcp-accept-remote
 ms-dns 8.8.8.8
 ms-dns 8.8.4.4
 noccp
-auth
+noauth
 mtu 1280
 mru 1280
 nodefaultroute
