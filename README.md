@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.51 — 2026-05-21
+
+### Fixed
+- **L2TP chap-secrets write — tidak lagi silent fail** — Go handler `CreateL2TPPeer` sebelumnya mengabaikan error saat menulis ke `/etc/ppp/chap-secrets` (`_, _ = ...`). Sekarang error dikembalikan sebagai HTTP 500 sehingga user tahu jika kredensial VPN gagal disimpan.
+- **vpn-watchdog — PEER_IP dinamis dari ppp0** — PEER_IP sebelumnya hardcoded `10.20.30.1` (salah). Sekarang dibaca dinamis dari routing table ppp0 via `ip route show dev ppp0 | grep 'proto kernel' | awk '{print $1}'` dengan fallback `10.201.0.10`.
+### Files
+- `internal/api/handlers/network_vpn_ext_handler.go` — Chap-secrets write sekarang return error jika gagal
+- `vpn-watchdog.sh` — PEER_IP dinamis dari kernel route ppp0
+
 ### v2.52.50 — 2026-05-21
 
 ### Added
@@ -536,13 +545,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `src/app/admin/AdminClientLayout.tsx` — tambah `fetchWithRetry` helper, ganti `fetch()` di 3 polling useEffect
 - `/etc/nginx/sites-enabled/salfanet-radius` — tambah `proxy_next_upstream` ke blok `/api/`
-
-### v2.52.45 — 2026-05-20
-
-### Fixed
-- **Edit Admin User 500 Internal Server Error** — Handler `PUT /api/admin/users/:id` meneruskan seluruh body JSON ke GORM `Updates()` termasuk field `permissions` (array) yang bukan kolom di tabel `admin_users`, menyebabkan SQL error. Fix: whitelist hanya field valid (`username`, `email`, `phone`, `name`, `role`, `isActive`, `twoFactorEnabled`, `password`), dan proses field `permissions` secara terpisah via tabel `user_permissions`.
-### Files
-- `internal/api/handlers/admin_users.go` — `Update`: whitelist kolom valid, handle permissions array secara terpisah
 
 <!-- AUTO-CHANGELOG:END -->
 
