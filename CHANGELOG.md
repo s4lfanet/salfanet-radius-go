@@ -10,9 +10,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - **L2TP chap-secrets write — tidak lagi silent fail** — Go handler `CreateL2TPPeer` sebelumnya mengabaikan error saat menulis ke `/etc/ppp/chap-secrets` (`_, _ = ...`). Sekarang error dikembalikan sebagai HTTP 500 sehingga user tahu jika kredensial VPN gagal disimpan.
 - **vpn-watchdog — PEER_IP dinamis dari ppp0** — PEER_IP sebelumnya hardcoded `10.20.30.1` (salah). Sekarang dibaca dinamis dari routing table ppp0 via `ip route show dev ppp0 | grep 'proto kernel' | awk '{print $1}'` dengan fallback `10.201.0.10`.
+- **systemd ProtectSystem=strict — /etc/ppp dan /etc/salfanet read-only** — `ProtectSystem=strict` memblokir Go service dari menulis ke `/etc/ppp/chap-secrets` dan `/etc/salfanet/l2tp/peer-routes.conf`. Fix: tambah `/etc/ppp /etc/salfanet /etc/wireguard` ke `ReadWritePaths` di systemd service. Juga ditambahkan auto-patch di `updater.sh` untuk instalasi lama.
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — Chap-secrets write sekarang return error jika gagal
 - `vpn-watchdog.sh` — PEER_IP dinamis dari kernel route ppp0
+- `vps-install/install-go.sh` — Tambah `/etc/ppp /etc/salfanet /etc/wireguard` ke ReadWritePaths
+- `vps-install/updater.sh` — Auto-patch ReadWritePaths jika belum ada `/etc/ppp`
 
 ---
 
