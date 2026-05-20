@@ -49,8 +49,11 @@ func (h *AdminUserHandler) Create(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	if body.Username == "" || body.Password == "" || body.Name == "" {
-		return c.Status(400).JSON(fiber.Map{"error": "username, password and name required"})
+	if body.Username == "" || body.Password == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "username and password required"})
+	}
+	if body.Name == "" {
+		body.Name = body.Username
 	}
 	hashed, err := bcrypt.GenerateFromPassword([]byte(body.Password), 10)
 	if err != nil {
