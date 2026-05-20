@@ -74,10 +74,10 @@ func (h *OLTHandler) GetOLT(c fiber.Ctx) error {
 		Preload("Alerts").
 		Preload("Routers.Router").
 		Preload("MonitoringLogs", func(db *gorm.DB) *gorm.DB {
-			return db.Order("created_at DESC").Limit(100)
+			return db.Order("createdAt DESC").Limit(100)
 		}).
 		Preload("PerformanceMetrics", func(db *gorm.DB) *gorm.DB {
-			return db.Order("recorded_at DESC").Limit(100)
+			return db.Order("recordedAt DESC").Limit(100)
 		}).
 		First(&olt, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})

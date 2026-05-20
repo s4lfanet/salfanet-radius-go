@@ -40,36 +40,36 @@ const (
 type NetworkOLT struct {
 	ID         string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
 	Name       string    `gorm:"not null" json:"name"`
-	IPAddress  string    `gorm:"not null" json:"ipAddress"`
+	IPAddress  string    `gorm:"not null;column:ipAddress" json:"ipAddress"`
 	Latitude   float64   `json:"latitude"`
 	Longitude  float64   `json:"longitude"`
 	Status     string    `gorm:"default:active" json:"status"`
-	FollowRoad bool      `gorm:"default:false" json:"followRoad"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	FollowRoad bool      `gorm:"default:false;column:followRoad" json:"followRoad"`
+	CreatedAt  time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	UpdatedAt  time.Time `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
 
 	// Monitoring fields
 	Vendor            *string    `gorm:"default:huawei" json:"vendor"`
 	Model             *string    `json:"model"`
-	FirmwareVersion   *string    `json:"firmwareVersion"`
-	SNMPEnabled       bool       `gorm:"default:true" json:"snmpEnabled"`
-	SNMPCommunity     string     `gorm:"default:public" json:"snmpCommunity"`
-	SNMPPort          int        `gorm:"default:161" json:"snmpPort"`
-	TelnetEnabled     bool       `gorm:"default:false" json:"telnetEnabled"`
-	TelnetPort        int        `gorm:"default:23" json:"telnetPort"`
-	SSHEnabled        bool       `gorm:"default:false" json:"sshEnabled"`
-	SSHPort           int        `gorm:"default:22" json:"sshPort"`
+	FirmwareVersion   *string    `gorm:"column:firmwareVersion" json:"firmwareVersion"`
+	SNMPEnabled       bool       `gorm:"default:true;column:snmpEnabled" json:"snmpEnabled"`
+	SNMPCommunity     string     `gorm:"default:public;column:snmpCommunity" json:"snmpCommunity"`
+	SNMPPort          int        `gorm:"default:161;column:snmpPort" json:"snmpPort"`
+	TelnetEnabled     bool       `gorm:"default:false;column:telnetEnabled" json:"telnetEnabled"`
+	TelnetPort        int        `gorm:"default:23;column:telnetPort" json:"telnetPort"`
+	SSHEnabled        bool       `gorm:"default:false;column:sshEnabled" json:"sshEnabled"`
+	SSHPort           int        `gorm:"default:22;column:sshPort" json:"sshPort"`
 	Username          *string    `json:"username"`
 	Password          *string    `json:"-"`
-	MonitoringEnabled bool       `gorm:"default:false" json:"monitoringEnabled"`
-	PollingInterval   int        `gorm:"default:300" json:"pollingInterval"`
-	LastPollAt        *time.Time `json:"lastPollAt"`
-	IsOnline          bool       `gorm:"default:false" json:"isOnline"`
+	MonitoringEnabled bool       `gorm:"default:false;column:monitoringEnabled" json:"monitoringEnabled"`
+	PollingInterval   int        `gorm:"default:300;column:pollingInterval" json:"pollingInterval"`
+	LastPollAt        *time.Time `gorm:"column:lastPollAt" json:"lastPollAt"`
+	IsOnline          bool       `gorm:"default:false;column:isOnline" json:"isOnline"`
 	Uptime            int64      `gorm:"default:0" json:"uptime"`
 	Temperature       *float64   `json:"temperature"`
-	TotalONU          int        `gorm:"default:0" json:"totalOnu"`
-	OnlineONU         int        `gorm:"default:0" json:"onlineOnu"`
-	OfflineONU        int        `gorm:"default:0" json:"offlineOnu"`
+	TotalONU          int        `gorm:"default:0;column:totalOnu" json:"totalOnu"`
+	OnlineONU         int        `gorm:"default:0;column:onlineOnu" json:"onlineOnu"`
+	OfflineONU        int        `gorm:"default:0;column:offlineOnu" json:"offlineOnu"`
 
 	// Relations
 	ONUStatuses        []OLTONUStatus         `gorm:"foreignKey:OltID" json:"onuStatuses,omitempty"`

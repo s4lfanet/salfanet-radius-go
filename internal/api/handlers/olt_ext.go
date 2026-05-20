@@ -59,7 +59,7 @@ func (h *OltExtHandler) Monitoring(c fiber.Ctx) error {
 	h.db.Model(&models.OLTAlert{}).Where("isResolved = ?", false).Count(&unresolved)
 
 	var olts []models.NetworkOLT
-	h.db.Select("id,name,ip_address,status,is_online,total_onu,online_onu,offline_onu").Find(&olts)
+	h.db.Select("id,name,ipAddress,status,isOnline,totalOnu,onlineOnu,offlineOnu").Find(&olts)
 
 	return c.JSON(fiber.Map{
 		"success":          true,
