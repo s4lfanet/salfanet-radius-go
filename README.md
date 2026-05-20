@@ -491,6 +491,21 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.55 — 2026-05-22
+
+### Fixed
+- **OLT detail page — JS crash `Cannot read properties of undefined (reading 'length')`** — `olt.monitoringLogs` undefined karena `GetOLT` tidak me-preload `MonitoringLogs` / `PerformanceMetrics`. Fix: tambah preload dengan ORDER + LIMIT 100, serta null-safety `??[]` di frontend.
+- **OLT detail page — password terhapus saat Save Settings** — `OLTHandler.UpdateOLT` menggunakan `h.db.Save(&body)` dengan struct `NetworkOLT`; field `Password *string json:"-"` tidak ter-bind oleh Fiber sehingga nilainya `nil`, lalu GORM Save menghapus password di DB. Fix: ganti ke map-based update (`map[string]interface{}`), skip key `password` jika kosong.
+- **OLT router associations — kolom DB camelCase vs GORM snake_case mismatch** — GORM default naming strategy menghasilkan `olt_id`, `router_id` dst., tapi Prisma membuat kolom dengan nama camelCase (`oltId`, `routerId`). Fix: tambah explicit `gorm:"column:camelCase"` tags ke model `NetworkOLTRouter`.
+- **OLT status check — kolom DB salah** — `NetworkOLTStatus` menggunakan `SELECT id, ip_address, ssh_enabled...` dan `UPDATE is_online` dengan nama snake_case. Fix: ganti ke `ipAddress`, `sshEnabled`, `sshPort`, `telnetEnabled`, `telnetPort`, `isOnline` (camelCase sesuai skema Prisma).
+- **OLT router delete — WHERE clause salah** — `h.db.Where("olt_id = ?", id)` seharusnya `"oltId = ?"` agar sesuai kolom DB camelCase. Fix diterapkan di `olt.go` dan `network_ext.go`.
+### Files
+- `internal/db/models/olt.go` — `NetworkOLTRouter`: tambah explicit `gorm:"column:..."` camelCase tags + relasi `MonitoringLogs`/`PerformanceMetrics` ke `NetworkOLT`
+- `internal/api/handlers/olt.go` — `GetOLT`: preload semua relasi; `UpdateOLT`: map-based update, skip empty password, fix `oltId` WHERE clause
+- `internal/api/handlers/network_ext.go` — fix `WHERE "oltId = ?"` untuk delete router associations
+- `internal/api/handlers/misc_handler.go` — `NetworkOLTStatus`: fix semua kolom DB ke camelCase
+- `src/app/admin/olt/[id]/page.tsx` — null-safety `??[]` pada `olt.monitoringLogs`
+
 ### v2.52.54 — 2026-05-22
 
 ### Fixed
@@ -534,24 +549,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `vpn-watchdog.sh` — PEER_IP dinamis dari kernel route ppp0
 - `vps-install/install-go.sh` — Tambah `/etc/ppp /etc/salfanet /etc/wireguard` ke ReadWritePaths
 - `vps-install/updater.sh` — Auto-patch ReadWritePaths jika belum ada `/etc/ppp`
-
-### v2.52.50 — 2026-05-21
-
-### Added
-- **L2TP VPN Client — input IP lokal dan auto-routing VPS** — Form tambah VPN client sekarang menampilkan field "IP Lokal / Subnet di Balik NAS" untuk tipe L2TP (VPS L2TP server) sama seperti WireGuard. Saat VPN client L2TP dibuat dengan `localNetworks` diisi, Go handler akan: (1) menulis entri ke `/etc/salfanet/l2tp/peer-routes.conf`, (2) memasang hook `/etc/ppp/ip-up.d/99-salfanet-routes.sh` yang otomatis menambahkan route ke subnet lokal NAS setiap kali tunnel L2TP tersambung, (3) mencoba `ip route replace` langsung (best-effort jika PPP sudah aktif). Script MikroTik yang dihasilkan juga menyertakan perintah route dan firewall untuk routing balik ke subnet VPN.
-- **WireGuard VPN Peer — localNetworks benar-benar digunakan** — `CreateWGPeer` sebelumnya menerima `localNetworks` tapi mengabaikannya. Sekarang subnet lokal disertakan di `AllowedIPs` peer di `wg0.conf` dan live via `wg set`, serta `ip route replace` langsung diterapkan di VPS.
-### Files
-- `src/app/admin/network/vpn-client/page.tsx` — Field "IP Lokal" kini tampil juga untuk L2TP VPS; label hint disesuaikan per tipe VPN
-- `internal/api/handlers/network_vpn_ext_handler.go` — `CreateL2TPPeer`: handle `localNetworks` → peer-routes.conf + ip-up.d hook + immediate routes + script; `CreateWGPeer`: build `allowedIPs` dari localNetworks + `ip route replace`
-
-### Fixed
-- **Tambah OLT di admin/network/olts — 405 Method Not Allowed** — `POST /api/network/olts` tidak ada route-nya. Backend hanya punya route CRUD di `/api/olt/*` bukan `/api/network/olts`. Fix: tambah `POST`, `PUT`, `DELETE` di network group + 3 handler baru di `NetworkHandler` yang handle ID dari request body (bukan URL param).
-- **OLT Test Connection — TypeError: Cannot read properties of undefined (reading 'tests')** — Dua root cause: (1) Frontend memanggil `POST /api/olt/test-connection` yang tidak ada route-nya. Fix: tambah `olt.Post("/test-connection", oltH.TestConnection)`. (2) Handler `TestOLTConnection` di AdminMiscHandler hanya stub tanpa field `results.tests`. Fix: buat handler baru di `OLTHandler.TestConnection` yang melakukan TCP check ke port SSH (dan Telnet jika enabled) lalu return `{success, results: {tests: [{method, success, message, time}]}}`. (3) Frontend tidak memproteksi akses `result.results.tests.map(...)` saat field undefined → fix dengan optional chaining + fallback.
-### Files
-- `internal/api/handlers/network_ext.go` — Tambah `CreateOLT`, `UpdateOLT`, `DeleteOLT` ke `NetworkHandler`; tambah import `strconv`
-- `internal/api/handlers/olt.go` — Tambah `TestConnection` ke `OLTHandler`; tambah import `net`
-- `internal/api/router.go` — Tambah `POST/PUT/DELETE /network/olts` + `POST /olt/test-connection`
-- `src/app/admin/network/olts/page.tsx` — Fix unsafe `result.results.tests.map()` → optional chaining + fallback string
 
 <!-- AUTO-CHANGELOG:END -->
 
