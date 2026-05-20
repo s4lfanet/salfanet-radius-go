@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.44 — 2026-05-20
+
+### Fixed
+- **RADIUS script NAS IP kosong + RADIUS IP masih public** — Root cause: tabel `vpn_clients` kosong di DB, sehingga lookup `h.db.First(&vpnClient, "id = ?", vpnClientId)` gagal dan `nasSrcAddress` tetap kosong → `radiusServerIP` tidak pernah di-override dari public IP. Fix: tambah fallback `nasSrcAddress = router.IPAddress` saat VPN client tidak ditemukan. Untuk VPN router, `nas.ipAddress` IS the VPN IP (mis. `10.201.0.10`), sehingga `radiusServerIP` bisa di-derive dengan benar ke `10.201.0.1`.
+### Files
+- `internal/api/handlers/misc_handler.go` — `SetupRadiusOnRouter`: fallback ke `router.IPAddress` saat `vpn_clients` lookup gagal
+
 ### v2.52.43 — 2026-05-20
 
 ### Fixed
@@ -529,16 +536,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **L2TP VPN putus setiap update (install-l2tp-server.sh overwrite ipsec.conf)** — Script installer menulis `/etc/ipsec.conf` dengan proposal IKE/ESP terlalu sempit dan flag strict (`!`), sehingga MikroTik gagal phase1 ("phase1 negotiation failed due to time up"). Dua masalah: (1) `ike=` hanya berisi `aes256-sha256-modp2048,aes256-sha1-modp1024!` — MikroTik default mengirim `aes128-sha1-modp1024` yang ditolak. (2) `esp=aes256-sha256,aes256-sha1!` tanpa modp1024, padahal MikroTik default ESP pakai PFS modp1024. Fix: perluas `ike=` dan `esp=` mencakup semua varian AES-128/192/256 + SHA1 + modp1024, hapus flag strict `!`. Juga fix `auth` → `noauth` di pppd options (Ubuntu 22.04 pppd 2.4.9 tidak support MSCHAPv2 natively; autentikasi sudah dijamin IPsec PSK phase 1).
 ### Files
 - `vps-install/install-l2tp-server.sh` — Perluas `ike=` dan `esp=` proposals; hapus flag strict `!`; ganti `auth` → `noauth` di pppd options; hapus em dash (`—`) dari baris komentar di heredoc ipsec.conf (em dash menyebabkan strongSwan 5.9.5 diam-diam gagal parse file sehingga `Connections:` tetap kosong meski syntax benar)
-
-### v2.52.39 — 2026-05-21
-
-### Fixed
-- **Router/NAS test connection gagal saat VPN client dipilih** — Dua bug:
-  1. `TestGateway` hanya mencoba TCP probe (port 8728/22/80/443). Jika MikroTik firewall memblokir semua port TCP dari subnet VPN, ping test gagal meski VPN tunnel aktif. Fix: tambah ICMP ping fallback menggunakan `ping -c 1 -W 2` setelah TCP probe gagal.
-  2. Perintah firewall MikroTik yang ditampilkan saat API test gagal menggunakan IP hardcoded salah `172.16.212.1` sebagai `src-address`. Fix: backend `TestGateway` sekarang mengembalikan `localIp` (IP VPS di tunnel, contoh `10.201.0.1`) via `ip route get`, dan frontend menggunakannya di firewall command.
-### Files
-- `internal/api/handlers/misc_handler.go` — `TestGateway`: tambah ICMP ping fallback; tambah helper `getLocalIPForDest()` menggunakan `ip route get`; tambah `localIp` ke semua response sukses
-- `src/app/admin/network/routers/page.tsx` — Capture `pingResult.localIp` → simpan ke `vpnGatewayIp`; ganti hardcoded `172.16.212.1` dengan `${vpnGatewayIp}` di firewall command
 
 <!-- AUTO-CHANGELOG:END -->
 
