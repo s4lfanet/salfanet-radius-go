@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.56 — 2026-05-22
+
+### Fixed
+- **GET /api/olt/:id — 404 meskipun route terdaftar** — `GetOLT` handler melakukan preload `ONUStatuses`, `Alerts`, `MonitoringLogs`, dan `PerformanceMetrics` dengan GORM auto-naming. GORM mengubah `OltID` → `olt_id`, `OnuID` → `onu_id`, dst., padahal kolom DB (Prisma) adalah camelCase (`oltId`, `onuId`). MySQL melempar error "Unknown column 'olt_id'" yang diperlakukan sebagai 404. Fix: tambah explicit `gorm:"column:..."` camelCase tags ke semua field di `OLTONUStatus`, `OLTAlert`, `OLTPerformanceMetric`, `OLTMonitoringLog`.
+- **ONU data selalu 0/0 di monitoring** — Poller `CreateInBatches` OLT ONU Status gagal karena INSERT menggunakan nama kolom snake_case (`olt_id`, `onu_id`, `mac_address`, dst.) yang tidak ada di DB. Dengan adanya column tags, INSERT sekarang menggunakan nama kolom yang benar (`oltId`, `onuId`, `macAddress`, dst.).
+- **Poller `knownPONPorts` — WHERE clause salah** — `Where("olt_id = ?", oltID)` diganti ke `Where("oltId = ?", oltID)`.
+- **Poller `checkAlerts` — WHERE clause salah** — raw SQL dengan `olt_id`, `onu_id`, `alert_type`, `is_resolved` diganti ke camelCase `oltId`, `onuId`, `alertType`, `isResolved`.
+### Files
+- `internal/db/models/olt.go` — `OLTONUStatus`, `OLTAlert`, `OLTPerformanceMetric`, `OLTMonitoringLog`: tambah `gorm:"column:camelCase"` tags ke semua field
+- `internal/olt/poller/poller.go` — fix `knownPONPorts` dan `checkAlerts` WHERE clause ke camelCase
+
 ### v2.52.55 — 2026-05-22
 
 ### Fixed
@@ -537,18 +548,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/network_vpn_ext_handler.go` — Tambah `removeL2TPPeerRoutes()`, panggil saat delete L2TP peer
 - `vpn-watchdog.sh` — Fix parsing peer-routes.conf di CHECK E (L2TP route restore)
-
-### v2.52.51 — 2026-05-21
-
-### Fixed
-- **L2TP chap-secrets write — tidak lagi silent fail** — Go handler `CreateL2TPPeer` sebelumnya mengabaikan error saat menulis ke `/etc/ppp/chap-secrets` (`_, _ = ...`). Sekarang error dikembalikan sebagai HTTP 500 sehingga user tahu jika kredensial VPN gagal disimpan.
-- **vpn-watchdog — PEER_IP dinamis dari ppp0** — PEER_IP sebelumnya hardcoded `10.20.30.1` (salah). Sekarang dibaca dinamis dari routing table ppp0 via `ip route show dev ppp0 | grep 'proto kernel' | awk '{print $1}'` dengan fallback `10.201.0.10`.
-- **systemd ProtectSystem=strict — /etc/ppp dan /etc/salfanet read-only** — `ProtectSystem=strict` memblokir Go service dari menulis ke `/etc/ppp/chap-secrets` dan `/etc/salfanet/l2tp/peer-routes.conf`. Fix: tambah `/etc/ppp /etc/salfanet /etc/wireguard` ke `ReadWritePaths` di systemd service. Juga ditambahkan auto-patch di `updater.sh` untuk instalasi lama.
-### Files
-- `internal/api/handlers/network_vpn_ext_handler.go` — Chap-secrets write sekarang return error jika gagal
-- `vpn-watchdog.sh` — PEER_IP dinamis dari kernel route ppp0
-- `vps-install/install-go.sh` — Tambah `/etc/ppp /etc/salfanet /etc/wireguard` ke ReadWritePaths
-- `vps-install/updater.sh` — Auto-patch ReadWritePaths jika belum ada `/etc/ppp`
 
 <!-- AUTO-CHANGELOG:END -->
 
