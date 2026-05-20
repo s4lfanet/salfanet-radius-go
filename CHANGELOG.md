@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.45] — 2026-05-20
+### Fixed
+- **Edit Admin User 500 Internal Server Error** — Handler `PUT /api/admin/users/:id` meneruskan seluruh body JSON ke GORM `Updates()` termasuk field `permissions` (array) yang bukan kolom di tabel `admin_users`, menyebabkan SQL error. Fix: whitelist hanya field valid (`username`, `email`, `phone`, `name`, `role`, `isActive`, `twoFactorEnabled`, `password`), dan proses field `permissions` secara terpisah via tabel `user_permissions`.
+### Files
+- `internal/api/handlers/admin_users.go` — `Update`: whitelist kolom valid, handle permissions array secara terpisah
+
+---
+
 ## [2.52.44] — 2026-05-20
 ### Fixed
 - **RADIUS script NAS IP kosong + RADIUS IP masih public** — Root cause: tabel `vpn_clients` kosong di DB, sehingga lookup `h.db.First(&vpnClient, "id = ?", vpnClientId)` gagal dan `nasSrcAddress` tetap kosong → `radiusServerIP` tidak pernah di-override dari public IP. Fix: tambah fallback `nasSrcAddress = router.IPAddress` saat VPN client tidak ditemukan. Untuk VPN router, `nas.ipAddress` IS the VPN IP (mis. `10.201.0.10`), sehingga `radiusServerIP` bisa di-derive dengan benar ke `10.201.0.1`.
