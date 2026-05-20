@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.39] — 2026-05-21
+### Fixed
+- **Router/NAS test connection gagal saat VPN client dipilih** — Dua bug:
+  1. `TestGateway` hanya mencoba TCP probe (port 8728/22/80/443). Jika MikroTik firewall memblokir semua port TCP dari subnet VPN, ping test gagal meski VPN tunnel aktif. Fix: tambah ICMP ping fallback menggunakan `ping -c 1 -W 2` setelah TCP probe gagal.
+  2. Perintah firewall MikroTik yang ditampilkan saat API test gagal menggunakan IP hardcoded salah `172.16.212.1` sebagai `src-address`. Fix: backend `TestGateway` sekarang mengembalikan `localIp` (IP VPS di tunnel, contoh `10.201.0.1`) via `ip route get`, dan frontend menggunakannya di firewall command.
+### Files
+- `internal/api/handlers/misc_handler.go` — `TestGateway`: tambah ICMP ping fallback; tambah helper `getLocalIPForDest()` menggunakan `ip route get`; tambah `localIp` ke semua response sukses
+- `src/app/admin/network/routers/page.tsx` — Capture `pingResult.localIp` → simpan ke `vpnGatewayIp`; ganti hardcoded `172.16.212.1` dengan `${vpnGatewayIp}` di firewall command
+
 ## [2.52.38] — 2026-05-20
 ### Fixed
 - **DELETE router 405 Method Not Allowed** — Frontend mengirim `DELETE /api/network/routers?id=xxx` (query param) tapi Go router hanya mendaftarkan `DELETE /network/routers/:id` (path param). Semua request DELETE ke URL lama diterima oleh route `GET/POST /network/routers` yang tidak punya handler DELETE → 405. Fix: ubah URL delete dari `?id=${id}` ke `/${id}`.
