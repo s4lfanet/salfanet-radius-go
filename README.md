@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.77 — 2026-05-22
+
+### Fixed
+- **Uplink status "Unknown"** — `uplinkParsePortStatus` membaca kolom index yang salah dari output `show interface port-status xgei_1/3/2`. ZTE C320 mengembalikan 9 field (index 0–8): port, hybridStatus, nativeVlan, negotiation, speed, duplex, flowCtrl, adminStatus, linkStatus. Kode lama salah baca duplex dari `parts[3]` (seharusnya `parts[5]`), flowCtrl dari `parts[8]` (seharusnya `parts[6]`), adminStatus dari `parts[9]` (OOB), linkStatus dari `parts[10]` (OOB). Akibatnya `adminRaw` selalu kosong → status "Unknown".
+- **Uplink status "Unknown" (fallback)** — `uplinkParseInterfaceStatus` memiliki regex `stateRe` yang hanya menangani `activate|deactivate`. Namun ZTE C320 untuk interface uplink (`xgei`) melaporkan `xgei_1/3/2 is up, line protocol is up` bukan `activate`. Fix: tambahkan `up|down` ke pattern. Update pemetaan: `up` → "Up", `down` → "Down".
+- **CONFIG tab menampilkan `%Error 20202`** — Handler `case "config"` menetapkan `raw = out` sebelum memeriksa CLI error, sehingga teks error mentah tampil di UI. Fix: hanya set `raw = out` ketika output tidak mengandung CLI error.
+- **Dark/light theme uplink modal** — Status indicator menggunakan warna hex hardcoded (`#111827`, `#052e16`, `#451a03`) via inline style tanpa dukungan light mode. Diganti dengan Tailwind classes `dark:` variants (`bg-gray-100 dark:bg-gray-900`, `bg-green-50 dark:bg-green-950/40`, dll).
+- **PON expansion bg invalid** — `dark:bg-gray-850` bukan class Tailwind valid (Tailwind hanya memiliki 100–900). Diganti ke `dark:bg-gray-900`.
+### Files
+- `internal/api/handlers/olt.go` — Fix `uplinkParsePortStatus` column indices; fix `uplinkParseInterfaceStatus` stateRe + admin mapping; fix `case "config"` raw error handling
+- `src/app/admin/olt/[id]/page.tsx` — Fix `statusTone` dari inline styles ke Tailwind dark: classes; fix `dark:bg-gray-850` → `dark:bg-gray-900`
+
 ### v2.52.76 — 2026-05-22
 
 ### Fixed
@@ -526,13 +538,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/olt/vendors/zte/zte.go` — `oidDistance` diubah ke OID `.3.50.12.1.1.21`; konversi `raw/10.0` diganti `int(dist)` langsung (2 tempat)
 - `src/app/admin/olt/[id]/page.tsx` — filter `o.status === 'dyingGasp'` diubah ke `'dying_gasp'`
-
-### v2.52.72 — 2026-05-21
-
-### Fixed
-- **Port 1 tidak menyala di ZTE C320 Rack Diagram** — `buildServicePorts` menyertakan port 0 (dummy) sebagai elemen pertama array (`ports[0] = {Port:0, HasOnus:false}`), sehingga offset index menggeser tampilan port. Fix: array ports kini dimulai dari port 1 (1-based), `ports[i] = {Port: i+1}`, dan lookup DB menggunakan `arrayIdx = portIdx - 1`. Juga perbaiki `portCount`: tidak lagi menggunakan `stdPorts + 1` melainkan `stdPorts` (atau `card.PortCount` jika lebih besar, misal 16 untuk GTGHG dari Telnet).
-### Files
-- `internal/api/handlers/olt_chassis.go` — `buildServicePorts`: 1-based port array; Telnet & SNMP service case: `portCount = stdPorts` (bukan `stdPorts+1`), gunakan `card.PortCount` jika lebih besar
 
 <!-- AUTO-CHANGELOG:END -->
 
