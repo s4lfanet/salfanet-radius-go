@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.78 — 2026-05-22
+
+### Fixed
+- **Remove VLAN 500 error** — Perintah `no switchport vlan X tag` tidak valid di ZTE C320 (mengembalikan `%Error 20201: Invalid command key word`). Perintah yang benar adalah `no switchport vlan X` (tanpa suffix `tag`). Sebelumnya juga ada dua commandSet — fallback kedua (`no switchport default vlan`) salah karena menghapus PVID bukan tagged VLAN. Kini hanya satu commandSet dengan perintah yang benar.
+- **API response 500 → 422 saat CLI error** — Ketika perintah Telnet ditolak OLT (CLI error seperti `%Error`), handler mengembalikan HTTP 500 "Uplink action failed" padahal ini bukan server error. Fix: kembalikan HTTP 422 Unprocessable Entity dengan detail pesan error dari OLT, sehingga frontend dapat menampilkan pesan yang tepat.
+### Changed
+- **Toggle Enable/Disable port** — Dua tombol terpisah (Enable + Disable) di status tab uplink diganti dengan satu tombol kontekstual: jika port sedang enabled tampil tombol "Disable Port" (merah), jika port disabled tampil tombol "Enable Port" (hijau).
+### Files
+- `internal/api/handlers/olt.go` — Fix `removeVlan` command dari `no switchport vlan X tag` → `no switchport vlan X`; remove wrong fallback commandSet; return 422 instead of 500 on CLI errors
+- `src/app/admin/olt/[id]/page.tsx` — Replace Enable+Disable buttons with single contextual toggle button
+
 ### v2.52.77 — 2026-05-22
 
 ### Fixed
@@ -529,15 +540,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Distance ONU semua NULL** — OID `.3.50.12.1.1.21` adalah nilai konstan per-port (bukan per-ONU), sehingga tidak ter-mapping ke masing-masing ONU dan distance tetap NULL di DB. Fix: ganti ke OID `.3.50.12.1.1.18` (equalization delay per-ONU, terindex per onuId) dengan formula `raw × 0.112` (diverifikasi: ONU 28 OID18=5000 → 5000×0.112=560m sesuai data Telnet).
 ### Files
 - `internal/olt/vendors/zte/zte.go` — `oidDistance` dari OID `.21` ke OID `.18`; formula `int(dist)` → `int(float64(dist) * 0.112)` (2 tempat)
-
-### v2.52.73 — 2026-05-21
-
-### Fixed
-- **Distance ONU salah di ONU List** — SNMP OID `.3.50.12.1.1.19` (equalization delay / bukan jarak fiber) menghasilkan nilai jarak yang salah (contoh: 1228m padahal actual 560m). Fix: ganti ke OID `.3.50.12.1.1.21` (direct fiber distance dalam meter) dan hapus konversi `raw/10` sehingga nilai dipakai langsung.
-- **Counter DyingGasp tidak muncul di OLT Detail** — Filter status menggunakan `'dyingGasp'` (camelCase) padahal API mengembalikan `'dying_gasp'`. Fix: ganti ke `'dying_gasp'` agar counter DyingGasp tampil di header OLT detail page.
-### Files
-- `internal/olt/vendors/zte/zte.go` — `oidDistance` diubah ke OID `.3.50.12.1.1.21`; konversi `raw/10.0` diganti `int(dist)` langsung (2 tempat)
-- `src/app/admin/olt/[id]/page.tsx` — filter `o.status === 'dyingGasp'` diubah ke `'dying_gasp'`
 
 <!-- AUTO-CHANGELOG:END -->
 
