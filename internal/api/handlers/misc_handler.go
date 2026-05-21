@@ -1432,6 +1432,7 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
+		_ = ctx // telnet pool uses its own CommandTimeout; context reserved for future use
 
 		out, err := pool.ExecuteMultiple([]string{
 			"show gpon onu detail-info " + iface,
