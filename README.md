@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.66 — 2026-05-21
+
+### Fixed
+- **RxPower formula salah** — ZTE C320 SNMP OID `.3.50.12.1.1.10` mengembalikan nilai integer dalam satuan **nanowatt (nW)**, bukan milli-dBm. Formula lama `dBm = -raw/1000` menghasilkan nilai seperti -7 dBm (salah). Formula benar: `dBm = 10 × log10(raw) - 60`. Contoh: raw=7540 nW → -21.2 dBm ✓. Nilai rxPower lama di DB di-reset agar sync berikutnya menulis nilai yang benar.
+- **ONU count tidak muncul di OLT Management list** — `ListOLTs` hanya mengembalikan data OLT mentah tanpa jumlah ONU. Frontend mengakses `olt._count.olt_onu_status` dan `olt.onu_stats` yang selalu `undefined`, sehingga tampil "0 ONU". Handler sekarang menjalankan satu query GROUP BY untuk mendapatkan jumlah ONU per OLT per status, lalu menyertakan `_count` dan `onu_stats` di setiap respons OLT.
+- **Signal quality threshold** — Dikalibrasi ulang untuk ONU downstream RX power (nW formula baru): ≥ -20 dBm Excellent, ≥ -24 Good, ≥ -27 Fair, < -27 Poor.
+### Files
+- `internal/olt/vendors/zte/zte.go` — rxPower dan txPower: formula diubah ke `10*math.Log10(raw) - 60`; import `math` ditambahkan; komentar OID diupdate
+- `internal/api/handlers/olt.go` — `ListOLTs`: tambah GROUP BY query untuk `onu_stats` dan `_count`; tambah `Preload("Routers.Router")`
+- `src/app/admin/olt/[id]/page.tsx` — signal quality thresholds untuk downstream ONU power
+
 ### v2.52.65 — 2026-05-25
 
 ### Fixed
@@ -551,14 +562,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/olt/snmp/snmp.go` — add `BulkWalk` function (GetBulk with auto Walk fallback)
 - `internal/olt/vendors/zte/zte.go` — add `discoverPONPorts` (dynamic SNMP PON table walk); rewrite `walkPONPort` to use `BulkWalk` + seen-ONU table; add `txPower` OID; fix `DiscoverAll` signature (no more `telnetPool`/`ponPorts` params); fix RxPower/TxPower upper bound
 - `internal/olt/poller/poller.go` — remove `knownPONPorts`; update `DiscoverAll` call; split upsert into registered (full) and unregistered (status only); add `unregistered` count to broadcast
-
-### v2.52.61 — 2026-05-22
-
-### Added
-- **GetChassis — real Telnet + SNMP chassis data (ported from Next.js)** — `GET /api/olt/:id/chassis` now fires Telnet (`show card` + `show interface port-status`) and 5 SNMP IF-MIB walks (ifDescr, ifAdminStatus, ifOperStatus, ifHighSpeed, ifAlias) plus ZTE PON table walk **in parallel**. Real card types (GTGO/GTGH/GTGQ/SMXA/MCUD) come from Telnet `show card`; uplink port states (admin/link status, speed, description) come from `show interface port-status` with SNMP IF-MIB fallback. Falls back to SNMP board presence + DB ONU port data when Telnet is unavailable. Response includes `source: "telnet" | "snmp+db"`.
-### Files
-- `internal/api/handlers/olt_chassis.go` — new file: full chassis handler with `parseShowCard`, `classifyCard`, `smxaUplinkIfaces`, `parseUplinkPortStatus`, `buildUplinkStatesFromSNMP`, SNMP IF-MIB walk helpers, and `GetChassis`
-- `internal/api/handlers/olt.go` — remove old inline `GetChassis` implementation (now delegated to `olt_chassis.go`)
 
 <!-- AUTO-CHANGELOG:END -->
 
