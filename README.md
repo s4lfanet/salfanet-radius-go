@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.72 — 2026-05-21
+
+### Fixed
+- **Port 1 tidak menyala di ZTE C320 Rack Diagram** — `buildServicePorts` menyertakan port 0 (dummy) sebagai elemen pertama array (`ports[0] = {Port:0, HasOnus:false}`), sehingga offset index menggeser tampilan port. Fix: array ports kini dimulai dari port 1 (1-based), `ports[i] = {Port: i+1}`, dan lookup DB menggunakan `arrayIdx = portIdx - 1`. Juga perbaiki `portCount`: tidak lagi menggunakan `stdPorts + 1` melainkan `stdPorts` (atau `card.PortCount` jika lebih besar, misal 16 untuk GTGHG dari Telnet).
+### Files
+- `internal/api/handlers/olt_chassis.go` — `buildServicePorts`: 1-based port array; Telnet & SNMP service case: `portCount = stdPorts` (bukan `stdPorts+1`), gunakan `card.PortCount` jika lebih besar
+
 ### v2.52.71 — 2026-05-21
 
 ### Fixed
@@ -535,16 +542,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/olt/telnet/telnet.go` — tambah `terminal length 0` setelah login berhasil untuk disable paging
 - `internal/olt/vendors/zte/zte.go` — ubah `oidDistance` dari `.21` ke `.19`; konversi RTT → jarak `int(float64(dist)/10.0)`; filter batas atas dari 100000 ke 1000000
 - `src/app/admin/olt/[id]/page.tsx` — stats cards: `p-4` konsisten, `text-2xl`, label uppercase, grid `grid-cols-3`, breakdown LOS/DyingGasp
-
-### v2.52.67 — 2026-05-21
-
-### Fixed
-- **RxPower formula salah (lagi)** — Formula `10*log10(raw)-60` (nW asumsi) masih salah. Setelah menganalisis raw SNMP dari live device vs CSV referensi, ditemukan rumus yang benar: **`dBm = raw/500.0 - 30.0`**. Verifikasi: raw=6751 → -16.50 dBm ✓, raw=5085 → -19.83 dBm ✓, raw=5910 → -18.18 dBm ✓ (cocok dengan CSV). ZTE C320 menggunakan encoding linear: 0 raw = -30 dBm, step 0.002 dBm per unit.
-- **ONU Name tidak muncul untuk FiberHome ONUs** — ONU FiberHome (prefix FHTTC/FHTT) mengembalikan `regStatus=2` dari SNMP, tapi kode hanya memproses `regStatus=1`. ONU regStatus=2 masuk ke loop fallback yang tidak membaca `description` dan masih menggunakan formula lama. Fix: terima regStatus=1 dan 2 sebagai "registered", baca description di kedua loop, gunakan formula yang benar di kedua loop.
-- **Signal quality threshold** — Dikalibrasi ulang sesuai nilai aktual dari live device: rentang -10 s/d -20 dBm. Threshold baru: ≥ -14 Excellent, ≥ -18 Good, ≥ -22 Fair, < -22 Poor.
-### Files
-- `internal/olt/vendors/zte/zte.go` — formula rxPower & txPower → `raw/500.0 - 30.0`; filter regStatus menerima 1 dan 2; loop fallback tambah description + formula benar; hapus import `math`
-- `src/app/admin/olt/[id]/page.tsx` — signal thresholds dikalibrasi
 
 <!-- AUTO-CHANGELOG:END -->
 
