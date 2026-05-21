@@ -354,11 +354,33 @@ function UplinkPortModal({ oltId, port, onClose }: { oltId: string; port: string
   );
 }
 
+// ── PON Port Stat types ───────────────────────────────────────────────────────
+interface PONPortStat {
+  slot: number;
+  port: number;
+  iface: string;
+  adminStatus: string;
+  lineProto: string;
+  description?: string;
+  inputBps?: number;
+  outputBps?: number;
+  inputPct?: number;
+  outputPct?: number;
+  temperature?: number;
+  txPower?: number;
+  rxPower?: number;
+  voltage?: number;
+  biasCurrent?: number;
+}
+
 // ── ZTE Chassis View ─────────────────────────────────────────────────────────
 function ZTEChassisView({ olt }: { olt: OLTDetail }) {
   const [chassisSlots, setChassisSlots] = useState<ApiChassisSlot[]>([]);
   const [selectedUplinkPort, setSelectedUplinkPort] = useState<string | null>(null);
   const [loadingChassis, setLoadingChassis] = useState(false);
+  const [expandedPON, setExpandedPON] = useState<string | null>(null);
+  const [ponStatCache, setPonStatCache] = useState<Record<string, PONPortStat | null>>({});
+  const [loadingPON, setLoadingPON] = useState<string | null>(null);
 
   const fetchChassis = useCallback(() => {
     setLoadingChassis(true);
@@ -372,6 +394,22 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
   useEffect(() => {
     fetchChassis();
   }, [fetchChassis]);
+
+  const fetchPONStat = useCallback((portKey: string) => {
+    // portKey is "slot/port" e.g. "1/1"
+    if (ponStatCache[portKey] !== undefined || loadingPON === portKey) return;
+    const [slot, port] = portKey.split('/');
+    setLoadingPON(portKey);
+    fetch(`/api/olt/${olt.id}/pon-stat?slot=${slot}&port=${port}`)
+      .then(r => r.json())
+      .then(j => {
+        setPonStatCache(prev => ({ ...prev, [portKey]: j.success ? j.stat : null }));
+      })
+      .catch(() => {
+        setPonStatCache(prev => ({ ...prev, [portKey]: null }));
+      })
+      .finally(() => setLoadingPON(null));
+  }, [olt.id, ponStatCache, loadingPON]);
 
   // ── Port stats from ONU list ──────────────────────────────────────────────
   const portStats: Record<string, { total: number; online: number; offline: number; los: number; dyingGasp: number; unregistered: number; rxPowers: number[] }> = {};
@@ -686,30 +724,126 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
         {Object.keys(portStats).length > 0 && (
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold mb-3 text-gray-800 dark:text-gray-200">Detail Per Port PON</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
               {Object.entries(portStats)
                 .sort(([a], [b]) => a.localeCompare(b, undefined, { numeric: true }))
                 .map(([portKey, s]) => {
                   const pct = s.total > 0 ? (s.online / s.total) * 100 : 0;
                   const avgRx = s.rxPowers.length > 0 ? (s.rxPowers.reduce((a, b) => a + b, 0) / s.rxPowers.length).toFixed(1) : null;
+                  const isExpanded = expandedPON === portKey;
+                  const stat = ponStatCache[portKey];
+                  const isLoading = loadingPON === portKey;
+
+                  const handleToggle = () => {
+                    if (isExpanded) {
+                      setExpandedPON(null);
+                    } else {
+                      setExpandedPON(portKey);
+                      fetchPONStat(portKey);
+                    }
+                  };
+
+                  const fmtBps = (bps?: number) => {
+                    if (bps == null) return '—';
+                    if (bps >= 1_000_000) return (bps / 1_000_000).toFixed(1) + ' Mbps';
+                    if (bps >= 1_000) return (bps / 1_000).toFixed(1) + ' Kbps';
+                    return bps + ' Bps';
+                  };
+
                   return (
-                    <div key={portKey} className="border border-gray-100 dark:border-gray-800 rounded-lg p-2.5">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-mono text-xs font-semibold text-gray-700 dark:text-gray-300">0/{portKey}</span>
-                        <span className={`text-[10px] font-bold ${pct === 100 ? 'text-green-600' : pct === 0 ? 'text-red-600' : 'text-orange-500'}`}>
-                          {s.online}/{s.total}
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-1">
-                        <div
-                          className={`h-1.5 rounded-full ${pct === 100 ? 'bg-green-500' : pct === 0 ? 'bg-red-500' : 'bg-orange-400'}`}
-                          style={{ width: `${Math.max(pct, s.total > 0 ? 5 : 0)}%` }}
-                        />
-                      </div>
-                      <div className="flex justify-between text-[9px] text-gray-400 gap-2">
-                        <span>{s.total} ONU{s.unregistered > 0 ? ` · ${s.unregistered} unreg` : ''}</span>
-                        {avgRx && <span>{avgRx} dBm</span>}
-                      </div>
+                    <div key={portKey} className="border border-gray-100 dark:border-gray-800 rounded-lg overflow-hidden">
+                      {/* Card header — always visible */}
+                      <button
+                        onClick={handleToggle}
+                        className="w-full text-left p-2.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="font-mono text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            PON 0/{portKey}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold ${pct === 100 ? 'text-green-600' : pct === 0 ? 'text-red-600' : 'text-orange-500'}`}>
+                              {s.online}/{s.total} ONU
+                            </span>
+                            <span className="text-[9px] text-gray-400">{isExpanded ? '▲' : '▼'}</span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-1">
+                          <div
+                            className={`h-1.5 rounded-full ${pct === 100 ? 'bg-green-500' : pct === 0 ? 'bg-red-500' : 'bg-orange-400'}`}
+                            style={{ width: `${Math.max(pct, s.total > 0 ? 5 : 0)}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-[9px] text-gray-400 gap-2">
+                          <span>{s.total} ONU{s.unregistered > 0 ? ` · ${s.unregistered} unreg` : ''}</span>
+                          {avgRx && <span>Avg RX: {avgRx} dBm</span>}
+                        </div>
+                      </button>
+
+                      {/* Expanded stats panel */}
+                      {isExpanded && (
+                        <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-850 p-2.5">
+                          {isLoading ? (
+                            <div className="text-[10px] text-gray-400 text-center py-2">Memuat data…</div>
+                          ) : stat === null ? (
+                            <div className="text-[10px] text-red-400 text-center py-2">Gagal mengambil data Telnet</div>
+                          ) : stat ? (
+                            <div className="space-y-2">
+                              {/* Optical module stats */}
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <div className="bg-white dark:bg-gray-900 rounded p-1.5">
+                                  <div className="text-[9px] text-gray-400 mb-0.5">Temperature</div>
+                                  <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                    {stat.temperature != null ? `${stat.temperature.toFixed(1)} °C` : '—'}
+                                  </div>
+                                </div>
+                                <div className="bg-white dark:bg-gray-900 rounded p-1.5">
+                                  <div className="text-[9px] text-gray-400 mb-0.5">TX Power</div>
+                                  <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                    {stat.txPower != null ? `${stat.txPower.toFixed(2)} dBm` : '—'}
+                                  </div>
+                                </div>
+                                <div className="bg-white dark:bg-gray-900 rounded p-1.5">
+                                  <div className="text-[9px] text-gray-400 mb-0.5">Voltage</div>
+                                  <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                    {stat.voltage != null ? `${stat.voltage.toFixed(2)} V` : '—'}
+                                  </div>
+                                </div>
+                                <div className="bg-white dark:bg-gray-900 rounded p-1.5">
+                                  <div className="text-[9px] text-gray-400 mb-0.5">Bias Current</div>
+                                  <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                    {stat.biasCurrent != null ? `${stat.biasCurrent.toFixed(1)} mA` : '—'}
+                                  </div>
+                                </div>
+                              </div>
+                              {/* Traffic stats */}
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <div className="bg-white dark:bg-gray-900 rounded p-1.5">
+                                  <div className="text-[9px] text-gray-400 mb-0.5">↑ Upstream</div>
+                                  <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                    {fmtBps(stat.inputBps)}
+                                  </div>
+                                  {stat.inputPct != null && (
+                                    <div className="text-[9px] text-gray-400">{stat.inputPct.toFixed(1)}% usage</div>
+                                  )}
+                                </div>
+                                <div className="bg-white dark:bg-gray-900 rounded p-1.5">
+                                  <div className="text-[9px] text-gray-400 mb-0.5">↓ Downstream</div>
+                                  <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                                    {fmtBps(stat.outputBps)}
+                                  </div>
+                                  {stat.outputPct != null && (
+                                    <div className="text-[9px] text-gray-400">{stat.outputPct.toFixed(1)}% usage</div>
+                                  )}
+                                </div>
+                              </div>
+                              {stat.description && (
+                                <div className="text-[9px] text-gray-400 truncate">{stat.description}</div>
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -6,6 +6,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.75] — 2026-05-22
+### Added
+- **Per-PON Live Stats** — Setiap port PON di section "Detail Per Port PON" kini bisa di-klik untuk expand dan menampilkan data live dari Telnet OLT: Temperature (°C), TX Power (dBm), Voltage (V), Bias Current (mA), Upstream/Downstream rate (Mbps) dan bandwidth usage (%). Data diambil via `show interface gpon-olt_1/{slot}/{port}` dan `show interface optical-module-info gpon-olt_1/{slot}/{port}`.
+### Fixed
+- **Chassis port squares** — Port PON menunjukkan index 0 (0/1/0) pada tooltip dan green box di posisi ke-2; seharusnya 1-based. Fix: rebuild frontend (source sudah benar dengan `i+1`, VPS belum di-build ulang).
+### Files
+- `internal/api/handlers/olt_pon_stat.go` — Handler baru `GetPONStat`; parser `parsePONInterfaceStat`, `parsePONBps`, `parsePONPct`, `parsePONFloatFromUnit`
+- `internal/api/router.go` — Route baru `GET /api/olt/:id/pon-stat`
+- `src/app/admin/olt/[id]/page.tsx` — Tambah type `PONPortStat`; state `expandedPON`, `ponStatCache`, `loadingPON`; fungsi `fetchPONStat`; "Detail Per Port PON" expandable cards dengan Temperature, TX Power, Voltage, Upstream/Downstream
+
+---
+
 ## [2.52.74] — 2026-05-22
 ### Fixed
 - **Distance ONU semua NULL** — OID `.3.50.12.1.1.21` adalah nilai konstan per-port (bukan per-ONU), sehingga tidak ter-mapping ke masing-masing ONU dan distance tetap NULL di DB. Fix: ganti ke OID `.3.50.12.1.1.18` (equalization delay per-ONU, terindex per onuId) dengan formula `raw × 0.112` (diverifikasi: ONU 28 OID18=5000 → 5000×0.112=560m sesuai data Telnet).
