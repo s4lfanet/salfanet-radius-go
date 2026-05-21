@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.79] — 2026-05-22
+### Fixed
+- **Reboot ONU tidak berfungsi** — `RebootONU` handler sebelumnya hanya stub (return success tanpa melakukan apa-apa). Perintah `reset gpon-onu_F/S/P:N` tidak valid di ZTE C320 V2.1 (error 20200/20204). Fix: implementasi nyata via Telnet dengan `shutdown` + `no shutdown` pada interface ONU, yang memaksa ONU offline dan re-registrasi (terbukti dari log: `Online Duration: 0h 00m 02s` setelah reboot).
+- **Batch Reboot ONU tidak berfungsi** — `BatchRebootONUs` handler juga stub. Fix: implementasi nyata — query ONUs dari DB, build commands `configure terminal` → `interface gpon-onu_F/S/P:N` → `shutdown` → `no shutdown` → `exit` untuk setiap ONU, kemudian `end`.
+- **ONU Detail modal banyak field N/A** — `onuParseDetailInfo` menggunakan alias field yang salah (`SN` alih-alih `Serial number`, `Match mode` alih-alih `Authentication mode`, `Control flag` alih-alih `Admin state`, dll) dan skip nilai kosong (`if val == "" { continue }`) sehingga `OMCI BW Profile` selalu ter-skip. Fix: hapus alias mapping (frontend menggunakan nama field ZTE C320 asli langsung), izinkan empty values, dan perbaiki summary map dengan nama field yang benar (`Authentication mode`, `SN Bind`, `Admin state`, `Current channel`, `Configured channel`, `DBA Mode`, `Vport mode`, `Line Profile`, `Service Profile`, `OMCI BW Profile`, `Serial number`).
+### Files
+- `internal/api/handlers/misc_handler.go` — Implement `RebootONU` via shutdown/no-shutdown; implement `BatchRebootONUs`; fix `onuParseDetailInfo` aliases and summary fields
+
+---
+
 ## [2.52.78] — 2026-05-22
 ### Fixed
 - **Remove VLAN 500 error** — Perintah `no switchport vlan X tag` tidak valid di ZTE C320 (mengembalikan `%Error 20201: Invalid command key word`). Perintah yang benar adalah `no switchport vlan X` (tanpa suffix `tag`). Sebelumnya juga ada dua commandSet — fallback kedua (`no switchport default vlan`) salah karena menghapus PVID bukan tagged VLAN. Kini hanya satu commandSet dengan perintah yang benar.

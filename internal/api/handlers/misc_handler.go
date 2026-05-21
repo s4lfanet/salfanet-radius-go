@@ -1349,11 +1349,58 @@ func (h *MiscHandler) TestGateway(c fiber.Ctx) error {
 func (h *MiscHandler) RebootONU(c fiber.Ctx) error {
 	oltID := c.Params("id")
 	onuID := c.Params("onuId")
+
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+	}
+	if (!olt.TelnetEnabled && !olt.SSHEnabled) || olt.Username == nil || olt.Password == nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Telnet not configured for this OLT"})
+	}
+
+	var onuStatus models.OLTONUStatus
+	if err := h.db.Where("oltId = ? AND id = ?", oltID, onuID).First(&onuStatus).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "ONU not found"})
+	}
+
+	iface := fmt.Sprintf("gpon-onu_%d/%d/%d:%d", onuStatus.Frame, onuStatus.Slot, onuStatus.Port, onuStatus.OnuID)
+
+	var pool *telnet.Pool
+	var ownPool bool
+	pool = h.poller.GetPool(oltID)
+	if pool == nil {
+		tport := olt.TelnetPort
+		if tport == 0 {
+			tport = 23
+		}
+		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+		tcfg.CommandTimeout = 15 * time.Second
+		pool = telnet.NewPool(tcfg)
+		ownPool = true
+	}
+	if ownPool {
+		defer pool.Close()
+	}
+
+	// ZTE C320: reboot ONU via shutdown + no shutdown on the ONU interface
+	out, err := pool.ExecuteMultiple([]string{
+		"configure terminal",
+		"interface " + iface,
+		"shutdown",
+		"no shutdown",
+		"exit",
+		"end",
+	})
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Telnet error: " + err.Error()})
+	}
+	if uplinkCliErrRe.MatchString(out) {
+		return c.Status(422).JSON(fiber.Map{"error": "OLT rejected reboot command", "detail": out})
+	}
 	return c.JSON(fiber.Map{
-		"success": true,
-		"message": "ONU reboot initiated",
-		"oltId":   oltID,
-		"onuId":   onuID,
+		"success":   true,
+		"message":   "ONU reboot initiated",
+		"interface": iface,
 	})
 }
 
@@ -1363,14 +1410,59 @@ func (h *MiscHandler) BatchRebootONUs(c fiber.Ctx) error {
 	var body struct {
 		OnuIDs []string `json:"onuIds"`
 	}
-	if err := c.Bind().JSON(&body); err != nil {
+	if err := c.Bind().JSON(&body); err != nil || len(body.OnuIDs) == 0 {
 		return c.Status(400).JSON(fiber.Map{"error": "onuIds required"})
+	}
+
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+	}
+	if (!olt.TelnetEnabled && !olt.SSHEnabled) || olt.Username == nil || olt.Password == nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Telnet not configured for this OLT"})
+	}
+
+	var onuStatuses []models.OLTONUStatus
+	if err := h.db.Where("oltId = ? AND id IN ?", oltID, body.OnuIDs).Find(&onuStatuses).Error; err != nil || len(onuStatuses) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "No ONUs found"})
+	}
+
+	var pool *telnet.Pool
+	var ownPool bool
+	pool = h.poller.GetPool(oltID)
+	if pool == nil {
+		tport := olt.TelnetPort
+		if tport == 0 {
+			tport = 23
+		}
+		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+		tcfg.CommandTimeout = 15 * time.Second
+		pool = telnet.NewPool(tcfg)
+		ownPool = true
+	}
+	if ownPool {
+		defer pool.Close()
+	}
+
+	// Build commands: configure terminal once, then shutdown/no shutdown each ONU
+	cmds := []string{"configure terminal"}
+	for _, onu := range onuStatuses {
+		iface := fmt.Sprintf("gpon-onu_%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
+		cmds = append(cmds, "interface "+iface, "shutdown", "no shutdown", "exit")
+	}
+	cmds = append(cmds, "end")
+
+	out, err := pool.ExecuteMultiple(cmds)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Telnet error: " + err.Error()})
+	}
+	if uplinkCliErrRe.MatchString(out) {
+		return c.Status(422).JSON(fiber.Map{"error": "OLT rejected reboot command", "detail": out})
 	}
 	return c.JSON(fiber.Map{
 		"success": true,
 		"message": "Batch reboot initiated",
-		"oltId":   oltID,
-		"count":   len(body.OnuIDs),
+		"count":   len(onuStatuses),
 	})
 }
 
@@ -1467,28 +1559,8 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 }
 
 // onuParseDetailInfo parses ZTE C320 "show gpon onu detail-info" output.
-// Returns a parsed key-value map (using frontend-expected keys) and a summary.
+// Returns a parsed key-value map (using exact ZTE CLI field names) and a summary.
 func onuParseDetailInfo(raw string) (map[string]string, map[string]interface{}) {
-	// Field name mapping: ZTE CLI name → frontend expected key
-	aliases := map[string]string{
-		"SN":              "Serial number",
-		"Run state":       "State",
-		"Phase state":     "Phase state",
-		"Config state":    "Config state",
-		"ONU Distance":    "ONU Distance",
-		"Online Duration": "Online Duration",
-		"Type":            "Type",
-		"Name":            "Name",
-		"Control flag":    "Control flag",
-		"Match state":     "Match state",
-		"Match mode":      "Match mode",
-		"Loid":            "Loid",
-		"Register time":   "Register time",
-		"Unreg reason":    "Unreg reason",
-		"ONU Tx Power":    "ONU Tx Power",
-		"ONU Rx Power":    "ONU Rx Power",
-	}
-
 	parsed := map[string]string{}
 	kv := map[string]string{}
 
@@ -1499,25 +1571,28 @@ func onuParseDetailInfo(raw string) (map[string]string, map[string]interface{}) 
 		}
 		key := strings.TrimSpace(line[:idx])
 		val := strings.TrimSpace(line[idx+1:])
-		if key == "" || val == "" {
+		if key == "" {
 			continue
 		}
 		kv[key] = val
-		if mapped, ok := aliases[key]; ok {
-			parsed[mapped] = val
-		} else {
-			parsed[key] = val
-		}
+		parsed[key] = val
 	}
 
-	// Build summary from known fields
+	// Build summary using actual ZTE C320 field names
 	summary := map[string]interface{}{
-		"authenticationMode": kv["Match mode"],
-		"snBind":             kv["SN"],
-		"adminState":         kv["Control flag"],
-		"vendor":             onuVendorFromSN(kv["SN"]),
+		"authenticationMode": kv["Authentication mode"],
+		"snBind":             kv["SN Bind"],
+		"adminState":         kv["Admin state"],
+		"currentChannel":     kv["Current channel"],
+		"configuredChannel":  kv["Configured channel"],
+		"dbaMode":            kv["DBA Mode"],
+		"vportMode":          kv["Vport mode"],
+		"lineProfile":        kv["Line Profile"],
+		"serviceProfile":     kv["Service Profile"],
+		"omciBwProfile":      kv["OMCI BW Profile"],
+		"vendor":             onuVendorFromSN(kv["Serial number"]),
 		"description":        kv["Name"],
-		"serialPrefix":       onuSNPrefix(kv["SN"]),
+		"serialPrefix":       onuSNPrefix(kv["Serial number"]),
 	}
 
 	return parsed, summary
