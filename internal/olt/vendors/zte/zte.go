@@ -7,8 +7,8 @@
 //	Serial:         .3.28.1.1.5   (Hex-STRING: 4 ASCII vendor + 4 hex SN)
 //	RegStatus:      .3.50.12.1.1.1 (1 = registered; indexed .col.ponIndex.onuSlot.onuId)
 //	OperState:      .3.50.12.1.1.6 (5|4=online, 0=unknown, else=offline)
-//	RxPower:        .3.50.12.1.1.10 (raw positive int; dBm = -(raw/1000); valid <50000)
-//	TxPower:        .3.50.12.1.1.11 (raw positive int; dBm = -(raw/1000))
+//	RxPower:        .3.50.12.1.1.10 (raw positive int in nanowatts; dBm = 10*log10(raw) - 60)
+//	TxPower:        .3.50.12.1.1.11 (raw positive int in nanowatts; dBm = 10*log10(raw) - 60)
 //	Distance:       .3.50.12.1.1.21 (meters)
 //	SeenONU table:  1.3.6.1.4.1.3902.1012.3.27.4.1.1  (ALL seen ONUs incl. unregistered)
 //	PON port table: 1.3.6.1.4.1.3902.1012.3.11.3.1.1  (one entry per provisioned PON port)
@@ -17,6 +17,7 @@ package zte
 import (
 	"context"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,7 +40,7 @@ const (
 	// zxAnGponOnuRegTable — indexed .col.ponIndex.onuSlot.onuId (3 index components)
 	oidRegStatus = oidBase + ".3.50.12.1.1.1"
 	oidOperState = oidBase + ".3.50.12.1.1.6"
-	oidRxPower   = oidBase + ".3.50.12.1.1.10" // raw pos int; dBm = -(raw/1000), valid range 0<raw<50000
+	oidRxPower   = oidBase + ".3.50.12.1.1.10" // raw pos int in nanowatts; dBm = 10*log10(raw) - 60
 	oidTxPower   = oidBase + ".3.50.12.1.1.11" // OLT TX power toward ONU
 	oidDistance  = oidBase + ".3.50.12.1.1.21" // meters from OLT
 
@@ -232,14 +233,17 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		}
 		info.Status = decodeOperState(merged.operState[k])
 
-		// RxPower: raw positive int, valid range 0 < raw < 50000; dBm = -(raw/1000)
-		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 && rxRaw < 50000 {
-			dbm := -float64(rxRaw) / 1000.0
+		// RxPower: raw positive int in nanowatts (nW).
+		// ZTE C320 encoding: dBm = 10*log10(raw_nW) - 60
+		// Valid GPON rx range: ~2 nW (-57 dBm) to ~500000 nW (-3 dBm).
+		// Typical ONU downstream rx: 1000–25000 nW (-20 to -27 dBm).
+		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 {
+			dbm := 10*math.Log10(float64(rxRaw)) - 60
 			info.RxPower = &dbm
 		}
 		// TxPower: same encoding
-		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 && txRaw < 50000 {
-			dbm := -float64(txRaw) / 1000.0
+		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 {
+			dbm := 10*math.Log10(float64(txRaw)) - 60
 			info.TxPower = &dbm
 		}
 		if dist, ok := merged.distances[k]; ok && dist > 0 && dist < 100000 {

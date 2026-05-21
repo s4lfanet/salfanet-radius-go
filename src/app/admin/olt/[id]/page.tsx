@@ -1932,13 +1932,13 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
     }
   };
 
-  // RxPower stored is OLT upstream received power from the ONU (after GPON power leveling).
-  // Typical range: -5 to -15 dBm. Thresholds calibrated for upstream OLT RX power.
+  // RxPower stored is ONU downstream received power (ZTE SNMP nW → dBm = 10*log10(raw) - 60).
+  // Typical GPON range: -15 to -27 dBm. B+ class sensitivity threshold: -28 dBm.
   const getSignalQuality = (rxPower: number | null) => {
     if (rxPower === null) return { label: 'N/A', color: 'text-gray-400' };
-    if (rxPower >= -10) return { label: 'Excellent', color: 'text-green-600' };
-    if (rxPower >= -15) return { label: 'Good', color: 'text-blue-600' };
-    if (rxPower >= -20) return { label: 'Fair', color: 'text-yellow-600' };
+    if (rxPower >= -20) return { label: 'Excellent', color: 'text-green-600' };
+    if (rxPower >= -24) return { label: 'Good', color: 'text-blue-600' };
+    if (rxPower >= -27) return { label: 'Fair', color: 'text-yellow-600' };
     return { label: 'Poor', color: 'text-red-600' };
   };
 

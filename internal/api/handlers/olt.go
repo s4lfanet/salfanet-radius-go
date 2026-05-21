@@ -41,10 +41,68 @@ func NewOLTHandler(db *gorm.DB, p *poller.Poller, h *ws.Hub) *OLTHandler {
 // GET /api/olt
 func (h *OLTHandler) ListOLTs(c fiber.Ctx) error {
 	var olts []models.NetworkOLT
-	if err := h.db.Find(&olts).Error; err != nil {
+	if err := h.db.Preload("Routers.Router").Find(&olts).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(olts)
+
+	// Gather ONU counts grouped by oltId + status in one query
+	type statRow struct {
+		OltID  string `gorm:"column:oltId"`
+		Status string `gorm:"column:status"`
+		Count  int    `gorm:"column:cnt"`
+	}
+	var rows []statRow
+	h.db.Raw(`SELECT oltId, status, COUNT(*) AS cnt FROM olt_onu_status GROUP BY oltId, status`).Scan(&rows)
+
+	type onuStats struct {
+		Online    int `json:"online"`
+		Offline   int `json:"offline"`
+		LOS       int `json:"los"`
+		DyingGasp int `json:"dying_gasp"`
+		Unconfig  int `json:"unconfig"`
+		Total     int `json:"total"`
+	}
+	statsMap := make(map[string]*onuStats)
+	for _, r := range rows {
+		if _, ok := statsMap[r.OltID]; !ok {
+			statsMap[r.OltID] = &onuStats{}
+		}
+		s := statsMap[r.OltID]
+		s.Total += r.Count
+		switch r.Status {
+		case "online":
+			s.Online += r.Count
+		case "offline":
+			s.Offline += r.Count
+		case "los":
+			s.LOS += r.Count
+		case "dying_gasp":
+			s.DyingGasp += r.Count
+		case "auth_failed":
+			s.Unconfig += r.Count
+		}
+	}
+
+	type oltResponse struct {
+		models.NetworkOLT
+		Count    map[string]int `json:"_count"`
+		OnuStats *onuStats      `json:"onu_stats,omitempty"`
+	}
+
+	result := make([]oltResponse, 0, len(olts))
+	for _, olt := range olts {
+		s := statsMap[olt.ID]
+		total := 0
+		if s != nil {
+			total = s.Total
+		}
+		result = append(result, oltResponse{
+			NetworkOLT: olt,
+			Count:      map[string]int{"olt_onu_status": total, "odps": 0},
+			OnuStats:   s,
+		})
+	}
+	return c.JSON(result)
 }
 
 // CreateOLT godoc
