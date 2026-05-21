@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.69 — 2026-05-21
+
+### Fixed
+- **Password OLT tidak tampil di list** — `Password *string json:"-"` di model mencegah password dikembalikan di API (by design untuk keamanan). Tambah field `hasPassword bool` di response `ListOLTs` yang bernilai `true` jika password sudah tersimpan. Frontend kini menampilkan `••••••••` jika `hasPassword=true`, `-` jika belum diset.
+- **Stats card teks terlalu mepet ke border** — Padding kiri kartu stats (Status/Uptime/ONUs) diperbesar dari `p-4` ke `pl-6 pr-4 py-4` agar teks tidak terlalu dekat dengan garis `border-l-4`.
+### Files
+- `internal/api/handlers/network_ext.go` — tambah `HasPassword bool json:"hasPassword"` ke `oltWithStats`, populate dari `o.Password != nil && *o.Password != ""`
+- `src/app/admin/network/olts/page.tsx` — tambah `hasPassword?: boolean` ke interface OLT; gunakan `olt.hasPassword` untuk display password di tabel dan detail panel
+- `src/app/admin/olt/[id]/page.tsx` — ubah padding stats card dari `p-4` ke `pl-6 pr-4 py-4`
+
 ### v2.52.68 — 2026-05-21
 
 ### Fixed
@@ -544,20 +554,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/olt/poller/poller.go` — tambah `GetPool(oltID)` method
 - `internal/olt/vendors/zte/zte.go` — `walkOut` tambah `baseOID`; tambah OID prefix filter per result
 - `src/app/admin/olt/[id]/page.tsx` — port map `i` → `i+1`; signal quality thresholds; tambah komentar
-
-### v2.52.64 — 2026-05-24
-
-### Fixed
-- **ONU detail modal crash (TypeError)** — `ONUDetailModal` rendered `detail.telnet.detail.raw` and `detail.telnet.config.raw` without optional chaining. When the API returned a mismatched shape, this caused `TypeError: Cannot read properties of undefined (reading 'detail')` crashing the OLT page. Fixed both lines to use `?.` optional chaining.
-- **ONUDetail handler response shape** — replaced stub handler that returned `{ "detail": {...} }` with a real Telnet-based implementation returning `{ "telnet": { "interface", "detail": { "parsed", "summary", "raw" }, "config": { "summary", "raw" }, "optical": { "raw" } }, "onu": { "id", "customer" } }` matching what the frontend expects.
-- **ONU discovery — all ONUs collapsed to onuId=1** — critical SNMP OID bug: for `zxAnGponOnuRegTable` and `zxAnGponOnuDiscoveredInfoTable`, the row index suffix is `.<onuId>.<subIdx>` (2 components), but `lastOIDComponent` was returning the trailing `subIdx` (always 1 or a column index) instead of the actual `onuId`. Added `secondToLastOIDComponent` helper and use it for all RegTable and SeenONU walk results. Serial/desc (`zxAnGponOnuCfgTable`) correctly use `lastOIDComponent` (1-component suffix). Verified against live ZTE C320 V2.1 SNMP output.
-### Added
-- `secondToLastOIDComponent` helper in `zte.go` — returns the second-to-last numeric OID component, used for ZTE RegTable and SeenONU tables.
-- `onuParseDetailInfo`, `onuParseRunningConfig`, `onuVendorFromSN`, `onuSNPrefix`, `contains` helpers in `misc_handler.go` — parse ZTE C320 Telnet ONU detail and running-config output.
-### Files
-- `src/app/admin/olt/[id]/page.tsx` — lines 1567-1568: add `?.` optional chaining on `detail.telnet.detail.raw` and `detail.telnet.config.raw`
-- `internal/api/handlers/misc_handler.go` — replace stub `ONUDetail` with real Telnet implementation; add `context` and `telnet` imports; add parse helpers
-- `internal/olt/vendors/zte/zte.go` — add `secondToLastOIDComponent`; use it for regStatus, operState, rxPower, txPower, distance, seenONU walks; keep `lastOIDComponent` for serial/desc
 
 <!-- AUTO-CHANGELOG:END -->
 
