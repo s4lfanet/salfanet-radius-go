@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.61] — 2026-05-22
+### Added
+- **GetChassis — real Telnet + SNMP chassis data (ported from Next.js)** — `GET /api/olt/:id/chassis` now fires Telnet (`show card` + `show interface port-status`) and 5 SNMP IF-MIB walks (ifDescr, ifAdminStatus, ifOperStatus, ifHighSpeed, ifAlias) plus ZTE PON table walk **in parallel**. Real card types (GTGO/GTGH/GTGQ/SMXA/MCUD) come from Telnet `show card`; uplink port states (admin/link status, speed, description) come from `show interface port-status` with SNMP IF-MIB fallback. Falls back to SNMP board presence + DB ONU port data when Telnet is unavailable. Response includes `source: "telnet" | "snmp+db"`.
+### Files
+- `internal/api/handlers/olt_chassis.go` — new file: full chassis handler with `parseShowCard`, `classifyCard`, `smxaUplinkIfaces`, `parseUplinkPortStatus`, `buildUplinkStatesFromSNMP`, SNMP IF-MIB walk helpers, and `GetChassis`
+- `internal/api/handlers/olt.go` — remove old inline `GetChassis` implementation (now delegated to `olt_chassis.go`)
+
+---
+
 ## [2.52.60] — 2026-05-22
 ### Fixed
 - **ZTE SNMP poller — wrong frame/slot mapping** — `decodePonIndex` stored board2 ONUs as `frame=2, slot=1` instead of `frame=1, slot=2`. Fixed: `frame` is always `1` (ZTE C320 single chassis), `slot = board` (1 or 2), `port = PON number (1-based)`. Matches ZTE CLI notation `gpon-olt_1/slot/port`.
