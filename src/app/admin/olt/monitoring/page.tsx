@@ -7,6 +7,7 @@ import {
   Thermometer, Clock, Search, Settings, Users, ChevronDown,
   ArrowUpDown, Zap,
 } from 'lucide-react';
+import { useToast } from '@/components/cyberpunk/CyberToast';
 
 interface OLT {
   id: string;
@@ -56,6 +57,7 @@ function uptimeStr(seconds: bigint | number | null): string {
 }
 
 export default function OLTMonitoringPage() {
+  const { addToast } = useToast();
   const [olts, setOlts] = useState<OLT[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,14 +106,20 @@ export default function OLTMonitoringPage() {
   const handleManualPoll = async (oltId: string) => {
     setPolling((prev) => new Set(prev).add(oltId));
     try {
-      await fetch('/api/olt/monitoring', {
+      const res = await fetch('/api/olt/monitoring', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ oltId }),
       });
       await fetchOLTs(true);
+      if (res.ok) {
+        addToast({ type: 'success', title: 'Poll Selesai', description: 'Data OLT berhasil diperbarui' });
+      } else {
+        addToast({ type: 'error', title: 'Poll Gagal', description: 'Gagal melakukan polling OLT' });
+      }
     } catch (e) {
       console.error('Poll failed', e);
+      addToast({ type: 'error', title: 'Poll Gagal', description: 'Terjadi kesalahan saat polling' });
     } finally {
       setPolling((prev) => { const n = new Set(prev); n.delete(oltId); return n; });
     }
@@ -120,6 +128,7 @@ export default function OLTMonitoringPage() {
   const handlePollAll = async () => {
     setPollingAll(true);
     const enabledOlts = olts.filter((o) => o.monitoringEnabled);
+    addToast({ type: 'info', title: 'Memulai Poll...', description: `Memulai polling ${enabledOlts.length} OLT` });
     await Promise.allSettled(
       enabledOlts.map((o) =>
         fetch('/api/olt/monitoring', {
@@ -131,6 +140,7 @@ export default function OLTMonitoringPage() {
     );
     await fetchOLTs(true);
     setPollingAll(false);
+    addToast({ type: 'success', title: 'Poll Semua Selesai', description: `${enabledOlts.length} OLT berhasil diperbarui` });
   };
 
   const sortedOlts = [...olts].sort((a, b) => {

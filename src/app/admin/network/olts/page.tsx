@@ -117,6 +117,7 @@ interface OLTStatus {
   details?: {
     telnet: boolean;
     ssh: boolean;
+    snmp: boolean;
     http: boolean;
     icmp: boolean;
   };
@@ -617,14 +618,19 @@ export default function OLTsPage() {
                           )}
                           {status.details && (
                             <div className="flex gap-1 flex-wrap">
+                              {status.details.ssh && (
+                                <span className="text-[9px] px-1 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded" title="SSH accessible">
+                                  SSH
+                                </span>
+                              )}
                               {status.details.telnet && (
                                 <span className="text-[9px] px-1 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded" title="Telnet accessible">
                                   TEL
                                 </span>
                               )}
-                              {status.details.ssh && (
-                                <span className="text-[9px] px-1 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded" title="SSH accessible">
-                                  SSH
+                              {status.details.snmp && (
+                                <span className="text-[9px] px-1 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded" title="SNMP configured">
+                                  SNMP
                                 </span>
                               )}
                               {status.details.http && (

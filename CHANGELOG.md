@@ -6,6 +6,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.70] — 2026-05-21
+### Fixed
+- **Uptime N/A di monitoring OLT** — Poller tidak pernah mengambil data uptime dari SNMP. Tambah SNMP GET untuk OID `1.3.6.1.2.1.1.3.0` (sysUpTime, centiseconds) di setiap siklus poll; konversi ke detik dan simpan ke field `uptime` di `network_olts`.
+- **ONU count = 0 di OLT Management list** — GORM raw SQL scan per-OLT menggunakan field `Count int64` tanpa tag → nama kolom ambigu. Ganti pendekatan: satu query agregat dengan alias eksplisit (`SELECT oltId AS olt_id, status, COUNT(*) AS cnt FROM olt_onu_status GROUP BY oltId, status`) dan gunakan map untuk distribusikan ke tiap OLT. Eliminasi N+1 queries sekaligus.
+- **Status OLT hanya tampil SSH** — `NetworkOLTStatus` handler mengecek Telnet hanya jika SSH gagal (`if !sshOK`). Fix: cek SSH dan Telnet secara paralel (goroutine terpisah), keduanya selalu dicek.
+- **Badge SNMP tidak muncul di status** — Tambah field `SNMPEnabled` ke `oltRow` query dan tambah badge SNMP (orange) di frontend status details.
+- **Tidak ada notifikasi saat Poll OLT** — Tambah CyberToast notification di `handleManualPoll` (poll selesai / gagal) dan `handlePollAll` (mulai polling + selesai) di halaman OLT Monitoring.
+### Files
+- `internal/olt/poller/poller.go` — tambah SNMP GET sysUpTime; update field `uptime` di Updates map
+- `internal/api/handlers/network_ext.go` — ganti N+1 per-OLT query dengan single aggregated query + explicit column aliases
+- `internal/api/handlers/misc_handler.go` — SSH+Telnet checked in parallel; tambah SNMPEnabled field + SNMP badge logic
+- `src/app/admin/network/olts/page.tsx` — tambah `snmp` ke `OLTStatus.details` interface; tampilkan badge SNMP; urutan badge SSH > TEL > SNMP
+- `src/app/admin/olt/monitoring/page.tsx` — tambah `useToast`; notifikasi di `handleManualPoll` dan `handlePollAll`
+
+---
+
 ## [2.52.69] — 2026-05-21
 ### Fixed
 - **Password OLT tidak tampil di list** — `Password *string json:"-"` di model mencegah password dikembalikan di API (by design untuk keamanan). Tambah field `hasPassword bool` di response `ListOLTs` yang bernilai `true` jika password sudah tersimpan. Frontend kini menampilkan `••••••••` jika `hasPassword=true`, `-` jika belum diset.

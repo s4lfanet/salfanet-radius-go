@@ -199,29 +199,41 @@ func (h *NetworkHandler) ListOLTs(c fiber.Ctx) error {
 		HasPassword bool        `json:"hasPassword"`
 	}
 
+	// Single aggregated query instead of N+1 per-OLT queries
+	type statRow struct {
+		OltID  string `gorm:"column:olt_id"`
+		Status string `gorm:"column:status"`
+		Count  int64  `gorm:"column:cnt"`
+	}
+	var statRows []statRow
+	h.db.Raw(`SELECT oltId AS olt_id, status, COUNT(*) AS cnt FROM olt_onu_status GROUP BY oltId, status`).Scan(&statRows)
+
+	// Build map: oltID → status → count
+	statsMap := make(map[string]map[string]int64)
+	for _, r := range statRows {
+		if statsMap[r.OltID] == nil {
+			statsMap[r.OltID] = make(map[string]int64)
+		}
+		statsMap[r.OltID][r.Status] += r.Count
+	}
+
 	result := make([]oltWithStats, len(olts))
 	for i, o := range olts {
-		type statRow struct {
-			Status string
-			Count  int64
-		}
-		var rows []statRow
-		h.db.Raw(`SELECT status, COUNT(*) as count FROM olt_onu_status WHERE oltId = ? GROUP BY status`, o.ID).Scan(&rows)
-
+		sm := statsMap[o.ID]
 		var total, online, offline, los, dyingGasp, unconfig int64
-		for _, r := range rows {
-			total += r.Count
-			switch r.Status {
+		for status, cnt := range sm {
+			total += cnt
+			switch status {
 			case "online":
-				online = r.Count
+				online = cnt
 			case "los":
-				los = r.Count
+				los = cnt
 			case "dying_gasp":
-				dyingGasp = r.Count
+				dyingGasp = cnt
 			case "auth_failed", "unconfig":
-				unconfig += r.Count
+				unconfig += cnt
 			default:
-				offline += r.Count
+				offline += cnt
 			}
 		}
 

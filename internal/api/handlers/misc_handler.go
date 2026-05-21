@@ -1626,9 +1626,10 @@ func (h *MiscHandler) NetworkOLTStatus(c fiber.Ctx) error {
 		SSHPort       int    `gorm:"column:sshPort"`
 		TelnetEnabled bool   `gorm:"column:telnetEnabled"`
 		TelnetPort    int    `gorm:"column:telnetPort"`
+		SNMPEnabled   bool   `gorm:"column:snmpEnabled"`
 	}
 	var olts []oltRow
-	q := h.db.Table("network_olts").Select("id, ipAddress, sshEnabled, sshPort, telnetEnabled, telnetPort")
+	q := h.db.Table("network_olts").Select("id, ipAddress, sshEnabled, sshPort, telnetEnabled, telnetPort, snmpEnabled")
 	if len(body.OltIDs) > 0 {
 		q = q.Where("id IN ?", body.OltIDs)
 	}
@@ -1640,6 +1641,7 @@ func (h *MiscHandler) NetworkOLTStatus(c fiber.Ctx) error {
 		Details struct {
 			SSH    bool `json:"ssh"`
 			Telnet bool `json:"telnet"`
+			SNMP   bool `json:"snmp"`
 			HTTP   bool `json:"http"`
 			ICMP   bool `json:"icmp"`
 		} `json:"details"`
@@ -1662,22 +1664,42 @@ func (h *MiscHandler) NetworkOLTStatus(c fiber.Ctx) error {
 			if telnetPort == 0 {
 				telnetPort = 23
 			}
-			conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", row.IPAddress, sshPort), 3*time.Second)
-			if err == nil {
-				conn.Close()
-				sshOK = true
-			}
-			if !sshOK {
-				conn2, err2 := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", row.IPAddress, telnetPort), 3*time.Second)
-				if err2 == nil {
-					conn2.Close()
-					telnetOK = true
+			// Check SSH and Telnet in parallel (always check both if enabled)
+			type checkResult struct{ ok bool }
+			sshCh := make(chan checkResult, 1)
+			telnetCh := make(chan checkResult, 1)
+
+			go func() {
+				if row.SSHEnabled {
+					conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", row.IPAddress, sshPort), 3*time.Second)
+					if err == nil {
+						conn.Close()
+						sshCh <- checkResult{ok: true}
+						return
+					}
 				}
-			}
+				sshCh <- checkResult{ok: false}
+			}()
+			go func() {
+				if row.TelnetEnabled {
+					conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", row.IPAddress, telnetPort), 3*time.Second)
+					if err == nil {
+						conn.Close()
+						telnetCh <- checkResult{ok: true}
+						return
+					}
+				}
+				telnetCh <- checkResult{ok: false}
+			}()
+
+			sshOK = (<-sshCh).ok
+			telnetOK = (<-telnetCh).ok
+
 			online := sshOK || telnetOK
 			entry := statusEntry{ID: row.ID, Online: online}
 			entry.Details.SSH = sshOK
 			entry.Details.Telnet = telnetOK
+			entry.Details.SNMP = row.SNMPEnabled // SNMP is configuration-based (UDP, not easily TCP-checked)
 			mu.Lock()
 			results[row.ID] = entry
 			h.db.Table("network_olts").Where("id = ?", row.ID).Update("isOnline", online)

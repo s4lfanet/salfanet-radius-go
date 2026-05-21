@@ -169,6 +169,14 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 		log.Error().Err(err).Str("olt", olt.ID).Msg("poller: ONU discovery failed")
 	}
 
+	// Fetch sysUpTime via SNMP (OID 1.3.6.1.2.1.1.3.0, value in centiseconds)
+	uptimeSeconds := int64(0)
+	if uptimeResults, uptimeErr := snmputil.Get(ctx, snmpCfg, []string{"1.3.6.1.2.1.1.3.0"}); uptimeErr == nil && len(uptimeResults) > 0 {
+		if v, ok := snmputil.ToInt(uptimeResults[0].Value); ok && v > 0 {
+			uptimeSeconds = v / 100 // centiseconds → seconds
+		}
+	}
+
 	now := time.Now()
 	var registeredStatuses []models.OLTONUStatus
 	var unregisteredStatuses []models.OLTONUStatus
@@ -252,6 +260,7 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 		"onlineOnu":  onlineCount,
 		"offlineOnu": offlineCount,
 		"isOnline":   true,
+		"uptime":     uptimeSeconds,
 	})
 
 	// Generate alerts for newly offline ONUs
