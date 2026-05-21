@@ -1715,6 +1715,11 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
       if (res.ok) {
         const data = await res.json();
         const o = data.olt;
+        o.onuStatuses = o.onuStatuses ?? [];
+        o.alerts = o.alerts ?? [];
+        o.routers = o.routers ?? [];
+        o.monitoringLogs = o.monitoringLogs ?? [];
+        o.performanceMetrics = o.performanceMetrics ?? [];
         setOlt(o);
         setSettings({
           vendor: o.vendor ?? 'huawei',

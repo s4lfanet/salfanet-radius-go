@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.59] — 2026-05-21
+### Fixed
+- **OLT detail page crash — TypeError: Cannot read properties of undefined (reading 'length')** — GORM JSON omits empty arrays (due to `omitempty`) so `onuStatuses`, `alerts`, `routers`, `monitoringLogs`, `performanceMetrics` are `undefined` on the frontend when empty. Added `?? []` normalization after `data.olt` is received in `fetchOLT`.
+### Files
+- `src/app/admin/olt/[id]/page.tsx` — normalize all relation arrays to `[]` after fetch
+
+---
+
 ## [2.52.58] — 2026-05-21
 ### Fixed
 - **GET /api/olt/:id — 404** — Root cause: `GetOLT` handler uses `Preload("MonitoringLogs", Order("created_at DESC"))` dan `Preload("PerformanceMetrics", Order("recorded_at DESC"))`. DB columns are camelCase (`createdAt`, `recordedAt`), bukan snake_case. MySQL error "Unknown column 'created_at'" membuat seluruh query gagal → handler return 404.
