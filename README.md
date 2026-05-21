@@ -491,6 +491,19 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.60 — 2026-05-22
+
+### Fixed
+- **ZTE SNMP poller — wrong frame/slot mapping** — `decodePonIndex` stored board2 ONUs as `frame=2, slot=1` instead of `frame=1, slot=2`. Fixed: `frame` is always `1` (ZTE C320 single chassis), `slot = board` (1 or 2), `port = PON number (1-based)`. Matches ZTE CLI notation `gpon-olt_1/slot/port`.
+- **`knownPONPorts` — used wrong column** — Was selecting `DISTINCT frame, port` and passing `[frame, port]` as `[board, pon]` to `PonIndex()`. Fixed to select `DISTINCT slot, port` and pass `[slot, port]`.
+- **`GET /api/olt/:id/chassis` — wrong response shape** — Returned `{"ports": [...]}` but frontend expects `{"success": true, "chassis": [ApiChassisSlot]}`. Rebuilt handler to aggregate ONU port data from DB into proper slot-level chassis structure with card type inference (GTGO/GTGH/GTGQ) and uplink slot (SMXA at index 15).
+- **OLT Management "0 ONUs"** — `GET /api/network/olts` returned raw `NetworkOLT` records without `_count` or `onu_stats`. Frontend reads `olt._count?.olt_onu_status`. Fixed by adding per-OLT status aggregation query; response now includes `_count.olt_onu_status` and `onu_stats` with per-status breakdown.
+### Files
+- `internal/olt/vendors/zte/zte.go` — fix `decodePonIndex`: `frame=1` always, `slot=board`, `port=pon`
+- `internal/olt/poller/poller.go` — fix `knownPONPorts`: select `slot, port` not `frame, port`
+- `internal/api/handlers/olt.go` — rewrite `GetChassis` to return `{success, chassis}` with ApiChassisSlot format
+- `internal/api/handlers/network_ext.go` — `ListOLTs` now returns `_count` and `onu_stats` per OLT
+
 ### v2.52.59 — 2026-05-21
 
 ### Fixed
@@ -569,21 +582,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/db/models/olt.go` — `OLTONUStatus`, `OLTAlert`, `OLTPerformanceMetric`, `OLTMonitoringLog`: tambah `gorm:"column:camelCase"` tags ke semua field
 - `internal/olt/poller/poller.go` — fix `knownPONPorts` dan `checkAlerts` WHERE clause ke camelCase
-
-### v2.52.55 — 2026-05-22
-
-### Fixed
-- **OLT detail page — JS crash `Cannot read properties of undefined (reading 'length')`** — `olt.monitoringLogs` undefined karena `GetOLT` tidak me-preload `MonitoringLogs` / `PerformanceMetrics`. Fix: tambah preload dengan ORDER + LIMIT 100, serta null-safety `??[]` di frontend.
-- **OLT detail page — password terhapus saat Save Settings** — `OLTHandler.UpdateOLT` menggunakan `h.db.Save(&body)` dengan struct `NetworkOLT`; field `Password *string json:"-"` tidak ter-bind oleh Fiber sehingga nilainya `nil`, lalu GORM Save menghapus password di DB. Fix: ganti ke map-based update (`map[string]interface{}`), skip key `password` jika kosong.
-- **OLT router associations — kolom DB camelCase vs GORM snake_case mismatch** — GORM default naming strategy menghasilkan `olt_id`, `router_id` dst., tapi Prisma membuat kolom dengan nama camelCase (`oltId`, `routerId`). Fix: tambah explicit `gorm:"column:camelCase"` tags ke model `NetworkOLTRouter`.
-- **OLT status check — kolom DB salah** — `NetworkOLTStatus` menggunakan `SELECT id, ip_address, ssh_enabled...` dan `UPDATE is_online` dengan nama snake_case. Fix: ganti ke `ipAddress`, `sshEnabled`, `sshPort`, `telnetEnabled`, `telnetPort`, `isOnline` (camelCase sesuai skema Prisma).
-- **OLT router delete — WHERE clause salah** — `h.db.Where("olt_id = ?", id)` seharusnya `"oltId = ?"` agar sesuai kolom DB camelCase. Fix diterapkan di `olt.go` dan `network_ext.go`.
-### Files
-- `internal/db/models/olt.go` — `NetworkOLTRouter`: tambah explicit `gorm:"column:..."` camelCase tags + relasi `MonitoringLogs`/`PerformanceMetrics` ke `NetworkOLT`
-- `internal/api/handlers/olt.go` — `GetOLT`: preload semua relasi; `UpdateOLT`: map-based update, skip empty password, fix `oltId` WHERE clause
-- `internal/api/handlers/network_ext.go` — fix `WHERE "oltId = ?"` untuk delete router associations
-- `internal/api/handlers/misc_handler.go` — `NetworkOLTStatus`: fix semua kolom DB ke camelCase
-- `src/app/admin/olt/[id]/page.tsx` — null-safety `??[]` pada `olt.monitoringLogs`
 
 <!-- AUTO-CHANGELOG:END -->
 
