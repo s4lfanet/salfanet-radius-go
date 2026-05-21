@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.76 — 2026-05-22
+
+### Fixed
+- **Distance via Telnet** — SNMP OID `.18` (equalization delay × 0.112) memberikan nilai yang tidak akurat untuk sebagian ONU (contoh: ONU 1/1/1:12 menampilkan "101.07 dBm" karena nilai raw OID terpetakan ke RxPower ONU lain akibat bug index). Fix: ambil jarak dari Telnet `show gpon onu detail-info gpon-onu_1/{slot}/{port}:{onuId}` yang langsung melaporkan `ONU Distance: Xm` (diukur dari proses ranging OLT). Semua ONU terdaftar di-query dalam satu sesi Telnet via `ExecuteMultiple`. Hasil Telnet override nilai SNMP; jika Telnet gagal, nilai SNMP tetap dipakai sebagai fallback.
+- **Frontend tidak update** — Next.js berjalan via PM2 (`salfanet-radius`), bukan `systemctl salfanet-api`. Deploy sebelumnya hanya restart Go binary tanpa restart PM2, sehingga UI lama masih terbuffer. Fix: `rm -rf .next && npm run build && pm2 restart salfanet-radius`.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetDistances(pool, onus)` dan `parseTelnetDistances(raw)` untuk parsing `ONU Distance: Xm` dari combined Telnet output
+- `internal/olt/poller/poller.go` — Di `poll()`: retrieve pool dari `p.pools[olt.ID]`; panggil `zte.FetchTelnetDistances` setelah SNMP discovery; override `onu.Distance` untuk setiap ONU yang mendapat data Telnet
+
 ### v2.52.75 — 2026-05-22
 
 ### Added
@@ -524,14 +533,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Port 1 tidak menyala di ZTE C320 Rack Diagram** — `buildServicePorts` menyertakan port 0 (dummy) sebagai elemen pertama array (`ports[0] = {Port:0, HasOnus:false}`), sehingga offset index menggeser tampilan port. Fix: array ports kini dimulai dari port 1 (1-based), `ports[i] = {Port: i+1}`, dan lookup DB menggunakan `arrayIdx = portIdx - 1`. Juga perbaiki `portCount`: tidak lagi menggunakan `stdPorts + 1` melainkan `stdPorts` (atau `card.PortCount` jika lebih besar, misal 16 untuk GTGHG dari Telnet).
 ### Files
 - `internal/api/handlers/olt_chassis.go` — `buildServicePorts`: 1-based port array; Telnet & SNMP service case: `portCount = stdPorts` (bukan `stdPorts+1`), gunakan `card.PortCount` jika lebih besar
-
-### v2.52.71 — 2026-05-21
-
-### Fixed
-- **Total ONU = 0 di halaman OLT Management** — `GET /api/network/olts` diarahkan ke handler `ListOLTsForMap` yang mengembalikan data OLT polos tanpa ONU stats. Fix: ubah route ke `ListOLTs` (handler yang mengembalikan `_count.olt_onu_status` dan `onu_stats`). Tambah `Preload("Routers.Router")` ke `ListOLTs` agar kolom ROUTER/NAS tetap muncul.
-### Files
-- `internal/api/router.go` — `network.Get("/olts")` → `networkH.ListOLTs` (bukan `ListOLTsForMap`)
-- `internal/api/handlers/network_ext.go` — tambah `Preload("Routers.Router")` ke `ListOLTs`
 
 <!-- AUTO-CHANGELOG:END -->
 
