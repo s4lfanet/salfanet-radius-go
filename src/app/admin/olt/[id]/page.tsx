@@ -1564,8 +1564,8 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <pre className="text-[11px] font-mono bg-gray-950 text-green-300 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">{detail.telnet.detail.raw || 'No detail output'}</pre>
-                <pre className="text-[11px] font-mono bg-gray-950 text-blue-300 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">{detail.telnet.config.raw || detail.telnet.optical.raw || 'No config/optical output'}</pre>
+                <pre className="text-[11px] font-mono bg-gray-950 text-green-300 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">{detail?.telnet?.detail?.raw || 'No detail output'}</pre>
+                <pre className="text-[11px] font-mono bg-gray-950 text-blue-300 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">{detail?.telnet?.config?.raw || detail?.telnet?.optical?.raw || 'No config/optical output'}</pre>
               </div>
             </>
           )}

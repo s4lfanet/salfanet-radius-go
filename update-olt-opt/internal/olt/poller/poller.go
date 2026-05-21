@@ -72,7 +72,7 @@ func (p *Poller) Start(olt *models.NetworkOLT) {
 
 	go func() {
 		// First poll immediately
-		p.poll(ctx, olt, pool)
+		p.poll(ctx, olt)
 
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -82,7 +82,7 @@ func (p *Poller) Start(olt *models.NetworkOLT) {
 				log.Info().Str("olt", olt.ID).Msg("poller: stopped")
 				return
 			case <-ticker.C:
-				p.poll(ctx, olt, pool)
+				p.poll(ctx, olt)
 			}
 		}
 	}()
@@ -141,13 +141,14 @@ func (p *Poller) TriggerPoll(oltID string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	p.poll(ctx, &olt, pool)
+	var _ *telnet.Pool = pool
+	p.poll(ctx, &olt)
 	return nil
 }
 
 // ─── Core poll logic ──────────────────────────────────────────────────────────
 
-func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.Pool) {
+func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 	start := time.Now()
 	log.Debug().Str("olt", olt.ID).Str("ip", olt.IPAddress).Msg("poller: poll start")
 
@@ -218,7 +219,6 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.
 	// Also cleanup any ONUs that haven't been seen in the last poll (optional, but let's stick to the bug cleanup for now)
 	p.db.WithContext(ctx).Where("oltId = ? AND updatedAt < ?", olt.ID, now.Add(-5*time.Minute)).Delete(&models.OLTONUStatus{})
 
-
 	// Update OLT summary
 	totalONU := len(onuStatuses)
 	pollTime := now
@@ -258,28 +258,6 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.
 			"polledAt": now,
 		})
 	}
-}
-
-// knownPONPorts returns the set of (board, port) pairs that have ONU records in the DB.
-// Falls back to nil (which triggers 2×8 default in zte.DiscoverONUsSNMP).
-func (p *Poller) knownPONPorts(ctx context.Context, oltID string) [][2]int {
-	type portRow struct {
-		Frame int
-		Port  int
-	}
-	var rows []portRow
-	if err := p.db.WithContext(ctx).
-		Model(&models.OLTONUStatus{}).
-		Where("oltId = ?", oltID).
-		Select("DISTINCT frame, port").
-		Find(&rows).Error; err != nil || len(rows) == 0 {
-		return nil
-	}
-	ports := make([][2]int, len(rows))
-	for i, r := range rows {
-		ports[i] = [2]int{r.Frame, r.Port}
-	}
-	return ports
 }
 
 // checkAlerts creates alert records for ONUs that went offline.

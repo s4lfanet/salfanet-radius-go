@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.64] — 2026-05-24
+### Fixed
+- **ONU detail modal crash (TypeError)** — `ONUDetailModal` rendered `detail.telnet.detail.raw` and `detail.telnet.config.raw` without optional chaining. When the API returned a mismatched shape, this caused `TypeError: Cannot read properties of undefined (reading 'detail')` crashing the OLT page. Fixed both lines to use `?.` optional chaining.
+- **ONUDetail handler response shape** — replaced stub handler that returned `{ "detail": {...} }` with a real Telnet-based implementation returning `{ "telnet": { "interface", "detail": { "parsed", "summary", "raw" }, "config": { "summary", "raw" }, "optical": { "raw" } }, "onu": { "id", "customer" } }` matching what the frontend expects.
+- **ONU discovery — all ONUs collapsed to onuId=1** — critical SNMP OID bug: for `zxAnGponOnuRegTable` and `zxAnGponOnuDiscoveredInfoTable`, the row index suffix is `.<onuId>.<subIdx>` (2 components), but `lastOIDComponent` was returning the trailing `subIdx` (always 1 or a column index) instead of the actual `onuId`. Added `secondToLastOIDComponent` helper and use it for all RegTable and SeenONU walk results. Serial/desc (`zxAnGponOnuCfgTable`) correctly use `lastOIDComponent` (1-component suffix). Verified against live ZTE C320 V2.1 SNMP output.
+### Added
+- `secondToLastOIDComponent` helper in `zte.go` — returns the second-to-last numeric OID component, used for ZTE RegTable and SeenONU tables.
+- `onuParseDetailInfo`, `onuParseRunningConfig`, `onuVendorFromSN`, `onuSNPrefix`, `contains` helpers in `misc_handler.go` — parse ZTE C320 Telnet ONU detail and running-config output.
+### Files
+- `src/app/admin/olt/[id]/page.tsx` — lines 1567-1568: add `?.` optional chaining on `detail.telnet.detail.raw` and `detail.telnet.config.raw`
+- `internal/api/handlers/misc_handler.go` — replace stub `ONUDetail` with real Telnet implementation; add `context` and `telnet` imports; add parse helpers
+- `internal/olt/vendors/zte/zte.go` — add `secondToLastOIDComponent`; use it for regStatus, operState, rxPower, txPower, distance, seenONU walks; keep `lastOIDComponent` for serial/desc
+
+---
+
 ## [2.52.63] — 2026-05-23
 ### Fixed
 - **Port map uplink AdminStatus/LinkStatus wrong** — `parseUplinkPortStatus` was reading column 7 (Pause) and column 8 (FlowControl) instead of column 9 (AdminStatus) and column 10 (LinkStatus). All uplink ports showed `DIS`/down incorrectly on the chassis port map.

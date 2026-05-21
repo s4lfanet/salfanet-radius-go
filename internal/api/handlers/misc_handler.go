@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"math/rand"
@@ -18,6 +19,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/olt/telnet"
 )
 
 func capitalize(s string) string {
@@ -1368,21 +1370,230 @@ func (h *MiscHandler) BatchRebootONUs(c fiber.Ctx) error {
 	})
 }
 
-// GET /api/olt/:id/onus/:onuId/detail — detailed ONU info including optical power
+// GET /api/olt/:id/onus/:onuId/detail — detailed ONU info via Telnet
 func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	oltID := c.Params("id")
 	onuID := c.Params("onuId")
+
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"success": false, "error": "OLT not found"})
+	}
+
+	var onuStatus models.OLTONUStatus
+	if err := h.db.Preload("Customer").Where("oltId = ? AND id = ?", oltID, onuID).First(&onuStatus).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"success": false, "error": "ONU not found"})
+	}
+
+	iface := fmt.Sprintf("gpon-onu_%d/%d/%d:%d", onuStatus.Frame, onuStatus.Slot, onuStatus.Port, onuStatus.OnuID)
+
+	type detailResult struct {
+		Raw     string                 `json:"raw"`
+		Parsed  map[string]string      `json:"parsed"`
+		Summary map[string]interface{} `json:"summary"`
+	}
+	type configResult struct {
+		Raw     string                 `json:"raw"`
+		Summary map[string]interface{} `json:"summary"`
+	}
+	type opticalResult struct {
+		Raw string `json:"raw"`
+	}
+
+	detailInfo := detailResult{
+		Parsed:  map[string]string{},
+		Summary: map[string]interface{}{},
+	}
+	configInfo := configResult{Summary: map[string]interface{}{}}
+	opticalInfo := opticalResult{}
+
+	if (olt.TelnetEnabled || olt.SSHEnabled) && olt.Username != nil && olt.Password != nil {
+		tport := olt.TelnetPort
+		if tport == 0 {
+			tport = 23
+		}
+		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+		tcfg.CommandTimeout = 20 * time.Second
+		pool := telnet.NewPool(tcfg)
+		defer pool.Close()
+
+		_, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		out, err := pool.ExecuteMultiple([]string{
+			"show gpon onu detail-info " + iface,
+			"show running-config interface " + iface,
+		})
+		if err == nil {
+			parts := splitAtPrompt(out)
+			if len(parts) >= 1 {
+				detailInfo.Raw = strings.TrimSpace(parts[0])
+				detailInfo.Parsed, detailInfo.Summary = onuParseDetailInfo(parts[0])
+			}
+			if len(parts) >= 2 {
+				configInfo.Raw = strings.TrimSpace(parts[1])
+				configInfo.Summary = onuParseRunningConfig(parts[1])
+			}
+		}
+	}
+
 	return c.JSON(fiber.Map{
 		"success": true,
-		"detail": fiber.Map{
-			"oltId":        oltID,
-			"onuId":        onuID,
-			"opticalPower": "-20.5 dBm",
-			"temperature":  "45°C",
-			"uptime":       "10d 5h",
-			"firmware":     "V300R016C10SPC100",
+		"telnet": fiber.Map{
+			"interface": iface,
+			"detail":    detailInfo,
+			"config":    configInfo,
+			"optical":   opticalInfo,
+		},
+		"onu": fiber.Map{
+			"id":       onuStatus.ID,
+			"customer": onuStatus.Customer,
 		},
 	})
+}
+
+// onuParseDetailInfo parses ZTE C320 "show gpon onu detail-info" output.
+// Returns a parsed key-value map (using frontend-expected keys) and a summary.
+func onuParseDetailInfo(raw string) (map[string]string, map[string]interface{}) {
+	// Field name mapping: ZTE CLI name → frontend expected key
+	aliases := map[string]string{
+		"SN":              "Serial number",
+		"Run state":       "State",
+		"Phase state":     "Phase state",
+		"Config state":    "Config state",
+		"ONU Distance":    "ONU Distance",
+		"Online Duration": "Online Duration",
+		"Type":            "Type",
+		"Name":            "Name",
+		"Control flag":    "Control flag",
+		"Match state":     "Match state",
+		"Match mode":      "Match mode",
+		"Loid":            "Loid",
+		"Register time":   "Register time",
+		"Unreg reason":    "Unreg reason",
+		"ONU Tx Power":    "ONU Tx Power",
+		"ONU Rx Power":    "ONU Rx Power",
+	}
+
+	parsed := map[string]string{}
+	kv := map[string]string{}
+
+	for _, line := range strings.Split(raw, "\n") {
+		idx := strings.Index(line, ":")
+		if idx < 1 {
+			continue
+		}
+		key := strings.TrimSpace(line[:idx])
+		val := strings.TrimSpace(line[idx+1:])
+		if key == "" || val == "" {
+			continue
+		}
+		kv[key] = val
+		if mapped, ok := aliases[key]; ok {
+			parsed[mapped] = val
+		} else {
+			parsed[key] = val
+		}
+	}
+
+	// Build summary from known fields
+	summary := map[string]interface{}{
+		"authenticationMode": kv["Match mode"],
+		"snBind":             kv["SN"],
+		"adminState":         kv["Control flag"],
+		"vendor":             onuVendorFromSN(kv["SN"]),
+		"description":        kv["Name"],
+		"serialPrefix":       onuSNPrefix(kv["SN"]),
+	}
+
+	return parsed, summary
+}
+
+// onuParseRunningConfig parses ZTE C320 "show running-config interface gpon-onu_F/S/P:N" output.
+func onuParseRunningConfig(raw string) map[string]interface{} {
+	serviceVlans := []string{}
+	tcontProfiles := []string{}
+	downstreamProfiles := []string{}
+
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimSpace(line)
+		// Extract VLAN IDs from service-port lines: "service-port N vport M user-vlan X vlan Y"
+		if strings.HasPrefix(line, "service-port") {
+			fields := strings.Fields(line)
+			for i, f := range fields {
+				if (f == "vlan" || f == "user-vlan") && i+1 < len(fields) {
+					v := fields[i+1]
+					if v != "untagged" && !contains(serviceVlans, v) {
+						serviceVlans = append(serviceVlans, v)
+					}
+				}
+			}
+		}
+		// Extract TCONT profiles: "tcont N profile <name>"
+		if strings.HasPrefix(line, "tcont") {
+			fields := strings.Fields(line)
+			for i, f := range fields {
+				if f == "profile" && i+1 < len(fields) {
+					p := fields[i+1]
+					if !contains(tcontProfiles, p) {
+						tcontProfiles = append(tcontProfiles, p)
+					}
+				}
+			}
+		}
+		// Extract downstream profiles: "gem add N eth-port N traffic-limit downstream <profile>"
+		if strings.Contains(line, "downstream") {
+			fields := strings.Fields(line)
+			for i, f := range fields {
+				if f == "downstream" && i+1 < len(fields) {
+					p := fields[i+1]
+					if !contains(downstreamProfiles, p) {
+						downstreamProfiles = append(downstreamProfiles, p)
+					}
+				}
+			}
+		}
+	}
+
+	return map[string]interface{}{
+		"serviceVlans":       serviceVlans,
+		"tcontProfiles":      tcontProfiles,
+		"downstreamProfiles": downstreamProfiles,
+	}
+}
+
+func onuVendorFromSN(sn string) string {
+	if len(sn) < 4 {
+		return ""
+	}
+	switch strings.ToUpper(sn[:4]) {
+	case "ZTEG":
+		return "ZTE"
+	case "HWTC":
+		return "Huawei"
+	case "FHTT":
+		return "FiberHome"
+	case "ALPH":
+		return "Alpha"
+	default:
+		return sn[:4]
+	}
+}
+
+func onuSNPrefix(sn string) string {
+	if len(sn) < 4 {
+		return sn
+	}
+	return sn[:4]
+}
+
+func contains(slice []string, s string) bool {
+	for _, v := range slice {
+		if v == s {
+			return true
+		}
+	}
+	return false
 }
 
 // ─── Batch 13 additions ───────────────────────────────────────────────────────

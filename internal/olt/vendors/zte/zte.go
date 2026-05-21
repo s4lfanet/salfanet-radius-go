@@ -49,6 +49,11 @@ const (
 	// ZTE C320 V2.1 PON port provisioning table — one entry per active PON port; indexed by ponIndex
 	oidPONPortTable = oidBase + ".3.11.3.1.1"
 
+	// Index format notes (verified via live SNMP walk against ZTE C320 V2.1):
+	//   zxAnGponOnuRegTable  (.3.50.12.1.1.*): suffix = .ponIndex.onuId.1   (onuId is second-to-last)
+	//   zxAnGponOnuCfgTable  (.3.28.1.1.*):    suffix = .ponIndex.onuId      (onuId is last)
+	//   zxAnGponOnuDiscoveredInfoTable (.3.27.4.1.1): suffix = .ponIndex.onuId.colIdx (onuId is second-to-last)
+
 	board1Base   int64 = 268500992
 	board2Base   int64 = 268509184
 	ponIncrement int64 = 256
@@ -372,8 +377,17 @@ func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResu
 		}
 
 		for _, r := range out.results {
-			// All ZTE C320 ONU tables use onuId as the last OID component.
-			onuID := lastOIDComponent(r.OID)
+			// ZTE C320 GPON OID index structure:
+			//  zxAnGponOnuRegTable  (.3.50.12.1.1.*): .col.ponIndex.onuId.1  → use second-to-last
+			//  zxAnGponOnuCfgTable  (.3.28.1.1.*):    .col.ponIndex.onuId    → use last
+			//  zxAnGponOnuDiscoveredInfoTable (.3.27.4.1.1): .ponIndex.onuId.colIdx → use second-to-last
+			var onuID int
+			switch out.key {
+			case "serial", "desc":
+				onuID = lastOIDComponent(r.OID)
+			default:
+				onuID = secondToLastOIDComponent(r.OID)
+			}
 			if onuID <= 0 || onuID > 128 {
 				continue
 			}
@@ -714,6 +728,26 @@ func lastOIDComponent(oid string) int {
 		if v, err := strconv.Atoi(parts[i]); err == nil && v > 0 {
 			return v
 		}
+	}
+	return 0
+}
+
+// secondToLastOIDComponent returns the second-to-last numeric OID component.
+// Used for ZTE C320 tables with 2-component row index suffix (e.g. .onuId.1 for RegTable,
+// or .onuId.colIdx for SeenONU), where the actual ONU-ID is the second-to-last component.
+func secondToLastOIDComponent(oid string) int {
+	parts := strings.Split(oid, ".")
+	foundLast := false
+	for i := len(parts) - 1; i >= 0; i-- {
+		v, err := strconv.Atoi(parts[i])
+		if err != nil || v <= 0 {
+			continue
+		}
+		if !foundLast {
+			foundLast = true
+			continue // skip the trailing sub-index
+		}
+		return v
 	}
 	return 0
 }

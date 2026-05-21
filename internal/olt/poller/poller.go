@@ -72,7 +72,7 @@ func (p *Poller) Start(olt *models.NetworkOLT) {
 
 	go func() {
 		// First poll immediately
-		p.poll(ctx, olt, pool)
+		p.poll(ctx, olt)
 
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -82,7 +82,7 @@ func (p *Poller) Start(olt *models.NetworkOLT) {
 				log.Info().Str("olt", olt.ID).Msg("poller: stopped")
 				return
 			case <-ticker.C:
-				p.poll(ctx, olt, pool)
+				p.poll(ctx, olt)
 			}
 		}
 	}()
@@ -141,13 +141,14 @@ func (p *Poller) TriggerPoll(oltID string) error {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	p.poll(ctx, &olt, pool)
+	var _ *telnet.Pool = pool
+	p.poll(ctx, &olt)
 	return nil
 }
 
 // ─── Core poll logic ──────────────────────────────────────────────────────────
 
-func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.Pool) {
+func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 	start := time.Now()
 	log.Debug().Str("olt", olt.ID).Str("ip", olt.IPAddress).Msg("poller: poll start")
 
