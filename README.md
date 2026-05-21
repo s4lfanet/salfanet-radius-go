@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.74 — 2026-05-22
+
+### Fixed
+- **Distance ONU semua NULL** — OID `.3.50.12.1.1.21` adalah nilai konstan per-port (bukan per-ONU), sehingga tidak ter-mapping ke masing-masing ONU dan distance tetap NULL di DB. Fix: ganti ke OID `.3.50.12.1.1.18` (equalization delay per-ONU, terindex per onuId) dengan formula `raw × 0.112` (diverifikasi: ONU 28 OID18=5000 → 5000×0.112=560m sesuai data Telnet).
+### Files
+- `internal/olt/vendors/zte/zte.go` — `oidDistance` dari OID `.21` ke OID `.18`; formula `int(dist)` → `int(float64(dist) * 0.112)` (2 tempat)
+
 ### v2.52.73 — 2026-05-21
 
 ### Fixed
@@ -529,16 +536,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/misc_handler.go` — SSH+Telnet checked in parallel; tambah SNMPEnabled field + SNMP badge logic
 - `src/app/admin/network/olts/page.tsx` — tambah `snmp` ke `OLTStatus.details` interface; tampilkan badge SNMP; urutan badge SSH > TEL > SNMP
 - `src/app/admin/olt/monitoring/page.tsx` — tambah `useToast`; notifikasi di `handleManualPoll` dan `handlePollAll`
-
-### v2.52.69 — 2026-05-21
-
-### Fixed
-- **Password OLT tidak tampil di list** — `Password *string json:"-"` di model mencegah password dikembalikan di API (by design untuk keamanan). Tambah field `hasPassword bool` di response `ListOLTs` yang bernilai `true` jika password sudah tersimpan. Frontend kini menampilkan `••••••••` jika `hasPassword=true`, `-` jika belum diset.
-- **Stats card teks terlalu mepet ke border** — Padding kiri kartu stats (Status/Uptime/ONUs) diperbesar dari `p-4` ke `pl-6 pr-4 py-4` agar teks tidak terlalu dekat dengan garis `border-l-4`.
-### Files
-- `internal/api/handlers/network_ext.go` — tambah `HasPassword bool json:"hasPassword"` ke `oltWithStats`, populate dari `o.Password != nil && *o.Password != ""`
-- `src/app/admin/network/olts/page.tsx` — tambah `hasPassword?: boolean` ke interface OLT; gunakan `olt.hasPassword` untuk display password di tabel dan detail panel
-- `src/app/admin/olt/[id]/page.tsx` — ubah padding stats card dari `p-4` ke `pl-6 pr-4 py-4`
 
 <!-- AUTO-CHANGELOG:END -->
 
