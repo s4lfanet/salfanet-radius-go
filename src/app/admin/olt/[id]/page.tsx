@@ -191,8 +191,11 @@ function UplinkPortModal({ oltId, port, onClose }: { oltId: string; port: string
           ) : null)}
         </div>
         <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-          <button onClick={() => doAction('enable')} disabled={actionLoading} className="px-3 py-1.5 text-xs rounded bg-green-800 hover:bg-green-700 text-white disabled:opacity-50">Enable</button>
-          <button onClick={() => doAction('disable')} disabled={actionLoading} className="px-3 py-1.5 text-xs rounded bg-red-900 hover:bg-red-800 text-white disabled:opacity-50">Disable</button>
+          {isEnabled ? (
+            <button onClick={() => doAction('disable')} disabled={actionLoading} className="px-3 py-1.5 text-xs rounded bg-red-900 hover:bg-red-800 text-white disabled:opacity-50">Disable Port</button>
+          ) : (
+            <button onClick={() => doAction('enable')} disabled={actionLoading} className="px-3 py-1.5 text-xs rounded bg-green-800 hover:bg-green-700 text-white disabled:opacity-50">Enable Port</button>
+          )}
         </div>
       </div>
     );

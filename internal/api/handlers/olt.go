@@ -807,9 +807,9 @@ func (h *OLTHandler) CreateUplink(c fiber.Ctx) error {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid VLAN ID"})
 		}
 		_ = vid
+		// ZTE C320: correct syntax is "no switchport vlan X" (without "tag" suffix)
 		commandSets = [][]string{
-			{"configure terminal", "interface " + port, "no switchport vlan " + body.VlanID + " tag", "exit", "end"},
-			{"configure terminal", "interface " + port, "no switchport default vlan", "exit", "end"},
+			{"configure terminal", "interface " + port, "no switchport vlan " + body.VlanID, "exit", "end"},
 		}
 
 	case "enable":
@@ -861,9 +861,15 @@ func (h *OLTHandler) CreateUplink(c fiber.Ctx) error {
 		return c.JSON(fiber.Map{"success": true, "port": port, "action": body.Action})
 	}
 
+	if lastDetail != "" {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"error":  "OLT command failed",
+			"detail": lastDetail,
+		})
+	}
 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 		"error":  "Uplink action failed",
-		"detail": lastDetail,
+		"detail": "",
 	})
 }
 

@@ -6,6 +6,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.78] — 2026-05-22
+### Fixed
+- **Remove VLAN 500 error** — Perintah `no switchport vlan X tag` tidak valid di ZTE C320 (mengembalikan `%Error 20201: Invalid command key word`). Perintah yang benar adalah `no switchport vlan X` (tanpa suffix `tag`). Sebelumnya juga ada dua commandSet — fallback kedua (`no switchport default vlan`) salah karena menghapus PVID bukan tagged VLAN. Kini hanya satu commandSet dengan perintah yang benar.
+- **API response 500 → 422 saat CLI error** — Ketika perintah Telnet ditolak OLT (CLI error seperti `%Error`), handler mengembalikan HTTP 500 "Uplink action failed" padahal ini bukan server error. Fix: kembalikan HTTP 422 Unprocessable Entity dengan detail pesan error dari OLT, sehingga frontend dapat menampilkan pesan yang tepat.
+### Changed
+- **Toggle Enable/Disable port** — Dua tombol terpisah (Enable + Disable) di status tab uplink diganti dengan satu tombol kontekstual: jika port sedang enabled tampil tombol "Disable Port" (merah), jika port disabled tampil tombol "Enable Port" (hijau).
+### Files
+- `internal/api/handlers/olt.go` — Fix `removeVlan` command dari `no switchport vlan X tag` → `no switchport vlan X`; remove wrong fallback commandSet; return 422 instead of 500 on CLI errors
+- `src/app/admin/olt/[id]/page.tsx` — Replace Enable+Disable buttons with single contextual toggle button
+
+---
+
 ## [2.52.77] — 2026-05-22
 ### Fixed
 - **Uplink status "Unknown"** — `uplinkParsePortStatus` membaca kolom index yang salah dari output `show interface port-status xgei_1/3/2`. ZTE C320 mengembalikan 9 field (index 0–8): port, hybridStatus, nativeVlan, negotiation, speed, duplex, flowCtrl, adminStatus, linkStatus. Kode lama salah baca duplex dari `parts[3]` (seharusnya `parts[5]`), flowCtrl dari `parts[8]` (seharusnya `parts[6]`), adminStatus dari `parts[9]` (OOB), linkStatus dari `parts[10]` (OOB). Akibatnya `adminRaw` selalu kosong → status "Unknown".
