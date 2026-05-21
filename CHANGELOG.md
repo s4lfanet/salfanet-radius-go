@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.71] — 2026-05-21
+### Fixed
+- **Total ONU = 0 di halaman OLT Management** — `GET /api/network/olts` diarahkan ke handler `ListOLTsForMap` yang mengembalikan data OLT polos tanpa ONU stats. Fix: ubah route ke `ListOLTs` (handler yang mengembalikan `_count.olt_onu_status` dan `onu_stats`). Tambah `Preload("Routers.Router")` ke `ListOLTs` agar kolom ROUTER/NAS tetap muncul.
+### Files
+- `internal/api/router.go` — `network.Get("/olts")` → `networkH.ListOLTs` (bukan `ListOLTsForMap`)
+- `internal/api/handlers/network_ext.go` — tambah `Preload("Routers.Router")` ke `ListOLTs`
+
+---
+
 ## [2.52.70] — 2026-05-21
 ### Fixed
 - **Uptime N/A di monitoring OLT** — Poller tidak pernah mengambil data uptime dari SNMP. Tambah SNMP GET untuk OID `1.3.6.1.2.1.1.3.0` (sysUpTime, centiseconds) di setiap siklus poll; konversi ke detik dan simpan ke field `uptime` di `network_olts`.

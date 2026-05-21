@@ -346,7 +346,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// Network Map
 	network := api.Group("/network")
-	network.Get("/olts", networkH.ListOLTsForMap)
+	network.Get("/olts", networkH.ListOLTs)
 	network.Post("/olts", networkH.CreateOLT)
 	network.Put("/olts", networkH.UpdateOLT)
 	network.Delete("/olts", networkH.DeleteOLT)

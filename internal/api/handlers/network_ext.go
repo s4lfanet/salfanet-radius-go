@@ -180,7 +180,7 @@ func (h *NetworkHandler) ImportRouters(c fiber.Ctx) error {
 // GET /api/network/olts
 func (h *NetworkHandler) ListOLTs(c fiber.Ctx) error {
 	var olts []models.NetworkOLT
-	h.db.Find(&olts)
+	h.db.Preload("Routers.Router").Find(&olts)
 
 	type countFields struct {
 		OltOnuStatus int64 `json:"olt_onu_status"`
