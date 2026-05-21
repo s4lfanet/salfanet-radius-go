@@ -163,10 +163,26 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 	snmpCfg := snmputil.DefaultConfig(olt.IPAddress, olt.SNMPCommunity, olt.SNMPPort)
 
 	// Dynamic PON port discovery + BulkWalk all ONU tables (registered + unregistered via SNMP).
-	// Telnet (pool) remains available for config/registration write operations.
 	onus, err := zte.DiscoverAll(ctx, snmpCfg)
 	if err != nil {
 		log.Error().Err(err).Str("olt", olt.ID).Msg("poller: ONU discovery failed")
+	}
+
+	// Enrich ONU distances via Telnet (more accurate than SNMP equalization delay).
+	// Runs "show gpon onu detail-info" per ONU and parses "ONU Distance: Xm".
+	p.mu.Lock()
+	pool := p.pools[olt.ID]
+	p.mu.Unlock()
+	if pool != nil && len(onus) > 0 {
+		if telnetDist := zte.FetchTelnetDistances(pool, onus); len(telnetDist) > 0 {
+			for _, onu := range onus {
+				key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
+				if d, ok := telnetDist[key]; ok {
+					onu.Distance = &d
+				}
+			}
+			log.Debug().Str("olt", olt.ID).Int("distances", len(telnetDist)).Msg("poller: telnet distances enriched")
+		}
 	}
 
 	// Fetch sysUpTime via SNMP (OID 1.3.6.1.2.1.1.3.0, value in centiseconds)

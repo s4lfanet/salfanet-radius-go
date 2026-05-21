@@ -811,3 +811,70 @@ func DiscoverAll(ctx context.Context, snmpCfg snmputil.Config) ([]*ONUInfo, erro
 	log.Debug().Int("ports", len(ponPorts)).Msg("zte: discovered PON ports")
 	return DiscoverONUsSNMP(ctx, snmpCfg, ponPorts)
 }
+
+// ─── Telnet Distance Collection ───────────────────────────────────────────────
+
+// FetchTelnetDistances retrieves ONU fiber distances via Telnet
+// "show gpon onu detail-info gpon-onu_F/S/P:N" for each registered ONU.
+// Returns a map of "F/S/P:N" → distance in meters.
+// All commands are batched in a single Telnet session for efficiency.
+func FetchTelnetDistances(pool *telnet.Pool, onus []*ONUInfo) map[string]int {
+	var cmds []string
+	for _, onu := range onus {
+		if onu.Registered {
+			cmds = append(cmds, fmt.Sprintf(
+				"show gpon onu detail-info gpon-onu_%d/%d/%d:%d",
+				onu.Frame, onu.Slot, onu.Port, onu.OnuID,
+			))
+		}
+	}
+	if len(cmds) == 0 {
+		return nil
+	}
+
+	output, err := pool.ExecuteMultiple(cmds)
+	if err != nil {
+		log.Warn().Err(err).Int("onus", len(cmds)).Msg("zte: telnet distance fetch failed")
+		return nil
+	}
+
+	return parseTelnetDistances(output)
+}
+
+// parseTelnetDistances scans the combined Telnet output from multiple
+// "show gpon onu detail-info" commands and extracts ONU Distance values.
+// Looks for: "ONU interface: gpon-onu_F/S/P:N" followed by "ONU Distance: Xm".
+func parseTelnetDistances(raw string) map[string]int {
+	distances := map[string]int{}
+	var currentKey string
+
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Match: "ONU interface:         gpon-onu_1/1/1:1"
+		if strings.HasPrefix(line, "ONU interface:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "ONU interface:"))
+			if idx := strings.Index(val, "gpon-onu_"); idx >= 0 {
+				currentKey = val[idx+len("gpon-onu_"):]
+			} else {
+				currentKey = ""
+			}
+			continue
+		}
+
+		// Match: "ONU Distance:        583m"
+		if currentKey != "" && strings.HasPrefix(line, "ONU Distance:") {
+			val := strings.TrimSpace(strings.TrimPrefix(line, "ONU Distance:"))
+			val = strings.TrimSuffix(strings.TrimSpace(val), "m")
+			val = strings.TrimSpace(val)
+			if d, err := strconv.Atoi(val); err == nil && d > 0 {
+				distances[currentKey] = d
+			}
+		}
+	}
+
+	return distances
+}
