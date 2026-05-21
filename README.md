@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.68 — 2026-05-21
+
+### Fixed
+- **ONU Detail Modal kosong** — ZTE C320 menggunakan `--More--` paging untuk output panjang (show gpon onu detail-info). `readUntilPrompt` tidak pernah melihat prompt `#` karena pager menginterupsi output → timeout 10 detik → output kosong. Fix: kirim `terminal length 0` setelah login berhasil untuk menonaktifkan paging di seluruh sesi telnet.
+- **Jarak ONU semua sama 328m** — OID `.21` (zxAnGponOnuOptDistance) mengembalikan nilai fixed 328 untuk semua ONU (equalization delay provisioning, bukan jarak sebenarnya). Ganti ke OID `.19` (zxAnPonAniOptRtt) yang mengembalikan RTT aktual dalam nanoseconds per ONU. Konversi: `jarak_m = RTT_ns / 10` (sesuai kecepatan cahaya di fiber ≈ 2×10⁸ m/s). Contoh: ONU1=11627 ns → 1163m, ONU9=15367 ns → 1537m.
+- **Uplink SMXA card status** — Setelah fix telnet paging, `show interface port-status` sekarang mengembalikan output lengkap → status active/disable port uplink SMXA ditampilkan dengan benar.
+- **Stats card ONU list** — Perbaiki padding kartu (`p-4` konsisten), ukuran font lebih jelas (`text-2xl`), label uppercase tracking, dan breakdown status ONU (offline, LOS, DyingGasp) ditampilkan lebih detail.
+### Files
+- `internal/olt/telnet/telnet.go` — tambah `terminal length 0` setelah login berhasil untuk disable paging
+- `internal/olt/vendors/zte/zte.go` — ubah `oidDistance` dari `.21` ke `.19`; konversi RTT → jarak `int(float64(dist)/10.0)`; filter batas atas dari 100000 ke 1000000
+- `src/app/admin/olt/[id]/page.tsx` — stats cards: `p-4` konsisten, `text-2xl`, label uppercase, grid `grid-cols-3`, breakdown LOS/DyingGasp
+
 ### v2.52.67 — 2026-05-21
 
 ### Fixed
@@ -546,18 +558,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/app/admin/olt/[id]/page.tsx` — lines 1567-1568: add `?.` optional chaining on `detail.telnet.detail.raw` and `detail.telnet.config.raw`
 - `internal/api/handlers/misc_handler.go` — replace stub `ONUDetail` with real Telnet implementation; add `context` and `telnet` imports; add parse helpers
 - `internal/olt/vendors/zte/zte.go` — add `secondToLastOIDComponent`; use it for regStatus, operState, rxPower, txPower, distance, seenONU walks; keep `lastOIDComponent` for serial/desc
-
-### v2.52.63 — 2026-05-23
-
-### Fixed
-- **Port map uplink AdminStatus/LinkStatus wrong** — `parseUplinkPortStatus` was reading column 7 (Pause) and column 8 (FlowControl) instead of column 9 (AdminStatus) and column 10 (LinkStatus). All uplink ports showed `DIS`/down incorrectly on the chassis port map.
-- **Minimum column count check** — updated from `len(parts) < 8` to `len(parts) < 11` so rows with fewer than 11 columns are skipped correctly.
-- **Uplink description via SNMP** — when Telnet-parsed uplink states are available, SNMP `ifAlias` descriptions are now merged in, so uplink port hover tooltips show descriptions even when Telnet is the primary data source.
-- **GetUplink handler** — replaced stub with real Telnet-based implementation for all four tabs: `status` (parses `show interface port-status` + `show interface` with SNMP fallback), `vlan` (parses `show running-config interface`), `config` (returns raw running-config), `optical` (parses `show interface optical-module-info` + `show ddmi interface`).
-- **CreateUplink handler** — replaced stub with real Telnet config-mode implementation: `addVlan`, `removeVlan`, `enable`, `disable`, `setPvid`, `removePvid`, `setDescription`.
-### Files
-- `internal/api/handlers/olt_chassis.go` — fix `parseUplinkPortStatus` column indices (9, 10); merge SNMP description into Telnet-parsed uplink states
-- `internal/api/handlers/olt.go` — implement real `GetUplink` + `CreateUplink` handlers with full parser helpers; add `context`, `regexp`, `strings`, snmputil imports
 
 <!-- AUTO-CHANGELOG:END -->
 
