@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.76] — 2026-05-22
+### Fixed
+- **Distance via Telnet** — SNMP OID `.18` (equalization delay × 0.112) memberikan nilai yang tidak akurat untuk sebagian ONU (contoh: ONU 1/1/1:12 menampilkan "101.07 dBm" karena nilai raw OID terpetakan ke RxPower ONU lain akibat bug index). Fix: ambil jarak dari Telnet `show gpon onu detail-info gpon-onu_1/{slot}/{port}:{onuId}` yang langsung melaporkan `ONU Distance: Xm` (diukur dari proses ranging OLT). Semua ONU terdaftar di-query dalam satu sesi Telnet via `ExecuteMultiple`. Hasil Telnet override nilai SNMP; jika Telnet gagal, nilai SNMP tetap dipakai sebagai fallback.
+- **Frontend tidak update** — Next.js berjalan via PM2 (`salfanet-radius`), bukan `systemctl salfanet-api`. Deploy sebelumnya hanya restart Go binary tanpa restart PM2, sehingga UI lama masih terbuffer. Fix: `rm -rf .next && npm run build && pm2 restart salfanet-radius`.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetDistances(pool, onus)` dan `parseTelnetDistances(raw)` untuk parsing `ONU Distance: Xm` dari combined Telnet output
+- `internal/olt/poller/poller.go` — Di `poll()`: retrieve pool dari `p.pools[olt.ID]`; panggil `zte.FetchTelnetDistances` setelah SNMP discovery; override `onu.Distance` untuk setiap ONU yang mendapat data Telnet
+
+---
+
 ## [2.52.75] — 2026-05-22
 ### Added
 - **Per-PON Live Stats** — Setiap port PON di section "Detail Per Port PON" kini bisa di-klik untuk expand dan menampilkan data live dari Telnet OLT: Temperature (°C), TX Power (dBm), Voltage (V), Bias Current (mA), Upstream/Downstream rate (Mbps) dan bandwidth usage (%). Data diambil via `show interface gpon-olt_1/{slot}/{port}` dan `show interface optical-module-info gpon-olt_1/{slot}/{port}`.
