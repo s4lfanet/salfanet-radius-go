@@ -2029,43 +2029,51 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
       </div>
 
       {/* Status Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Card className={`border-l-4 ${olt.isOnline ? 'border-l-green-500' : 'border-l-red-500'}`}>
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <Wifi className="h-3 w-3" /> Status
+          <CardContent className="p-4">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              <Wifi className="h-3.5 w-3.5" /> Status
             </div>
-            <div className={`font-bold text-xl ${olt.isOnline ? 'text-green-600' : 'text-red-600'}`}>
+            <div className={`font-bold text-2xl leading-tight ${olt.isOnline ? 'text-green-600' : 'text-red-600'}`}>
               {olt.isOnline ? 'Online' : 'Offline'}
             </div>
-            <div className="text-xs text-gray-400 mt-0.5">
+            <div className="text-xs text-gray-400 mt-1">
               {olt.lastPollAt ? `Polled ${new Date(olt.lastPollAt).toLocaleTimeString('id-ID')}` : 'Not polled yet'}
             </div>
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-blue-500">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <Clock className="h-3 w-3" /> Uptime
+          <CardContent className="p-4">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              <Clock className="h-3.5 w-3.5" /> Uptime
             </div>
-            <div className="font-bold text-xl text-gray-900 dark:text-white">{formatUptime(olt.uptime)}</div>
-            <div className="text-xs text-gray-400 mt-0.5">
+            <div className="font-bold text-2xl leading-tight text-gray-900 dark:text-white">{formatUptime(olt.uptime)}</div>
+            <div className="text-xs text-gray-400 mt-1">
               {olt.vendor ?? 'OLT'} {olt.model ?? ''}
             </div>
           </CardContent>
         </Card>
+
         <Card className="border-l-4 border-l-teal-500">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 mb-1">
-              <Activity className="h-3 w-3" /> ONUs
+          <CardContent className="p-4">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+              <Activity className="h-3.5 w-3.5" /> ONUs
             </div>
-            <div className="font-bold text-xl">
+            <div className="font-bold text-2xl leading-tight">
               <span className="text-green-600">{olt.onlineOnu}</span>
-              <span className="text-gray-400 text-base">/{olt.totalOnu}</span>
+              <span className="text-gray-400 text-lg font-semibold">/{olt.totalOnu}</span>
             </div>
-            <div className="text-xs text-gray-400 mt-0.5">
-              {olt.offlineOnu > 0 ? `${olt.offlineOnu} offline` : 'All online'}
+            <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs">
+              {olt.offlineOnu > 0 && <span className="text-orange-500 font-medium">{olt.offlineOnu} offline</span>}
+              {olt.onuStatuses.filter(o => o.status === 'los').length > 0 && (
+                <span className="text-red-500 font-medium">{olt.onuStatuses.filter(o => o.status === 'los').length} LOS</span>
+              )}
+              {olt.onuStatuses.filter(o => o.status === 'dyingGasp').length > 0 && (
+                <span className="text-orange-600 font-medium">{olt.onuStatuses.filter(o => o.status === 'dyingGasp').length} DyingGasp</span>
+              )}
+              {olt.offlineOnu === 0 && <span className="text-green-500 font-medium">All online</span>}
             </div>
           </CardContent>
         </Card>

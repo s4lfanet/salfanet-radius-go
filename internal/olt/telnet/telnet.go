@@ -111,6 +111,15 @@ func (s *session) login() error {
 		return fmt.Errorf("login: waiting for prompt %q: %w", s.cfg.Prompt, err)
 	}
 
+	// Disable terminal paging so long outputs are not interrupted by --More--
+	if err := s.writeLine("terminal length 0"); err != nil {
+		return err
+	}
+	if err := s.readUntil(s.cfg.Prompt, 10*time.Second); err != nil {
+		// Non-fatal: log and continue; some firmware versions may not support this
+		log.Warn().Err(err).Msg("telnet: terminal length 0 failed (paging may remain active)")
+	}
+
 	return nil
 }
 

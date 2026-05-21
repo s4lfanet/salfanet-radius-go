@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.68] — 2026-05-21
+### Fixed
+- **ONU Detail Modal kosong** — ZTE C320 menggunakan `--More--` paging untuk output panjang (show gpon onu detail-info). `readUntilPrompt` tidak pernah melihat prompt `#` karena pager menginterupsi output → timeout 10 detik → output kosong. Fix: kirim `terminal length 0` setelah login berhasil untuk menonaktifkan paging di seluruh sesi telnet.
+- **Jarak ONU semua sama 328m** — OID `.21` (zxAnGponOnuOptDistance) mengembalikan nilai fixed 328 untuk semua ONU (equalization delay provisioning, bukan jarak sebenarnya). Ganti ke OID `.19` (zxAnPonAniOptRtt) yang mengembalikan RTT aktual dalam nanoseconds per ONU. Konversi: `jarak_m = RTT_ns / 10` (sesuai kecepatan cahaya di fiber ≈ 2×10⁸ m/s). Contoh: ONU1=11627 ns → 1163m, ONU9=15367 ns → 1537m.
+- **Uplink SMXA card status** — Setelah fix telnet paging, `show interface port-status` sekarang mengembalikan output lengkap → status active/disable port uplink SMXA ditampilkan dengan benar.
+- **Stats card ONU list** — Perbaiki padding kartu (`p-4` konsisten), ukuran font lebih jelas (`text-2xl`), label uppercase tracking, dan breakdown status ONU (offline, LOS, DyingGasp) ditampilkan lebih detail.
+### Files
+- `internal/olt/telnet/telnet.go` — tambah `terminal length 0` setelah login berhasil untuk disable paging
+- `internal/olt/vendors/zte/zte.go` — ubah `oidDistance` dari `.21` ke `.19`; konversi RTT → jarak `int(float64(dist)/10.0)`; filter batas atas dari 100000 ke 1000000
+- `src/app/admin/olt/[id]/page.tsx` — stats cards: `p-4` konsisten, `text-2xl`, label uppercase, grid `grid-cols-3`, breakdown LOS/DyingGasp
+
+---
+
 ## [2.52.67] — 2026-05-21
 ### Fixed
 - **RxPower formula salah (lagi)** — Formula `10*log10(raw)-60` (nW asumsi) masih salah. Setelah menganalisis raw SNMP dari live device vs CSV referensi, ditemukan rumus yang benar: **`dBm = raw/500.0 - 30.0`**. Verifikasi: raw=6751 → -16.50 dBm ✓, raw=5085 → -19.83 dBm ✓, raw=5910 → -18.18 dBm ✓ (cocok dengan CSV). ZTE C320 menggunakan encoding linear: 0 raw = -30 dBm, step 0.002 dBm per unit.
