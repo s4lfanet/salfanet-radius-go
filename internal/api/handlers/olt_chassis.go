@@ -597,15 +597,16 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 	}
 
 	buildServicePorts := func(slot int, portCount int) []chassisPort {
-		ports := make([]chassisPort, portCount+1) // 0-based slice; port indices 0..portCount
+		ports := make([]chassisPort, portCount) // 1-based: index i = port i+1
 		for i := range ports {
-			ports[i] = chassisPort{Port: i}
+			ports[i] = chassisPort{Port: i + 1} // start from port 1
 		}
 		if d, ok := slotDB[slot]; ok {
 			for portIdx, p := range d.ports {
-				if portIdx < len(ports) {
+				arrayIdx := portIdx - 1 // port 1 → index 0
+				if arrayIdx >= 0 && arrayIdx < len(ports) {
 					e := false
-					ports[portIdx] = chassisPort{
+					ports[arrayIdx] = chassisPort{
 						Port:        portIdx,
 						OnuCount:    p.onuCount,
 						OnlineCount: p.onlineCount,
@@ -710,7 +711,11 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 				case slotService:
 					if dbD, ok := slotDB[slotIdx]; ok {
 						_, stdPorts := inferCardType(dbD.maxPort)
-						portCount = stdPorts + 1
+						// Prefer actual card port count from Telnet (e.g., 16 for GTGHG)
+						if hasCard && card.PortCount > stdPorts {
+							stdPorts = card.PortCount
+						}
+						portCount = stdPorts
 						ports = buildServicePorts(slotIdx, stdPorts)
 					} else if card.PortCount > 0 {
 						portCount = card.PortCount
@@ -842,7 +847,7 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 		case slotService:
 			if hasDB {
 				_, stdPorts := inferCardType(dbD.maxPort)
-				portCount = stdPorts + 1
+				portCount = stdPorts
 				ports = buildServicePorts(slotIdx, stdPorts)
 			}
 		case slotUplink:

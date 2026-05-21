@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.72] — 2026-05-21
+### Fixed
+- **Port 1 tidak menyala di ZTE C320 Rack Diagram** — `buildServicePorts` menyertakan port 0 (dummy) sebagai elemen pertama array (`ports[0] = {Port:0, HasOnus:false}`), sehingga offset index menggeser tampilan port. Fix: array ports kini dimulai dari port 1 (1-based), `ports[i] = {Port: i+1}`, dan lookup DB menggunakan `arrayIdx = portIdx - 1`. Juga perbaiki `portCount`: tidak lagi menggunakan `stdPorts + 1` melainkan `stdPorts` (atau `card.PortCount` jika lebih besar, misal 16 untuk GTGHG dari Telnet).
+### Files
+- `internal/api/handlers/olt_chassis.go` — `buildServicePorts`: 1-based port array; Telnet & SNMP service case: `portCount = stdPorts` (bukan `stdPorts+1`), gunakan `card.PortCount` jika lebih besar
+
+---
+
 ## [2.52.71] — 2026-05-21
 ### Fixed
 - **Total ONU = 0 di halaman OLT Management** — `GET /api/network/olts` diarahkan ke handler `ListOLTsForMap` yang mengembalikan data OLT polos tanpa ONU stats. Fix: ubah route ke `ListOLTs` (handler yang mengembalikan `_count.olt_onu_status` dan `onu_stats`). Tambah `Preload("Routers.Router")` ke `ListOLTs` agar kolom ROUTER/NAS tetap muncul.
