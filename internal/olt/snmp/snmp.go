@@ -86,6 +86,67 @@ func Walk(ctx context.Context, cfg Config, oid string) ([]WalkResult, error) {
 	return results, walkErr
 }
 
+// BulkWalk performs an SNMP GETBULK walk on the given OID prefix.
+// More efficient than Walk for large tables (sends GetBulk PDUs instead of GetNext).
+// Falls back to Walk automatically when the agent returns an error.
+// It is safe to call from multiple goroutines — each call opens its own session.
+func BulkWalk(ctx context.Context, cfg Config, oid string) ([]WalkResult, error) {
+	g := &gosnmp.GoSNMP{
+		Target:         cfg.Target,
+		Port:           cfg.Port,
+		Community:      cfg.Community,
+		Version:        cfg.Version,
+		Timeout:        cfg.Timeout,
+		Retries:        cfg.Retries,
+		MaxOids:        gosnmp.MaxOids,
+		MaxRepetitions: 25,
+	}
+
+	if err := g.Connect(); err != nil {
+		return nil, fmt.Errorf("snmp connect to %s: %w", cfg.Target, err)
+	}
+	defer g.Conn.Close()
+
+	done := make(chan struct{})
+	var results []WalkResult
+	var walkErr error
+
+	go func() {
+		defer close(done)
+		err := g.BulkWalk(oid, func(pdu gosnmp.SnmpPDU) error {
+			results = append(results, WalkResult{
+				OID:   pdu.Name,
+				Type:  pdu.Type,
+				Value: pdu.Value,
+			})
+			return nil
+		})
+		if err != nil {
+			// Fallback: some agents reject GetBulk — retry with GetNext Walk
+			results = nil
+			err2 := g.Walk(oid, func(pdu gosnmp.SnmpPDU) error {
+				results = append(results, WalkResult{
+					OID:   pdu.Name,
+					Type:  pdu.Type,
+					Value: pdu.Value,
+				})
+				return nil
+			})
+			walkErr = err2
+			return
+		}
+		walkErr = err
+	}()
+
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case <-done:
+	}
+
+	return results, walkErr
+}
+
 // Get retrieves specific OIDs in a single SNMP GET request.
 func Get(ctx context.Context, cfg Config, oids []string) ([]WalkResult, error) {
 	g := &gosnmp.GoSNMP{

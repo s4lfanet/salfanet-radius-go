@@ -153,22 +153,20 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.
 
 	snmpCfg := snmputil.DefaultConfig(olt.IPAddress, olt.SNMPCommunity, olt.SNMPPort)
 
-	// Dynamic PON port discovery + BulkWalk all ONU tables (registered + unregistered via SNMP).
-	// Telnet (pool) remains available for config/registration write operations.
+	// Dynamic PON port discovery + BulkWalk (registered + unregistered via SNMP seen-ONU table).
 	onus, err := zte.DiscoverAll(ctx, snmpCfg)
 	if err != nil {
 		log.Error().Err(err).Str("olt", olt.ID).Msg("poller: ONU discovery failed")
 	}
 
+	// Upsert all discovered ONU statuses
 	now := time.Now()
-	var registeredStatuses []models.OLTONUStatus
-	var unregisteredStatuses []models.OLTONUStatus
+	var onuStatuses []models.OLTONUStatus
 	onlineCount := 0
 	offlineCount := 0
-	unregisteredCount := 0
 
 	for _, onu := range onus {
-		base := models.OLTONUStatus{
+		status := models.OLTONUStatus{
 			ID:         uuid.NewString(),
 			OltID:      olt.ID,
 			OnuIndex:   onu.Frame*100000 + onu.Slot*10000 + onu.Port*100 + onu.OnuID,
@@ -177,34 +175,28 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.
 			Port:       onu.Port,
 			OnuID:      onu.OnuID,
 			Status:     onu.Status,
+			RxPower:    onu.RxPower,
+			Distance:   onu.Distance,
 			LastSeenAt: &now,
 			UpdatedAt:  now,
 		}
-
-		if onu.Registered {
-			if onu.SerialNumber != "" {
-				base.SerialNumber = &onu.SerialNumber
-			}
-			if onu.Description != "" {
-				base.Description = &onu.Description
-			}
-			base.RxPower = onu.RxPower
-			base.Distance = onu.Distance
-			if onu.Status == models.OnuOnline {
-				onlineCount++
-			} else {
-				offlineCount++
-			}
-			registeredStatuses = append(registeredStatuses, base)
-		} else {
-			unregisteredCount++
-			unregisteredStatuses = append(unregisteredStatuses, base)
+		if onu.SerialNumber != "" {
+			status.SerialNumber = &onu.SerialNumber
 		}
+		if onu.Description != "" {
+			status.Description = &onu.Description
+		}
+		if onu.Status == models.OnuOnline {
+			onlineCount++
+		} else {
+			offlineCount++
+		}
+		onuStatuses = append(onuStatuses, status)
 	}
 
-	// Upsert registered ONUs with full column set
-	if len(registeredStatuses) > 0 {
-		if e := p.db.Clauses(clause.OnConflict{
+	// Batch upsert (update on conflict)
+	if len(onuStatuses) > 0 {
+		err := p.db.Clauses(clause.OnConflict{
 			Columns: []clause.Column{
 				{Name: "oltId"}, {Name: "frame"}, {Name: "slot"}, {Name: "port"}, {Name: "onuId"},
 			},
@@ -212,30 +204,23 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.
 				"serialNumber", "description", "status", "rxPower",
 				"distance", "lastSeenAt", "updatedAt",
 			}),
-		}).CreateInBatches(registeredStatuses, 100).Error; e != nil {
-			log.Error().Err(e).Str("olt", olt.ID).Msg("poller: upsert registered ONUs failed")
+		}).CreateInBatches(onuStatuses, 100).Error
+		if err != nil {
+			log.Error().Err(err).Str("olt", olt.ID).Msg("poller: upsert onu statuses failed")
 		}
 	}
 
-	// Upsert unregistered ONUs — only update status and timestamps,
-	// preserving any previously known serialNumber/description in the DB.
-	if len(unregisteredStatuses) > 0 {
-		if e := p.db.Clauses(clause.OnConflict{
-			Columns: []clause.Column{
-				{Name: "oltId"}, {Name: "frame"}, {Name: "slot"}, {Name: "port"}, {Name: "onuId"},
-			},
-			DoUpdates: clause.AssignmentColumns([]string{
-				"status", "lastSeenAt", "updatedAt",
-			}),
-		}).CreateInBatches(unregisteredStatuses, 100).Error; e != nil {
-			log.Error().Err(e).Str("olt", olt.ID).Msg("poller: upsert unregistered ONUs failed")
-		}
+	// Cleanup ghost records caused by previous ponIndex parsing bug
+	if err := p.db.WithContext(ctx).Where("oltId = ? AND (frame > 1 OR port > 32)", olt.ID).Delete(&models.OLTONUStatus{}).Error; err != nil {
+		log.Error().Err(err).Str("olt", olt.ID).Msg("poller: failed to cleanup ghost ONUs")
 	}
 
-	allStatuses := append(registeredStatuses, unregisteredStatuses...)
-	totalONU := len(allStatuses)
+	// Also cleanup any ONUs that haven't been seen in the last poll (optional, but let's stick to the bug cleanup for now)
+	p.db.WithContext(ctx).Where("oltId = ? AND updatedAt < ?", olt.ID, now.Add(-5*time.Minute)).Delete(&models.OLTONUStatus{})
+
 
 	// Update OLT summary
+	totalONU := len(onuStatuses)
 	pollTime := now
 	p.db.Model(olt).Updates(map[string]interface{}{
 		"lastPollAt": pollTime,
@@ -246,7 +231,12 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.
 	})
 
 	// Generate alerts for newly offline ONUs
-	p.checkAlerts(ctx, olt, allStatuses)
+	var dbStatuses []models.OLTONUStatus
+	if err := p.db.WithContext(ctx).Where("oltId = ?", olt.ID).Find(&dbStatuses).Error; err == nil {
+		p.checkAlerts(ctx, olt, dbStatuses)
+	} else {
+		log.Error().Err(err).Str("olt", olt.ID).Msg("poller: failed to fetch updated statuses for alerts")
+	}
 
 	duration := time.Since(start)
 	log.Debug().
@@ -254,22 +244,42 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.
 		Int("total", totalONU).
 		Int("online", onlineCount).
 		Int("offline", offlineCount).
-		Int("unregistered", unregisteredCount).
 		Dur("took", duration).
 		Msg("poller: poll done")
 
 	// Broadcast to WebSocket clients
 	if p.broadcast != nil {
 		p.broadcast(olt.ID, map[string]interface{}{
-			"type":         "olt_status",
-			"oltId":        olt.ID,
-			"total":        totalONU,
-			"online":       onlineCount,
-			"offline":      offlineCount,
-			"unregistered": unregisteredCount,
-			"polledAt":     now,
+			"type":     "olt_status",
+			"oltId":    olt.ID,
+			"total":    totalONU,
+			"online":   onlineCount,
+			"offline":  offlineCount,
+			"polledAt": now,
 		})
 	}
+}
+
+// knownPONPorts returns the set of (board, port) pairs that have ONU records in the DB.
+// Falls back to nil (which triggers 2×8 default in zte.DiscoverONUsSNMP).
+func (p *Poller) knownPONPorts(ctx context.Context, oltID string) [][2]int {
+	type portRow struct {
+		Frame int
+		Port  int
+	}
+	var rows []portRow
+	if err := p.db.WithContext(ctx).
+		Model(&models.OLTONUStatus{}).
+		Where("oltId = ?", oltID).
+		Select("DISTINCT frame, port").
+		Find(&rows).Error; err != nil || len(rows) == 0 {
+		return nil
+	}
+	ports := make([][2]int, len(rows))
+	for i, r := range rows {
+		ports[i] = [2]int{r.Frame, r.Port}
+	}
+	return ports
 }
 
 // checkAlerts creates alert records for ONUs that went offline.

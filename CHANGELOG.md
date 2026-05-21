@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.62] — 2026-05-23
+### Fixed
+- **ONU polling — missing ONUs from new/empty PON ports** — removed DB-based `knownPONPorts` lookup. PON ports are now discovered dynamically by walking the ZTE V2.1 PON port table (`oidPONPortTable = 1.3.6.1.4.1.3902.1012.3.11.3.1.1`). All provisioned PON ports are found regardless of DB state. Falls back to 2×8 default only when the walk returns nothing.
+- **Unregistered ONU detection via SNMP** — replaced Telnet `show gpon onu uncfg` with a walk of the SNMP seen-ONU table (`zxAnGponOnuDiscoveredInfoTable = 1.3.6.1.4.1.3902.1012.3.27.4.1.1`). ONUs present in the seen table but absent from `regStatus` walk are recorded with `status=unregistered`. No Telnet required for read operations; Telnet remains available for config/registration write operations.
+- **SNMP BulkWalk** — replaced GetNext-based `Walk` with GetBulk-based `BulkWalk` for all ONU data collection (8 parallel BulkWalks per PON port). Auto-falls back to Walk when the agent rejects GetBulk.
+- **RxPower validation** — added upper bound check (`rxRaw < 50000`) alongside the existing `rxRaw > 0` check to filter invalid raw values. Same fix applied to new `TxPower` field.
+- **TxPower** — added OLT TX power toward ONU (`oidTxPower = .3.50.12.1.1.11`) to per-ONU data.
+- **Unregistered ONU DB upsert** — poller now saves unregistered ONUs to `olt_onu_status` with a separate upsert that only updates `status` + `lastSeenAt`, preserving any previously known serial number/description.
+### Files
+- `internal/olt/snmp/snmp.go` — add `BulkWalk` function (GetBulk with auto Walk fallback)
+- `internal/olt/vendors/zte/zte.go` — add `discoverPONPorts` (dynamic SNMP PON table walk); rewrite `walkPONPort` to use `BulkWalk` + seen-ONU table; add `txPower` OID; fix `DiscoverAll` signature (no more `telnetPool`/`ponPorts` params); fix RxPower/TxPower upper bound
+- `internal/olt/poller/poller.go` — remove `knownPONPorts`; update `DiscoverAll` call; split upsert into registered (full) and unregistered (status only); add `unregistered` count to broadcast
+
+---
+
 ## [2.52.61] — 2026-05-22
 ### Added
 - **GetChassis — real Telnet + SNMP chassis data (ported from Next.js)** — `GET /api/olt/:id/chassis` now fires Telnet (`show card` + `show interface port-status`) and 5 SNMP IF-MIB walks (ifDescr, ifAdminStatus, ifOperStatus, ifHighSpeed, ifAlias) plus ZTE PON table walk **in parallel**. Real card types (GTGO/GTGH/GTGQ/SMXA/MCUD) come from Telnet `show card`; uplink port states (admin/link status, speed, description) come from `show interface port-status` with SNMP IF-MIB fallback. Falls back to SNMP board presence + DB ONU port data when Telnet is unavailable. Response includes `source: "telnet" | "snmp+db"`.
