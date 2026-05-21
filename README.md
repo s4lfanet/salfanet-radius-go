@@ -491,6 +491,20 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.64 — 2026-05-24
+
+### Fixed
+- **ONU detail modal crash (TypeError)** — `ONUDetailModal` rendered `detail.telnet.detail.raw` and `detail.telnet.config.raw` without optional chaining. When the API returned a mismatched shape, this caused `TypeError: Cannot read properties of undefined (reading 'detail')` crashing the OLT page. Fixed both lines to use `?.` optional chaining.
+- **ONUDetail handler response shape** — replaced stub handler that returned `{ "detail": {...} }` with a real Telnet-based implementation returning `{ "telnet": { "interface", "detail": { "parsed", "summary", "raw" }, "config": { "summary", "raw" }, "optical": { "raw" } }, "onu": { "id", "customer" } }` matching what the frontend expects.
+- **ONU discovery — all ONUs collapsed to onuId=1** — critical SNMP OID bug: for `zxAnGponOnuRegTable` and `zxAnGponOnuDiscoveredInfoTable`, the row index suffix is `.<onuId>.<subIdx>` (2 components), but `lastOIDComponent` was returning the trailing `subIdx` (always 1 or a column index) instead of the actual `onuId`. Added `secondToLastOIDComponent` helper and use it for all RegTable and SeenONU walk results. Serial/desc (`zxAnGponOnuCfgTable`) correctly use `lastOIDComponent` (1-component suffix). Verified against live ZTE C320 V2.1 SNMP output.
+### Added
+- `secondToLastOIDComponent` helper in `zte.go` — returns the second-to-last numeric OID component, used for ZTE RegTable and SeenONU tables.
+- `onuParseDetailInfo`, `onuParseRunningConfig`, `onuVendorFromSN`, `onuSNPrefix`, `contains` helpers in `misc_handler.go` — parse ZTE C320 Telnet ONU detail and running-config output.
+### Files
+- `src/app/admin/olt/[id]/page.tsx` — lines 1567-1568: add `?.` optional chaining on `detail.telnet.detail.raw` and `detail.telnet.config.raw`
+- `internal/api/handlers/misc_handler.go` — replace stub `ONUDetail` with real Telnet implementation; add `context` and `telnet` imports; add parse helpers
+- `internal/olt/vendors/zte/zte.go` — add `secondToLastOIDComponent`; use it for regStatus, operState, rxPower, txPower, distance, seenONU walks; keep `lastOIDComponent` for serial/desc
+
 ### v2.52.63 — 2026-05-23
 
 ### Fixed
@@ -537,13 +551,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/olt/poller/poller.go` — fix `knownPONPorts`: select `slot, port` not `frame, port`
 - `internal/api/handlers/olt.go` — rewrite `GetChassis` to return `{success, chassis}` with ApiChassisSlot format
 - `internal/api/handlers/network_ext.go` — `ListOLTs` now returns `_count` and `onu_stats` per OLT
-
-### v2.52.59 — 2026-05-21
-
-### Fixed
-- **OLT detail page crash — TypeError: Cannot read properties of undefined (reading 'length')** — GORM JSON omits empty arrays (due to `omitempty`) so `onuStatuses`, `alerts`, `routers`, `monitoringLogs`, `performanceMetrics` are `undefined` on the frontend when empty. Added `?? []` normalization after `data.olt` is received in `fetchOLT`.
-### Files
-- `src/app/admin/olt/[id]/page.tsx` — normalize all relation arrays to `[]` after fetch
 
 <!-- AUTO-CHANGELOG:END -->
 
