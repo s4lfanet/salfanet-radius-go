@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.67 — 2026-05-21
+
+### Fixed
+- **RxPower formula salah (lagi)** — Formula `10*log10(raw)-60` (nW asumsi) masih salah. Setelah menganalisis raw SNMP dari live device vs CSV referensi, ditemukan rumus yang benar: **`dBm = raw/500.0 - 30.0`**. Verifikasi: raw=6751 → -16.50 dBm ✓, raw=5085 → -19.83 dBm ✓, raw=5910 → -18.18 dBm ✓ (cocok dengan CSV). ZTE C320 menggunakan encoding linear: 0 raw = -30 dBm, step 0.002 dBm per unit.
+- **ONU Name tidak muncul untuk FiberHome ONUs** — ONU FiberHome (prefix FHTTC/FHTT) mengembalikan `regStatus=2` dari SNMP, tapi kode hanya memproses `regStatus=1`. ONU regStatus=2 masuk ke loop fallback yang tidak membaca `description` dan masih menggunakan formula lama. Fix: terima regStatus=1 dan 2 sebagai "registered", baca description di kedua loop, gunakan formula yang benar di kedua loop.
+- **Signal quality threshold** — Dikalibrasi ulang sesuai nilai aktual dari live device: rentang -10 s/d -20 dBm. Threshold baru: ≥ -14 Excellent, ≥ -18 Good, ≥ -22 Fair, < -22 Poor.
+### Files
+- `internal/olt/vendors/zte/zte.go` — formula rxPower & txPower → `raw/500.0 - 30.0`; filter regStatus menerima 1 dan 2; loop fallback tambah description + formula benar; hapus import `math`
+- `src/app/admin/olt/[id]/page.tsx` — signal thresholds dikalibrasi
+
 ### v2.52.66 — 2026-05-21
 
 ### Fixed
@@ -548,20 +558,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/olt_chassis.go` — fix `parseUplinkPortStatus` column indices (9, 10); merge SNMP description into Telnet-parsed uplink states
 - `internal/api/handlers/olt.go` — implement real `GetUplink` + `CreateUplink` handlers with full parser helpers; add `context`, `regexp`, `strings`, snmputil imports
-
-### v2.52.62 — 2026-05-23
-
-### Fixed
-- **ONU polling — missing ONUs from new/empty PON ports** — removed DB-based `knownPONPorts` lookup. PON ports are now discovered dynamically by walking the ZTE V2.1 PON port table (`oidPONPortTable = 1.3.6.1.4.1.3902.1012.3.11.3.1.1`). All provisioned PON ports are found regardless of DB state. Falls back to 2×8 default only when the walk returns nothing.
-- **Unregistered ONU detection via SNMP** — replaced Telnet `show gpon onu uncfg` with a walk of the SNMP seen-ONU table (`zxAnGponOnuDiscoveredInfoTable = 1.3.6.1.4.1.3902.1012.3.27.4.1.1`). ONUs present in the seen table but absent from `regStatus` walk are recorded with `status=unregistered`. No Telnet required for read operations; Telnet remains available for config/registration write operations.
-- **SNMP BulkWalk** — replaced GetNext-based `Walk` with GetBulk-based `BulkWalk` for all ONU data collection (8 parallel BulkWalks per PON port). Auto-falls back to Walk when the agent rejects GetBulk.
-- **RxPower validation** — added upper bound check (`rxRaw < 50000`) alongside the existing `rxRaw > 0` check to filter invalid raw values. Same fix applied to new `TxPower` field.
-- **TxPower** — added OLT TX power toward ONU (`oidTxPower = .3.50.12.1.1.11`) to per-ONU data.
-- **Unregistered ONU DB upsert** — poller now saves unregistered ONUs to `olt_onu_status` with a separate upsert that only updates `status` + `lastSeenAt`, preserving any previously known serial number/description.
-### Files
-- `internal/olt/snmp/snmp.go` — add `BulkWalk` function (GetBulk with auto Walk fallback)
-- `internal/olt/vendors/zte/zte.go` — add `discoverPONPorts` (dynamic SNMP PON table walk); rewrite `walkPONPort` to use `BulkWalk` + seen-ONU table; add `txPower` OID; fix `DiscoverAll` signature (no more `telnetPool`/`ponPorts` params); fix RxPower/TxPower upper bound
-- `internal/olt/poller/poller.go` — remove `knownPONPorts`; update `DiscoverAll` call; split upsert into registered (full) and unregistered (status only); add `unregistered` count to broadcast
 
 <!-- AUTO-CHANGELOG:END -->
 
