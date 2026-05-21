@@ -181,7 +181,61 @@ func (h *NetworkHandler) ImportRouters(c fiber.Ctx) error {
 func (h *NetworkHandler) ListOLTs(c fiber.Ctx) error {
 	var olts []models.NetworkOLT
 	h.db.Find(&olts)
-	return c.JSON(fiber.Map{"success": true, "olts": olts})
+
+	type countFields struct {
+		OltOnuStatus int64 `json:"olt_onu_status"`
+	}
+	type onuStats struct {
+		Online    int64 `json:"online"`
+		Offline   int64 `json:"offline"`
+		Los       int64 `json:"los"`
+		DyingGasp int64 `json:"dying_gasp"`
+		Unconfig  int64 `json:"unconfig"`
+	}
+	type oltWithStats struct {
+		models.NetworkOLT
+		Count   countFields `json:"_count"`
+		OnuStat *onuStats   `json:"onu_stats,omitempty"`
+	}
+
+	result := make([]oltWithStats, len(olts))
+	for i, o := range olts {
+		type statRow struct {
+			Status string
+			Count  int64
+		}
+		var rows []statRow
+		h.db.Raw(`SELECT status, COUNT(*) as count FROM olt_onu_status WHERE oltId = ? GROUP BY status`, o.ID).Scan(&rows)
+
+		var total, online, offline, los, dyingGasp, unconfig int64
+		for _, r := range rows {
+			total += r.Count
+			switch r.Status {
+			case "online":
+				online = r.Count
+			case "los":
+				los = r.Count
+			case "dying_gasp":
+				dyingGasp = r.Count
+			case "auth_failed", "unconfig":
+				unconfig += r.Count
+			default:
+				offline += r.Count
+			}
+		}
+
+		var stats *onuStats
+		if total > 0 {
+			stats = &onuStats{Online: online, Offline: offline, Los: los, DyingGasp: dyingGasp, Unconfig: unconfig}
+		}
+		result[i] = oltWithStats{
+			NetworkOLT: o,
+			Count:      countFields{OltOnuStatus: total},
+			OnuStat:    stats,
+		}
+	}
+
+	return c.JSON(fiber.Map{"success": true, "olts": result})
 }
 
 // GET /api/network/olt-routers

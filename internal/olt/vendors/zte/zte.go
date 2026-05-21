@@ -611,17 +611,18 @@ func lastOIDComponent(oid string) int {
 }
 
 // decodePonIndex decodes a ponIndex back to (frame, slot, port).
+// ZTE C320: frame is always 1 (single chassis). slot = board card (1 or 2). port = 1-based PON port.
 // ponIndex = boardBase + port * ponIncrement
 func decodePonIndex(ponIdx int64, onuID int) (frame, slot, port, onu int) {
 	onu = onuID
+	frame = 1 // ZTE C320: single chassis, frame is always 1
 	var offset int64
-	frame = 1
-	slot = 1
 
 	if ponIdx >= board2Base {
-		frame = 2
+		slot = 2
 		offset = ponIdx - board2Base
 	} else {
+		slot = 1
 		offset = ponIdx - board1Base
 	}
 

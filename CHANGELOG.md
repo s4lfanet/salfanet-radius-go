@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.60] — 2026-05-22
+### Fixed
+- **ZTE SNMP poller — wrong frame/slot mapping** — `decodePonIndex` stored board2 ONUs as `frame=2, slot=1` instead of `frame=1, slot=2`. Fixed: `frame` is always `1` (ZTE C320 single chassis), `slot = board` (1 or 2), `port = PON number (1-based)`. Matches ZTE CLI notation `gpon-olt_1/slot/port`.
+- **`knownPONPorts` — used wrong column** — Was selecting `DISTINCT frame, port` and passing `[frame, port]` as `[board, pon]` to `PonIndex()`. Fixed to select `DISTINCT slot, port` and pass `[slot, port]`.
+- **`GET /api/olt/:id/chassis` — wrong response shape** — Returned `{"ports": [...]}` but frontend expects `{"success": true, "chassis": [ApiChassisSlot]}`. Rebuilt handler to aggregate ONU port data from DB into proper slot-level chassis structure with card type inference (GTGO/GTGH/GTGQ) and uplink slot (SMXA at index 15).
+- **OLT Management "0 ONUs"** — `GET /api/network/olts` returned raw `NetworkOLT` records without `_count` or `onu_stats`. Frontend reads `olt._count?.olt_onu_status`. Fixed by adding per-OLT status aggregation query; response now includes `_count.olt_onu_status` and `onu_stats` with per-status breakdown.
+### Files
+- `internal/olt/vendors/zte/zte.go` — fix `decodePonIndex`: `frame=1` always, `slot=board`, `port=pon`
+- `internal/olt/poller/poller.go` — fix `knownPONPorts`: select `slot, port` not `frame, port`
+- `internal/api/handlers/olt.go` — rewrite `GetChassis` to return `{success, chassis}` with ApiChassisSlot format
+- `internal/api/handlers/network_ext.go` — `ListOLTs` now returns `_count` and `onu_stats` per OLT
+
+---
+
 ## [2.52.59] — 2026-05-21
 ### Fixed
 - **OLT detail page crash — TypeError: Cannot read properties of undefined (reading 'length')** — GORM JSON omits empty arrays (due to `omitempty`) so `onuStatuses`, `alerts`, `routers`, `monitoringLogs`, `performanceMetrics` are `undefined` on the frontend when empty. Added `?? []` normalization after `data.olt` is received in `fetchOLT`.

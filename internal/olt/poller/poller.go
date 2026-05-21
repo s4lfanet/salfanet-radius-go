@@ -245,24 +245,24 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT, pool *telnet.
 	}
 }
 
-// knownPONPorts returns the set of (board, port) pairs that have ONU records in the DB.
+// knownPONPorts returns the set of (board/slot, ponPort) pairs that have ONU records in the DB.
 // Falls back to nil (which triggers 2×8 default in zte.DiscoverONUsSNMP).
 func (p *Poller) knownPONPorts(ctx context.Context, oltID string) [][2]int {
 	type portRow struct {
-		Frame int
-		Port  int
+		Slot int
+		Port int
 	}
 	var rows []portRow
 	if err := p.db.WithContext(ctx).
 		Model(&models.OLTONUStatus{}).
 		Where("oltId = ?", oltID).
-		Select("DISTINCT frame, port").
+		Select("DISTINCT slot, port").
 		Find(&rows).Error; err != nil || len(rows) == 0 {
 		return nil
 	}
 	ports := make([][2]int, len(rows))
 	for i, r := range rows {
-		ports[i] = [2]int{r.Frame, r.Port}
+		ports[i] = [2]int{r.Slot, r.Port} // [board/slot, ponPort] — matches PonIndex(board, pon)
 	}
 	return ports
 }

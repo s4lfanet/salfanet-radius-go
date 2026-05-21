@@ -518,31 +518,121 @@ func (h *OLTHandler) ListPerformance(c fiber.Ctx) error {
 
 // GetChassis godoc
 // GET /api/olt/:id/chassis
+// Returns chassis slot layout compatible with ZTEChassisView frontend component.
+// Response: { success: true, chassis: [ApiChassisSlot] }
 func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 	id := c.Params("id")
 
-	type portSummary struct {
-		Frame   int   `json:"frame"`
+	type portRow struct {
 		Slot    int   `json:"slot"`
 		Port    int   `json:"port"`
 		Total   int64 `json:"total"`
 		Online  int64 `json:"online"`
 		Offline int64 `json:"offline"`
 	}
+	type chassisPort struct {
+		Port       int  `json:"port"`
+		OnuCount   int  `json:"onuCount"`
+		OnlineCount int `json:"onlineCount"`
+		HasOnus    bool `json:"hasOnus"`
+	}
+	type chassisSlot struct {
+		Index     int           `json:"index"`
+		Label     string        `json:"label"`
+		Type      string        `json:"type"`
+		Present   bool          `json:"present"`
+		CardType  string        `json:"cardType"`
+		PortCount int           `json:"portCount"`
+		Ports     []chassisPort `json:"ports"`
+	}
 
-	var rows []portSummary
+	var rows []portRow
 	h.db.Raw(`
-		SELECT frame, slot, port,
+		SELECT slot, port,
 		       COUNT(*) as total,
 		       SUM(CASE WHEN status = 'online' THEN 1 ELSE 0 END) as online,
 		       SUM(CASE WHEN status != 'online' THEN 1 ELSE 0 END) as offline
 		FROM olt_onu_status
 		WHERE oltId = ?
-		GROUP BY frame, slot, port
-		ORDER BY frame, slot, port
+		GROUP BY slot, port
+		ORDER BY slot, port
 	`, id).Scan(&rows)
 
-	return c.JSON(fiber.Map{"ports": rows})
+	// Build per-slot data
+	type slotAgg struct {
+		maxPort int
+		ports   map[int]portRow
+	}
+	slotMap := map[int]*slotAgg{}
+	for _, r := range rows {
+		if _, ok := slotMap[r.Slot]; !ok {
+			slotMap[r.Slot] = &slotAgg{ports: map[int]portRow{}}
+		}
+		agg := slotMap[r.Slot]
+		agg.ports[r.Port] = r
+		if r.Port > agg.maxPort {
+			agg.maxPort = r.Port
+		}
+	}
+
+	// Determine portCount and cardType for each service slot
+	cardType := func(portCount int) string {
+		if portCount <= 4 {
+			return "GTGO"
+		} else if portCount <= 8 {
+			return "GTGH"
+		}
+		return "GTGQ"
+	}
+
+	var chassis []chassisSlot
+	for slotIdx, agg := range slotMap {
+		portCount := agg.maxPort + 1
+		if portCount < 4 {
+			portCount = 4
+		}
+		ports := make([]chassisPort, portCount)
+		for i := range ports {
+			ports[i] = chassisPort{Port: i, OnuCount: 0, OnlineCount: 0, HasOnus: false}
+		}
+		for port, row := range agg.ports {
+			if port < portCount {
+				ports[port] = chassisPort{
+					Port:        port,
+					OnuCount:    int(row.Total),
+					OnlineCount: int(row.Online),
+					HasOnus:     row.Total > 0,
+				}
+			}
+		}
+		ct := cardType(portCount)
+		chassis = append(chassis, chassisSlot{
+			Index:     slotIdx,
+			Label:     fmt.Sprintf("%d", slotIdx),
+			Type:      "service",
+			Present:   true,
+			CardType:  ct,
+			PortCount: portCount,
+			Ports:     ports,
+		})
+	}
+
+	// Always add uplink slot (index 15)
+	chassis = append(chassis, chassisSlot{
+		Index: 15, Label: "UPL-A", Type: "uplink", Present: true, CardType: "SMXA", PortCount: 2,
+		Ports: []chassisPort{{Port: 0}, {Port: 1}},
+	})
+
+	// Sort by index
+	for i := 0; i < len(chassis); i++ {
+		for j := i + 1; j < len(chassis); j++ {
+			if chassis[j].Index < chassis[i].Index {
+				chassis[i], chassis[j] = chassis[j], chassis[i]
+			}
+		}
+	}
+
+	return c.JSON(fiber.Map{"success": true, "chassis": chassis})
 }
 
 // WebSocketOLT handles WebSocket connections for real-time ONU status.
