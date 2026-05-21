@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.73] — 2026-05-21
+### Fixed
+- **Distance ONU salah di ONU List** — SNMP OID `.3.50.12.1.1.19` (equalization delay / bukan jarak fiber) menghasilkan nilai jarak yang salah (contoh: 1228m padahal actual 560m). Fix: ganti ke OID `.3.50.12.1.1.21` (direct fiber distance dalam meter) dan hapus konversi `raw/10` sehingga nilai dipakai langsung.
+- **Counter DyingGasp tidak muncul di OLT Detail** — Filter status menggunakan `'dyingGasp'` (camelCase) padahal API mengembalikan `'dying_gasp'`. Fix: ganti ke `'dying_gasp'` agar counter DyingGasp tampil di header OLT detail page.
+### Files
+- `internal/olt/vendors/zte/zte.go` — `oidDistance` diubah ke OID `.3.50.12.1.1.21`; konversi `raw/10.0` diganti `int(dist)` langsung (2 tempat)
+- `src/app/admin/olt/[id]/page.tsx` — filter `o.status === 'dyingGasp'` diubah ke `'dying_gasp'`
+
+---
+
 ## [2.52.72] — 2026-05-21
 ### Fixed
 - **Port 1 tidak menyala di ZTE C320 Rack Diagram** — `buildServicePorts` menyertakan port 0 (dummy) sebagai elemen pertama array (`ports[0] = {Port:0, HasOnus:false}`), sehingga offset index menggeser tampilan port. Fix: array ports kini dimulai dari port 1 (1-based), `ports[i] = {Port: i+1}`, dan lookup DB menggunakan `arrayIdx = portIdx - 1`. Juga perbaiki `portCount`: tidak lagi menggunakan `stdPorts + 1` melainkan `stdPorts` (atau `card.PortCount` jika lebih besar, misal 16 untuk GTGHG dari Telnet).

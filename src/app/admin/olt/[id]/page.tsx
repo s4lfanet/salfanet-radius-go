@@ -2070,8 +2070,8 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
               {olt.onuStatuses.filter(o => o.status === 'los').length > 0 && (
                 <span className="text-red-500 font-medium">{olt.onuStatuses.filter(o => o.status === 'los').length} LOS</span>
               )}
-              {olt.onuStatuses.filter(o => o.status === 'dyingGasp').length > 0 && (
-                <span className="text-orange-600 font-medium">{olt.onuStatuses.filter(o => o.status === 'dyingGasp').length} DyingGasp</span>
+              {olt.onuStatuses.filter(o => o.status === 'dying_gasp').length > 0 && (
+                <span className="text-orange-600 font-medium">{olt.onuStatuses.filter(o => o.status === 'dying_gasp').length} DyingGasp</span>
               )}
               {olt.offlineOnu === 0 && <span className="text-green-500 font-medium">All online</span>}
             </div>

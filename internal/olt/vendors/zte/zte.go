@@ -41,7 +41,7 @@ const (
 	oidOperState = oidBase + ".3.50.12.1.1.6"
 	oidRxPower   = oidBase + ".3.50.12.1.1.10" // raw int; dBm = raw/500.0 - 30.0
 	oidTxPower   = oidBase + ".3.50.12.1.1.11" // OLT TX power toward ONU
-	oidDistance  = oidBase + ".3.50.12.1.1.19" // ONU RTT in nanoseconds; distance (m) = raw / 10
+	oidDistance  = oidBase + ".3.50.12.1.1.21" // ONU distance in meters (direct value)
 
 	// zxAnGponOnuDiscoveredInfoTable — ALL seen ONUs incl. unregistered; indexed .ponIndex.onuSlot.onuId
 	oidSeenONUTable = oidBase + ".3.27.4.1.1"
@@ -245,7 +245,7 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 			info.TxPower = &dbm
 		}
 		if dist, ok := merged.distances[k]; ok && dist > 0 && dist < 1000000 {
-			d := int(float64(dist) / 10.0)
+			d := int(dist)
 			info.Distance = &d
 		}
 		onuMap[k] = info
@@ -280,7 +280,7 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 			info.TxPower = &dbm
 		}
 		if dist, ok := merged.distances[k]; ok && dist > 0 && dist < 1000000 {
-			d := int(float64(dist) / 10.0)
+			d := int(dist)
 			info.Distance = &d
 		}
 		onuMap[k] = info
