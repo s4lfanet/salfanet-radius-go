@@ -491,6 +491,20 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.62 — 2026-05-23
+
+### Fixed
+- **ONU polling — missing ONUs from new/empty PON ports** — removed DB-based `knownPONPorts` lookup. PON ports are now discovered dynamically by walking the ZTE V2.1 PON port table (`oidPONPortTable = 1.3.6.1.4.1.3902.1012.3.11.3.1.1`). All provisioned PON ports are found regardless of DB state. Falls back to 2×8 default only when the walk returns nothing.
+- **Unregistered ONU detection via SNMP** — replaced Telnet `show gpon onu uncfg` with a walk of the SNMP seen-ONU table (`zxAnGponOnuDiscoveredInfoTable = 1.3.6.1.4.1.3902.1012.3.27.4.1.1`). ONUs present in the seen table but absent from `regStatus` walk are recorded with `status=unregistered`. No Telnet required for read operations; Telnet remains available for config/registration write operations.
+- **SNMP BulkWalk** — replaced GetNext-based `Walk` with GetBulk-based `BulkWalk` for all ONU data collection (8 parallel BulkWalks per PON port). Auto-falls back to Walk when the agent rejects GetBulk.
+- **RxPower validation** — added upper bound check (`rxRaw < 50000`) alongside the existing `rxRaw > 0` check to filter invalid raw values. Same fix applied to new `TxPower` field.
+- **TxPower** — added OLT TX power toward ONU (`oidTxPower = .3.50.12.1.1.11`) to per-ONU data.
+- **Unregistered ONU DB upsert** — poller now saves unregistered ONUs to `olt_onu_status` with a separate upsert that only updates `status` + `lastSeenAt`, preserving any previously known serial number/description.
+### Files
+- `internal/olt/snmp/snmp.go` — add `BulkWalk` function (GetBulk with auto Walk fallback)
+- `internal/olt/vendors/zte/zte.go` — add `discoverPONPorts` (dynamic SNMP PON table walk); rewrite `walkPONPort` to use `BulkWalk` + seen-ONU table; add `txPower` OID; fix `DiscoverAll` signature (no more `telnetPool`/`ponPorts` params); fix RxPower/TxPower upper bound
+- `internal/olt/poller/poller.go` — remove `knownPONPorts`; update `DiscoverAll` call; split upsert into registered (full) and unregistered (status only); add `unregistered` count to broadcast
+
 ### v2.52.61 — 2026-05-22
 
 ### Added
@@ -529,56 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/db/models/olt.go` — tambah `gorm:"column:..."` camelCase ke semua field `NetworkOLT`: `ipAddress`, `followRoad`, `firmwareVersion`, `snmpEnabled`, `snmpCommunity`, `snmpPort`, `telnetEnabled`, `telnetPort`, `sshEnabled`, `sshPort`, `monitoringEnabled`, `pollingInterval`, `lastPollAt`, `isOnline`, `totalOnu`, `onlineOnu`, `offlineOnu`, `createdAt`, `updatedAt`
 - `internal/api/handlers/olt.go` — fix `GetOLT` preload order: `created_at` → `createdAt`, `recorded_at` → `recordedAt`
 - `internal/api/handlers/olt_ext.go` — fix `Monitoring` SELECT ke camelCase column names
-
-### v2.52.57 — 2026-05-22
-
-### Fixed
-- **TSC Errors (9 errors → 0)** — Semua TypeScript compile error diperbaiki:
-  - `invoice-templates/page.tsx` — `variant="ghost"` → `variant="secondary"` (2 tempat, `ghost` tidak valid di `ModalButton`)
-  - `laporan/analitik/page.tsx` — `s.avgChurnRate` possibly undefined → `(s.avgChurnRate ?? 0)`
-  - `pay/[token]/page.tsx` — tambah `hasListener?: boolean` ke tipe state `qrisOwn`
-  - `cron/runner.ts` — `(prisma as any).cronScheduleConfig.findMany()` + tambah type untuk callback parameter
-  - `lib/genieacs/api-client.ts` — import dari route yang tidak ada → pindahkan `getGenieACSCredentials` ke `src/lib/genieacs/credentials.ts`
-  - `qrcode.react` — buat type declaration `src/types/qrcode.react.d.ts` (package tidak tersedia lokal)
-- **i18n — 72 missing translation keys** — Tambah semua key yang hilang ke `src/locales/id.json`:
-  - Top-level `payment.*` namespace (38 keys dari `customer.payment.*`)
-  - `pppoe.balance.*` (10 keys baru untuk halaman riwayat saldo)
-  - `pppoe.eWallet`, `pppoe.monthlyDueDateDesc`, `pppoe.profileMikrotik`
-  - `invoices.pdfBillTo/HeaderPrice/HeaderQty/HeaderTotal`
-  - `keuangan.pdfAmount/Category/Description/Type`
-  - `network.common.nodes`, `network.otb.output`, `network.routerCreated`
-  - `ticket.replySent/statusUpdated/priorityUpdated`
-  - `common.coordinates/done/subtract`
-  - `hotspot.autoGenerate/of`
-  - `settings.pageWillReload`
-- **Go Model Column Tags — Komprehensif** — Semua model Go di `internal/db/models/models.go` dan `olt.go` kini memiliki explicit `gorm:"column:camelCase"` tags agar INSERT/UPDATE/CREATE menggunakan nama kolom yang benar (Prisma default = camelCase, GORM default = snake_case):
-  - `PppoeProfile` — `downloadSpeed`, `uploadSpeed`, `rateLimit`, `groupName`, `mikrotikProfileName`, `ipPoolName`, `ipPoolRange`, `localAddress`, `ppnActive`, `ppnRate`, `isActive`, `validityUnit`, `validityValue`, `sharedUser`, `createdAt`, `updatedAt`
-  - `PppoeUser` — `profileId`, `areaId`, `ipAddress`, `macAddress`, `expiredAt`, `routerId`, `subscriptionType`, `lastPaymentDate`, `billingDay`, `autoIsolationEnabled`, `autoRenewal`, `connectionType`, `referralCode`, `syncedToRadius`, `createdAt`, `updatedAt`
-  - `PppoeCustomer` — `customerId`, `idCardNumber`, `idCardPhoto`, `isActive`, `areaId`, `createdAt`, `updatedAt`
-  - `Invoice` — `invoiceNumber`, `userId`, `dueDate`, `paidAt`, `paymentLink`, `paymentToken`, `customerName`, `customerPhone`, `customerEmail`, `customerUsername`, `sentReminders`, `invoiceType`, `baseAmount`, `createdAt`, `updatedAt`
-  - `Router` — `ipAddress`, `apiPort`, `isActive`, `createdAt`, `updatedAt`
-  - `Company` — semua compound fields: `adminPhone`, `baseUrl`, `poweredBy`, `customerIdPrefix`, `invoiceGenerateDays`, `gracePeriodDays`, `isolationEnabled`, dll. + `createdAt`, `updatedAt`
-  - `QrisPending` — `invoiceId`, `userId`, `orderId`, `baseAmount`, `uniqueAmount`, `qrString`, `sourceApp`, `expiresAt`, `paidAt`, `createdAt`, `updatedAt`
-  - `CustomerSession` — `userId`, `otpCode`, `otpExpiry`, `expiresAt`, `createdAt`, `updatedAt`
-  - `WhatsappProvider` — `apiKey`, `apiUrl`, `senderNumber`, `isActive`, `createdAt`, `updatedAt`
-  - `WhatsappTemplate` — `isActive`, `createdAt`, `updatedAt`
-  - `ManualPayment` — `createdAt`, `updatedAt`
-  - `Payment` — `invoiceId`, `gatewayId`, `paidAt`, `createdAt`
-  - `Ticket` — `ticketNumber`, `customerId`, `customerName`, `customerEmail`, `customerPhone`, `categoryId`, `assignedToId`, `assignedToType`, `closedAt`, `resolvedAt`, `createdAt`, `updatedAt`
-### Added
-- `src/lib/genieacs/credentials.ts` — standalone helper `getGenieACSCredentials()` yang membaca dari tabel `genieacsSettings` via Prisma
-- `src/types/qrcode.react.d.ts` — type declaration untuk `qrcode.react` (QRCodeSVG, QRCodeCanvas)
-### Files
-- `src/app/admin/invoice-templates/page.tsx` — ghost→secondary
-- `src/app/admin/laporan/analitik/page.tsx` — null coalescing untuk avgChurnRate
-- `src/app/pay/[token]/page.tsx` — tambah hasListener ke qrisOwn type
-- `src/cron/runner.ts` — type cast untuk cronScheduleConfig
-- `src/lib/genieacs/api-client.ts` — fix import credentials
-- `src/lib/genieacs/credentials.ts` — file baru
-- `src/types/qrcode.react.d.ts` — file baru
-- `src/locales/id.json` — tambah 72+ missing translation keys
-- `internal/db/models/models.go` — komprehensif camelCase column tags
-- `internal/db/models/olt.go` — sudah di-fix di [2.52.56]
 
 <!-- AUTO-CHANGELOG:END -->
 
