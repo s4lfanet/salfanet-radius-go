@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.73 — 2026-05-21
+
+### Fixed
+- **Distance ONU salah di ONU List** — SNMP OID `.3.50.12.1.1.19` (equalization delay / bukan jarak fiber) menghasilkan nilai jarak yang salah (contoh: 1228m padahal actual 560m). Fix: ganti ke OID `.3.50.12.1.1.21` (direct fiber distance dalam meter) dan hapus konversi `raw/10` sehingga nilai dipakai langsung.
+- **Counter DyingGasp tidak muncul di OLT Detail** — Filter status menggunakan `'dyingGasp'` (camelCase) padahal API mengembalikan `'dying_gasp'`. Fix: ganti ke `'dying_gasp'` agar counter DyingGasp tampil di header OLT detail page.
+### Files
+- `internal/olt/vendors/zte/zte.go` — `oidDistance` diubah ke OID `.3.50.12.1.1.21`; konversi `raw/10.0` diganti `int(dist)` langsung (2 tempat)
+- `src/app/admin/olt/[id]/page.tsx` — filter `o.status === 'dyingGasp'` diubah ke `'dying_gasp'`
+
 ### v2.52.72 — 2026-05-21
 
 ### Fixed
@@ -530,18 +539,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/network_ext.go` — tambah `HasPassword bool json:"hasPassword"` ke `oltWithStats`, populate dari `o.Password != nil && *o.Password != ""`
 - `src/app/admin/network/olts/page.tsx` — tambah `hasPassword?: boolean` ke interface OLT; gunakan `olt.hasPassword` untuk display password di tabel dan detail panel
 - `src/app/admin/olt/[id]/page.tsx` — ubah padding stats card dari `p-4` ke `pl-6 pr-4 py-4`
-
-### v2.52.68 — 2026-05-21
-
-### Fixed
-- **ONU Detail Modal kosong** — ZTE C320 menggunakan `--More--` paging untuk output panjang (show gpon onu detail-info). `readUntilPrompt` tidak pernah melihat prompt `#` karena pager menginterupsi output → timeout 10 detik → output kosong. Fix: kirim `terminal length 0` setelah login berhasil untuk menonaktifkan paging di seluruh sesi telnet.
-- **Jarak ONU semua sama 328m** — OID `.21` (zxAnGponOnuOptDistance) mengembalikan nilai fixed 328 untuk semua ONU (equalization delay provisioning, bukan jarak sebenarnya). Ganti ke OID `.19` (zxAnPonAniOptRtt) yang mengembalikan RTT aktual dalam nanoseconds per ONU. Konversi: `jarak_m = RTT_ns / 10` (sesuai kecepatan cahaya di fiber ≈ 2×10⁸ m/s). Contoh: ONU1=11627 ns → 1163m, ONU9=15367 ns → 1537m.
-- **Uplink SMXA card status** — Setelah fix telnet paging, `show interface port-status` sekarang mengembalikan output lengkap → status active/disable port uplink SMXA ditampilkan dengan benar.
-- **Stats card ONU list** — Perbaiki padding kartu (`p-4` konsisten), ukuran font lebih jelas (`text-2xl`), label uppercase tracking, dan breakdown status ONU (offline, LOS, DyingGasp) ditampilkan lebih detail.
-### Files
-- `internal/olt/telnet/telnet.go` — tambah `terminal length 0` setelah login berhasil untuk disable paging
-- `internal/olt/vendors/zte/zte.go` — ubah `oidDistance` dari `.21` ke `.19`; konversi RTT → jarak `int(float64(dist)/10.0)`; filter batas atas dari 100000 ke 1000000
-- `src/app/admin/olt/[id]/page.tsx` — stats cards: `p-4` konsisten, `text-2xl`, label uppercase, grid `grid-cols-3`, breakdown LOS/DyingGasp
 
 <!-- AUTO-CHANGELOG:END -->
 
