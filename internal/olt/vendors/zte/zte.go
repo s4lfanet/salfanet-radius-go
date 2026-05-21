@@ -9,7 +9,7 @@
 //	OperState:      .3.50.12.1.1.6 (5|4=online, 0=unknown, else=offline)
 //	RxPower:        .3.50.12.1.1.10 (raw int; dBm = raw/500.0 - 30; e.g. raw=6751 → -16.50 dBm)
 //	TxPower:        .3.50.12.1.1.11 (same encoding as RxPower)
-//	Distance:       .3.50.12.1.1.21 (meters)
+//	Distance:       .3.50.12.1.1.18 (equalization delay; meters = raw × 0.112)
 //	SeenONU table:  1.3.6.1.4.1.3902.1012.3.27.4.1.1  (ALL seen ONUs incl. unregistered)
 //	PON port table: 1.3.6.1.4.1.3902.1012.3.11.3.1.1  (one entry per provisioned PON port)
 package zte
@@ -41,7 +41,7 @@ const (
 	oidOperState = oidBase + ".3.50.12.1.1.6"
 	oidRxPower   = oidBase + ".3.50.12.1.1.10" // raw int; dBm = raw/500.0 - 30.0
 	oidTxPower   = oidBase + ".3.50.12.1.1.11" // OLT TX power toward ONU
-	oidDistance  = oidBase + ".3.50.12.1.1.21" // ONU distance in meters (direct value)
+	oidDistance  = oidBase + ".3.50.12.1.1.18" // ONU equalization delay; distance (m) = raw × 0.112
 
 	// zxAnGponOnuDiscoveredInfoTable — ALL seen ONUs incl. unregistered; indexed .ponIndex.onuSlot.onuId
 	oidSeenONUTable = oidBase + ".3.27.4.1.1"
@@ -245,7 +245,7 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 			info.TxPower = &dbm
 		}
 		if dist, ok := merged.distances[k]; ok && dist > 0 && dist < 1000000 {
-			d := int(dist)
+			d := int(float64(dist) * 0.112)
 			info.Distance = &d
 		}
 		onuMap[k] = info
@@ -280,7 +280,7 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 			info.TxPower = &dbm
 		}
 		if dist, ok := merged.distances[k]; ok && dist > 0 && dist < 1000000 {
-			d := int(dist)
+			d := int(float64(dist) * 0.112)
 			info.Distance = &d
 		}
 		onuMap[k] = info

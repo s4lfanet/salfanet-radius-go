@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.74] — 2026-05-22
+### Fixed
+- **Distance ONU semua NULL** — OID `.3.50.12.1.1.21` adalah nilai konstan per-port (bukan per-ONU), sehingga tidak ter-mapping ke masing-masing ONU dan distance tetap NULL di DB. Fix: ganti ke OID `.3.50.12.1.1.18` (equalization delay per-ONU, terindex per onuId) dengan formula `raw × 0.112` (diverifikasi: ONU 28 OID18=5000 → 5000×0.112=560m sesuai data Telnet).
+### Files
+- `internal/olt/vendors/zte/zte.go` — `oidDistance` dari OID `.21` ke OID `.18`; formula `int(dist)` → `int(float64(dist) * 0.112)` (2 tempat)
+
+---
+
 ## [2.52.73] — 2026-05-21
 ### Fixed
 - **Distance ONU salah di ONU List** — SNMP OID `.3.50.12.1.1.19` (equalization delay / bukan jarak fiber) menghasilkan nilai jarak yang salah (contoh: 1228m padahal actual 560m). Fix: ganti ke OID `.3.50.12.1.1.21` (direct fiber distance dalam meter) dan hapus konversi `raw/10` sehingga nilai dipakai langsung.
