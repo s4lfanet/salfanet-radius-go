@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.71 — 2026-05-21
+
+### Fixed
+- **Total ONU = 0 di halaman OLT Management** — `GET /api/network/olts` diarahkan ke handler `ListOLTsForMap` yang mengembalikan data OLT polos tanpa ONU stats. Fix: ubah route ke `ListOLTs` (handler yang mengembalikan `_count.olt_onu_status` dan `onu_stats`). Tambah `Preload("Routers.Router")` ke `ListOLTs` agar kolom ROUTER/NAS tetap muncul.
+### Files
+- `internal/api/router.go` — `network.Get("/olts")` → `networkH.ListOLTs` (bukan `ListOLTsForMap`)
+- `internal/api/handlers/network_ext.go` — tambah `Preload("Routers.Router")` ke `ListOLTs`
+
 ### v2.52.70 — 2026-05-21
 
 ### Fixed
@@ -537,17 +545,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/olt/vendors/zte/zte.go` — formula rxPower & txPower → `raw/500.0 - 30.0`; filter regStatus menerima 1 dan 2; loop fallback tambah description + formula benar; hapus import `math`
 - `src/app/admin/olt/[id]/page.tsx` — signal thresholds dikalibrasi
-
-### v2.52.66 — 2026-05-21
-
-### Fixed
-- **RxPower formula salah** — ZTE C320 SNMP OID `.3.50.12.1.1.10` mengembalikan nilai integer dalam satuan **nanowatt (nW)**, bukan milli-dBm. Formula lama `dBm = -raw/1000` menghasilkan nilai seperti -7 dBm (salah). Formula benar: `dBm = 10 × log10(raw) - 60`. Contoh: raw=7540 nW → -21.2 dBm ✓. Nilai rxPower lama di DB di-reset agar sync berikutnya menulis nilai yang benar.
-- **ONU count tidak muncul di OLT Management list** — `ListOLTs` hanya mengembalikan data OLT mentah tanpa jumlah ONU. Frontend mengakses `olt._count.olt_onu_status` dan `olt.onu_stats` yang selalu `undefined`, sehingga tampil "0 ONU". Handler sekarang menjalankan satu query GROUP BY untuk mendapatkan jumlah ONU per OLT per status, lalu menyertakan `_count` dan `onu_stats` di setiap respons OLT.
-- **Signal quality threshold** — Dikalibrasi ulang untuk ONU downstream RX power (nW formula baru): ≥ -20 dBm Excellent, ≥ -24 Good, ≥ -27 Fair, < -27 Poor.
-### Files
-- `internal/olt/vendors/zte/zte.go` — rxPower dan txPower: formula diubah ke `10*math.Log10(raw) - 60`; import `math` ditambahkan; komentar OID diupdate
-- `internal/api/handlers/olt.go` — `ListOLTs`: tambah GROUP BY query untuk `onu_stats` dan `_count`; tambah `Preload("Routers.Router")`
-- `src/app/admin/olt/[id]/page.tsx` — signal quality thresholds untuk downstream ONU power
 
 <!-- AUTO-CHANGELOG:END -->
 
