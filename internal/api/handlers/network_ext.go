@@ -194,8 +194,9 @@ func (h *NetworkHandler) ListOLTs(c fiber.Ctx) error {
 	}
 	type oltWithStats struct {
 		models.NetworkOLT
-		Count   countFields `json:"_count"`
-		OnuStat *onuStats   `json:"onu_stats,omitempty"`
+		Count       countFields `json:"_count"`
+		OnuStat     *onuStats   `json:"onu_stats,omitempty"`
+		HasPassword bool        `json:"hasPassword"`
 	}
 
 	result := make([]oltWithStats, len(olts))
@@ -229,9 +230,10 @@ func (h *NetworkHandler) ListOLTs(c fiber.Ctx) error {
 			stats = &onuStats{Online: online, Offline: offline, Los: los, DyingGasp: dyingGasp, Unconfig: unconfig}
 		}
 		result[i] = oltWithStats{
-			NetworkOLT: o,
-			Count:      countFields{OltOnuStatus: total},
-			OnuStat:    stats,
+			NetworkOLT:  o,
+			Count:       countFields{OltOnuStatus: total},
+			OnuStat:     stats,
+			HasPassword: o.Password != nil && *o.Password != "",
 		}
 	}
 

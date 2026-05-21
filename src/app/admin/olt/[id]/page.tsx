@@ -2031,7 +2031,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
       {/* Status Cards */}
       <div className="grid grid-cols-3 gap-3">
         <Card className={`border-l-4 ${olt.isOnline ? 'border-l-green-500' : 'border-l-red-500'}`}>
-          <CardContent className="p-4">
+          <CardContent className="pl-6 pr-4 py-4">
             <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
               <Wifi className="h-3.5 w-3.5" /> Status
             </div>
@@ -2045,7 +2045,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
         </Card>
 
         <Card className="border-l-4 border-l-blue-500">
-          <CardContent className="p-4">
+          <CardContent className="pl-6 pr-4 py-4">
             <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
               <Clock className="h-3.5 w-3.5" /> Uptime
             </div>
@@ -2057,7 +2057,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
         </Card>
 
         <Card className="border-l-4 border-l-teal-500">
-          <CardContent className="p-4">
+          <CardContent className="pl-6 pr-4 py-4">
             <div className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
               <Activity className="h-3.5 w-3.5" /> ONUs
             </div>

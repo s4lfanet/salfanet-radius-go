@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.69] — 2026-05-21
+### Fixed
+- **Password OLT tidak tampil di list** — `Password *string json:"-"` di model mencegah password dikembalikan di API (by design untuk keamanan). Tambah field `hasPassword bool` di response `ListOLTs` yang bernilai `true` jika password sudah tersimpan. Frontend kini menampilkan `••••••••` jika `hasPassword=true`, `-` jika belum diset.
+- **Stats card teks terlalu mepet ke border** — Padding kiri kartu stats (Status/Uptime/ONUs) diperbesar dari `p-4` ke `pl-6 pr-4 py-4` agar teks tidak terlalu dekat dengan garis `border-l-4`.
+### Files
+- `internal/api/handlers/network_ext.go` — tambah `HasPassword bool json:"hasPassword"` ke `oltWithStats`, populate dari `o.Password != nil && *o.Password != ""`
+- `src/app/admin/network/olts/page.tsx` — tambah `hasPassword?: boolean` ke interface OLT; gunakan `olt.hasPassword` untuk display password di tabel dan detail panel
+- `src/app/admin/olt/[id]/page.tsx` — ubah padding stats card dari `p-4` ke `pl-6 pr-4 py-4`
+
+---
+
 ## [2.52.68] — 2026-05-21
 ### Fixed
 - **ONU Detail Modal kosong** — ZTE C320 menggunakan `--More--` paging untuk output panjang (show gpon onu detail-info). `readUntilPrompt` tidak pernah melihat prompt `#` karena pager menginterupsi output → timeout 10 detik → output kosong. Fix: kirim `terminal length 0` setelah login berhasil untuk menonaktifkan paging di seluruh sesi telnet.

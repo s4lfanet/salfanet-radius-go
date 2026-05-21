@@ -69,6 +69,7 @@ interface OLT {
   firmwareVersion?: string;
   username?: string;
   password?: string;
+  hasPassword?: boolean;
   snmpCommunity?: string;
   snmp_community?: string;
   sshEnabled?: boolean;
@@ -594,7 +595,7 @@ export default function OLTsPage() {
                     </td>
                     <td className="px-3 py-2 hidden lg:table-cell">
                       <span className="text-xs text-gray-700 dark:text-gray-300 font-mono">
-                        {olt.password ? '••••••••' : '-'}
+                        {olt.hasPassword ? '••••••••' : '-'}
                       </span>
                     </td>
                     <td className="px-3 py-2 hidden md:table-cell">
@@ -873,7 +874,7 @@ export default function OLTsPage() {
               </div>
 
               {/* Credentials */}
-              {(olt.username || olt.password || olt.snmpCommunity || olt.snmp_community) && (
+              {(olt.username || olt.hasPassword || olt.snmpCommunity || olt.snmp_community) && (
                 <div className="mb-2 pb-2 border-b border-gray-100 dark:border-gray-800">
                   <div className="text-[9px] text-gray-400 uppercase mb-1">Credentials</div>
                   <div className="grid grid-cols-2 gap-2 text-[10px]">
@@ -883,7 +884,7 @@ export default function OLTsPage() {
                         <span className="ml-1 font-mono text-gray-700 dark:text-gray-300">{olt.username}</span>
                       </div>
                     )}
-                    {olt.password && (
+                    {olt.hasPassword && (
                       <div>
                         <span className="text-gray-500 dark:text-gray-400">Password:</span>
                         <span className="ml-1 font-mono text-gray-700 dark:text-gray-300">••••••</span>
