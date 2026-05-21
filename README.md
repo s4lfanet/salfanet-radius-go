@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.61 — 2026-05-22
+
+### Added
+- **GetChassis — real Telnet + SNMP chassis data (ported from Next.js)** — `GET /api/olt/:id/chassis` now fires Telnet (`show card` + `show interface port-status`) and 5 SNMP IF-MIB walks (ifDescr, ifAdminStatus, ifOperStatus, ifHighSpeed, ifAlias) plus ZTE PON table walk **in parallel**. Real card types (GTGO/GTGH/GTGQ/SMXA/MCUD) come from Telnet `show card`; uplink port states (admin/link status, speed, description) come from `show interface port-status` with SNMP IF-MIB fallback. Falls back to SNMP board presence + DB ONU port data when Telnet is unavailable. Response includes `source: "telnet" | "snmp+db"`.
+### Files
+- `internal/api/handlers/olt_chassis.go` — new file: full chassis handler with `parseShowCard`, `classifyCard`, `smxaUplinkIfaces`, `parseUplinkPortStatus`, `buildUplinkStatesFromSNMP`, SNMP IF-MIB walk helpers, and `GetChassis`
+- `internal/api/handlers/olt.go` — remove old inline `GetChassis` implementation (now delegated to `olt_chassis.go`)
+
 ### v2.52.60 — 2026-05-22
 
 ### Fixed
@@ -571,17 +579,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `src/locales/id.json` — tambah 72+ missing translation keys
 - `internal/db/models/models.go` — komprehensif camelCase column tags
 - `internal/db/models/olt.go` — sudah di-fix di [2.52.56]
-
-### v2.52.56 — 2026-05-22
-
-### Fixed
-- **GET /api/olt/:id — 404 meskipun route terdaftar** — `GetOLT` handler melakukan preload `ONUStatuses`, `Alerts`, `MonitoringLogs`, dan `PerformanceMetrics` dengan GORM auto-naming. GORM mengubah `OltID` → `olt_id`, `OnuID` → `onu_id`, dst., padahal kolom DB (Prisma) adalah camelCase (`oltId`, `onuId`). MySQL melempar error "Unknown column 'olt_id'" yang diperlakukan sebagai 404. Fix: tambah explicit `gorm:"column:..."` camelCase tags ke semua field di `OLTONUStatus`, `OLTAlert`, `OLTPerformanceMetric`, `OLTMonitoringLog`.
-- **ONU data selalu 0/0 di monitoring** — Poller `CreateInBatches` OLT ONU Status gagal karena INSERT menggunakan nama kolom snake_case (`olt_id`, `onu_id`, `mac_address`, dst.) yang tidak ada di DB. Dengan adanya column tags, INSERT sekarang menggunakan nama kolom yang benar (`oltId`, `onuId`, `macAddress`, dst.).
-- **Poller `knownPONPorts` — WHERE clause salah** — `Where("olt_id = ?", oltID)` diganti ke `Where("oltId = ?", oltID)`.
-- **Poller `checkAlerts` — WHERE clause salah** — raw SQL dengan `olt_id`, `onu_id`, `alert_type`, `is_resolved` diganti ke camelCase `oltId`, `onuId`, `alertType`, `isResolved`.
-### Files
-- `internal/db/models/olt.go` — `OLTONUStatus`, `OLTAlert`, `OLTPerformanceMetric`, `OLTMonitoringLog`: tambah `gorm:"column:camelCase"` tags ke semua field
-- `internal/olt/poller/poller.go` — fix `knownPONPorts` dan `checkAlerts` WHERE clause ke camelCase
 
 <!-- AUTO-CHANGELOG:END -->
 
