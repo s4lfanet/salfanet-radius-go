@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.75 — 2026-05-22
+
+### Added
+- **Per-PON Live Stats** — Setiap port PON di section "Detail Per Port PON" kini bisa di-klik untuk expand dan menampilkan data live dari Telnet OLT: Temperature (°C), TX Power (dBm), Voltage (V), Bias Current (mA), Upstream/Downstream rate (Mbps) dan bandwidth usage (%). Data diambil via `show interface gpon-olt_1/{slot}/{port}` dan `show interface optical-module-info gpon-olt_1/{slot}/{port}`.
+### Fixed
+- **Chassis port squares** — Port PON menunjukkan index 0 (0/1/0) pada tooltip dan green box di posisi ke-2; seharusnya 1-based. Fix: rebuild frontend (source sudah benar dengan `i+1`, VPS belum di-build ulang).
+### Files
+- `internal/api/handlers/olt_pon_stat.go` — Handler baru `GetPONStat`; parser `parsePONInterfaceStat`, `parsePONBps`, `parsePONPct`, `parsePONFloatFromUnit`
+- `internal/api/router.go` — Route baru `GET /api/olt/:id/pon-stat`
+- `src/app/admin/olt/[id]/page.tsx` — Tambah type `PONPortStat`; state `expandedPON`, `ponStatCache`, `loadingPON`; fungsi `fetchPONStat`; "Detail Per Port PON" expandable cards dengan Temperature, TX Power, Voltage, Upstream/Downstream
+
 ### v2.52.74 — 2026-05-22
 
 ### Fixed
@@ -521,21 +532,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/router.go` — `network.Get("/olts")` → `networkH.ListOLTs` (bukan `ListOLTsForMap`)
 - `internal/api/handlers/network_ext.go` — tambah `Preload("Routers.Router")` ke `ListOLTs`
-
-### v2.52.70 — 2026-05-21
-
-### Fixed
-- **Uptime N/A di monitoring OLT** — Poller tidak pernah mengambil data uptime dari SNMP. Tambah SNMP GET untuk OID `1.3.6.1.2.1.1.3.0` (sysUpTime, centiseconds) di setiap siklus poll; konversi ke detik dan simpan ke field `uptime` di `network_olts`.
-- **ONU count = 0 di OLT Management list** — GORM raw SQL scan per-OLT menggunakan field `Count int64` tanpa tag → nama kolom ambigu. Ganti pendekatan: satu query agregat dengan alias eksplisit (`SELECT oltId AS olt_id, status, COUNT(*) AS cnt FROM olt_onu_status GROUP BY oltId, status`) dan gunakan map untuk distribusikan ke tiap OLT. Eliminasi N+1 queries sekaligus.
-- **Status OLT hanya tampil SSH** — `NetworkOLTStatus` handler mengecek Telnet hanya jika SSH gagal (`if !sshOK`). Fix: cek SSH dan Telnet secara paralel (goroutine terpisah), keduanya selalu dicek.
-- **Badge SNMP tidak muncul di status** — Tambah field `SNMPEnabled` ke `oltRow` query dan tambah badge SNMP (orange) di frontend status details.
-- **Tidak ada notifikasi saat Poll OLT** — Tambah CyberToast notification di `handleManualPoll` (poll selesai / gagal) dan `handlePollAll` (mulai polling + selesai) di halaman OLT Monitoring.
-### Files
-- `internal/olt/poller/poller.go` — tambah SNMP GET sysUpTime; update field `uptime` di Updates map
-- `internal/api/handlers/network_ext.go` — ganti N+1 per-OLT query dengan single aggregated query + explicit column aliases
-- `internal/api/handlers/misc_handler.go` — SSH+Telnet checked in parallel; tambah SNMPEnabled field + SNMP badge logic
-- `src/app/admin/network/olts/page.tsx` — tambah `snmp` ke `OLTStatus.details` interface; tampilkan badge SNMP; urutan badge SSH > TEL > SNMP
-- `src/app/admin/olt/monitoring/page.tsx` — tambah `useToast`; notifikasi di `handleManualPoll` dan `handlePollAll`
 
 <!-- AUTO-CHANGELOG:END -->
 
