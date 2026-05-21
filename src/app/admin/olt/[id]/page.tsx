@@ -168,14 +168,14 @@ function UplinkPortModal({ oltId, port, onClose }: { oltId: string; port: string
     const isEnabled = /up|enable|activate/i.test(adminStatus);
     const isUp = /up|online/i.test(linkStatus);
     const statusTone = !isEnabled
-      ? { bg: '#111827', border: '#475569', dot: 'bg-slate-500', text: 'text-slate-300', label: 'Disabled' }
+      ? { className: 'bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-slate-600', dot: 'bg-slate-400 dark:bg-slate-500', text: 'text-slate-600 dark:text-slate-300', label: 'Disabled' }
       : isUp
-        ? { bg: '#052e16', border: '#16a34a', dot: 'bg-green-400 animate-pulse', text: 'text-green-400', label: 'Online' }
-        : { bg: '#451a03', border: '#f59e0b', dot: 'bg-amber-400', text: 'text-amber-300', label: 'Admin UP / Link DOWN' };
+        ? { className: 'bg-green-50 dark:bg-green-950/40 border border-green-300 dark:border-green-800', dot: 'bg-green-500 dark:bg-green-400 animate-pulse', text: 'text-green-700 dark:text-green-400', label: 'Online' }
+        : { className: 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700', dot: 'bg-amber-500 dark:bg-amber-400', text: 'text-amber-700 dark:text-amber-300', label: 'Admin UP / Link DOWN' };
 
     return (
       <div className="space-y-4">
-        <div className="flex items-center gap-3 p-3 rounded-lg" style={{ background: statusTone.bg, border: `1px solid ${statusTone.border}` }}>
+        <div className={`flex items-center gap-3 p-3 rounded-lg ${statusTone.className}`}>
           <div className={`w-3 h-3 rounded-full ${statusTone.dot}`} />
           <div>
             <div className={`text-sm font-bold ${statusTone.text}`}>{statusTone.label}</div>
@@ -782,7 +782,7 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
 
                       {/* Expanded stats panel */}
                       {isExpanded && (
-                        <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-850 p-2.5">
+                        <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50 dark:bg-gray-900 p-2.5">
                           {isLoading ? (
                             <div className="text-[10px] text-gray-400 text-center py-2">Memuat data…</div>
                           ) : stat === null ? (

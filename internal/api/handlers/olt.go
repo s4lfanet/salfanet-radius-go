@@ -711,11 +711,9 @@ func (h *OLTHandler) GetUplink(c fiber.Ctx) error {
 		}
 		out, err := pool.Execute("show running-config interface " + port)
 		raw, parsed := "", map[string]string{}
-		if err == nil {
+		if err == nil && !uplinkCliErrRe.MatchString(out) {
 			raw = out
-			if !uplinkCliErrRe.MatchString(out) {
-				parsed = uplinkParseRunningConfig(out)
-			}
+			parsed = uplinkParseRunningConfig(out)
 		}
 		data = tabResult{Raw: raw, Parsed: parsed}
 
@@ -888,22 +886,25 @@ func uplinkParsePortStatus(output, portName string) map[string]string {
 		if len(parts) < 8 {
 			break
 		}
+		// ZTE C320 port-status columns (0-based):
+		// [0]=Port [1]=HybridStatus [2]=NativeVLAN [3]=Negotiation [4]=Speed(Mbps)
+		// [5]=Duplex [6]=FlowCtrl [7]=AdminStatus [8]=LinkStatus
 		result["Physical Type"] = parts[1]
-		if len(parts) > 3 {
-			result["Duplex"] = parts[3]
+		if len(parts) > 5 {
+			result["Duplex"] = parts[5]
 		}
 		if len(parts) > 4 && parts[4] != "N/A" && parts[4] != "0" {
 			result["Speed"] = parts[4] + " Mbps"
 		}
-		if len(parts) > 8 {
-			result["Flow Control"] = parts[8]
+		if len(parts) > 6 {
+			result["Flow Control"] = parts[6]
 		}
 		adminRaw, linkRaw := "", ""
-		if len(parts) > 9 {
-			adminRaw = parts[9]
+		if len(parts) > 7 {
+			adminRaw = parts[7]
 		}
-		if len(parts) > 10 {
-			linkRaw = parts[10]
+		if len(parts) > 8 {
+			linkRaw = parts[8]
 		}
 		if strings.EqualFold(adminRaw, "activate") {
 			result["Admin Status"] = "Up"
@@ -927,7 +928,8 @@ func uplinkParsePortStatus(output, portName string) map[string]string {
 // uplinkParseInterfaceStatus parses "show interface <port>" key:value output.
 func uplinkParseInterfaceStatus(output string) map[string]string {
 	result := map[string]string{}
-	stateRe := regexp.MustCompile(`(?i)^(\S+)\s+is\s+(activate|deactivate)\s*,\s*line protocol is\s+(up|down)`)
+	// ZTE C320 uplink (xgei) uses "up/down"; GPON ports use "activate/deactivate"
+	stateRe := regexp.MustCompile(`(?i)^(\S+)\s+is\s+(activate|deactivate|up|down)\s*,\s*line protocol is\s+(up|down)`)
 	descRe := regexp.MustCompile(`(?i)^Description is\s+(.+?)\.?$`)
 	kvRe := regexp.MustCompile(`^\s*([^:]+?)\s*:\s*(.+)$`)
 	for _, rawLine := range strings.Split(output, "\n") {
@@ -936,7 +938,8 @@ func uplinkParseInterfaceStatus(output string) map[string]string {
 			continue
 		}
 		if m := stateRe.FindStringSubmatch(line); m != nil {
-			if strings.EqualFold(m[2], "activate") {
+			adminRaw := strings.ToLower(m[2])
+			if adminRaw == "activate" || adminRaw == "up" {
 				result["Admin Status"] = "Up"
 			} else {
 				result["Admin Status"] = "Down"
