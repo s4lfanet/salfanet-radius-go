@@ -6,6 +6,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.66] — 2026-05-21
+### Fixed
+- **RxPower formula salah** — ZTE C320 SNMP OID `.3.50.12.1.1.10` mengembalikan nilai integer dalam satuan **nanowatt (nW)**, bukan milli-dBm. Formula lama `dBm = -raw/1000` menghasilkan nilai seperti -7 dBm (salah). Formula benar: `dBm = 10 × log10(raw) - 60`. Contoh: raw=7540 nW → -21.2 dBm ✓. Nilai rxPower lama di DB di-reset agar sync berikutnya menulis nilai yang benar.
+- **ONU count tidak muncul di OLT Management list** — `ListOLTs` hanya mengembalikan data OLT mentah tanpa jumlah ONU. Frontend mengakses `olt._count.olt_onu_status` dan `olt.onu_stats` yang selalu `undefined`, sehingga tampil "0 ONU". Handler sekarang menjalankan satu query GROUP BY untuk mendapatkan jumlah ONU per OLT per status, lalu menyertakan `_count` dan `onu_stats` di setiap respons OLT.
+- **Signal quality threshold** — Dikalibrasi ulang untuk ONU downstream RX power (nW formula baru): ≥ -20 dBm Excellent, ≥ -24 Good, ≥ -27 Fair, < -27 Poor.
+### Files
+- `internal/olt/vendors/zte/zte.go` — rxPower dan txPower: formula diubah ke `10*math.Log10(raw) - 60`; import `math` ditambahkan; komentar OID diupdate
+- `internal/api/handlers/olt.go` — `ListOLTs`: tambah GROUP BY query untuk `onu_stats` dan `_count`; tambah `Preload("Routers.Router")`
+- `src/app/admin/olt/[id]/page.tsx` — signal quality thresholds untuk downstream ONU power
+
+---
+
 ## [2.52.65] — 2026-05-25
 ### Fixed
 - **Sync OLT — data tidak refresh setelah sync** — backend `SyncOLT` hanya mengembalikan `{"message":"sync triggered"}` tanpa flag `background`. Frontend langsung memanggil `fetchOLT()` sebelum sync selesai sehingga data tidak berubah. Sekarang response berisi `{"background": true, ...}` sehingga frontend menunggu 30 detik lalu refresh otomatis.
