@@ -343,6 +343,7 @@ func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResu
 
 	type walkOut struct {
 		key     string
+		baseOID string // full walked OID (oid + "." + ponIdx)
 		results []snmputil.WalkResult
 		err     error
 	}
@@ -354,7 +355,7 @@ func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResu
 			// BulkWalk (GetBulk PDUs) is far more efficient for large tables.
 			// snmputil.BulkWalk automatically falls back to Walk on error.
 			res, err := snmputil.BulkWalk(ctx, cfg, o.oid)
-			ch <- walkOut{key: o.key, results: res, err: err}
+			ch <- walkOut{key: o.key, baseOID: o.oid, results: res, err: err}
 		}()
 	}
 
@@ -377,6 +378,15 @@ func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResu
 		}
 
 		for _, r := range out.results {
+			// Validate OID belongs to the walked subtree.
+			// BulkWalk may return the first entry of the next sibling subtree
+			// when the last GetBulk batch overshoots. Strip a leading dot that
+			// gosnmp sometimes adds, then check for the expected prefix.
+			oidNorm := strings.TrimPrefix(r.OID, ".")
+			if !strings.HasPrefix(oidNorm, out.baseOID+".") {
+				continue
+			}
+
 			// ZTE C320 GPON OID index structure:
 			//  zxAnGponOnuRegTable  (.3.50.12.1.1.*): .col.ponIndex.onuId.1  → use second-to-last
 			//  zxAnGponOnuCfgTable  (.3.28.1.1.*):    .col.ponIndex.onuId    → use last

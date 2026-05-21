@@ -19,6 +19,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/olt/poller"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/telnet"
 )
 
@@ -30,10 +31,13 @@ func capitalize(s string) string {
 }
 
 // MiscHandler covers misc missing routes: sessions ext, radius auth, health ext, coordinator, pppoe misc.
-type MiscHandler struct{ db *gorm.DB }
+type MiscHandler struct {
+	db     *gorm.DB
+	poller *poller.Poller
+}
 
-func NewMiscHandler(db *gorm.DB) *MiscHandler {
-	return &MiscHandler{db: db}
+func NewMiscHandler(db *gorm.DB, p *poller.Poller) *MiscHandler {
+	return &MiscHandler{db: db, poller: p}
 }
 
 // ─── Sessions Extended ────────────────────────────────────────────────────────
@@ -1408,16 +1412,25 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	opticalInfo := opticalResult{}
 
 	if (olt.TelnetEnabled || olt.SSHEnabled) && olt.Username != nil && olt.Password != nil {
-		tport := olt.TelnetPort
-		if tport == 0 {
-			tport = 23
+		// Reuse the poller's persistent Telnet pool if available; otherwise create a temporary one.
+		var pool *telnet.Pool
+		var ownPool bool
+		pool = h.poller.GetPool(oltID)
+		if pool == nil {
+			tport := olt.TelnetPort
+			if tport == 0 {
+				tport = 23
+			}
+			tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+			tcfg.CommandTimeout = 20 * time.Second
+			pool = telnet.NewPool(tcfg)
+			ownPool = true
 		}
-		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
-		tcfg.CommandTimeout = 20 * time.Second
-		pool := telnet.NewPool(tcfg)
-		defer pool.Close()
+		if ownPool {
+			defer pool.Close()
+		}
 
-		_, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
 		out, err := pool.ExecuteMultiple([]string{

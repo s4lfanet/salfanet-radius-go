@@ -568,14 +568,14 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
           ) : (
             <div className="flex items-center gap-1 flex-nowrap min-w-max">
               {Array.from({ length: servicePortCount }, (_, i) => {
-                const c = portColor(slot.index, i);
-                const s = portStats[`${slot.index}/${i}`];
+                const c = portColor(slot.index, i + 1);
+                const s = portStats[`${slot.index}/${i + 1}`];
 
                 return (
-                  <div key={i}
+                  <div key={i + 1}
                     className="w-4 h-4 rounded-[3px] border flex items-center justify-center cursor-default transition-all hover:brightness-150 hover:scale-110 hover:z-10 relative"
                     style={{ background: c.bg, borderColor: c.border }}
-                    title={portTooltip(slot.index, i)}>
+                    title={portTooltip(slot.index, i + 1)}>
                     <div className="w-1 h-1 rounded-full" style={{ background: c.dot }} />
                     {s && s.unregistered > 0 && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-400 border border-yellow-600" title="Unregistered ONU" />
@@ -1932,11 +1932,13 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
     }
   };
 
+  // RxPower stored is OLT upstream received power from the ONU (after GPON power leveling).
+  // Typical range: -5 to -15 dBm. Thresholds calibrated for upstream OLT RX power.
   const getSignalQuality = (rxPower: number | null) => {
     if (rxPower === null) return { label: 'N/A', color: 'text-gray-400' };
-    if (rxPower >= -20) return { label: 'Excellent', color: 'text-green-600' };
-    if (rxPower >= -25) return { label: 'Good', color: 'text-blue-600' };
-    if (rxPower >= -27) return { label: 'Fair', color: 'text-yellow-600' };
+    if (rxPower >= -10) return { label: 'Excellent', color: 'text-green-600' };
+    if (rxPower >= -15) return { label: 'Good', color: 'text-blue-600' };
+    if (rxPower >= -20) return { label: 'Fair', color: 'text-yellow-600' };
     return { label: 'Poor', color: 'text-red-600' };
   };
 

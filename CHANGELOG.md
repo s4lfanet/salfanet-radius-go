@@ -6,6 +6,28 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.65] — 2026-05-25
+### Fixed
+- **Sync OLT — data tidak refresh setelah sync** — backend `SyncOLT` hanya mengembalikan `{"message":"sync triggered"}` tanpa flag `background`. Frontend langsung memanggil `fetchOLT()` sebelum sync selesai sehingga data tidak berubah. Sekarang response berisi `{"background": true, ...}` sehingga frontend menunggu 30 detik lalu refresh otomatis.
+- **Port map — index 0-based vs 1-based** — port map merender port `i=0,1,2,...` tapi data di `portStats` diindeks `1,2,3,...` (1-based dari DB). Port 0 selalu kosong, semua ONU tergeser satu posisi. Fix: gunakan `i+1` pada `portColor`, `portStats`, `portTooltip`, dan `key` di render loop.
+- **OID prefix bleed di BulkWalk** — `walkPONPort` tidak memvalidasi bahwa OID yang dikembalikan BulkWalk memang berasal dari subtree yang di-walk. Jika `MaxRepetitions=25` melebihi batas tabel, OID dari PON port berikutnya masuk ke data port saat ini, menyebabkan nilai `distance`/`rxPower` yang salah (misal 1328, 2328 di DB). Sekarang setiap result dicek prefix `strings.HasPrefix(oidNorm, baseOID+".")`.
+- **Signal quality threshold salah** — threshold dikalibrasi untuk ONU downstream RX power (-20 s/d -27 dBm), tapi SNMP OID `.3.50.12.1.1.10` menyimpan OLT upstream received power (~-5 s/d -15 dBm setelah power leveling). Semua ONU tampil "Excellent" karena semua nilai > -20 dBm. Threshold diubah ke: ≥ -10 Excellent, ≥ -15 Good, ≥ -20 Fair, < -20 Poor.
+### Performance
+- **walkToMap menggunakan BulkWalk** — `GetUplink` memanggil `fetchIfMib` yang menjalankan 5 parallel walk untuk IF-MIB. Sebelumnya menggunakan `snmputil.Walk` (GetNext PDUs, lambat). Diganti ke `snmputil.BulkWalk` (GetBulk PDUs) yang 3-5× lebih cepat untuk tabel besar.
+- **ONU detail & uplink Telnet pool reuse** — `ONUDetail` dan `GetUplink` sebelumnya membuat `telnet.NewPool` baru setiap request dan langsung menutupnya via `defer pool.Close()`. Ini menyebabkan Telnet login ulang (3-5 detik) setiap kali modal ONU detail atau uplink tab dibuka. Sekarang keduanya memakai pool persistent milik Poller via `h.poller.GetPool(oltID)`. Pool sementara hanya dibuat jika Poller belum mengelola OLT tersebut.
+- **Poller — `GetPool` method** — tambah method `GetPool(oltID string) *telnet.Pool` pada `Poller` agar handler dapat mengakses persistent pool tanpa race condition.
+- **MiscHandler — tambah Poller** — `MiscHandler.poller` ditambahkan agar `ONUDetail` bisa akses Poller pool. `NewMiscHandler` sekarang menerima `*poller.Poller`.
+### Files
+- `internal/api/handlers/olt.go` — `SyncOLT`: return `background:true`; `GetUplink`: reuse poller pool
+- `internal/api/handlers/olt_chassis.go` — `walkToMap`: `snmputil.Walk` → `snmputil.BulkWalk`
+- `internal/api/handlers/misc_handler.go` — tambah `poller` ke struct; `ONUDetail`: reuse pool, fix context bug
+- `internal/api/router.go` — pass poller ke `NewMiscHandler`
+- `internal/olt/poller/poller.go` — tambah `GetPool(oltID)` method
+- `internal/olt/vendors/zte/zte.go` — `walkOut` tambah `baseOID`; tambah OID prefix filter per result
+- `src/app/admin/olt/[id]/page.tsx` — port map `i` → `i+1`; signal quality thresholds; tambah komentar
+
+---
+
 ## [2.52.64] — 2026-05-24
 ### Fixed
 - **ONU detail modal crash (TypeError)** — `ONUDetailModal` rendered `detail.telnet.detail.raw` and `detail.telnet.config.raw` without optional chaining. When the API returned a mismatched shape, this caused `TypeError: Cannot read properties of undefined (reading 'detail')` crashing the OLT page. Fixed both lines to use `?.` optional chaining.

@@ -324,7 +324,7 @@ type ifMibData struct {
 }
 
 func walkToMap(ctx context.Context, cfg snmputil.Config, oid string) map[string]string {
-	results, err := snmputil.Walk(ctx, cfg, oid)
+	results, err := snmputil.BulkWalk(ctx, cfg, oid)
 	if err != nil {
 		return nil
 	}

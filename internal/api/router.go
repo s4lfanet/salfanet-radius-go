@@ -99,7 +99,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	custExtH := handlers.NewCustomerExtHandler(db)
 	waCrudH := handlers.NewWhatsappCrudHandler(db)
 	adminJobsH := handlers.NewAdminJobsHandler(db)
-	miscH := handlers.NewMiscHandler(db)
+	miscH := handlers.NewMiscHandler(db, p)
 
 	// ─── Batch 8 handlers ────────────────────────────────────────────────────
 	custExt2H := handlers.NewCustomerPortalExt2Handler(db)

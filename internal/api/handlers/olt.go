@@ -250,7 +250,7 @@ func (h *OLTHandler) SyncOLT(c fiber.Ctx) error {
 			log.Error().Err(err).Str("olt", id).Msg("manual sync failed")
 		}
 	}()
-	return c.JSON(fiber.Map{"message": "sync triggered"})
+	return c.JSON(fiber.Map{"background": true, "message": "Sync started — data will refresh automatically"})
 }
 
 // ─── ONU endpoints ───────────────────────────────────────────────────────────
@@ -558,16 +558,23 @@ func (h *OLTHandler) GetUplink(c fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
 	}
 
-	// Build Telnet pool
+	// Build Telnet pool — reuse the poller's persistent pool if available.
 	var pool *telnet.Pool
+	var ownPool bool // true = we created the pool and must close it
 	if (olt.TelnetEnabled || olt.SSHEnabled) && olt.Username != nil && olt.Password != nil {
-		tport := olt.TelnetPort
-		if tport == 0 {
-			tport = 23
+		pool = h.poller.GetPool(id)
+		if pool == nil {
+			tport := olt.TelnetPort
+			if tport == 0 {
+				tport = 23
+			}
+			tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+			tcfg.CommandTimeout = 20 * time.Second
+			pool = telnet.NewPool(tcfg)
+			ownPool = true
 		}
-		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
-		tcfg.CommandTimeout = 20 * time.Second
-		pool = telnet.NewPool(tcfg)
+	}
+	if ownPool {
 		defer pool.Close()
 	}
 

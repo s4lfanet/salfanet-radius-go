@@ -128,6 +128,14 @@ func (p *Poller) StartAll() {
 	}
 }
 
+// GetPool returns the persistent Telnet pool for the given OLT, or nil if none exists.
+// Callers must NOT close the returned pool — it is managed by the Poller.
+func (p *Poller) GetPool(oltID string) *telnet.Pool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.pools[oltID]
+}
+
 // TriggerPoll triggers an immediate poll for the given OLT (used by manual sync endpoint).
 func (p *Poller) TriggerPoll(oltID string) error {
 	var olt models.NetworkOLT
