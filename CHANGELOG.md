@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.63] — 2026-05-23
+### Fixed
+- **Port map uplink AdminStatus/LinkStatus wrong** — `parseUplinkPortStatus` was reading column 7 (Pause) and column 8 (FlowControl) instead of column 9 (AdminStatus) and column 10 (LinkStatus). All uplink ports showed `DIS`/down incorrectly on the chassis port map.
+- **Minimum column count check** — updated from `len(parts) < 8` to `len(parts) < 11` so rows with fewer than 11 columns are skipped correctly.
+- **Uplink description via SNMP** — when Telnet-parsed uplink states are available, SNMP `ifAlias` descriptions are now merged in, so uplink port hover tooltips show descriptions even when Telnet is the primary data source.
+- **GetUplink handler** — replaced stub with real Telnet-based implementation for all four tabs: `status` (parses `show interface port-status` + `show interface` with SNMP fallback), `vlan` (parses `show running-config interface`), `config` (returns raw running-config), `optical` (parses `show interface optical-module-info` + `show ddmi interface`).
+- **CreateUplink handler** — replaced stub with real Telnet config-mode implementation: `addVlan`, `removeVlan`, `enable`, `disable`, `setPvid`, `removePvid`, `setDescription`.
+### Files
+- `internal/api/handlers/olt_chassis.go` — fix `parseUplinkPortStatus` column indices (9, 10); merge SNMP description into Telnet-parsed uplink states
+- `internal/api/handlers/olt.go` — implement real `GetUplink` + `CreateUplink` handlers with full parser helpers; add `context`, `regexp`, `strings`, snmputil imports
+
+---
+
 ## [2.52.62] — 2026-05-23
 ### Fixed
 - **ONU polling — missing ONUs from new/empty PON ports** — removed DB-based `knownPONPorts` lookup. PON ports are now discovered dynamically by walking the ZTE V2.1 PON port table (`oidPONPortTable = 1.3.6.1.4.1.3902.1012.3.11.3.1.1`). All provisioned PON ports are found regardless of DB state. Falls back to 2×8 default only when the walk returns nothing.

@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -14,6 +17,7 @@ import (
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/poller"
+	snmputil "github.com/s4lfanet/salfanet-radius-go/internal/olt/snmp"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/telnet"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/vendors/zte"
 	"github.com/s4lfanet/salfanet-radius-go/internal/ws"
@@ -528,35 +532,538 @@ func (h *OLTHandler) WebSocketOLT(conn interface{}, oltID string) {
 
 // ─── OLT Uplink ──────────────────────────────────────────────────────────────
 
-// GET /api/olt/:id/uplink — get uplink configuration for an OLT
+// uplinkPortRe validates ZTE uplink interface names: gei_1/N, gei_1/N/M, xgei_1/N, xgei_1/N/M
+var uplinkPortRe = regexp.MustCompile(`(?i)^(?:gei|xgei)_\d+/\d+(?:/\d+)?$`)
+
+// uplinkCliErrRe detects ZTE CLI error messages in command output
+var uplinkCliErrRe = regexp.MustCompile(`(?i)%Error|Invalid input detected|Invalid parameter|Incomplete command|Ambiguous command|Failure:`)
+
+// GET /api/olt/:id/uplink?port=<iface>&tab=status|vlan|config|optical
 func (h *OLTHandler) GetUplink(c fiber.Ctx) error {
-	oltID := c.Params("id")
+	id := c.Params("id")
+	port := c.Query("port")
+	tab := c.Query("tab")
+	if tab == "" {
+		tab = "status"
+	}
+	if port == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "port parameter required"})
+	}
+	if !uplinkPortRe.MatchString(port) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid port name"})
+	}
+
 	var olt models.NetworkOLT
-	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
+	if err := h.db.First(&olt, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
 	}
-	return c.JSON(fiber.Map{
-		"success": true,
-		"oltId":   oltID,
-		"uplink":  fiber.Map{"port": "uplink0", "status": "unknown", "speed": "1G"},
+
+	// Build Telnet pool
+	var pool *telnet.Pool
+	if (olt.TelnetEnabled || olt.SSHEnabled) && olt.Username != nil && olt.Password != nil {
+		tport := olt.TelnetPort
+		if tport == 0 {
+			tport = 23
+		}
+		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+		tcfg.CommandTimeout = 20 * time.Second
+		pool = telnet.NewPool(tcfg)
+		defer pool.Close()
+	}
+
+	// Build SNMP config
+	var snmpCfg *snmputil.Config
+	if olt.SNMPEnabled {
+		community := "public"
+		if olt.SNMPCommunity != "" {
+			community = olt.SNMPCommunity
+		}
+		snmpPort := 161
+		if olt.SNMPPort > 0 {
+			snmpPort = olt.SNMPPort
+		}
+		cfg := snmputil.DefaultConfig(olt.IPAddress, community, snmpPort)
+		snmpCfg = &cfg
+	}
+
+	type tabResult struct {
+		Raw    string            `json:"raw"`
+		Parsed map[string]string `json:"parsed"`
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 25*time.Second)
+	defer cancel()
+
+	var data tabResult
+
+	switch tab {
+	case "status":
+		parsed := map[string]string{}
+		raw := ""
+		if pool != nil {
+			out, err := pool.ExecuteMultiple([]string{
+				"show interface port-status " + port,
+				"show interface " + port,
+			})
+			if err == nil {
+				parts := splitAtPrompt(out)
+				if len(parts) >= 1 && !uplinkCliErrRe.MatchString(parts[0]) {
+					raw = parts[0]
+					parsed = uplinkParsePortStatus(parts[0], port)
+				}
+				if parsed["Admin Status"] == "" && len(parts) >= 2 && !uplinkCliErrRe.MatchString(parts[1]) {
+					raw = parts[1]
+					parsed = uplinkParseInterfaceStatus(parts[1])
+				}
+			}
+		}
+		// SNMP fallback for missing fields
+		if (parsed["Admin Status"] == "" || parsed["Link Status"] == "") && snmpCfg != nil {
+			snmpParsed := uplinkGetStatusFromSNMP(ctx, *snmpCfg, port)
+			for k, v := range snmpParsed {
+				if _, exists := parsed[k]; !exists {
+					parsed[k] = v
+				}
+			}
+		}
+		data = tabResult{Raw: raw, Parsed: parsed}
+
+	case "vlan":
+		if pool == nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Telnet not configured for this OLT"})
+		}
+		out, err := pool.Execute("show running-config interface " + port)
+		raw, parsed := "", map[string]string{}
+		if err == nil {
+			raw = out
+			parsed = uplinkParseRunningConfig(out)
+		}
+		data = tabResult{Raw: raw, Parsed: parsed}
+
+	case "config":
+		if pool == nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Telnet not configured for this OLT"})
+		}
+		out, err := pool.Execute("show running-config interface " + port)
+		raw, parsed := "", map[string]string{}
+		if err == nil {
+			raw = out
+			if !uplinkCliErrRe.MatchString(out) {
+				parsed = uplinkParseRunningConfig(out)
+			}
+		}
+		data = tabResult{Raw: raw, Parsed: parsed}
+
+	case "optical":
+		if pool == nil {
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Telnet not configured for this OLT"})
+		}
+		out, err := pool.ExecuteMultiple([]string{
+			"show interface optical-module-info " + port,
+			"show ddmi interface " + port,
+		})
+		raw, parsed := "", map[string]string{}
+		if err == nil {
+			parts := splitAtPrompt(out)
+			if len(parts) >= 1 && !uplinkCliErrRe.MatchString(parts[0]) {
+				p := uplinkParseOpticalModuleInfo(parts[0])
+				if len(p) > 0 {
+					parsed = p
+					raw = parts[0]
+				}
+			}
+			if len(parsed) == 0 && len(parts) >= 2 && !uplinkCliErrRe.MatchString(parts[1]) {
+				parsed = uplinkParseDdmi(parts[1])
+				raw = parts[1]
+			}
+		}
+		data = tabResult{Raw: raw, Parsed: parsed}
+
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid tab"})
+	}
+
+	return c.JSON(fiber.Map{"success": true, "port": port, "tab": tab, "data": data})
+}
+
+// POST /api/olt/:id/uplink — configure uplink port (addVlan, removeVlan, enable, disable, setPvid, removePvid, setDescription)
+func (h *OLTHandler) CreateUplink(c fiber.Ctx) error {
+	id := c.Params("id")
+	var body struct {
+		Port        string `json:"port"`
+		Action      string `json:"action"`
+		VlanID      string `json:"vlanId"`
+		Mode        string `json:"mode"`
+		Description string `json:"description"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request body"})
+	}
+	if body.Port == "" || body.Action == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "port and action required"})
+	}
+	if !uplinkPortRe.MatchString(body.Port) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid port name"})
+	}
+
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", id).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+	}
+	if (!olt.TelnetEnabled && !olt.SSHEnabled) || olt.Username == nil || olt.Password == nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Telnet not configured for this OLT"})
+	}
+
+	tport := olt.TelnetPort
+	if tport == 0 {
+		tport = 23
+	}
+	tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+	tcfg.CommandTimeout = 8 * time.Second
+	pool := telnet.NewPool(tcfg)
+	defer pool.Close()
+
+	port := body.Port
+	var commandSets [][]string
+
+	switch body.Action {
+	case "addVlan":
+		vid, err := strconv.Atoi(body.VlanID)
+		if err != nil || vid < 1 || vid > 4094 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid VLAN ID"})
+		}
+		vlanCmd := "switchport vlan " + body.VlanID + " tag"
+		if body.Mode == "access" {
+			vlanCmd = "switchport default vlan " + body.VlanID
+		}
+		commandSets = [][]string{{"configure terminal", "interface " + port, vlanCmd, "exit", "end"}}
+
+	case "removeVlan":
+		vid, err := strconv.Atoi(body.VlanID)
+		if err != nil || vid < 1 || vid > 4094 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid VLAN ID"})
+		}
+		_ = vid
+		commandSets = [][]string{
+			{"configure terminal", "interface " + port, "no switchport vlan " + body.VlanID + " tag", "exit", "end"},
+			{"configure terminal", "interface " + port, "no switchport default vlan", "exit", "end"},
+		}
+
+	case "enable":
+		commandSets = [][]string{{"configure terminal", "interface " + port, "no shutdown", "exit", "end"}}
+
+	case "disable":
+		commandSets = [][]string{{"configure terminal", "interface " + port, "shutdown", "exit", "end"}}
+
+	case "setDescription":
+		if body.Description == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "description required"})
+		}
+		safe := uplinkSanitizeDesc(body.Description)
+		commandSets = [][]string{{"configure terminal", "interface " + port, "description " + safe, "exit", "end"}}
+
+	case "setPvid":
+		vid, err := strconv.Atoi(body.VlanID)
+		if err != nil || vid < 1 || vid > 4094 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid VLAN ID"})
+		}
+		_ = vid
+		commandSets = [][]string{{"configure terminal", "interface " + port, "switchport default vlan " + body.VlanID, "exit", "end"}}
+
+	case "removePvid":
+		commandSets = [][]string{{"configure terminal", "interface " + port, "no switchport default vlan", "exit", "end"}}
+
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Unknown action"})
+	}
+
+	lastDetail := ""
+	for _, cmds := range commandSets {
+		out, err := pool.ExecuteMultiple(cmds)
+		if err != nil {
+			lastDetail = err.Error()
+			break
+		}
+		cliErr := false
+		for _, part := range splitAtPrompt(out) {
+			if uplinkCliErrRe.MatchString(part) {
+				lastDetail = strings.TrimSpace(part)
+				cliErr = true
+				break
+			}
+		}
+		if cliErr {
+			continue
+		}
+		return c.JSON(fiber.Map{"success": true, "port": port, "action": body.Action})
+	}
+
+	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		"error":  "Uplink action failed",
+		"detail": lastDetail,
 	})
 }
 
-// POST /api/olt/:id/uplink — configure uplink for an OLT
-func (h *OLTHandler) CreateUplink(c fiber.Ctx) error {
-	oltID := c.Params("id")
-	var olt models.NetworkOLT
-	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+// ── Uplink parser helpers ─────────────────────────────────────────────────────
+
+// uplinkParsePortStatus parses "show interface port-status <port>" tabular output.
+// ZTE C320 column layout (0-indexed):
+//
+//	[0]=Port [1]=PhType [2]=Speed [3]=Duplex [4]=ActualSpeed(Mbps)
+//	[5]=FEC  [6]=CRC16  [7]=Pause [8]=FlowCtrl [9]=AdminStatus [10]=LinkStatus
+func uplinkParsePortStatus(output, portName string) map[string]string {
+	result := map[string]string{}
+	escaped := regexp.QuoteMeta(portName)
+	lineRe := regexp.MustCompile(`(?i)^\s*` + escaped + `\s+`)
+	for _, rawLine := range strings.Split(output, "\n") {
+		if !lineRe.MatchString(rawLine) {
+			continue
+		}
+		parts := strings.Fields(strings.TrimSpace(rawLine))
+		if len(parts) < 8 {
+			break
+		}
+		result["Physical Type"] = parts[1]
+		if len(parts) > 3 {
+			result["Duplex"] = parts[3]
+		}
+		if len(parts) > 4 && parts[4] != "N/A" && parts[4] != "0" {
+			result["Speed"] = parts[4] + " Mbps"
+		}
+		if len(parts) > 8 {
+			result["Flow Control"] = parts[8]
+		}
+		adminRaw, linkRaw := "", ""
+		if len(parts) > 9 {
+			adminRaw = parts[9]
+		}
+		if len(parts) > 10 {
+			linkRaw = parts[10]
+		}
+		if strings.EqualFold(adminRaw, "activate") {
+			result["Admin Status"] = "Up"
+		} else if strings.EqualFold(adminRaw, "deactivate") {
+			result["Admin Status"] = "Down"
+		} else if adminRaw != "" {
+			result["Admin Status"] = adminRaw
+		}
+		if strings.EqualFold(linkRaw, "up") {
+			result["Link Status"] = "Up"
+		} else if strings.EqualFold(linkRaw, "down") {
+			result["Link Status"] = "Down"
+		} else if linkRaw != "" {
+			result["Link Status"] = linkRaw
+		}
+		break
 	}
-	var body map[string]interface{}
-	_ = c.Bind().JSON(&body)
-	return c.JSON(fiber.Map{
-		"success": true,
-		"oltId":   oltID,
-		"message": "Uplink configuration updated",
-		"config":  body,
-	})
+	return result
+}
+
+// uplinkParseInterfaceStatus parses "show interface <port>" key:value output.
+func uplinkParseInterfaceStatus(output string) map[string]string {
+	result := map[string]string{}
+	stateRe := regexp.MustCompile(`(?i)^(\S+)\s+is\s+(activate|deactivate)\s*,\s*line protocol is\s+(up|down)`)
+	descRe := regexp.MustCompile(`(?i)^Description is\s+(.+?)\.?$`)
+	kvRe := regexp.MustCompile(`^\s*([^:]+?)\s*:\s*(.+)$`)
+	for _, rawLine := range strings.Split(output, "\n") {
+		line := strings.TrimSpace(rawLine)
+		if line == "" {
+			continue
+		}
+		if m := stateRe.FindStringSubmatch(line); m != nil {
+			if strings.EqualFold(m[2], "activate") {
+				result["Admin Status"] = "Up"
+			} else {
+				result["Admin Status"] = "Down"
+			}
+			if strings.EqualFold(m[3], "up") {
+				result["Link Status"] = "Up"
+			} else {
+				result["Link Status"] = "Down"
+			}
+			continue
+		}
+		if m := descRe.FindStringSubmatch(line); m != nil {
+			result["Description"] = strings.TrimSpace(m[1])
+			continue
+		}
+		if m := kvRe.FindStringSubmatch(line); m != nil {
+			result[strings.TrimSpace(m[1])] = strings.TrimSpace(m[2])
+		}
+	}
+	return result
+}
+
+// uplinkParseRunningConfig parses "show running-config interface <port>" output.
+func uplinkParseRunningConfig(output string) map[string]string {
+	result := map[string]string{}
+	taggedVlans := []string{}
+	skipRe := regexp.MustCompile(`(?i)^Building configuration|^interface\s+|^!$|^end$`)
+	for _, rawLine := range strings.Split(output, "\n") {
+		line := strings.TrimSpace(rawLine)
+		if line == "" || skipRe.MatchString(line) {
+			continue
+		}
+		var m []string
+		if m = regexp.MustCompile(`(?i)^description\s+(.+)$`).FindStringSubmatch(line); m != nil {
+			result["Description"] = m[1]
+		} else if m = regexp.MustCompile(`(?i)^switchport mode\s+(\S+)$`).FindStringSubmatch(line); m != nil {
+			result["Mode"] = m[1]
+		} else if m = regexp.MustCompile(`(?i)^switchport tls\s+(\S+)$`).FindStringSubmatch(line); m != nil {
+			result["TLS"] = m[1]
+		} else if m = regexp.MustCompile(`(?i)^switchport default vlan\s+(\d+)$`).FindStringSubmatch(line); m != nil {
+			result["Pvid"] = m[1]
+		} else if m = regexp.MustCompile(`(?i)^switchport vlan\s+(\d+)\s+untag$`).FindStringSubmatch(line); m != nil {
+			result["Pvid"] = m[1]
+		} else if m = regexp.MustCompile(`(?i)^switchport vlan\s+(.+?)\s+tag$`).FindStringSubmatch(line); m != nil {
+			for _, v := range strings.Split(m[1], ",") {
+				if v = strings.TrimSpace(v); v != "" {
+					taggedVlans = append(taggedVlans, v)
+				}
+			}
+		} else if m = regexp.MustCompile(`(?i)^vlan\s+(.+?)\s+tag$`).FindStringSubmatch(line); m != nil {
+			for _, v := range strings.FieldsFunc(m[1], func(r rune) bool { return r == ' ' || r == ',' }) {
+				if v = strings.TrimSpace(v); v != "" {
+					taggedVlans = append(taggedVlans, v)
+				}
+			}
+		} else if m = regexp.MustCompile(`(?i)^pvid\s+(\d+)$`).FindStringSubmatch(line); m != nil {
+			result["Pvid"] = m[1]
+		} else if m = regexp.MustCompile(`(?i)^mode\s+(\S+)$`).FindStringSubmatch(line); m != nil {
+			if result["Mode"] == "" {
+				result["Mode"] = m[1]
+			}
+		} else if strings.EqualFold(line, "no shutdown") {
+			result["Admin Status"] = "Up"
+		} else if strings.EqualFold(line, "shutdown") {
+			result["Admin Status"] = "Down"
+		}
+	}
+	if len(taggedVlans) > 0 {
+		seen := map[string]bool{}
+		unique := []string{}
+		for _, v := range taggedVlans {
+			if !seen[v] {
+				seen[v] = true
+				unique = append(unique, v)
+			}
+		}
+		result["Tagged Vlan"] = strings.Join(unique, " ")
+	}
+	return result
+}
+
+// uplinkParseDdmi parses "show ddmi interface <port>" output (key: value lines).
+func uplinkParseDdmi(output string) map[string]string {
+	result := map[string]string{}
+	re := regexp.MustCompile(`^\s*([^:()]+(?:\([^)]*\))?[^:]*?)\s*:\s*(.+)$`)
+	unitRe := regexp.MustCompile(`\s*\([^)]*\)\s*$`)
+	for _, rawLine := range strings.Split(output, "\n") {
+		m := re.FindStringSubmatch(rawLine)
+		if m == nil {
+			continue
+		}
+		key := strings.TrimSpace(unitRe.ReplaceAllString(strings.TrimSpace(m[1]), ""))
+		val := strings.TrimSpace(m[2])
+		if key != "" && val != "" {
+			result[key] = val
+		}
+	}
+	return result
+}
+
+// uplinkParseOpticalModuleInfo parses "show interface optical-module-info <port>" output.
+func uplinkParseOpticalModuleInfo(output string) map[string]string {
+	result := map[string]string{}
+	keyMap := map[string]string{
+		"vendor-name":    "Vendor",
+		"vendor-pn":      "Part Number",
+		"vendor-sn":      "Serial Number",
+		"wavelength":     "Wavelength",
+		"fiber-type":     "Fiber Type",
+		"connector":      "Connector Type",
+		"rxpower":        "RX Power",
+		"txpower":        "TX Power",
+		"txbias-current": "TX Bias Current",
+		"temperature":    "Temperature",
+		"supply-vol":     "Supply Voltage",
+	}
+	re := regexp.MustCompile(`([A-Za-z][A-Za-z0-9\- ]+?)\s*:\s*(.+?)(?:\s{2,}|$)`)
+	for _, rawLine := range strings.Split(output, "\n") {
+		line := strings.TrimSpace(rawLine)
+		if line == "" || !strings.Contains(line, ":") {
+			continue
+		}
+		for _, m := range re.FindAllStringSubmatch(line, -1) {
+			rawKey := strings.TrimSpace(m[1])
+			rawVal := strings.TrimSpace(m[2])
+			normalizedKey := strings.ToLower(rawKey)
+			mappedKey := rawKey
+			if k, ok := keyMap[normalizedKey]; ok {
+				mappedKey = k
+			}
+			if rawVal != "" {
+				result[mappedKey] = rawVal
+			}
+		}
+	}
+	return result
+}
+
+// uplinkGetStatusFromSNMP fetches interface status from SNMP IF-MIB as a fallback.
+func uplinkGetStatusFromSNMP(ctx context.Context, cfg snmputil.Config, ifaceName string) map[string]string {
+	result := map[string]string{}
+	data := fetchIfMib(ctx, cfg)
+	if data == nil {
+		return result
+	}
+	normalize := func(s string) string {
+		return strings.ToLower(strings.ReplaceAll(strings.ReplaceAll(s, "-", "_"), " ", "_"))
+	}
+	idx := ""
+	for suffix, name := range data.descr {
+		if normalize(name) == normalize(ifaceName) {
+			idx = suffix
+			break
+		}
+	}
+	if idx == "" {
+		return result
+	}
+	adminVal, _ := strconv.Atoi(data.admin[idx])
+	operVal, _ := strconv.Atoi(data.oper[idx])
+	if adminVal == 1 {
+		result["Admin Status"] = "Up"
+	} else {
+		result["Admin Status"] = "Down"
+	}
+	if operVal == 1 {
+		result["Link Status"] = "Up"
+	} else {
+		result["Link Status"] = "Down"
+	}
+	if s := data.speed[idx]; s != "" && s != "0" {
+		result["Speed"] = s + "M"
+	}
+	if a := data.alias[idx]; a != "" {
+		result["Description"] = a
+	}
+	return result
+}
+
+// uplinkSanitizeDesc strips non-printable-ASCII and truncates to 64 chars.
+func uplinkSanitizeDesc(desc string) string {
+	safe := make([]rune, 0, len(desc))
+	for _, r := range desc {
+		if r >= 0x20 && r <= 0x7E {
+			safe = append(safe, r)
+		}
+	}
+	s := string(safe)
+	if len(s) > 64 {
+		s = s[:64]
+	}
+	return s
 }
 
 // ─── OLT Monitoring Dashboard ─────────────────────────────────────────────────

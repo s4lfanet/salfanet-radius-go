@@ -26,11 +26,11 @@ import (
 
 // ── IF-MIB OIDs ───────────────────────────────────────────────────────────────
 const (
-	oidIfDescr     = "1.3.6.1.2.1.2.2.1.2"    // ifDescr — interface name
-	oidIfAdmin     = "1.3.6.1.2.1.2.2.1.7"    // ifAdminStatus (1=up, 2=down)
-	oidIfOper      = "1.3.6.1.2.1.2.2.1.8"    // ifOperStatus  (1=up, 2=down)
-	oidIfHighSpeed = "1.3.6.1.2.1.31.1.1.1.15" // ifHighSpeed Mbps
-	oidIfAlias     = "1.3.6.1.2.1.31.1.1.1.18" // ifAlias
+	oidIfDescr     = "1.3.6.1.2.1.2.2.1.2"              // ifDescr — interface name
+	oidIfAdmin     = "1.3.6.1.2.1.2.2.1.7"              // ifAdminStatus (1=up, 2=down)
+	oidIfOper      = "1.3.6.1.2.1.2.2.1.8"              // ifOperStatus  (1=up, 2=down)
+	oidIfHighSpeed = "1.3.6.1.2.1.31.1.1.1.15"          // ifHighSpeed Mbps
+	oidIfAlias     = "1.3.6.1.2.1.31.1.1.1.18"          // ifAlias
 	oidZtePONTable = "1.3.6.1.4.1.3902.1012.3.11.3.1.1" // PON index table
 )
 
@@ -75,33 +75,33 @@ type uplinkPortState struct {
 }
 
 type chassisPort struct {
-	Port        int     `json:"port"`
-	Iface       string  `json:"iface,omitempty"`
-	OnuCount    int     `json:"onuCount"`
-	OnlineCount int     `json:"onlineCount"`
-	HasOnus     bool    `json:"hasOnus"`
-	AdminStatus string  `json:"adminStatus,omitempty"`
-	LinkStatus  string  `json:"linkStatus,omitempty"`
-	Speed       string  `json:"speed,omitempty"`
-	PhysType    string  `json:"physicalType,omitempty"`
-	Description string  `json:"description,omitempty"`
-	IsEnabled   *bool   `json:"isEnabled,omitempty"`
-	IsLinked    *bool   `json:"isLinked,omitempty"`
+	Port        int    `json:"port"`
+	Iface       string `json:"iface,omitempty"`
+	OnuCount    int    `json:"onuCount"`
+	OnlineCount int    `json:"onlineCount"`
+	HasOnus     bool   `json:"hasOnus"`
+	AdminStatus string `json:"adminStatus,omitempty"`
+	LinkStatus  string `json:"linkStatus,omitempty"`
+	Speed       string `json:"speed,omitempty"`
+	PhysType    string `json:"physicalType,omitempty"`
+	Description string `json:"description,omitempty"`
+	IsEnabled   *bool  `json:"isEnabled,omitempty"`
+	IsLinked    *bool  `json:"isLinked,omitempty"`
 }
 
 type chassisSlotOut struct {
-	Index       int           `json:"index"`
-	Label       string        `json:"label"`
-	Type        string        `json:"type"`
-	Description string        `json:"description,omitempty"`
-	Present     bool          `json:"present"`
-	CardType    string        `json:"cardType"`
-	HardVer     string        `json:"hardVer,omitempty"`
-	SoftVer     string        `json:"softVer,omitempty"`
-	CardStatus  string        `json:"cardStatus,omitempty"`
-	PortCount   int           `json:"portCount"`
-	Ports       []chassisPort `json:"ports"`
-	UplinkIfaces []string     `json:"uplinkIfaces,omitempty"`
+	Index        int           `json:"index"`
+	Label        string        `json:"label"`
+	Type         string        `json:"type"`
+	Description  string        `json:"description,omitempty"`
+	Present      bool          `json:"present"`
+	CardType     string        `json:"cardType"`
+	HardVer      string        `json:"hardVer,omitempty"`
+	SoftVer      string        `json:"softVer,omitempty"`
+	CardStatus   string        `json:"cardStatus,omitempty"`
+	PortCount    int           `json:"portCount"`
+	Ports        []chassisPort `json:"ports"`
+	UplinkIfaces []string      `json:"uplinkIfaces,omitempty"`
 }
 
 // ── Card classification ───────────────────────────────────────────────────────
@@ -272,18 +272,18 @@ func parseUplinkPortStatus(output string, ifaces []string) map[string]uplinkPort
 			continue
 		}
 		parts := strings.Fields(line)
-		if len(parts) < 8 {
+		if len(parts) < 11 {
 			continue
 		}
 		iface := parts[0]
 		if !wanted[strings.ToLower(iface)] {
 			continue
 		}
-		adminRaw := parts[7]
-		linkRaw := ""
-		if len(parts) > 8 {
-			linkRaw = parts[8]
-		}
+		// Column layout (0-indexed):
+		// [0]=Port [1]=PhType [2]=Speed [3]=Duplex [4]=ActualSpeed [5]=FEC
+		// [6]=CRC16 [7]=Pause [8]=FlowCtrl [9]=AdminStatus [10]=LinkStatus
+		adminRaw := parts[9]
+		linkRaw := parts[10]
 		adminStatus := adminRaw
 		if strings.EqualFold(adminRaw, "activate") {
 			adminStatus = "Up"
@@ -645,6 +645,15 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 			uplinkStates := parseUplinkPortStatus(telnetRes.portStatus, allIfaces)
 			if len(uplinkStates) == 0 && len(allIfaces) > 0 && ifMib != nil {
 				uplinkStates = buildUplinkStatesFromSNMP(ifMib, allIfaces)
+			} else if ifMib != nil {
+				// Merge SNMP ifAlias descriptions into Telnet-parsed states
+				snmpStates := buildUplinkStatesFromSNMP(ifMib, allIfaces)
+				for iface, st := range uplinkStates {
+					if snmpSt, ok := snmpStates[iface]; ok && snmpSt.Description != "" {
+						st.Description = snmpSt.Description
+						uplinkStates[iface] = st
+					}
+				}
 			}
 
 			// Determine slot range
@@ -742,17 +751,17 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 				}
 
 				chassis = append(chassis, chassisSlotOut{
-					Index:      slotIdx,
-					Label:      label,
-					Type:       string(sType),
+					Index:       slotIdx,
+					Label:       label,
+					Type:        string(sType),
 					Description: desc,
-					Present:    operational || (isMCU && slotIdx == 0),
-					CardType:   cardType,
-					HardVer:    hardVer,
-					SoftVer:    softVer,
-					CardStatus: cardStatus,
-					PortCount:  portCount,
-					Ports:      ports,
+					Present:     operational || (isMCU && slotIdx == 0),
+					CardType:    cardType,
+					HardVer:     hardVer,
+					SoftVer:     softVer,
+					CardStatus:  cardStatus,
+					PortCount:   portCount,
+					Ports:       ports,
 					UplinkIfaces: func() []string {
 						if sType == slotUplink {
 							return uplinkIfacesBySlot[slotIdx]
@@ -764,7 +773,7 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 
 			// Sort by slot index
 			sortChassisSlots(chassis)
-		vendorStr, modelStr := derefStr(olt.Vendor), derefStr(olt.Model)
+			vendorStr, modelStr := derefStr(olt.Vendor), derefStr(olt.Model)
 			return c.JSON(fiber.Map{
 				"success": true, "chassis": chassis,
 				"vendor": vendorStr, "model": modelStr, "source": "telnet",
@@ -860,14 +869,14 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 		}
 
 		chassis = append(chassis, chassisSlotOut{
-			Index:     slotIdx,
-			Label:     label,
-			Type:      string(sType),
+			Index:       slotIdx,
+			Label:       label,
+			Type:        string(sType),
 			Description: cardType,
-			Present:   present,
-			CardType:  cardType,
-			PortCount: portCount,
-			Ports:     ports,
+			Present:     present,
+			CardType:    cardType,
+			PortCount:   portCount,
+			Ports:       ports,
 		})
 	}
 
