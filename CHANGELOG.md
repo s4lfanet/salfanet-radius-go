@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.67] — 2026-05-21
+### Fixed
+- **RxPower formula salah (lagi)** — Formula `10*log10(raw)-60` (nW asumsi) masih salah. Setelah menganalisis raw SNMP dari live device vs CSV referensi, ditemukan rumus yang benar: **`dBm = raw/500.0 - 30.0`**. Verifikasi: raw=6751 → -16.50 dBm ✓, raw=5085 → -19.83 dBm ✓, raw=5910 → -18.18 dBm ✓ (cocok dengan CSV). ZTE C320 menggunakan encoding linear: 0 raw = -30 dBm, step 0.002 dBm per unit.
+- **ONU Name tidak muncul untuk FiberHome ONUs** — ONU FiberHome (prefix FHTTC/FHTT) mengembalikan `regStatus=2` dari SNMP, tapi kode hanya memproses `regStatus=1`. ONU regStatus=2 masuk ke loop fallback yang tidak membaca `description` dan masih menggunakan formula lama. Fix: terima regStatus=1 dan 2 sebagai "registered", baca description di kedua loop, gunakan formula yang benar di kedua loop.
+- **Signal quality threshold** — Dikalibrasi ulang sesuai nilai aktual dari live device: rentang -10 s/d -20 dBm. Threshold baru: ≥ -14 Excellent, ≥ -18 Good, ≥ -22 Fair, < -22 Poor.
+### Files
+- `internal/olt/vendors/zte/zte.go` — formula rxPower & txPower → `raw/500.0 - 30.0`; filter regStatus menerima 1 dan 2; loop fallback tambah description + formula benar; hapus import `math`
+- `src/app/admin/olt/[id]/page.tsx` — signal thresholds dikalibrasi
+
+---
+
 ## [2.52.66] — 2026-05-21
 ### Fixed
 - **RxPower formula salah** — ZTE C320 SNMP OID `.3.50.12.1.1.10` mengembalikan nilai integer dalam satuan **nanowatt (nW)**, bukan milli-dBm. Formula lama `dBm = -raw/1000` menghasilkan nilai seperti -7 dBm (salah). Formula benar: `dBm = 10 × log10(raw) - 60`. Contoh: raw=7540 nW → -21.2 dBm ✓. Nilai rxPower lama di DB di-reset agar sync berikutnya menulis nilai yang benar.
