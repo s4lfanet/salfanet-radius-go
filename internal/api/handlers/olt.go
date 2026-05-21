@@ -531,10 +531,10 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 		Offline int64 `json:"offline"`
 	}
 	type chassisPort struct {
-		Port       int  `json:"port"`
-		OnuCount   int  `json:"onuCount"`
-		OnlineCount int `json:"onlineCount"`
-		HasOnus    bool `json:"hasOnus"`
+		Port        int  `json:"port"`
+		OnuCount    int  `json:"onuCount"`
+		OnlineCount int  `json:"onlineCount"`
+		HasOnus     bool `json:"hasOnus"`
 	}
 	type chassisSlot struct {
 		Index     int           `json:"index"`
@@ -576,21 +576,25 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 	}
 
 	// Determine portCount and cardType for each service slot
-	cardType := func(portCount int) string {
-		if portCount <= 4 {
-			return "GTGO"
-		} else if portCount <= 8 {
-			return "GTGH"
+	// cardType is determined by maxPort (1-based PON port number):
+	//   maxPort <= 4  → GTGO (4-port GPON card)
+	//   maxPort <= 8  → GTGH (8-port GPON card)
+	//   otherwise     → GTGQ (16-port GPON card)
+	cardType := func(maxPort int) (string, int) {
+		if maxPort <= 4 {
+			return "GTGO", 4
+		} else if maxPort <= 8 {
+			return "GTGH", 8
 		}
-		return "GTGQ"
+		return "GTGQ", 16
 	}
 
 	var chassis []chassisSlot
 	for slotIdx, agg := range slotMap {
-		portCount := agg.maxPort + 1
-		if portCount < 4 {
-			portCount = 4
-		}
+		ct, stdPortCount := cardType(agg.maxPort)
+		// ports array uses 0-indexed port numbers matching what's stored in DB (1-indexed port=1..N)
+		// frontend renders Math.max(portCount, 16) squares, port index i → portStats["slot/i"]
+		portCount := stdPortCount + 1 // +1 so indices 1..N are valid (index 0 = unused)
 		ports := make([]chassisPort, portCount)
 		for i := range ports {
 			ports[i] = chassisPort{Port: i, OnuCount: 0, OnlineCount: 0, HasOnus: false}
@@ -605,7 +609,6 @@ func (h *OLTHandler) GetChassis(c fiber.Ctx) error {
 				}
 			}
 		}
-		ct := cardType(portCount)
 		chassis = append(chassis, chassisSlot{
 			Index:     slotIdx,
 			Label:     fmt.Sprintf("%d", slotIdx),
