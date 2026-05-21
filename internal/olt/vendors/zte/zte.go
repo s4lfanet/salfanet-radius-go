@@ -7,8 +7,8 @@
 //	Serial:         .3.28.1.1.5   (Hex-STRING: 4 ASCII vendor + 4 hex SN)
 //	RegStatus:      .3.50.12.1.1.1 (1 = registered; indexed .col.ponIndex.onuSlot.onuId)
 //	OperState:      .3.50.12.1.1.6 (5|4=online, 0=unknown, else=offline)
-//	RxPower:        .3.50.12.1.1.10 (raw positive int in nanowatts; dBm = 10*log10(raw) - 60)
-//	TxPower:        .3.50.12.1.1.11 (raw positive int in nanowatts; dBm = 10*log10(raw) - 60)
+//	RxPower:        .3.50.12.1.1.10 (raw int; dBm = raw/500.0 - 30; e.g. raw=6751 → -16.50 dBm)
+//	TxPower:        .3.50.12.1.1.11 (same encoding as RxPower)
 //	Distance:       .3.50.12.1.1.21 (meters)
 //	SeenONU table:  1.3.6.1.4.1.3902.1012.3.27.4.1.1  (ALL seen ONUs incl. unregistered)
 //	PON port table: 1.3.6.1.4.1.3902.1012.3.11.3.1.1  (one entry per provisioned PON port)
@@ -17,7 +17,6 @@ package zte
 import (
 	"context"
 	"fmt"
-	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -40,7 +39,7 @@ const (
 	// zxAnGponOnuRegTable — indexed .col.ponIndex.onuSlot.onuId (3 index components)
 	oidRegStatus = oidBase + ".3.50.12.1.1.1"
 	oidOperState = oidBase + ".3.50.12.1.1.6"
-	oidRxPower   = oidBase + ".3.50.12.1.1.10" // raw pos int in nanowatts; dBm = 10*log10(raw) - 60
+	oidRxPower   = oidBase + ".3.50.12.1.1.10" // raw int; dBm = raw/500.0 - 30.0
 	oidTxPower   = oidBase + ".3.50.12.1.1.11" // OLT TX power toward ONU
 	oidDistance  = oidBase + ".3.50.12.1.1.21" // meters from OLT
 
@@ -212,9 +211,9 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 
 	onuMap := make(map[IndexKey]*ONUInfo)
 
-	// ── Registered ONUs (authoritative source: regStatus=1) ─────────────────
+	// ── Registered ONUs (regStatus=1 normal; regStatus=2 = SB mode, used by FiberHome ONUs) ───
 	for k, regVal := range merged.regStatus {
-		if regVal != 1 {
+		if regVal != 1 && regVal != 2 {
 			continue
 		}
 		frame, slot, port, onuID := decodePonIndex(k.PonIndex, k.OnuID)
@@ -233,17 +232,16 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		}
 		info.Status = decodeOperState(merged.operState[k])
 
-		// RxPower: raw positive int in nanowatts (nW).
-		// ZTE C320 encoding: dBm = 10*log10(raw_nW) - 60
-		// Valid GPON rx range: ~2 nW (-57 dBm) to ~500000 nW (-3 dBm).
-		// Typical ONU downstream rx: 1000–25000 nW (-20 to -27 dBm).
+		// RxPower: ZTE C320 encodes optical power as raw = (dBm + 30) * 500.
+		// Formula: dBm = raw/500.0 - 30.0
+		// Verified from live device: raw=6751 → -16.50 dBm; raw=5085 → -19.83 dBm.
 		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 {
-			dbm := 10*math.Log10(float64(rxRaw)) - 60
+			dbm := float64(rxRaw)/500.0 - 30.0
 			info.RxPower = &dbm
 		}
 		// TxPower: same encoding
 		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 {
-			dbm := 10*math.Log10(float64(txRaw)) - 60
+			dbm := float64(txRaw)/500.0 - 30.0
 			info.TxPower = &dbm
 		}
 		if dist, ok := merged.distances[k]; ok && dist > 0 && dist < 100000 {
@@ -270,9 +268,20 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		if sn, ok := merged.serials[k]; ok {
 			info.SerialNumber = sn
 		}
-		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 && rxRaw < 50000 {
-			dbm := -float64(rxRaw) / 1000.0
+		if desc, ok := merged.descs[k]; ok {
+			info.Description = desc
+		}
+		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 {
+			dbm := float64(rxRaw)/500.0 - 30.0
 			info.RxPower = &dbm
+		}
+		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 {
+			dbm := float64(txRaw)/500.0 - 30.0
+			info.TxPower = &dbm
+		}
+		if dist, ok := merged.distances[k]; ok && dist > 0 && dist < 100000 {
+			d := int(dist)
+			info.Distance = &d
 		}
 		onuMap[k] = info
 	}
