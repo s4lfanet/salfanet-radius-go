@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.63 — 2026-05-23
+
+### Fixed
+- **Port map uplink AdminStatus/LinkStatus wrong** — `parseUplinkPortStatus` was reading column 7 (Pause) and column 8 (FlowControl) instead of column 9 (AdminStatus) and column 10 (LinkStatus). All uplink ports showed `DIS`/down incorrectly on the chassis port map.
+- **Minimum column count check** — updated from `len(parts) < 8` to `len(parts) < 11` so rows with fewer than 11 columns are skipped correctly.
+- **Uplink description via SNMP** — when Telnet-parsed uplink states are available, SNMP `ifAlias` descriptions are now merged in, so uplink port hover tooltips show descriptions even when Telnet is the primary data source.
+- **GetUplink handler** — replaced stub with real Telnet-based implementation for all four tabs: `status` (parses `show interface port-status` + `show interface` with SNMP fallback), `vlan` (parses `show running-config interface`), `config` (returns raw running-config), `optical` (parses `show interface optical-module-info` + `show ddmi interface`).
+- **CreateUplink handler** — replaced stub with real Telnet config-mode implementation: `addVlan`, `removeVlan`, `enable`, `disable`, `setPvid`, `removePvid`, `setDescription`.
+### Files
+- `internal/api/handlers/olt_chassis.go` — fix `parseUplinkPortStatus` column indices (9, 10); merge SNMP description into Telnet-parsed uplink states
+- `internal/api/handlers/olt.go` — implement real `GetUplink` + `CreateUplink` handlers with full parser helpers; add `context`, `regexp`, `strings`, snmputil imports
+
 ### v2.52.62 — 2026-05-23
 
 ### Fixed
@@ -532,17 +544,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **OLT detail page crash — TypeError: Cannot read properties of undefined (reading 'length')** — GORM JSON omits empty arrays (due to `omitempty`) so `onuStatuses`, `alerts`, `routers`, `monitoringLogs`, `performanceMetrics` are `undefined` on the frontend when empty. Added `?? []` normalization after `data.olt` is received in `fetchOLT`.
 ### Files
 - `src/app/admin/olt/[id]/page.tsx` — normalize all relation arrays to `[]` after fetch
-
-### v2.52.58 — 2026-05-21
-
-### Fixed
-- **GET /api/olt/:id — 404** — Root cause: `GetOLT` handler uses `Preload("MonitoringLogs", Order("created_at DESC"))` dan `Preload("PerformanceMetrics", Order("recorded_at DESC"))`. DB columns are camelCase (`createdAt`, `recordedAt`), bukan snake_case. MySQL error "Unknown column 'created_at'" membuat seluruh query gagal → handler return 404.
-- **`NetworkOLT` model — tidak ada column tags** — Semua field compound (`ipAddress`, `snmpEnabled`, `isOnline`, `totalOnu`, dst.) dipetakan GORM sebagai snake_case (`ip_address`, `snmp_enabled`, `is_online`, `total_onu`, dst.) tapi DB pakai camelCase. CREATE/UPDATE/SELECT semua salah.
-- **`olt_ext.go` Monitoring SELECT — snake_case columns** — `Select("id,name,ip_address,status,is_online,total_onu,online_onu,offline_onu")` → MySQL error "Unknown column". Diganti ke `"id,name,ipAddress,status,isOnline,totalOnu,onlineOnu,offlineOnu"`.
-### Files
-- `internal/db/models/olt.go` — tambah `gorm:"column:..."` camelCase ke semua field `NetworkOLT`: `ipAddress`, `followRoad`, `firmwareVersion`, `snmpEnabled`, `snmpCommunity`, `snmpPort`, `telnetEnabled`, `telnetPort`, `sshEnabled`, `sshPort`, `monitoringEnabled`, `pollingInterval`, `lastPollAt`, `isOnline`, `totalOnu`, `onlineOnu`, `offlineOnu`, `createdAt`, `updatedAt`
-- `internal/api/handlers/olt.go` — fix `GetOLT` preload order: `created_at` → `createdAt`, `recorded_at` → `recordedAt`
-- `internal/api/handlers/olt_ext.go` — fix `Monitoring` SELECT ke camelCase column names
 
 <!-- AUTO-CHANGELOG:END -->
 
