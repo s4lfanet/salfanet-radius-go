@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.79 — 2026-05-22
+
+### Fixed
+- **Reboot ONU tidak berfungsi** — `RebootONU` handler sebelumnya hanya stub (return success tanpa melakukan apa-apa). Perintah `reset gpon-onu_F/S/P:N` tidak valid di ZTE C320 V2.1 (error 20200/20204). Fix: implementasi nyata via Telnet dengan `shutdown` + `no shutdown` pada interface ONU, yang memaksa ONU offline dan re-registrasi (terbukti dari log: `Online Duration: 0h 00m 02s` setelah reboot).
+- **Batch Reboot ONU tidak berfungsi** — `BatchRebootONUs` handler juga stub. Fix: implementasi nyata — query ONUs dari DB, build commands `configure terminal` → `interface gpon-onu_F/S/P:N` → `shutdown` → `no shutdown` → `exit` untuk setiap ONU, kemudian `end`.
+- **ONU Detail modal banyak field N/A** — `onuParseDetailInfo` menggunakan alias field yang salah (`SN` alih-alih `Serial number`, `Match mode` alih-alih `Authentication mode`, `Control flag` alih-alih `Admin state`, dll) dan skip nilai kosong (`if val == "" { continue }`) sehingga `OMCI BW Profile` selalu ter-skip. Fix: hapus alias mapping (frontend menggunakan nama field ZTE C320 asli langsung), izinkan empty values, dan perbaiki summary map dengan nama field yang benar (`Authentication mode`, `SN Bind`, `Admin state`, `Current channel`, `Configured channel`, `DBA Mode`, `Vport mode`, `Line Profile`, `Service Profile`, `OMCI BW Profile`, `Serial number`).
+### Files
+- `internal/api/handlers/misc_handler.go` — Implement `RebootONU` via shutdown/no-shutdown; implement `BatchRebootONUs`; fix `onuParseDetailInfo` aliases and summary fields
+
 ### v2.52.78 — 2026-05-22
 
 ### Fixed
@@ -533,13 +542,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/olt_pon_stat.go` — Handler baru `GetPONStat`; parser `parsePONInterfaceStat`, `parsePONBps`, `parsePONPct`, `parsePONFloatFromUnit`
 - `internal/api/router.go` — Route baru `GET /api/olt/:id/pon-stat`
 - `src/app/admin/olt/[id]/page.tsx` — Tambah type `PONPortStat`; state `expandedPON`, `ponStatCache`, `loadingPON`; fungsi `fetchPONStat`; "Detail Per Port PON" expandable cards dengan Temperature, TX Power, Voltage, Upstream/Downstream
-
-### v2.52.74 — 2026-05-22
-
-### Fixed
-- **Distance ONU semua NULL** — OID `.3.50.12.1.1.21` adalah nilai konstan per-port (bukan per-ONU), sehingga tidak ter-mapping ke masing-masing ONU dan distance tetap NULL di DB. Fix: ganti ke OID `.3.50.12.1.1.18` (equalization delay per-ONU, terindex per onuId) dengan formula `raw × 0.112` (diverifikasi: ONU 28 OID18=5000 → 5000×0.112=560m sesuai data Telnet).
-### Files
-- `internal/olt/vendors/zte/zte.go` — `oidDistance` dari OID `.21` ke OID `.18`; formula `int(dist)` → `int(float64(dist) * 0.112)` (2 tempat)
 
 <!-- AUTO-CHANGELOG:END -->
 
