@@ -220,6 +220,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	olt.Get("/:id/onus/:onuId", oltH.GetONU)
 	olt.Post("/:id/onus/:onuId/register", oltH.RegisterONU)
 	olt.Delete("/:id/onus/:onuId", oltH.DeregisterONU)
+	olt.Get("/:id/onus/:onuId/assign", oltH.GetAssignONUCandidates)
 	olt.Post("/:id/onus/:onuId/assign", oltH.AssignONU)
 	olt.Get("/:id/alerts", oltH.ListAlerts)
 	olt.Get("/:id/performance", oltH.ListPerformance)

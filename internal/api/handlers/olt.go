@@ -477,15 +477,42 @@ func (h *OLTHandler) DeregisterONU(c fiber.Ctx) error {
 
 // AssignONU godoc
 // POST /api/olt/:id/onus/:onuId/assign
+// GET /api/olt/:id/onus/:onuId/assign — return searchable customer list for assignment modal
+func (h *OLTHandler) GetAssignONUCandidates(c fiber.Ctx) error {
+	oltID := c.Params("id")
+	onuID := c.Params("onuId")
+	q := strings.TrimSpace(c.Query("q"))
+
+	var onu models.OLTONUStatus
+	if err := h.db.Preload("Customer").Where("oltId = ? AND id = ?", oltID, onuID).First(&onu).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"success": false, "error": "ONU not found"})
+	}
+
+	var customers []models.PppoeUser
+	db := h.db.Select("id, username, name, phone, customer_id").Limit(50)
+	if q != "" {
+		like := "%" + q + "%"
+		db = db.Where("name LIKE ? OR username LIKE ? OR phone LIKE ? OR customer_id LIKE ?", like, like, like, like)
+	}
+	db.Find(&customers)
+
+	return c.JSON(fiber.Map{
+		"success":         true,
+		"customers":       customers,
+		"currentCustomer": onu.Customer,
+	})
+}
+
+// POST /api/olt/:id/onus/:onuId/assign — assign or unassign a customer from an ONU
 func (h *OLTHandler) AssignONU(c fiber.Ctx) error {
 	oltID := c.Params("id")
 	onuID := c.Params("onuId")
 
 	var body struct {
-		CustomerID string `json:"customerId"`
+		CustomerID *string `json:"customerId"`
 	}
-	if err := c.Bind().JSON(&body); err != nil || body.CustomerID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "customerId required"})
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
 	if err := h.db.Model(&models.OLTONUStatus{}).
@@ -494,8 +521,7 @@ func (h *OLTHandler) AssignONU(c fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.JSON(fiber.Map{"message": "ONU assigned to customer"})
-}
+	return c.JSON(fiber.Map{"success": true, "message": "ONU customer assignment updated"})
 
 // GetRegisterMetadata godoc
 // GET /api/olt/:id/onus/register — returns ONU types and TCONT profiles for register form

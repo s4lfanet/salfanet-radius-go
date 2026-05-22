@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.80] — 2026-05-22
+### Fixed
+- **Assign Customer 405 Method Not Allowed** — Frontend memanggil `GET /api/olt/:id/onus/:onuId/assign` untuk memuat daftar pelanggan di assign modal, namun backend hanya mendaftarkan `POST` untuk route tersebut. Fix: tambahkan `GET` handler `GetAssignONUCandidates` yang mengembalikan daftar `PppoeUser` (bisa dicari via `?q=`) dan customer yang sedang di-assign ke ONU.
+- **Unassign ONU tidak berfungsi** — `AssignONU` POST handler menggunakan `CustomerID string` sehingga nilai `null` dari frontend di-decode sebagai string kosong, lalu ditolak dengan error "customerId required". Fix: ubah ke `*string` agar `null` diterima dan GORM meng-update kolom ke NULL (unassign).
+### Files
+- `internal/api/handlers/olt.go` — Add `GetAssignONUCandidates` GET handler; fix `AssignONU` to accept null customerId for unassign
+- `internal/api/router.go` — Register `GET /:id/onus/:onuId/assign` route
+
+---
+
 ## [2.52.79] — 2026-05-22
 ### Fixed
 - **Reboot ONU tidak berfungsi** — `RebootONU` handler sebelumnya hanya stub (return success tanpa melakukan apa-apa). Perintah `reset gpon-onu_F/S/P:N` tidak valid di ZTE C320 V2.1 (error 20200/20204). Fix: implementasi nyata via Telnet dengan `shutdown` + `no shutdown` pada interface ONU, yang memaksa ONU offline dan re-registrasi (terbukti dari log: `Online Duration: 0h 00m 02s` setelah reboot).
