@@ -522,6 +522,7 @@ func (h *OLTHandler) AssignONU(c fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"success": true, "message": "ONU customer assignment updated"})
+}
 
 // GetRegisterMetadata godoc
 // GET /api/olt/:id/onus/register — returns ONU types and TCONT profiles for register form
