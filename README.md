@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.80 — 2026-05-22
+
+### Fixed
+- **Assign Customer 405 Method Not Allowed** — Frontend memanggil `GET /api/olt/:id/onus/:onuId/assign` untuk memuat daftar pelanggan di assign modal, namun backend hanya mendaftarkan `POST` untuk route tersebut. Fix: tambahkan `GET` handler `GetAssignONUCandidates` yang mengembalikan daftar `PppoeUser` (bisa dicari via `?q=`) dan customer yang sedang di-assign ke ONU.
+- **Unassign ONU tidak berfungsi** — `AssignONU` POST handler menggunakan `CustomerID string` sehingga nilai `null` dari frontend di-decode sebagai string kosong, lalu ditolak dengan error "customerId required". Fix: ubah ke `*string` agar `null` diterima dan GORM meng-update kolom ke NULL (unassign).
+### Files
+- `internal/api/handlers/olt.go` — Add `GetAssignONUCandidates` GET handler; fix `AssignONU` to accept null customerId for unassign
+- `internal/api/router.go` — Register `GET /:id/onus/:onuId/assign` route
+
 ### v2.52.79 — 2026-05-22
 
 ### Fixed
@@ -531,17 +540,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetDistances(pool, onus)` dan `parseTelnetDistances(raw)` untuk parsing `ONU Distance: Xm` dari combined Telnet output
 - `internal/olt/poller/poller.go` — Di `poll()`: retrieve pool dari `p.pools[olt.ID]`; panggil `zte.FetchTelnetDistances` setelah SNMP discovery; override `onu.Distance` untuk setiap ONU yang mendapat data Telnet
-
-### v2.52.75 — 2026-05-22
-
-### Added
-- **Per-PON Live Stats** — Setiap port PON di section "Detail Per Port PON" kini bisa di-klik untuk expand dan menampilkan data live dari Telnet OLT: Temperature (°C), TX Power (dBm), Voltage (V), Bias Current (mA), Upstream/Downstream rate (Mbps) dan bandwidth usage (%). Data diambil via `show interface gpon-olt_1/{slot}/{port}` dan `show interface optical-module-info gpon-olt_1/{slot}/{port}`.
-### Fixed
-- **Chassis port squares** — Port PON menunjukkan index 0 (0/1/0) pada tooltip dan green box di posisi ke-2; seharusnya 1-based. Fix: rebuild frontend (source sudah benar dengan `i+1`, VPS belum di-build ulang).
-### Files
-- `internal/api/handlers/olt_pon_stat.go` — Handler baru `GetPONStat`; parser `parsePONInterfaceStat`, `parsePONBps`, `parsePONPct`, `parsePONFloatFromUnit`
-- `internal/api/router.go` — Route baru `GET /api/olt/:id/pon-stat`
-- `src/app/admin/olt/[id]/page.tsx` — Tambah type `PONPortStat`; state `expandedPON`, `ponStatCache`, `loadingPON`; fungsi `fetchPONStat`; "Detail Per Port PON" expandable cards dengan Temperature, TX Power, Voltage, Upstream/Downstream
 
 <!-- AUTO-CHANGELOG:END -->
 
