@@ -491,6 +491,21 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.87 — 2026-05-31
+
+### Added
+- **Clean Config ONU dari OLT** — Tombol "Clean" (kuning) di tabel ONU list mengirim `restore default` ke interface `gpon-onu_1/{slot}/{port}:{onuId}` via Telnet. ONU tetap terdaftar di PON port, hanya konfigurasi service (VLAN, profile) yang di-reset. Endpoint: `POST /api/olt/:id/onus/:onuId/clean-config`.
+- **Fix Delete ONU endpoint** — Frontend memanggil `DELETE /api/olt/:id/onus/:onuId/delete` tapi route belum ada. Route baru ditambahkan, mengarah ke handler `DeregisterONU` yang sudah ada.
+### Fixed
+- **TxPower tidak tersimpan saat poll** — Poller SNMP sudah memparse `TxPower` dari ZTE via SNMP (`oidTxPower`) tapi nilai tidak di-assign ke `base.TxPower` dan tidak masuk ke upsert `DoUpdates`. Fix: tambah `base.TxPower = onu.TxPower` dan `txPower: COALESCE(...)` ke upsert.
+- **Table ONU lambat update setelah mutasi** — Setelah delete ONU, sekarang memanggil `fetchLiveOnus()` segera (bukan hanya `fetchOLT()`). Interval auto-refresh dipercepat dari 30s → 15s.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Tambah `CleanONUConfig()`
+- `internal/api/handlers/misc_handler.go` — Tambah `CleanONUConfig` handler; import `zte`
+- `internal/api/router.go` — Tambah route `POST /:id/onus/:onuId/clean-config` dan `DELETE /:id/onus/:onuId/delete`
+- `internal/olt/poller/poller.go` — Tambah `TxPower` ke base struct dan upsert `DoUpdates`
+- `src/app/admin/olt/[id]/page.tsx` — State `cleaningConfigOnu`; handler `handleCleanConfigOnu`; tombol "Clean" di action column; refresh 15s; import `Eraser`
+
 ### v2.52.86 — 2026-05-31
 
 ### Fixed
@@ -530,14 +545,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/olt.go` — `ListONUs` ditulis ulang: raw SQL dengan LEFT JOIN ke `network_odps` + support `?all=true` untuk polling tanpa pagination; fix `const baseSQL` → `var baseSQL`
 - `internal/olt/poller/poller.go` — `checkAlerts`: tambah Rx power degradation check (single ONU + bulk per PON port) dengan create/resolve alert + WA+Telegram notifikasi
 - `src/app/admin/olt/[id]/page.tsx` — `liveOnus` state + `fetchLiveOnus` (30s interval); ODP column di tabel ONU; refresh indicator; fix PON stale closure via `fetchPONStatRef`
-
-### v2.52.82 — 2026-05-24
-
-### Fixed
-- **Sinkronisasi alert OLT detail vs halaman global** — Badge "Alerts" di tab detail OLT menghitung semua alert (termasuk yang sudah resolved) karena `Preload("Alerts")` tanpa filter. Kini backend hanya preload alert `isResolved = false`, dan frontend juga memfilter `!a.isResolved` sehingga badge dan konten tab hanya menampilkan alert aktif — konsisten dengan halaman global OLT Alerts.
-### Files
-- `internal/api/handlers/olt.go` — `GetOLT`: tambah filter `isResolved = false` + `Limit(50)` pada `Preload("Alerts")`
-- `src/app/admin/olt/[id]/page.tsx` — Badge tab "Alerts" dan konten tab kini filter `!a.isResolved`
 
 <!-- AUTO-CHANGELOG:END -->
 
