@@ -275,6 +275,23 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 		}
 	}
 
+	// ── Ghost ONU cleanup ─────────────────────────────────────────────────────
+	// Registered ONUs that were not seen in this SNMP walk at all (e.g. the ZTE
+	// completely removed them from the reg table because they powered off cleanly)
+	// will still have their old 'online' status in the DB. Mark them offline now.
+	// We use `updatedAt < start` as the marker — the upsert above sets updatedAt=now
+	// for every ONU visible in this poll cycle; anything older was not touched.
+	if res := p.db.WithContext(ctx).Model(&models.OLTONUStatus{}).
+		Where("oltId = ? AND status NOT IN (?, ?) AND updatedAt < ?",
+			olt.ID, string(models.OnuOffline), string(models.OnuUnregistered), start).
+		Updates(map[string]interface{}{
+			"status":    string(models.OnuOffline),
+			"updatedAt": now,
+		}); res.Error == nil && res.RowsAffected > 0 {
+		log.Debug().Str("olt", olt.ID).Int64("count", res.RowsAffected).Msg("poller: ghost ONUs marked offline")
+		offlineCount += int(res.RowsAffected)
+	}
+
 	allStatuses := append(registeredStatuses, unregisteredStatuses...)
 	totalONU := len(allStatuses)
 
@@ -346,7 +363,7 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 
 		switch s.Status {
 		case models.OnuOffline:
-			// Create a new alert only when there is no open one.
+			// Create a new offline alert only when there is no open one.
 			var existing models.OLTAlert
 			err := p.db.WithContext(ctx).Where(
 				"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
@@ -355,8 +372,7 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 			if err == nil {
 				continue // Already open
 			}
-
-			message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) went offline",
+			message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) offline",
 				strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID)
 			alert := models.OLTAlert{
 				ID:        uuid.NewString(),
@@ -371,24 +387,48 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 			}
 			p.db.WithContext(ctx).Create(&alert)
 
-		case models.OnuOnline:
-			// Resolve any open offline alert and send recovery notification.
+		case models.OnuDyingGasp:
+			// Create a dying gasp alert if none open.
 			var existing models.OLTAlert
 			err := p.db.WithContext(ctx).Where(
 				"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
-				olt.ID, realID, models.AlertONUOffline, false,
+				olt.ID, realID, models.AlertDyingGasp, false,
 			).First(&existing).Error
-			if err != nil {
-				// no open offline alert — still check Rx power below
-			} else {
-				now := time.Now()
-				p.db.WithContext(ctx).Model(&existing).Updates(map[string]interface{}{
-					"isResolved": true,
-					"resolvedAt": &now,
-				})
-				message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) is back online",
-					strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID)
-				go p.notifyAlert(olt.Name, message, true) //nolint:errcheck
+			if err == nil {
+				continue // Already open
+			}
+			message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) dying gasp — kemungkinan listrik mati mendadak",
+				strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID)
+			alert := models.OLTAlert{
+				ID:        uuid.NewString(),
+				OltID:     &olt.ID,
+				OnuID:     &realID,
+				AlertType: models.AlertDyingGasp,
+				Severity:  models.SeverityCritical,
+				Message:   message,
+			}
+			if waErr := p.notifyAlert(olt.Name, message, false); waErr == nil {
+				alert.NotifiedViaWhatsapp = true
+			}
+			p.db.WithContext(ctx).Create(&alert)
+
+		case models.OnuOnline:
+			// Resolve any open offline or dying-gasp alert and send recovery notification.
+			resolvTime := time.Now()
+			for _, alertType := range []models.OltAlertType{models.AlertONUOffline, models.AlertDyingGasp} {
+				var existing models.OLTAlert
+				if err := p.db.WithContext(ctx).Where(
+					"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
+					olt.ID, realID, alertType, false,
+				).First(&existing).Error; err == nil {
+					p.db.WithContext(ctx).Model(&existing).Updates(map[string]interface{}{
+						"isResolved": true,
+						"resolvedAt": &resolvTime,
+					})
+					message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) kembali online",
+						strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID)
+					go p.notifyAlert(olt.Name, message, true) //nolint:errcheck
+				}
 			}
 		}
 

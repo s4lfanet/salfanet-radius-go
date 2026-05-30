@@ -757,11 +757,15 @@ func parseTcontProfiles(output string) []TcontProfile {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 // decodeOperState converts the raw ZTE OperState integer to our OltOnuStatus.
-// 5 or 4 = online, 0 = unknown → offline, anything else = offline.
+// ZTE C320 zxAnGponOnuRegOperStatus values (verified from ZTE MIB):
+//
+//	1=notPresent, 2=inactive, 3=activating, 4=working, 5=active, 6=dyingGasp
 func decodeOperState(v int64) models.OltOnuStatus {
 	switch v {
 	case 4, 5:
 		return models.OnuOnline
+	case 6:
+		return models.OnuDyingGasp
 	default:
 		return models.OnuOffline
 	}
