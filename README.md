@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.88 — 2026-05-31
+
+### Fixed
+- **RX Power / TX Power tampil 101.07 dBm** — ZTE C320 mengembalikan `0xFFFF` (65535) via SNMP sebagai nilai sentinel "no data". Sebelumnya nilai ini lolos filter `rxRaw > 0` dan dihitung: `65535/500 - 30 = 101.07 dBm`. Fix: tambah filter `rxRaw != 0xFFFF` di parser ZTE SNMP. Fix juga di layer SQL `ListONUs`: `CASE WHEN rxPower <= 30 THEN rxPower ELSE NULL END` agar nilai lama di DB tidak tampil sampai poller update berikutnya.
+- **Data ONU lambat aktual** — Default minimum poller interval diubah dari 60s → 30s. Sebelumnya jika `PollingInterval` tidak dikonfigurasi (0), interval fallback ke 60s. Sekarang fallback ke 30s sehingga data DB maksimal 30s dari kondisi aktual OLT.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Filter `rxRaw != 0xFFFF` dan `txRaw != 0xFFFF` di dua blok ONUInfo builder
+- `internal/olt/poller/poller.go` — Default minimum interval: 60s → 30s
+- `internal/api/handlers/olt.go` — Filter SQL `CASE WHEN rxPower/txPower <= 30` di `ListONUs`
+
 ### v2.52.87 — 2026-05-31
 
 ### Added
@@ -532,19 +542,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/db/models/olt.go` — `OLTONUStatus`: tambah `OdpID *string \`gorm:"index;column:odpId"\``
 - `internal/api/handlers/olt.go` — `ListONUs`: SQL JOIN ke `network_odps` via `o.odpId`; `UpdateONU`: tambah handling `odpId` + `clearOdp`
 - `src/app/admin/olt/[id]/page.tsx` — Kolom ODP kini clickable → `ONUOdpAssignModal`; state `assigningOdpToOnu`; komponen `ONUOdpAssignModal`
-
-### v2.52.83 — 2026-05-25
-
-### Added
-- **Rx power degradation alerts (WA + Telegram)** — Poller kini mendeteksi sinyal ONU lemah (Rx < -27 dBm) dan membuat alert tipe `rx_degradation`. Saat Rx membaik (>= -27 dBm), alert otomatis di-resolve. Juga mendeteksi degradasi massal: jika ≥ 3 atau ≥ 50% ONU online pada satu PON port memiliki sinyal lemah, dibuat alert tipe `bulk_rx_degrade` (severity: critical) dengan notifikasi WA + Telegram.
-- **Real-time auto-refresh tabel ONU** — List ONU di tab detail OLT kini refresh otomatis setiap 30 detik via `GET /api/olt/:id/onus?all=true`. Ditampilkan indikator "Updated Xs ago" di header tabel. Data awal langsung dimuat saat halaman dibuka.
-- **Kolom ODP di tabel ONU** — Kolom baru "ODP" di tabel list ONU, diisi dari join `network_odps` berdasarkan `ponPort = onu.port` (query SQL di `ListONUs`). Menampilkan nama ODP yang terhubung ke port tersebut.
-- **Fix PON port enable/disable (stale closure)** — Tombol Enable/Disable PON port kini bekerja dengan benar untuk port yang sedang enabled maupun disabled. Fix stale closure di `handlePONAction`: gunakan `useRef` (`fetchPONStatRef`) agar `fetchPONStat` dengan cache terbaru selalu dipanggil setelah aksi.
-### Files
-- `internal/db/models/olt.go` — Tambah `AlertRxDegradation` + `AlertBulkRxDegrade` ke `OltAlertType`
-- `internal/api/handlers/olt.go` — `ListONUs` ditulis ulang: raw SQL dengan LEFT JOIN ke `network_odps` + support `?all=true` untuk polling tanpa pagination; fix `const baseSQL` → `var baseSQL`
-- `internal/olt/poller/poller.go` — `checkAlerts`: tambah Rx power degradation check (single ONU + bulk per PON port) dengan create/resolve alert + WA+Telegram notifikasi
-- `src/app/admin/olt/[id]/page.tsx` — `liveOnus` state + `fetchLiveOnus` (30s interval); ODP column di tabel ONU; refresh indicator; fix PON stale closure via `fetchPONStatRef`
 
 <!-- AUTO-CHANGELOG:END -->
 
