@@ -491,6 +491,19 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.83 — 2026-05-25
+
+### Added
+- **Rx power degradation alerts (WA + Telegram)** — Poller kini mendeteksi sinyal ONU lemah (Rx < -27 dBm) dan membuat alert tipe `rx_degradation`. Saat Rx membaik (>= -27 dBm), alert otomatis di-resolve. Juga mendeteksi degradasi massal: jika ≥ 3 atau ≥ 50% ONU online pada satu PON port memiliki sinyal lemah, dibuat alert tipe `bulk_rx_degrade` (severity: critical) dengan notifikasi WA + Telegram.
+- **Real-time auto-refresh tabel ONU** — List ONU di tab detail OLT kini refresh otomatis setiap 30 detik via `GET /api/olt/:id/onus?all=true`. Ditampilkan indikator "Updated Xs ago" di header tabel. Data awal langsung dimuat saat halaman dibuka.
+- **Kolom ODP di tabel ONU** — Kolom baru "ODP" di tabel list ONU, diisi dari join `network_odps` berdasarkan `ponPort = onu.port` (query SQL di `ListONUs`). Menampilkan nama ODP yang terhubung ke port tersebut.
+- **Fix PON port enable/disable (stale closure)** — Tombol Enable/Disable PON port kini bekerja dengan benar untuk port yang sedang enabled maupun disabled. Fix stale closure di `handlePONAction`: gunakan `useRef` (`fetchPONStatRef`) agar `fetchPONStat` dengan cache terbaru selalu dipanggil setelah aksi.
+### Files
+- `internal/db/models/olt.go` — Tambah `AlertRxDegradation` + `AlertBulkRxDegrade` ke `OltAlertType`
+- `internal/api/handlers/olt.go` — `ListONUs` ditulis ulang: raw SQL dengan LEFT JOIN ke `network_odps` + support `?all=true` untuk polling tanpa pagination; fix `const baseSQL` → `var baseSQL`
+- `internal/olt/poller/poller.go` — `checkAlerts`: tambah Rx power degradation check (single ONU + bulk per PON port) dengan create/resolve alert + WA+Telegram notifikasi
+- `src/app/admin/olt/[id]/page.tsx` — `liveOnus` state + `fetchLiveOnus` (30s interval); ODP column di tabel ONU; refresh indicator; fix PON stale closure via `fetchPONStatRef`
+
 ### v2.52.82 — 2026-05-24
 
 ### Fixed
@@ -532,17 +545,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **ONU Detail modal banyak field N/A** — `onuParseDetailInfo` menggunakan alias field yang salah (`SN` alih-alih `Serial number`, `Match mode` alih-alih `Authentication mode`, `Control flag` alih-alih `Admin state`, dll) dan skip nilai kosong (`if val == "" { continue }`) sehingga `OMCI BW Profile` selalu ter-skip. Fix: hapus alias mapping (frontend menggunakan nama field ZTE C320 asli langsung), izinkan empty values, dan perbaiki summary map dengan nama field yang benar (`Authentication mode`, `SN Bind`, `Admin state`, `Current channel`, `Configured channel`, `DBA Mode`, `Vport mode`, `Line Profile`, `Service Profile`, `OMCI BW Profile`, `Serial number`).
 ### Files
 - `internal/api/handlers/misc_handler.go` — Implement `RebootONU` via shutdown/no-shutdown; implement `BatchRebootONUs`; fix `onuParseDetailInfo` aliases and summary fields
-
-### v2.52.78 — 2026-05-22
-
-### Fixed
-- **Remove VLAN 500 error** — Perintah `no switchport vlan X tag` tidak valid di ZTE C320 (mengembalikan `%Error 20201: Invalid command key word`). Perintah yang benar adalah `no switchport vlan X` (tanpa suffix `tag`). Sebelumnya juga ada dua commandSet — fallback kedua (`no switchport default vlan`) salah karena menghapus PVID bukan tagged VLAN. Kini hanya satu commandSet dengan perintah yang benar.
-- **API response 500 → 422 saat CLI error** — Ketika perintah Telnet ditolak OLT (CLI error seperti `%Error`), handler mengembalikan HTTP 500 "Uplink action failed" padahal ini bukan server error. Fix: kembalikan HTTP 422 Unprocessable Entity dengan detail pesan error dari OLT, sehingga frontend dapat menampilkan pesan yang tepat.
-### Changed
-- **Toggle Enable/Disable port** — Dua tombol terpisah (Enable + Disable) di status tab uplink diganti dengan satu tombol kontekstual: jika port sedang enabled tampil tombol "Disable Port" (merah), jika port disabled tampil tombol "Enable Port" (hijau).
-### Files
-- `internal/api/handlers/olt.go` — Fix `removeVlan` command dari `no switchport vlan X tag` → `no switchport vlan X`; remove wrong fallback commandSet; return 422 instead of 500 on CLI errors
-- `src/app/admin/olt/[id]/page.tsx` — Replace Enable+Disable buttons with single contextual toggle button
 
 <!-- AUTO-CHANGELOG:END -->
 
