@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.82 — 2026-05-24
+
+### Fixed
+- **Sinkronisasi alert OLT detail vs halaman global** — Badge "Alerts" di tab detail OLT menghitung semua alert (termasuk yang sudah resolved) karena `Preload("Alerts")` tanpa filter. Kini backend hanya preload alert `isResolved = false`, dan frontend juga memfilter `!a.isResolved` sehingga badge dan konten tab hanya menampilkan alert aktif — konsisten dengan halaman global OLT Alerts.
+### Files
+- `internal/api/handlers/olt.go` — `GetOLT`: tambah filter `isResolved = false` + `Limit(50)` pada `Preload("Alerts")`
+- `src/app/admin/olt/[id]/page.tsx` — Badge tab "Alerts" dan konten tab kini filter `!a.isResolved`
+
 ### v2.52.81 — 2026-05-23
 
 ### Added
@@ -535,18 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/olt.go` — Fix `removeVlan` command dari `no switchport vlan X tag` → `no switchport vlan X`; remove wrong fallback commandSet; return 422 instead of 500 on CLI errors
 - `src/app/admin/olt/[id]/page.tsx` — Replace Enable+Disable buttons with single contextual toggle button
-
-### v2.52.77 — 2026-05-22
-
-### Fixed
-- **Uplink status "Unknown"** — `uplinkParsePortStatus` membaca kolom index yang salah dari output `show interface port-status xgei_1/3/2`. ZTE C320 mengembalikan 9 field (index 0–8): port, hybridStatus, nativeVlan, negotiation, speed, duplex, flowCtrl, adminStatus, linkStatus. Kode lama salah baca duplex dari `parts[3]` (seharusnya `parts[5]`), flowCtrl dari `parts[8]` (seharusnya `parts[6]`), adminStatus dari `parts[9]` (OOB), linkStatus dari `parts[10]` (OOB). Akibatnya `adminRaw` selalu kosong → status "Unknown".
-- **Uplink status "Unknown" (fallback)** — `uplinkParseInterfaceStatus` memiliki regex `stateRe` yang hanya menangani `activate|deactivate`. Namun ZTE C320 untuk interface uplink (`xgei`) melaporkan `xgei_1/3/2 is up, line protocol is up` bukan `activate`. Fix: tambahkan `up|down` ke pattern. Update pemetaan: `up` → "Up", `down` → "Down".
-- **CONFIG tab menampilkan `%Error 20202`** — Handler `case "config"` menetapkan `raw = out` sebelum memeriksa CLI error, sehingga teks error mentah tampil di UI. Fix: hanya set `raw = out` ketika output tidak mengandung CLI error.
-- **Dark/light theme uplink modal** — Status indicator menggunakan warna hex hardcoded (`#111827`, `#052e16`, `#451a03`) via inline style tanpa dukungan light mode. Diganti dengan Tailwind classes `dark:` variants (`bg-gray-100 dark:bg-gray-900`, `bg-green-50 dark:bg-green-950/40`, dll).
-- **PON expansion bg invalid** — `dark:bg-gray-850` bukan class Tailwind valid (Tailwind hanya memiliki 100–900). Diganti ke `dark:bg-gray-900`.
-### Files
-- `internal/api/handlers/olt.go` — Fix `uplinkParsePortStatus` column indices; fix `uplinkParseInterfaceStatus` stateRe + admin mapping; fix `case "config"` raw error handling
-- `src/app/admin/olt/[id]/page.tsx` — Fix `statusTone` dari inline styles ke Tailwind dark: classes; fix `dark:bg-gray-850` → `dark:bg-gray-900`
 
 <!-- AUTO-CHANGELOG:END -->
 
