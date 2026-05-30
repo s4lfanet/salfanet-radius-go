@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.88] — 2026-05-31
+### Fixed
+- **RX Power / TX Power tampil 101.07 dBm** — ZTE C320 mengembalikan `0xFFFF` (65535) via SNMP sebagai nilai sentinel "no data". Sebelumnya nilai ini lolos filter `rxRaw > 0` dan dihitung: `65535/500 - 30 = 101.07 dBm`. Fix: tambah filter `rxRaw != 0xFFFF` di parser ZTE SNMP. Fix juga di layer SQL `ListONUs`: `CASE WHEN rxPower <= 30 THEN rxPower ELSE NULL END` agar nilai lama di DB tidak tampil sampai poller update berikutnya.
+- **Data ONU lambat aktual** — Default minimum poller interval diubah dari 60s → 30s. Sebelumnya jika `PollingInterval` tidak dikonfigurasi (0), interval fallback ke 60s. Sekarang fallback ke 30s sehingga data DB maksimal 30s dari kondisi aktual OLT.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Filter `rxRaw != 0xFFFF` dan `txRaw != 0xFFFF` di dua blok ONUInfo builder
+- `internal/olt/poller/poller.go` — Default minimum interval: 60s → 30s
+- `internal/api/handlers/olt.go` — Filter SQL `CASE WHEN rxPower/txPower <= 30` di `ListONUs`
+
 ## [2.52.87] — 2026-05-31
 ### Added
 - **Clean Config ONU dari OLT** — Tombol "Clean" (kuning) di tabel ONU list mengirim `restore default` ke interface `gpon-onu_1/{slot}/{port}:{onuId}` via Telnet. ONU tetap terdaftar di PON port, hanya konfigurasi service (VLAN, profile) yang di-reset. Endpoint: `POST /api/olt/:id/onus/:onuId/clean-config`.
