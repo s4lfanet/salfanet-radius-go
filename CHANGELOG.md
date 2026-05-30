@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.89] — 2026-05-31
+### Fixed
+- **ONU DyingGasp tidak terdeteksi** — `decodeOperState` hanya mengenal nilai 4 dan 5 (online) dan semua nilai lainnya sebagai offline, sehingga nilai 6 (DyingGasp dari ZTE MIB: `zxAnGponOnuRegOperStatus`) ikut dibaca sebagai offline biasa. Fix: tambah `case 6 → dying_gasp`.
+- **ONU offline tetapi terbaca online di tabel** — Jika ONU mati mendadak (tanpa dying gasp), ZTE bisa menghapusnya dari tabel SNMP `zxAnGponOnuRegTable` sepenuhnya. Poller tidak memproses ONU tersebut sama sekali → status lama di DB (`online`) tidak diupdate → ONU kelihatan online padahal sudah mati. Fix: setelah upsert, semua ONU yang `updatedAt < poll_start` (tidak tersentuh upsert = tidak ada di SNMP walk) ditandai offline secara otomatis.
+- **Alert DyingGasp belum ada** — `checkAlerts` hanya menangani `OnuOffline` dan `OnuOnline`, tidak ada penanganan `OnuDyingGasp`. Fix: tambah case DyingGasp → create alert dengan severity `critical` dan pesan "kemungkinan listrik mati mendadak". Alert DyingGasp juga di-resolve saat ONU kembali online.
+- **Recovery message (online kembali) lebih akurat** — Sebelumnya hanya resolve alert `onu_offline`. Sekarang juga resolve `dying_gasp` alert saat ONU recovery.
+### Files
+- `internal/olt/vendors/zte/zte.go` — `decodeOperState`: tambah `case 6 → OnuDyingGasp`
+- `internal/olt/poller/poller.go` — Ghost ONU cleanup setelah upsert; DyingGasp case di `checkAlerts`; resolve loop untuk `onu_offline` + `dying_gasp` di case online
+
 ## [2.52.88] — 2026-05-31
 ### Fixed
 - **RX Power / TX Power tampil 101.07 dBm** — ZTE C320 mengembalikan `0xFFFF` (65535) via SNMP sebagai nilai sentinel "no data". Sebelumnya nilai ini lolos filter `rxRaw > 0` dan dihitung: `65535/500 - 30 = 101.07 dBm`. Fix: tambah filter `rxRaw != 0xFFFF` di parser ZTE SNMP. Fix juga di layer SQL `ListONUs`: `CASE WHEN rxPower <= 30 THEN rxPower ELSE NULL END` agar nilai lama di DB tidak tampil sampai poller update berikutnya.
