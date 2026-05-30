@@ -6,6 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.81] — 2026-05-23
+### Added
+- **PON port enable/disable & description edit** — Tambahkan handler `POST /api/olt/:id/pon` dengan action `enable`, `disable`, `setDescription`. Frontend: di panel detail port PON (expanded card), muncul tombol Enable/Disable dan "Edit Desc" dengan inline input.
+- **ONU name/description edit** — Tambahkan handler `PATCH /api/olt/:id/onus/:onuId` untuk update `description` di DB dan perintah `name` + `description` via Telnet ke OLT. Frontend: tombol **Edit** di list ONU membuka modal `ONUEditModal`.
+- **WA + Telegram alert saat ONU offline** — Poller `checkAlerts` kini mengirim notifikasi WhatsApp (ke `Company.AdminPhone`) dan Telegram (ke `TelegramBackupSettings`) saat ONU baru go offline. Set `notifiedViaWhatsapp = true` pada record alert.
+- **Auto-resolve alert + notifikasi recovery** — Saat ONU yang sebelumnya offline kembali online, alert `onu_offline` di-resolve (`isResolved = true`, `resolvedAt = now`) dan dikirim pesan 🟢 recovery via WA + Telegram.
+- **Fix alert deduplication bug** — `checkAlerts` sebelumnya menggunakan `s.ID` (UUID baru tiap poll) alih-alih DB ID ONU nyata, sehingga duplikat alert dibuat setiap siklus poll. Fix: fetch real DB IDs by (frame, slot, port, onuId) terlebih dahulu.
+- **`internal/notify/telegram.go`** — Fungsi paket-level `notify.SendTelegramMessage(botToken, chatId, text)` yang dapat digunakan oleh poller (di luar package `handlers`).
+### Files
+- `internal/notify/telegram.go` — New: `SendTelegramMessage` helper
+- `internal/api/handlers/olt.go` — Add `PONPortAction` + `UpdateONU` handlers
+- `internal/api/router.go` — Register `POST /:id/pon` + `PATCH /:id/onus/:onuId`
+- `internal/olt/poller/poller.go` — Fix `checkAlerts` deduplication; add recovery detection; add WA+Telegram notifications via `notifyAlert()`
+- `src/app/admin/olt/[id]/page.tsx` — PON port action buttons + inline desc editor; ONU Edit button + `ONUEditModal`
+
+---
+
 ## [2.52.80] — 2026-05-22
 ### Fixed
 - **Assign Customer 405 Method Not Allowed** — Frontend memanggil `GET /api/olt/:id/onus/:onuId/assign` untuk memuat daftar pelanggan di assign modal, namun backend hanya mendaftarkan `POST` untuk route tersebut. Fix: tambahkan `GET` handler `GetAssignONUCandidates` yang mengembalikan daftar `PppoeUser` (bisa dicari via `?q=`) dan customer yang sedang di-assign ke ONU.

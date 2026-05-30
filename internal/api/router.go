@@ -226,6 +226,8 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	olt.Get("/:id/performance", oltH.ListPerformance)
 	olt.Get("/:id/chassis", oltH.GetChassis)
 	olt.Get("/:id/pon-stat", oltH.GetPONStat)
+	olt.Post("/:id/pon", oltH.PONPortAction)
+	olt.Patch("/:id/onus/:onuId", oltH.UpdateONU)
 
 	// PPPoE
 	pppoe := api.Group("/pppoe")

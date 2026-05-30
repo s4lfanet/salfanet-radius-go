@@ -19,7 +19,7 @@ import {
   Server, RefreshCw, AlertCircle, Wifi, WifiOff,
   Thermometer, Clock, Activity, ArrowLeft, Save, TestTube,
   Power, Download, CheckCircle, Signal, Plus, X, Cpu, Zap,
-  Eye, UserPlus, Trash2,
+  Eye, UserPlus, Trash2, Pencil,
 } from 'lucide-react';
 
 interface ONU {
@@ -384,6 +384,8 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
   const [expandedPON, setExpandedPON] = useState<string | null>(null);
   const [ponStatCache, setPonStatCache] = useState<Record<string, PONPortStat | null>>({});
   const [loadingPON, setLoadingPON] = useState<string | null>(null);
+  const [ponActing, setPonActing] = useState<string | null>(null); // portKey currently acting
+  const [editingPONDesc, setEditingPONDesc] = useState<{ portKey: string; value: string } | null>(null);
 
   const fetchChassis = useCallback(() => {
     setLoadingChassis(true);
@@ -413,6 +415,30 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
       })
       .finally(() => setLoadingPON(null));
   }, [olt.id, ponStatCache, loadingPON]);
+
+  const refreshPONStat = useCallback((portKey: string) => {
+    setPonStatCache(prev => { const n = { ...prev }; delete n[portKey]; return n; });
+  }, []);
+
+  const handlePONAction = useCallback(async (portKey: string, action: string, description?: string) => {
+    const [slotStr, portStr] = portKey.split('/');
+    setPonActing(portKey);
+    try {
+      const res = await fetch(`/api/olt/${olt.id}/pon`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slot: parseInt(slotStr), port: parseInt(portStr), action, description }),
+      });
+      if (res.ok) {
+        refreshPONStat(portKey);
+        setTimeout(() => fetchPONStat(portKey), 500);
+      }
+    } catch {
+      // ignore
+    } finally {
+      setPonActing(null);
+    }
+  }, [olt.id, fetchPONStat, refreshPONStat]);
 
   // ── Port stats from ONU list ──────────────────────────────────────────────
   const portStats: Record<string, { total: number; online: number; offline: number; los: number; dyingGasp: number; unregistered: number; rxPowers: number[] }> = {};
@@ -842,6 +868,57 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
                               </div>
                               {stat.description && (
                                 <div className="text-[9px] text-gray-400 truncate">{stat.description}</div>
+                              )}
+                              {/* PON port actions */}
+                              {editingPONDesc?.portKey === portKey ? (
+                                <div className="flex items-center gap-1 pt-1 border-t border-gray-100 dark:border-gray-800">
+                                  <input
+                                    autoFocus
+                                    value={editingPONDesc.value}
+                                    onChange={e => setEditingPONDesc({ portKey, value: e.target.value })}
+                                    className="flex-1 text-[10px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200"
+                                    placeholder="Description…"
+                                  />
+                                  <button
+                                    disabled={ponActing === portKey}
+                                    onClick={() => {
+                                      handlePONAction(portKey, 'setDescription', editingPONDesc.value);
+                                      setEditingPONDesc(null);
+                                    }}
+                                    className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                                  >
+                                    OK
+                                  </button>
+                                  <button
+                                    onClick={() => setEditingPONDesc(null)}
+                                    className="text-[9px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300"
+                                  >
+                                    ✕
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1 pt-1 border-t border-gray-100 dark:border-gray-800">
+                                  <button
+                                    disabled={ponActing === portKey}
+                                    onClick={() => handlePONAction(portKey,
+                                      stat.adminStatus?.toLowerCase().includes('deactivate') ? 'enable' : 'disable'
+                                    )}
+                                    className={`flex-1 text-[9px] px-1.5 py-0.5 rounded border font-medium disabled:opacity-50 ${
+                                      stat.adminStatus?.toLowerCase().includes('deactivate')
+                                        ? 'border-green-400 text-green-600 hover:bg-green-50 dark:hover:bg-green-950'
+                                        : 'border-red-400 text-red-500 hover:bg-red-50 dark:hover:bg-red-950'
+                                    }`}
+                                  >
+                                    {ponActing === portKey ? '…' : stat.adminStatus?.toLowerCase().includes('deactivate') ? 'Enable' : 'Disable'}
+                                  </button>
+                                  <button
+                                    disabled={ponActing === portKey}
+                                    onClick={() => setEditingPONDesc({ portKey, value: stat.description ?? '' })}
+                                    className="flex-1 text-[9px] px-1.5 py-0.5 rounded border border-blue-400 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-950 font-medium disabled:opacity-50"
+                                  >
+                                    Edit Desc
+                                  </button>
+                                </div>
                               )}
                             </div>
                           ) : null}
@@ -1825,6 +1902,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
   const [registeringOnu, setRegisteringOnu] = useState<ONU | null>(null);
   const [detailOnu, setDetailOnu] = useState<ONU | null>(null);
   const [assigningOnu, setAssigningOnu] = useState<ONU | null>(null);
+  const [editingOnu, setEditingOnu] = useState<ONU | null>(null);
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -2431,6 +2509,14 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                               Assign
                             </button>
                             <button
+                              onClick={() => setEditingOnu(onu)}
+                              disabled={deletingOnu === onu.id}
+                              className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:opacity-50 transition-colors"
+                            >
+                              <Pencil className="w-3 h-3" />
+                              Edit
+                            </button>
+                            <button
                               onClick={() => setConfirmReboot(onu.id)}
                               disabled={deletingOnu === onu.id || rebootingOnu !== null || batchRebooting}
                               className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-orange-500 text-white rounded-md hover:bg-orange-600 disabled:opacity-50 transition-colors"
@@ -2812,6 +2898,84 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
           onSuccess={fetchOLT}
         />
       )}
+
+      {editingOnu && (
+        <ONUEditModal
+          oltId={id}
+          onu={editingOnu}
+          onClose={() => setEditingOnu(null)}
+          onSuccess={fetchOLT}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─── ONUEditModal ────────────────────────────────────────────────────────────
+
+function ONUEditModal({
+  oltId, onu, onClose, onSuccess,
+}: { oltId: string; onu: ONU; onClose: () => void; onSuccess: () => Promise<void> }) {
+  const [name, setName] = useState(onu.description ?? '');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/olt/${oltId}/onus/${onu.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, description: name }),
+      });
+      const j = await res.json();
+      if (!res.ok || !j.success) throw new Error(j.error ?? 'Update failed');
+      await onSuccess();
+      onClose();
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-800">
+          <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Pencil className="h-4 w-4 text-teal-500" /> Edit ONU
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="text-xs text-gray-400 font-mono">
+            {onu.serialNumber ?? 'No SN'} — {onu.frame}/{onu.slot}/{onu.port}:{onu.onuId}
+          </div>
+          <div>
+            <Label className="text-xs text-gray-500 mb-1">Name / Description</Label>
+            <input
+              autoFocus
+              value={name}
+              onChange={e => setName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') save(); }}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-md px-3 py-2 text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+              placeholder="e.g. Pelanggan Budi"
+            />
+          </div>
+          {error && <p className="text-xs text-red-500">{error}</p>}
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-4 border-t dark:border-gray-800">
+          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button onClick={save} disabled={saving} className="bg-teal-600 hover:bg-teal-700 text-white">
+            {saving ? <RefreshCw className="h-3 w-3 mr-2 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+            Save
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

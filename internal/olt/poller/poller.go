@@ -16,6 +16,7 @@ import (
 	"gorm.io/gorm/clause"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/notify"
 	snmputil "github.com/s4lfanet/salfanet-radius-go/internal/olt/snmp"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/telnet"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/vendors/zte"
@@ -306,32 +307,110 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 	}
 }
 
-// checkAlerts creates alert records for ONUs that went offline.
+// checkAlerts creates/resolves alert records and sends WA+Telegram notifications.
 func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, statuses []models.OLTONUStatus) {
+	// Fetch real DB IDs for all registered ONUs on this OLT.
+	// (The upsert generates a new UUID per poll; the DB may keep the original.)
+	type onuKey struct{ frame, slot, port, onuID int }
+	var dbONUs []models.OLTONUStatus
+	p.db.WithContext(ctx).
+		Where("oltId = ?", olt.ID).
+		Select("id, frame, slot, port, onuId").
+		Find(&dbONUs)
+	realIDs := make(map[onuKey]string, len(dbONUs))
+	for _, o := range dbONUs {
+		realIDs[onuKey{o.Frame, o.Slot, o.Port, o.OnuID}] = o.ID
+	}
+
 	for _, s := range statuses {
-		if s.Status == models.OnuOffline {
-			// Check if an unresolved alert already exists for this ONU
+		realID, ok := realIDs[onuKey{s.Frame, s.Slot, s.Port, s.OnuID}]
+		if !ok {
+			continue // ONU not yet committed to DB
+		}
+
+		switch s.Status {
+		case models.OnuOffline:
+			// Create a new alert only when there is no open one.
 			var existing models.OLTAlert
 			err := p.db.WithContext(ctx).Where(
 				"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
-				olt.ID, s.ID, models.AlertONUOffline, false,
+				olt.ID, realID, models.AlertONUOffline, false,
 			).First(&existing).Error
 			if err == nil {
-				continue // Alert already open
+				continue // Already open
 			}
 
-			onuID := s.ID
+			message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) went offline",
+				strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID)
 			alert := models.OLTAlert{
 				ID:        uuid.NewString(),
 				OltID:     &olt.ID,
-				OnuID:     &onuID,
+				OnuID:     &realID,
 				AlertType: models.AlertONUOffline,
 				Severity:  models.SeverityWarning,
-				Message:   fmt.Sprintf("ONU %s (port %d/%d/%d:%d) went offline", strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID),
+				Message:   message,
+			}
+			if waErr := p.notifyAlert(olt.Name, message, false); waErr == nil {
+				alert.NotifiedViaWhatsapp = true
 			}
 			p.db.WithContext(ctx).Create(&alert)
+
+		case models.OnuOnline:
+			// Resolve any open offline alert and send recovery notification.
+			var existing models.OLTAlert
+			err := p.db.WithContext(ctx).Where(
+				"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
+				olt.ID, realID, models.AlertONUOffline, false,
+			).First(&existing).Error
+			if err != nil {
+				continue // No open alert to resolve
+			}
+			now := time.Now()
+			p.db.WithContext(ctx).Model(&existing).Updates(map[string]interface{}{
+				"isResolved": true,
+				"resolvedAt": &now,
+			})
+			message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) is back online",
+				strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID)
+			go p.notifyAlert(olt.Name, message, true) //nolint:errcheck
 		}
 	}
+}
+
+// notifyAlert sends an OLT/ONU alert or recovery message via WhatsApp and Telegram.
+// isRecovery=true sends a green recovery message; false sends a red alert.
+// Returns non-nil error only if WhatsApp sending failed (callers may use this to set NotifiedViaWhatsapp).
+func (p *Poller) notifyAlert(oltName, message string, isRecovery bool) error {
+	emoji := "🔴"
+	label := "ALERT"
+	if isRecovery {
+		emoji = "🟢"
+		label = "PULIH"
+	}
+
+	// WhatsApp — send to admin phone stored in Company settings.
+	var company models.Company
+	var waErr error
+	if err := p.db.Select("adminPhone").First(&company).Error; err == nil &&
+		company.AdminPhone != nil && *company.AdminPhone != "" {
+		waMsg := fmt.Sprintf("%s *[%s] %s*\n%s", emoji, oltName, label, message)
+		waErr = notify.Send(*company.AdminPhone, waMsg)
+		if waErr != nil {
+			log.Warn().Err(waErr).Msg("poller: WA alert send failed")
+		}
+	}
+
+	// Telegram — send to Telegram chat configured in backup settings.
+	var tgs models.TelegramBackupSettings
+	if err := p.db.First(&tgs).Error; err == nil &&
+		tgs.Enabled && tgs.BotToken != "" && tgs.ChatId != "" {
+		tgMsg := fmt.Sprintf("%s <b>[%s] %s</b>\n%s", emoji, oltName, label, message)
+		if tgErr := notify.SendTelegramMessage(tgs.BotToken, tgs.ChatId, tgMsg); tgErr != nil {
+			log.Warn().Err(tgErr).Msg("poller: Telegram alert send failed")
+		}
+	}
+
+	return waErr
 }
 
 func strPtr(s *string) string {

@@ -900,6 +900,163 @@ func (h *OLTHandler) CreateUplink(c fiber.Ctx) error {
 	})
 }
 
+// ─── PON Port Action ─────────────────────────────────────────────────────────
+
+// PONPortAction godoc
+// POST /api/olt/:id/pon — enable, disable, or set description on a gpon-olt port.
+func (h *OLTHandler) PONPortAction(c fiber.Ctx) error {
+	id := c.Params("id")
+
+	var body struct {
+		Slot        int    `json:"slot"`
+		Port        int    `json:"port"`
+		Action      string `json:"action"`      // "enable" | "disable" | "setDescription"
+		Description string `json:"description"` // required for setDescription
+	}
+	if err := c.Bind().JSON(&body); err != nil || body.Slot < 1 || body.Port < 1 || body.Action == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "slot, port, and action are required"})
+	}
+
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", id).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+	}
+	if (!olt.TelnetEnabled && !olt.SSHEnabled) || olt.Username == nil || olt.Password == nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Telnet not configured for this OLT"})
+	}
+
+	iface := fmt.Sprintf("gpon-olt_1/%d/%d", body.Slot, body.Port)
+
+	var cmds []string
+	switch body.Action {
+	case "enable":
+		cmds = []string{"configure terminal", "interface " + iface, "no shutdown", "exit", "end"}
+	case "disable":
+		cmds = []string{"configure terminal", "interface " + iface, "shutdown", "exit", "end"}
+	case "setDescription":
+		if body.Description == "" {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "description required"})
+		}
+		safe := uplinkSanitizeDesc(body.Description)
+		cmds = []string{"configure terminal", "interface " + iface, "description " + safe, "exit", "end"}
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "unknown action: " + body.Action})
+	}
+
+	// Prefer the poller's persistent pool; fall back to a one-shot pool.
+	pool := h.poller.GetPool(id)
+	var ownPool bool
+	if pool == nil {
+		tport := olt.TelnetPort
+		if tport == 0 {
+			tport = 23
+		}
+		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+		tcfg.CommandTimeout = 10 * time.Second
+		pool = telnet.NewPool(tcfg)
+		ownPool = true
+	}
+	if ownPool {
+		defer pool.Close()
+	}
+
+	out, err := pool.ExecuteMultiple(cmds)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	for _, part := range splitAtPrompt(out) {
+		if uplinkCliErrRe.MatchString(part) {
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+				"error":  "OLT rejected command",
+				"detail": strings.TrimSpace(part),
+			})
+		}
+	}
+	return c.JSON(fiber.Map{"success": true, "interface": iface, "action": body.Action})
+}
+
+// ─── Update ONU ──────────────────────────────────────────────────────────────
+
+// UpdateONU godoc
+// PATCH /api/olt/:id/onus/:onuId — update ONU name and/or description in DB and on the OLT.
+func (h *OLTHandler) UpdateONU(c fiber.Ctx) error {
+	oltID := c.Params("id")
+	onuID := c.Params("onuId")
+
+	var body struct {
+		Name        *string `json:"name"`
+		Description *string `json:"description"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
+	}
+	if body.Name == nil && body.Description == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "name or description required"})
+	}
+
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+	}
+
+	var onuStatus models.OLTONUStatus
+	if err := h.db.Where("oltId = ? AND id = ?", oltID, onuID).First(&onuStatus).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "ONU not found"})
+	}
+
+	// Persist description change in the database.
+	if body.Description != nil {
+		if err := h.db.Model(&onuStatus).Update("description", *body.Description).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+	}
+
+	// Push change to OLT via Telnet if available.
+	if (olt.TelnetEnabled || olt.SSHEnabled) && olt.Username != nil && olt.Password != nil {
+		iface := fmt.Sprintf("gpon-onu_%d/%d/%d:%d", onuStatus.Frame, onuStatus.Slot, onuStatus.Port, onuStatus.OnuID)
+
+		pool := h.poller.GetPool(oltID)
+		var ownPool bool
+		if pool == nil {
+			tport := olt.TelnetPort
+			if tport == 0 {
+				tport = 23
+			}
+			tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+			tcfg.CommandTimeout = 10 * time.Second
+			pool = telnet.NewPool(tcfg)
+			ownPool = true
+		}
+		if ownPool {
+			defer pool.Close()
+		}
+
+		cmds := []string{"configure terminal", "interface " + iface}
+		if body.Name != nil {
+			cmds = append(cmds, "name "+uplinkSanitizeDesc(*body.Name))
+		}
+		if body.Description != nil {
+			cmds = append(cmds, "description "+uplinkSanitizeDesc(*body.Description))
+		}
+		cmds = append(cmds, "exit", "end")
+
+		out, err := pool.ExecuteMultiple(cmds)
+		if err != nil {
+			// Telnet failure is non-fatal; DB was already updated.
+			log.Warn().Err(err).Str("iface", iface).Msg("UpdateONU: Telnet command failed")
+		} else {
+			for _, part := range splitAtPrompt(out) {
+				if uplinkCliErrRe.MatchString(part) {
+					log.Warn().Str("detail", strings.TrimSpace(part)).Str("iface", iface).Msg("UpdateONU: OLT CLI error (DB updated)")
+					break
+				}
+			}
+		}
+	}
+
+	return c.JSON(fiber.Map{"success": true, "message": "ONU updated"})
+}
+
 // ── Uplink parser helpers ─────────────────────────────────────────────────────
 
 // uplinkParsePortStatus parses "show interface port-status <port>" tabular output.
