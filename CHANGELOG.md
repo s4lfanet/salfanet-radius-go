@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.85] — 2026-05-31
+### Added
+- **Enable/Disable PON Port dari Rack Diagram** — Klik titik PON port di diagram rack ZTE C320 membuka modal PON port. Modal menampilkan status admin (Enabled/Disabled), link proto (UP/DOWN), statistik ONU (Total/Online/Offline), suhu dan TX power optik. Tombol **Disable Port** mengirim `shutdown` ke interface `gpon-olt_1/{slot}/{port}` via Telnet; tombol **Enable Port** mengirim `no shutdown`. Tidak perlu login CLI lagi.
+### Files
+- `src/app/admin/olt/[id]/page.tsx` — PON dot `<div>` → `<button>` klikable; state `selectedPON`; modal render `PONPortModal`; komponen `PONPortModal`
+
 ## [2.52.84] — 2026-05-31
 ### Added
 - **Assign ODP ke ONU dari tabel ONU list** — Klik kolom ODP (menampilkan "— assign" jika belum ada) di tabel ONU list membuka modal pilih ODP. Modal menampilkan daftar semua ODP (`GET /api/network/odps`) dengan pencarian, preview ODP aktif, dan opsi hapus link. Simpan via `PATCH /api/olt/:id/onus/:onuId` dengan body `{odpId: "..."}` atau `{clearOdp: true}`. Setelah simpan, tabel live-refresh otomatis.
