@@ -370,16 +370,11 @@ func (h *OLTHandler) ListONUs(c fiber.Ctx) error {
 		       u.name  AS customerName,
 		       u.username AS customerUsername,
 		       u.phone AS customerPhone,
-		       odp.id   AS odpId,
+		       o.odpId AS odpId,
 		       odp.name AS odpName
 		FROM olt_onu_status o
 		LEFT JOIN pppoe_users u ON u.id = o.customerId
-		LEFT JOIN (
-		    SELECT oltId, ponPort, MIN(id) AS id, MIN(name) AS name
-		    FROM network_odps
-		    WHERE oltId IS NOT NULL AND ponPort IS NOT NULL
-		    GROUP BY oltId, ponPort
-		) odp ON odp.oltId = o.oltId AND odp.ponPort = o.port
+		LEFT JOIN network_odps odp ON odp.id = o.odpId
 		WHERE ` + whereClause + `
 		ORDER BY o.slot, o.port, o.onuId`
 
@@ -1050,12 +1045,14 @@ func (h *OLTHandler) UpdateONU(c fiber.Ctx) error {
 	var body struct {
 		Name        *string `json:"name"`
 		Description *string `json:"description"`
+		OdpID       *string `json:"odpId"`      // set ODP assignment (UUID of network_odps)
+		ClearOdp    bool    `json:"clearOdp"`   // true to remove ODP link
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
 	}
-	if body.Name == nil && body.Description == nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "name or description required"})
+	if body.Name == nil && body.Description == nil && body.OdpID == nil && !body.ClearOdp {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "name, description, or odpId required"})
 	}
 
 	var olt models.NetworkOLT
@@ -1072,6 +1069,27 @@ func (h *OLTHandler) UpdateONU(c fiber.Ctx) error {
 	if body.Description != nil {
 		if err := h.db.Model(&onuStatus).Update("description", *body.Description).Error; err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+	}
+
+	// Persist ODP assignment.
+	if body.ClearOdp {
+		if err := h.db.Model(&onuStatus).Update("odpId", nil).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+	} else if body.OdpID != nil {
+		// Verify ODP exists before linking
+		var odpCount int64
+		h.db.Model(&models.NetworkODP{}).Where("id = ?", *body.OdpID).Count(&odpCount)
+		if odpCount == 0 {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "ODP not found"})
+		}
+		if err := h.db.Model(&onuStatus).Update("odpId", *body.OdpID).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+		// If only setting ODP (no name/description changes), return early
+		if body.Name == nil && body.Description == nil {
+			return c.JSON(fiber.Map{"success": true, "message": "ODP assigned"})
 		}
 	}
 

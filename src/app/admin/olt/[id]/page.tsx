@@ -1916,6 +1916,9 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
   const [assigningOnu, setAssigningOnu] = useState<ONU | null>(null);
   const [editingOnu, setEditingOnu] = useState<ONU | null>(null);
 
+  // ODP assignment
+  const [assigningOdpToOnu, setAssigningOdpToOnu] = useState<ONU | null>(null);
+
   // Settings state
   const [settings, setSettings] = useState({
     vendor: 'huawei',
@@ -2514,10 +2517,14 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                           <span className="font-mono text-gray-700 dark:text-gray-300">{onu.distance} m</span>
                         ) : <span className="text-gray-400">—</span>}
                       </td>
-                      <td className="py-2.5 pr-4 text-xs">
+                      <td
+                        className="py-2.5 pr-4 text-xs cursor-pointer group"
+                        title="Klik untuk assign/ganti ODP"
+                        onClick={() => setAssigningOdpToOnu(onu)}
+                      >
                         {onu.odpName
-                          ? <span className="font-medium text-indigo-700 dark:text-indigo-400">{onu.odpName}</span>
-                          : <span className="text-gray-400">—</span>}
+                          ? <span className="font-medium text-indigo-700 dark:text-indigo-400 group-hover:underline">{onu.odpName}</span>
+                          : <span className="text-gray-400 group-hover:text-indigo-500 transition-colors">— assign</span>}
                       </td>
                       <td className="py-2.5 pr-4">
                         {onu.customer ? (
@@ -2983,6 +2990,15 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
           onSuccess={fetchOLT}
         />
       )}
+
+      {assigningOdpToOnu && (
+        <ONUOdpAssignModal
+          oltId={id}
+          onu={assigningOdpToOnu}
+          onClose={() => setAssigningOdpToOnu(null)}
+          onSuccess={() => { fetchLiveOnus(); setAssigningOdpToOnu(null); }}
+        />
+      )}
     </div>
   );
 }
@@ -3049,6 +3065,117 @@ function ONUEditModal({
           <Button onClick={save} disabled={saving} className="bg-teal-600 hover:bg-teal-700 text-white">
             {saving ? <RefreshCw className="h-3 w-3 mr-2 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
             Save
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ONUOdpAssignModal ────────────────────────────────────────────────────────
+
+function ONUOdpAssignModal({
+  oltId, onu, onClose, onSuccess,
+}: { oltId: string; onu: ONU; onClose: () => void; onSuccess: () => void }) {
+  const [odps, setOdps] = useState<{ id: string; name: string }[]>([]);
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<string | null>(onu.odpId ?? null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/network/odps')
+      .then(r => r.json())
+      .then((data: any[]) => setOdps(data.map((o: any) => ({ id: o.id, name: o.name }))))
+      .catch(() => {});
+  }, []);
+
+  const filtered = odps.filter(o => o.name.toLowerCase().includes(search.toLowerCase()));
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const body: Record<string, unknown> = selected ? { odpId: selected } : { clearOdp: true };
+      const res = await fetch(`/api/olt/${oltId}/onus/${onu.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setError(d.error ?? 'Gagal menyimpan');
+        return;
+      }
+      onSuccess();
+    } catch {
+      setError('Network error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-md border dark:border-gray-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-800">
+          <h2 className="font-semibold text-sm flex items-center gap-2">
+            <Signal className="h-4 w-4 text-indigo-500" /> Assign ODP ke ONU
+          </h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="text-xs text-gray-400 font-mono">
+            {onu.serialNumber ?? 'No SN'} — {onu.frame}/{onu.slot}/{onu.port}:{onu.onuId}
+          </div>
+          {onu.odpName && (
+            <div className="text-xs text-indigo-600 dark:text-indigo-400">
+              ODP saat ini: <strong>{onu.odpName}</strong>
+            </div>
+          )}
+          <Input
+            placeholder="Cari nama ODP…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="text-sm"
+            autoFocus
+          />
+          <div className="max-h-56 overflow-y-auto rounded-lg border dark:border-gray-700 divide-y dark:divide-gray-800">
+            {/* Clear option */}
+            <button
+              onClick={() => setSelected(null)}
+              className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                selected === null ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-500'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full border-2 border-gray-400 flex-shrink-0" />
+              — Tidak ada ODP (hapus link)
+            </button>
+            {filtered.length === 0 && (
+              <div className="px-3 py-4 text-xs text-gray-400 text-center">Tidak ada ODP ditemukan</div>
+            )}
+            {filtered.map(odp => (
+              <button
+                key={odp.id}
+                onClick={() => setSelected(odp.id)}
+                className={`w-full text-left px-3 py-2 text-xs flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
+                  selected === odp.id ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-medium' : 'text-gray-900 dark:text-gray-200'
+                }`}
+              >
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${selected === odp.id ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
+                {odp.name}
+              </button>
+            ))}
+          </div>
+          {error && <p className="text-xs text-red-500">{error}</p>}
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-4 border-t dark:border-gray-800">
+          <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button onClick={save} disabled={saving} className="bg-indigo-600 hover:bg-indigo-700 text-white">
+            {saving ? <RefreshCw className="h-3 w-3 mr-2 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
+            Simpan
           </Button>
         </div>
       </div>

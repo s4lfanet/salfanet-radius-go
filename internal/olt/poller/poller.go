@@ -324,7 +324,7 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 
 	// Track per-port Rx power for bulk degradation check.
 	type portStat struct {
-		total   int
+		total    int
 		degraded int // Rx < -27 dBm
 	}
 	portRx := make(map[int]*portStat) // key: port number

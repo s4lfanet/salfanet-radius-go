@@ -25,8 +25,8 @@ const (
 	AlertHighErrors      OltAlertType = "high_errors"
 	AlertDyingGasp       OltAlertType = "dying_gasp"
 	AlertUnauthorizedONU OltAlertType = "unauthorized_onu"
-	AlertRxDegradation   OltAlertType = "rx_degradation"   // single ONU Rx power drop
-	AlertBulkRxDegrade   OltAlertType = "bulk_rx_degrade"  // multiple ONUs on same PON port
+	AlertRxDegradation   OltAlertType = "rx_degradation"  // single ONU Rx power drop
+	AlertBulkRxDegrade   OltAlertType = "bulk_rx_degrade" // multiple ONUs on same PON port
 )
 
 type OltAlertSeverity string
@@ -109,6 +109,7 @@ type OLTONUStatus struct {
 	BandwidthUp     int64        `gorm:"default:0;column:bandwidthUp" json:"bandwidthUp"`
 	BandwidthDown   int64        `gorm:"default:0;column:bandwidthDown" json:"bandwidthDown"`
 	CustomerID      *string      `gorm:"index;column:customerId" json:"customerId"`
+	OdpID           *string      `gorm:"index;column:odpId" json:"odpId"`
 	FirstSeenAt     time.Time    `gorm:"autoCreateTime;column:firstSeenAt" json:"firstSeenAt"`
 	LastSeenAt      *time.Time   `gorm:"column:lastSeenAt" json:"lastSeenAt"`
 	LastOfflineAt   *time.Time   `gorm:"column:lastOfflineAt" json:"lastOfflineAt"`

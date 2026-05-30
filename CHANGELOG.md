@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.84] — 2026-05-31
+### Added
+- **Assign ODP ke ONU dari tabel ONU list** — Klik kolom ODP (menampilkan "— assign" jika belum ada) di tabel ONU list membuka modal pilih ODP. Modal menampilkan daftar semua ODP (`GET /api/network/odps`) dengan pencarian, preview ODP aktif, dan opsi hapus link. Simpan via `PATCH /api/olt/:id/onus/:onuId` dengan body `{odpId: "..."}` atau `{clearOdp: true}`. Setelah simpan, tabel live-refresh otomatis.
+- **Field `odpId` pada `olt_onu_status`** — Tambah kolom `odpId VARCHAR(191)` ke tabel `olt_onu_status` untuk link langsung per-ONU ke ODP (sebelumnya join by port — tidak akurat karena 1 port bisa punya banyak ODP).
+- **Perbaikan SQL JOIN `ListONUs`** — JOIN dari `ponPort`-based (tidak akurat) diganti ke direct `o.odpId = odp.id` sehingga setiap ONU menampilkan ODP yang tepat.
+### Files
+- `internal/db/models/olt.go` — `OLTONUStatus`: tambah `OdpID *string \`gorm:"index;column:odpId"\``
+- `internal/api/handlers/olt.go` — `ListONUs`: SQL JOIN ke `network_odps` via `o.odpId`; `UpdateONU`: tambah handling `odpId` + `clearOdp`
+- `src/app/admin/olt/[id]/page.tsx` — Kolom ODP kini clickable → `ONUOdpAssignModal`; state `assigningOdpToOnu`; komponen `ONUOdpAssignModal`
+
 ## [2.52.83] — 2026-05-25
 ### Added
 - **Rx power degradation alerts (WA + Telegram)** — Poller kini mendeteksi sinyal ONU lemah (Rx < -27 dBm) dan membuat alert tipe `rx_degradation`. Saat Rx membaik (>= -27 dBm), alert otomatis di-resolve. Juga mendeteksi degradasi massal: jika ≥ 3 atau ≥ 50% ONU online pada satu PON port memiliki sinyal lemah, dibuat alert tipe `bulk_rx_degrade` (severity: critical) dengan notifikasi WA + Telegram.
