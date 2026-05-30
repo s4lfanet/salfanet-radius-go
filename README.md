@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.85 — 2026-05-31
+
+### Added
+- **Enable/Disable PON Port dari Rack Diagram** — Klik titik PON port di diagram rack ZTE C320 membuka modal PON port. Modal menampilkan status admin (Enabled/Disabled), link proto (UP/DOWN), statistik ONU (Total/Online/Offline), suhu dan TX power optik. Tombol **Disable Port** mengirim `shutdown` ke interface `gpon-olt_1/{slot}/{port}` via Telnet; tombol **Enable Port** mengirim `no shutdown`. Tidak perlu login CLI lagi.
+### Files
+- `src/app/admin/olt/[id]/page.tsx` — PON dot `<div>` → `<button>` klikable; state `selectedPON`; modal render `PONPortModal`; komponen `PONPortModal`
+
 ### v2.52.84 — 2026-05-31
 
 ### Added
@@ -538,15 +545,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/router.go` — Register `POST /:id/pon` + `PATCH /:id/onus/:onuId`
 - `internal/olt/poller/poller.go` — Fix `checkAlerts` deduplication; add recovery detection; add WA+Telegram notifications via `notifyAlert()`
 - `src/app/admin/olt/[id]/page.tsx` — PON port action buttons + inline desc editor; ONU Edit button + `ONUEditModal`
-
-### v2.52.80 — 2026-05-22
-
-### Fixed
-- **Assign Customer 405 Method Not Allowed** — Frontend memanggil `GET /api/olt/:id/onus/:onuId/assign` untuk memuat daftar pelanggan di assign modal, namun backend hanya mendaftarkan `POST` untuk route tersebut. Fix: tambahkan `GET` handler `GetAssignONUCandidates` yang mengembalikan daftar `PppoeUser` (bisa dicari via `?q=`) dan customer yang sedang di-assign ke ONU.
-- **Unassign ONU tidak berfungsi** — `AssignONU` POST handler menggunakan `CustomerID string` sehingga nilai `null` dari frontend di-decode sebagai string kosong, lalu ditolak dengan error "customerId required". Fix: ubah ke `*string` agar `null` diterima dan GORM meng-update kolom ke NULL (unassign).
-### Files
-- `internal/api/handlers/olt.go` — Add `GetAssignONUCandidates` GET handler; fix `AssignONU` to accept null customerId for unassign
-- `internal/api/router.go` — Register `GET /:id/onus/:onuId/assign` route
 
 <!-- AUTO-CHANGELOG:END -->
 
