@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.86] — 2026-05-31
+### Fixed
+- **Fix adminStatus PON port selalu "Enabled"** — Parser `parsePONInterfaceStat` di `olt_pon_stat.go` menggunakan `strings.Contains(lower, "activate")` yang juga match kata "**de**activate" → semua port disabled terbaca sebagai enabled. Fix: cek "deactivate" lebih dulu sebelum "activate".
+- **Fix ONU name/description terhapus saat poll** — Upsert poller menggunakan `AssignmentColumns` yang selalu update kolom `description` dengan nilai baru (termasuk NULL jika OLT tidak mengembalikan deskripsi). Akibatnya nama ONU yang sudah di-set manual terhapus saat poll berikutnya. Fix: gunakan `COALESCE(VALUES(description), description)` agar nilai lama dipertahankan jika nilai baru NULL. Berlaku juga untuk `serialNumber`.
+### Files
+- `internal/api/handlers/olt_pon_stat.go` — Fix urutan cek `deactivate` vs `activate` di `parsePONInterfaceStat`
+- `internal/olt/poller/poller.go` — Ganti `AssignmentColumns` ke `clause.Assignments` dengan `COALESCE` untuk `description` dan `serialNumber`
+
 ## [2.52.85] — 2026-05-31
 ### Added
 - **Enable/Disable PON Port dari Rack Diagram** — Klik titik PON port di diagram rack ZTE C320 membuka modal PON port. Modal menampilkan status admin (Enabled/Disabled), link proto (UP/DOWN), statistik ONU (Total/Online/Offline), suhu dan TX power optik. Tombol **Disable Port** mengirim `shutdown` ke interface `gpon-olt_1/{slot}/{port}` via Telnet; tombol **Enable Port** mengirim `no shutdown`. Tidak perlu login CLI lagi.

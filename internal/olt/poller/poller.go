@@ -236,15 +236,22 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 		}
 	}
 
-	// Upsert registered ONUs with full column set
+	// Upsert registered ONUs with full column set.
+	// COALESCE ensures we never overwrite an existing description/serialNumber
+	// with NULL when the OLT didn't return one for that poll cycle.
 	if len(registeredStatuses) > 0 {
 		if e := p.db.Clauses(clause.OnConflict{
 			Columns: []clause.Column{
 				{Name: "oltId"}, {Name: "frame"}, {Name: "slot"}, {Name: "port"}, {Name: "onuId"},
 			},
-			DoUpdates: clause.AssignmentColumns([]string{
-				"serialNumber", "description", "status", "rxPower",
-				"distance", "lastSeenAt", "updatedAt",
+			DoUpdates: clause.Assignments(map[string]interface{}{
+				"serialNumber": gorm.Expr("COALESCE(VALUES(serialNumber), serialNumber)"),
+				"description":  gorm.Expr("COALESCE(VALUES(description), description)"),
+				"status":       gorm.Expr("VALUES(status)"),
+				"rxPower":      gorm.Expr("VALUES(rxPower)"),
+				"distance":     gorm.Expr("VALUES(distance)"),
+				"lastSeenAt":   gorm.Expr("VALUES(lastSeenAt)"),
+				"updatedAt":    gorm.Expr("VALUES(updatedAt)"),
 			}),
 		}).CreateInBatches(registeredStatuses, 100).Error; e != nil {
 			log.Error().Err(e).Str("olt", olt.ID).Msg("poller: upsert registered ONUs failed")

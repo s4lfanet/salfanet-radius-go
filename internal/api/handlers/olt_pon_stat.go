@@ -115,11 +115,13 @@ func parsePONInterfaceStat(iface string, slot, port int, ifaceOut, optOut string
 		lower := strings.ToLower(line)
 
 		// "gpon-olt_1/1/1 is activate, line protocol is up."
+		// "gpon-olt_1/1/1 is deactivate, line protocol is down."
 		if strings.Contains(lower, "line protocol") {
-			if strings.Contains(lower, "activate") {
-				s.AdminStatus = "activate"
-			} else {
+			// Check deactivate FIRST — "deactivate" contains the word "activate"
+			if strings.Contains(lower, "deactivate") {
 				s.AdminStatus = "deactivate"
+			} else if strings.Contains(lower, "activate") {
+				s.AdminStatus = "activate"
 			}
 			if strings.Contains(lower, "line protocol is up") {
 				s.LineProto = "up"
