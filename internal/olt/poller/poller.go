@@ -276,23 +276,40 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 	}
 
 	// ── Ghost ONU cleanup ─────────────────────────────────────────────────────
-	// Registered ONUs that were not seen in this SNMP walk at all (e.g. the ZTE
-	// completely removed them from the reg table because they powered off cleanly)
-	// will still have their old 'online' status in the DB. Mark them offline now.
-	// We use `updatedAt < start` as the marker — the upsert above sets updatedAt=now
-	// for every ONU visible in this poll cycle; anything older was not touched.
-	if res := p.db.WithContext(ctx).Model(&models.OLTONUStatus{}).
+	// Registered ONUs that vanished from the SNMP walk entirely (e.g. ZTE removed
+	// them from the reg table after a clean shutdown) still hold their old 'online'
+	// status in the DB.  We identify them by updatedAt < start: the upsert above
+	// sets updatedAt=now for every ONU visible in this poll; anything older was
+	// not touched and is therefore a "ghost".
+	//
+	// NOTE: We use Table("olt_onu_status") — NOT Model(&OLTONUStatus{}) — because
+	// GORM would silently append "WHERE id = ''" when the primary-key field is empty,
+	// making the UPDATE a no-op.
+	allStatuses := append(registeredStatuses, unregisteredStatuses...)
+
+	var ghostOnus []models.OLTONUStatus
+	if err := p.db.WithContext(ctx).
 		Where("oltId = ? AND status NOT IN (?, ?) AND updatedAt < ?",
 			olt.ID, string(models.OnuOffline), string(models.OnuUnregistered), start).
-		Updates(map[string]interface{}{
-			"status":    string(models.OnuOffline),
-			"updatedAt": now,
-		}); res.Error == nil && res.RowsAffected > 0 {
-		log.Debug().Str("olt", olt.ID).Int64("count", res.RowsAffected).Msg("poller: ghost ONUs marked offline")
-		offlineCount += int(res.RowsAffected)
+		Find(&ghostOnus).Error; err == nil && len(ghostOnus) > 0 {
+
+		p.db.WithContext(ctx).Table("olt_onu_status").
+			Where("oltId = ? AND status NOT IN (?, ?) AND updatedAt < ?",
+				olt.ID, string(models.OnuOffline), string(models.OnuUnregistered), start).
+			Updates(map[string]interface{}{
+				"status":    string(models.OnuOffline),
+				"updatedAt": now,
+			})
+
+		log.Debug().Str("olt", olt.ID).Int("count", len(ghostOnus)).Msg("poller: ghost ONUs marked offline")
+		for i := range ghostOnus {
+			ghostOnus[i].Status = models.OnuOffline
+			offlineCount++
+		}
+		// Include ghost ONUs in allStatuses so checkAlerts can raise offline alerts.
+		allStatuses = append(allStatuses, ghostOnus...)
 	}
 
-	allStatuses := append(registeredStatuses, unregisteredStatuses...)
 	totalONU := len(allStatuses)
 
 	// Update OLT summary
