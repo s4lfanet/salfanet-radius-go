@@ -66,7 +66,7 @@ func (p *Poller) Start(olt *models.NetworkOLT) {
 
 	interval := time.Duration(olt.PollingInterval) * time.Second
 	if interval < 30*time.Second {
-		interval = 60 * time.Second
+		interval = 30 * time.Second
 	}
 
 	log.Info().Str("olt", olt.ID).Str("ip", olt.IPAddress).Dur("interval", interval).Msg("poller: starting")

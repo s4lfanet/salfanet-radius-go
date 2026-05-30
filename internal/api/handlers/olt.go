@@ -364,7 +364,9 @@ func (h *OLTHandler) ListONUs(c fiber.Ctx) error {
 	baseSQL := `
 		SELECT o.id, o.frame, o.slot, o.port, o.onuId, o.onuIndex,
 		       o.serialNumber, o.macAddress, o.description, o.status,
-		       o.rxPower, o.txPower, o.distance, o.temperature, o.voltage, o.biasCurrent,
+		       CASE WHEN o.rxPower IS NOT NULL AND o.rxPower <= 30 THEN o.rxPower ELSE NULL END AS rxPower,
+		       CASE WHEN o.txPower IS NOT NULL AND o.txPower <= 30 THEN o.txPower ELSE NULL END AS txPower,
+		       o.distance, o.temperature, o.voltage, o.biasCurrent,
 		       o.bandwidthUp, o.bandwidthDown, o.customerId,
 		       o.lastSeenAt, o.lastOfflineAt,
 		       u.name  AS customerName,

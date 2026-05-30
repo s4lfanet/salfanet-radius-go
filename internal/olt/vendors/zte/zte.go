@@ -235,12 +235,13 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		// RxPower: ZTE C320 encodes optical power as raw = (dBm + 30) * 500.
 		// Formula: dBm = raw/500.0 - 30.0
 		// Verified from live device: raw=6751 → -16.50 dBm; raw=5085 → -19.83 dBm.
-		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 {
+		// 0xFFFF (65535) is a ZTE sentinel meaning "no data" → must be excluded.
+		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 && rxRaw != 0xFFFF {
 			dbm := float64(rxRaw)/500.0 - 30.0
 			info.RxPower = &dbm
 		}
-		// TxPower: same encoding
-		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 {
+		// TxPower: same encoding and same sentinel
+		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 && txRaw != 0xFFFF {
 			dbm := float64(txRaw)/500.0 - 30.0
 			info.TxPower = &dbm
 		}
@@ -271,11 +272,11 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		if desc, ok := merged.descs[k]; ok {
 			info.Description = desc
 		}
-		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 {
+		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 && rxRaw != 0xFFFF {
 			dbm := float64(rxRaw)/500.0 - 30.0
 			info.RxPower = &dbm
 		}
-		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 {
+		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 && txRaw != 0xFFFF {
 			dbm := float64(txRaw)/500.0 - 30.0
 			info.TxPower = &dbm
 		}
