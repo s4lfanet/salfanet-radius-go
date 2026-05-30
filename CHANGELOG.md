@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.90] — 2026-05-31
+### Fixed
+- **Ghost ONU cleanup tidak berjalan (GORM bug)** — `Model(&models.OLTONUStatus{})` dengan primary key kosong menyebabkan GORM menambah kondisi `WHERE id = ''` secara diam-diam, membuat batch UPDATE tidak pernah mengeksekusi satu baris pun. Fix: ganti ke `.Table("olt_onu_status")` yang tidak punya kondisi PK implisit.
+- **Ghost ONUs tidak masuk `checkAlerts`** — Karena ghost ONUs di-append setelah `allStatuses` dibuat, mereka tidak diproses oleh alert engine → tidak ada alert offline yang dibuat. Fix: load ghost ONUs terlebih dulu via `Find`, lalu append ke `allStatuses` SEBELUM `checkAlerts` dipanggil.
+- **`totalONU` tidak menghitung ghost ONUs** — Summary OLT (`onlineOnu`, `offlineOnu`, `totalOnu`) tidak mencerminkan ONUs yang hilang dari SNMP walk. Sekarang ghost ONUs masuk ke `allStatuses` sehingga `totalONU` dan `offlineOnu` dihitung dengan benar.
+### Files
+- `internal/olt/poller/poller.go` — Rewrite ghost ONU cleanup: `Find` + `Table("olt_onu_status")` + append ke `allStatuses` sebelum `totalONU` dihitung
+
 ## [2.52.89] — 2026-05-31
 ### Fixed
 - **ONU DyingGasp tidak terdeteksi** — `decodeOperState` hanya mengenal nilai 4 dan 5 (online) dan semua nilai lainnya sebagai offline, sehingga nilai 6 (DyingGasp dari ZTE MIB: `zxAnGponOnuRegOperStatus`) ikut dibaca sebagai offline biasa. Fix: tambah `case 6 → dying_gasp`.
