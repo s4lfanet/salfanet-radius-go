@@ -19,7 +19,7 @@ import {
   Server, RefreshCw, AlertCircle, Wifi, WifiOff,
   Thermometer, Clock, Activity, ArrowLeft, Save, TestTube,
   Power, Download, CheckCircle, Signal, Plus, X, Cpu, Zap,
-  Eye, UserPlus, Trash2, Pencil,
+  Eye, UserPlus, Trash2, Pencil, Eraser,
 } from 'lucide-react';
 
 interface ONU {
@@ -1941,6 +1941,9 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
   const [assigningOnu, setAssigningOnu] = useState<ONU | null>(null);
   const [editingOnu, setEditingOnu] = useState<ONU | null>(null);
 
+  // Clean config ONU
+  const [cleaningConfigOnu, setCleaningConfigOnu] = useState<string | null>(null);
+
   // ODP assignment
   const [assigningOdpToOnu, setAssigningOdpToOnu] = useState<ONU | null>(null);
 
@@ -2044,7 +2047,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
   // Start auto-refresh of ONU list every 30s
   useEffect(() => {
     fetchLiveOnus();
-    const interval = setInterval(fetchLiveOnus, 30_000);
+    const interval = setInterval(fetchLiveOnus, 15_000);
     return () => clearInterval(interval);
   }, [fetchLiveOnus]);
 
@@ -2149,7 +2152,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
 
   const handleDeleteOnu = async (onu: ONU) => {
     const confirmed = window.confirm(
-      `Hapus ONU ${onu.serialNumber ?? `${onu.frame}/${onu.slot}/${onu.port}:${onu.onuId}`} dari OLT?\n\nAksi ini akan clear config service dan unregister ONU.`
+      `Hapus ONU ${onu.serialNumber ?? `${onu.frame}/${onu.slot}/${onu.port}:${onu.onuId}`} dari OLT?\n\nAksi ini akan deregister ONU dari PON port dan hapus dari database.`
     );
     if (!confirmed) return;
 
@@ -2160,15 +2163,36 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
       if (!res.ok) {
         alert(data.error ?? 'Delete ONU failed');
       } else {
+        await fetchLiveOnus();
         await fetchOLT();
-        if (data.sync?.success === false) {
-          alert(data.message ?? 'ONU deleted, but sync failed');
-        }
       }
     } catch (e) {
       alert('Delete ONU request failed');
     } finally {
       setDeletingOnu(null);
+    }
+  };
+
+  const handleCleanConfigOnu = async (onu: ONU) => {
+    const confirmed = window.confirm(
+      `Clean config ONU ${onu.serialNumber ?? `${onu.frame}/${onu.slot}/${onu.port}:${onu.onuId}`}?\n\nAksi ini akan menghapus konfigurasi service (VLAN, profile) di OLT. ONU tetap terdaftar.`
+    );
+    if (!confirmed) return;
+
+    setCleaningConfigOnu(onu.id);
+    try {
+      const res = await fetch(`/api/olt/${id}/onus/${onu.id}/clean-config`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error ?? 'Clean config failed');
+      } else {
+        alert('Config ONU berhasil di-reset.');
+        await fetchLiveOnus();
+      }
+    } catch (e) {
+      alert('Clean config request failed');
+    } finally {
+      setCleaningConfigOnu(null);
     }
   };
 
@@ -2633,9 +2657,19 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                               Reboot
                             </button>
                             <button
+                              onClick={() => handleCleanConfigOnu(onu)}
+                              disabled={cleaningConfigOnu === onu.id || deletingOnu === onu.id || rebootingOnu !== null || batchRebooting}
+                              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-yellow-600 text-white rounded-md hover:bg-yellow-700 disabled:opacity-50 transition-colors"
+                              title="Reset konfigurasi service ONU di OLT (VLAN, profile). ONU tetap terdaftar."
+                            >
+                              {cleaningConfigOnu === onu.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Eraser className="w-3 h-3" />}
+                              {cleaningConfigOnu === onu.id ? 'Cleaning...' : 'Clean'}
+                            </button>
+                            <button
                               onClick={() => handleDeleteOnu(onu)}
-                              disabled={deletingOnu === onu.id || rebootingOnu !== null || batchRebooting}
+                              disabled={deletingOnu === onu.id || cleaningConfigOnu === onu.id || rebootingOnu !== null || batchRebooting}
                               className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 transition-colors"
+                              title="Deregister ONU dari PON port dan hapus dari database"
                             >
                               {deletingOnu === onu.id ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
                               {deletingOnu === onu.id ? 'Deleting...' : 'Delete'}

@@ -223,6 +223,7 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 				base.Description = &onu.Description
 			}
 			base.RxPower = onu.RxPower
+			base.TxPower = onu.TxPower
 			base.Distance = onu.Distance
 			if onu.Status == models.OnuOnline {
 				onlineCount++
@@ -249,6 +250,7 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 				"description":  gorm.Expr("COALESCE(VALUES(description), description)"),
 				"status":       gorm.Expr("VALUES(status)"),
 				"rxPower":      gorm.Expr("VALUES(rxPower)"),
+				"txPower":      gorm.Expr("VALUES(txPower)"),
 				"distance":     gorm.Expr("VALUES(distance)"),
 				"lastSeenAt":   gorm.Expr("VALUES(lastSeenAt)"),
 				"updatedAt":    gorm.Expr("VALUES(updatedAt)"),

@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.87] — 2026-05-31
+### Added
+- **Clean Config ONU dari OLT** — Tombol "Clean" (kuning) di tabel ONU list mengirim `restore default` ke interface `gpon-onu_1/{slot}/{port}:{onuId}` via Telnet. ONU tetap terdaftar di PON port, hanya konfigurasi service (VLAN, profile) yang di-reset. Endpoint: `POST /api/olt/:id/onus/:onuId/clean-config`.
+- **Fix Delete ONU endpoint** — Frontend memanggil `DELETE /api/olt/:id/onus/:onuId/delete` tapi route belum ada. Route baru ditambahkan, mengarah ke handler `DeregisterONU` yang sudah ada.
+### Fixed
+- **TxPower tidak tersimpan saat poll** — Poller SNMP sudah memparse `TxPower` dari ZTE via SNMP (`oidTxPower`) tapi nilai tidak di-assign ke `base.TxPower` dan tidak masuk ke upsert `DoUpdates`. Fix: tambah `base.TxPower = onu.TxPower` dan `txPower: COALESCE(...)` ke upsert.
+- **Table ONU lambat update setelah mutasi** — Setelah delete ONU, sekarang memanggil `fetchLiveOnus()` segera (bukan hanya `fetchOLT()`). Interval auto-refresh dipercepat dari 30s → 15s.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Tambah `CleanONUConfig()`
+- `internal/api/handlers/misc_handler.go` — Tambah `CleanONUConfig` handler; import `zte`
+- `internal/api/router.go` — Tambah route `POST /:id/onus/:onuId/clean-config` dan `DELETE /:id/onus/:onuId/delete`
+- `internal/olt/poller/poller.go` — Tambah `TxPower` ke base struct dan upsert `DoUpdates`
+- `src/app/admin/olt/[id]/page.tsx` — State `cleaningConfigOnu`; handler `handleCleanConfigOnu`; tombol "Clean" di action column; refresh 15s; import `Eraser`
+
 ## [2.52.86] — 2026-05-31
 ### Fixed
 - **Fix adminStatus PON port selalu "Enabled"** — Parser `parsePONInterfaceStat` di `olt_pon_stat.go` menggunakan `strings.Contains(lower, "activate")` yang juga match kata "**de**activate" → semua port disabled terbaca sebagai enabled. Fix: cek "deactivate" lebih dulu sebelum "activate".

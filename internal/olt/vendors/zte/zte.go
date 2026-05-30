@@ -653,6 +653,29 @@ func DeregisterONU(pool *telnet.Pool, frame, slot, port, onuID int) error {
 	return nil
 }
 
+// CleanONUConfig resets an ONU's service configuration to factory defaults via
+// "restore default" on the gpon-onu interface.  The ONU stays registered on the
+// PON port — only its service configuration (VLANs, profiles, etc.) is cleared.
+func CleanONUConfig(pool *telnet.Pool, frame, slot, port, onuID int) error {
+	cmds := []string{
+		"configure terminal",
+		fmt.Sprintf("interface gpon-onu_%d/%d/%d:%d", frame, slot, port, onuID),
+		"restore default",
+		"exit",
+		"end",
+	}
+	output, err := pool.ExecuteMultiple(cmds)
+	if err != nil {
+		return err
+	}
+	for _, line := range strings.Split(output, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "%") {
+			return fmt.Errorf("OLT CLI error during clean config: %s", strings.TrimSpace(line))
+		}
+	}
+	return nil
+}
+
 // ─── ONU Types ───────────────────────────────────────────────────────────────
 
 // ONUType holds metadata about a supported ONU type on this OLT.

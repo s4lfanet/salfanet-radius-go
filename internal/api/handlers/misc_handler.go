@@ -21,6 +21,7 @@ import (
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/poller"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/telnet"
+	"github.com/s4lfanet/salfanet-radius-go/internal/olt/vendors/zte"
 )
 
 func capitalize(s string) string {
@@ -1402,6 +1403,49 @@ func (h *MiscHandler) RebootONU(c fiber.Ctx) error {
 		"message":   "ONU reboot initiated",
 		"interface": iface,
 	})
+}
+
+// POST /api/olt/:id/onus/:onuId/clean-config — reset ONU service config on OLT (restore default).
+// The ONU stays registered; only its VLAN/profile configuration is cleared.
+func (h *MiscHandler) CleanONUConfig(c fiber.Ctx) error {
+	oltID := c.Params("id")
+	onuID := c.Params("onuId")
+
+	var olt models.NetworkOLT
+	if err := h.db.First(&olt, "id = ?", oltID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "OLT not found"})
+	}
+	if (!olt.TelnetEnabled && !olt.SSHEnabled) || olt.Username == nil || olt.Password == nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Telnet not configured for this OLT"})
+	}
+
+	var onuStatus models.OLTONUStatus
+	if err := h.db.Where("oltId = ? AND id = ?", oltID, onuID).First(&onuStatus).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "ONU not found"})
+	}
+
+	pool := h.poller.GetPool(oltID)
+	var ownPool bool
+	if pool == nil {
+		tport := olt.TelnetPort
+		if tport == 0 {
+			tport = 23
+		}
+		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+		tcfg.CommandTimeout = 15 * time.Second
+		pool = telnet.NewPool(tcfg)
+		ownPool = true
+	}
+	if ownPool {
+		defer pool.Close()
+	}
+
+	if err := zte.CleanONUConfig(pool, onuStatus.Frame, onuStatus.Slot, onuStatus.Port, onuStatus.OnuID); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to clean ONU config: " + err.Error()})
+	}
+
+	iface := fmt.Sprintf("gpon-onu_%d/%d/%d:%d", onuStatus.Frame, onuStatus.Slot, onuStatus.Port, onuStatus.OnuID)
+	return c.JSON(fiber.Map{"success": true, "message": "ONU config cleared", "interface": iface})
 }
 
 // POST /api/olt/:id/onus/batch-reboot — batch reboot multiple ONUs

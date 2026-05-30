@@ -1244,6 +1244,9 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	olt.Post("/:id/onus/:onuId/reboot", miscH.RebootONU)
 	olt.Post("/:id/onus/batch-reboot", miscH.BatchRebootONUs)
 	olt.Get("/:id/onus/:onuId/detail", miscH.ONUDetail)
+	olt.Post("/:id/onus/:onuId/clean-config", miscH.CleanONUConfig)
+	// Frontend calls DELETE /onus/:onuId/delete — map to DeregisterONU
+	olt.Delete("/:id/onus/:onuId/delete", oltH.DeregisterONU)
 
 	// ─── Batch 12: Network infrastructure ────────────────────────────────────
 	api.Get("/network/cables", networkInfraH.ListCables)
