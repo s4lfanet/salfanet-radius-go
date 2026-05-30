@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.89 — 2026-05-31
+
+### Fixed
+- **ONU DyingGasp tidak terdeteksi** — `decodeOperState` hanya mengenal nilai 4 dan 5 (online) dan semua nilai lainnya sebagai offline, sehingga nilai 6 (DyingGasp dari ZTE MIB: `zxAnGponOnuRegOperStatus`) ikut dibaca sebagai offline biasa. Fix: tambah `case 6 → dying_gasp`.
+- **ONU offline tetapi terbaca online di tabel** — Jika ONU mati mendadak (tanpa dying gasp), ZTE bisa menghapusnya dari tabel SNMP `zxAnGponOnuRegTable` sepenuhnya. Poller tidak memproses ONU tersebut sama sekali → status lama di DB (`online`) tidak diupdate → ONU kelihatan online padahal sudah mati. Fix: setelah upsert, semua ONU yang `updatedAt < poll_start` (tidak tersentuh upsert = tidak ada di SNMP walk) ditandai offline secara otomatis.
+- **Alert DyingGasp belum ada** — `checkAlerts` hanya menangani `OnuOffline` dan `OnuOnline`, tidak ada penanganan `OnuDyingGasp`. Fix: tambah case DyingGasp → create alert dengan severity `critical` dan pesan "kemungkinan listrik mati mendadak". Alert DyingGasp juga di-resolve saat ONU kembali online.
+- **Recovery message (online kembali) lebih akurat** — Sebelumnya hanya resolve alert `onu_offline`. Sekarang juga resolve `dying_gasp` alert saat ONU recovery.
+### Files
+- `internal/olt/vendors/zte/zte.go` — `decodeOperState`: tambah `case 6 → OnuDyingGasp`
+- `internal/olt/poller/poller.go` — Ghost ONU cleanup setelah upsert; DyingGasp case di `checkAlerts`; resolve loop untuk `onu_offline` + `dying_gasp` di case online
+
 ### v2.52.88 — 2026-05-31
 
 ### Fixed
@@ -531,17 +542,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Enable/Disable PON Port dari Rack Diagram** — Klik titik PON port di diagram rack ZTE C320 membuka modal PON port. Modal menampilkan status admin (Enabled/Disabled), link proto (UP/DOWN), statistik ONU (Total/Online/Offline), suhu dan TX power optik. Tombol **Disable Port** mengirim `shutdown` ke interface `gpon-olt_1/{slot}/{port}` via Telnet; tombol **Enable Port** mengirim `no shutdown`. Tidak perlu login CLI lagi.
 ### Files
 - `src/app/admin/olt/[id]/page.tsx` — PON dot `<div>` → `<button>` klikable; state `selectedPON`; modal render `PONPortModal`; komponen `PONPortModal`
-
-### v2.52.84 — 2026-05-31
-
-### Added
-- **Assign ODP ke ONU dari tabel ONU list** — Klik kolom ODP (menampilkan "— assign" jika belum ada) di tabel ONU list membuka modal pilih ODP. Modal menampilkan daftar semua ODP (`GET /api/network/odps`) dengan pencarian, preview ODP aktif, dan opsi hapus link. Simpan via `PATCH /api/olt/:id/onus/:onuId` dengan body `{odpId: "..."}` atau `{clearOdp: true}`. Setelah simpan, tabel live-refresh otomatis.
-- **Field `odpId` pada `olt_onu_status`** — Tambah kolom `odpId VARCHAR(191)` ke tabel `olt_onu_status` untuk link langsung per-ONU ke ODP (sebelumnya join by port — tidak akurat karena 1 port bisa punya banyak ODP).
-- **Perbaikan SQL JOIN `ListONUs`** — JOIN dari `ponPort`-based (tidak akurat) diganti ke direct `o.odpId = odp.id` sehingga setiap ONU menampilkan ODP yang tepat.
-### Files
-- `internal/db/models/olt.go` — `OLTONUStatus`: tambah `OdpID *string \`gorm:"index;column:odpId"\``
-- `internal/api/handlers/olt.go` — `ListONUs`: SQL JOIN ke `network_odps` via `o.odpId`; `UpdateONU`: tambah handling `odpId` + `clearOdp`
-- `src/app/admin/olt/[id]/page.tsx` — Kolom ODP kini clickable → `ONUOdpAssignModal`; state `assigningOdpToOnu`; komponen `ONUOdpAssignModal`
 
 <!-- AUTO-CHANGELOG:END -->
 
