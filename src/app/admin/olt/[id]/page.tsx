@@ -388,6 +388,7 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
   const [loadingPON, setLoadingPON] = useState<string | null>(null);
   const [ponActing, setPonActing] = useState<string | null>(null); // portKey currently acting
   const [editingPONDesc, setEditingPONDesc] = useState<{ portKey: string; value: string } | null>(null);
+  const [selectedPON, setSelectedPON] = useState<{ slot: number; port: number } | null>(null);
 
   const fetchChassis = useCallback(() => {
     setLoadingChassis(true);
@@ -646,15 +647,21 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
                 const s = portStats[`${slot.index}/${i + 1}`];
 
                 return (
-                  <div key={i + 1}
-                    className="w-4 h-4 rounded-[3px] border flex items-center justify-center cursor-default transition-all hover:brightness-150 hover:scale-110 hover:z-10 relative"
+                  <button key={i + 1}
+                    className="w-4 h-4 rounded-[3px] border flex items-center justify-center cursor-pointer transition-all hover:brightness-150 hover:scale-110 hover:z-10 relative"
                     style={{ background: c.bg, borderColor: c.border }}
-                    title={portTooltip(slot.index, i + 1)}>
+                    title={portTooltip(slot.index, i + 1)}
+                    onClick={() => {
+                      const pk = `${slot.index}/${i + 1}`;
+                      setSelectedPON({ slot: slot.index, port: i + 1 });
+                      refreshPONStat(pk);
+                      setTimeout(() => fetchPONStatRef.current(pk), 50);
+                    }}>
                     <div className="w-1 h-1 rounded-full" style={{ background: c.dot }} />
                     {s && s.unregistered > 0 && (
                       <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-yellow-400 border border-yellow-600" title="Unregistered ONU" />
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -671,6 +678,24 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
       <div className="space-y-4">
         {selectedUplinkPort && (
           <UplinkPortModal oltId={olt.id} port={selectedUplinkPort} onClose={() => setSelectedUplinkPort(null)} />
+        )}
+        {selectedPON && (
+          <PONPortModal
+            oltId={olt.id}
+            slot={selectedPON.slot}
+            port={selectedPON.port}
+            stat={ponStatCache[`${selectedPON.slot}/${selectedPON.port}`]}
+            loadingStat={loadingPON === `${selectedPON.slot}/${selectedPON.port}`}
+            acting={ponActing === `${selectedPON.slot}/${selectedPON.port}`}
+            portStats={portStats[`${selectedPON.slot}/${selectedPON.port}`]}
+            onAction={(action) => handlePONAction(`${selectedPON.slot}/${selectedPON.port}`, action)}
+            onRefresh={() => {
+              const pk = `${selectedPON.slot}/${selectedPON.port}`;
+              refreshPONStat(pk);
+              setTimeout(() => fetchPONStatRef.current(pk), 50);
+            }}
+            onClose={() => setSelectedPON(null)}
+          />
         )}
 
         {/* ── Main rack panel ── */}
@@ -3066,6 +3091,139 @@ function ONUEditModal({
             {saving ? <RefreshCw className="h-3 w-3 mr-2 animate-spin" /> : <Save className="h-3 w-3 mr-1" />}
             Save
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PONPortModal ─────────────────────────────────────────────────────────────
+
+function PONPortModal({
+  oltId, slot, port, stat, loadingStat, acting, portStats, onAction, onRefresh, onClose,
+}: {
+  oltId: string;
+  slot: number;
+  port: number;
+  stat: PONPortStat | null | undefined;
+  loadingStat: boolean;
+  acting: boolean;
+  portStats: { total: number; online: number; offline: number; los: number; dyingGasp: number; unregistered: number } | undefined;
+  onAction: (action: string) => Promise<void>;
+  onRefresh: () => void;
+  onClose: () => void;
+}) {
+  const iface = `gpon-olt_1/${slot}/${port}`;
+  const isEnabled = stat?.adminStatus !== 'deactivate';
+  const isUp = stat?.lineProto === 'up';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
+      <div
+        className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-sm mx-4"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-2">
+            <Signal className="w-4 h-4 text-green-400" />
+            <span className="font-semibold text-slate-900 dark:text-white font-mono text-sm">{iface}</span>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="px-5 py-4 space-y-4">
+          {/* Status badges */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {loadingStat ? (
+              <span className="text-xs text-slate-400 animate-pulse">Mengambil status...</span>
+            ) : stat ? (
+              <>
+                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${isEnabled ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'}`}>
+                  <Power className="w-3 h-3" />
+                  {isEnabled ? 'Enabled' : 'Disabled'}
+                </span>
+                <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full ${isUp ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400'}`}>
+                  <Activity className="w-3 h-3" />
+                  Link {isUp ? 'UP' : 'DOWN'}
+                </span>
+                {stat.description && (
+                  <span className="text-xs text-slate-400 italic truncate max-w-[180px]">{stat.description}</span>
+                )}
+              </>
+            ) : (
+              <span className="text-xs text-slate-400">Status tidak tersedia</span>
+            )}
+          </div>
+
+          {/* ONU stats */}
+          {portStats && (
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Total ONU', value: portStats.total, color: 'text-slate-700 dark:text-slate-200' },
+                { label: 'Online', value: portStats.online, color: 'text-green-600 dark:text-green-400' },
+                { label: 'Offline', value: portStats.offline, color: 'text-red-500 dark:text-red-400' },
+              ].map(item => (
+                <div key={item.label} className="flex flex-col items-center p-2 rounded-lg bg-slate-50 dark:bg-slate-800">
+                  <span className={`text-xl font-bold ${item.color}`}>{item.value}</span>
+                  <span className="text-[10px] text-slate-400">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Optical stats */}
+          {stat && (stat.temperature !== undefined || stat.txPower !== undefined) && (
+            <div className="flex gap-3 text-xs text-slate-500 dark:text-slate-400">
+              {stat.temperature !== undefined && <span>🌡 {stat.temperature.toFixed(1)}°C</span>}
+              {stat.txPower !== undefined && <span>📡 TX {stat.txPower.toFixed(2)} dBm</span>}
+            </div>
+          )}
+
+          {/* Warning when disabling */}
+          {isEnabled && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded px-3 py-2">
+              ⚠ Mematikan port PON akan memutus semua ONU di port ini.
+            </p>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 px-5 pb-5">
+          <button
+            onClick={onRefresh}
+            disabled={loadingStat || acting}
+            className="flex items-center gap-1 px-3 py-1.5 text-xs rounded border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3 h-3 ${loadingStat ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+
+          <div className="flex-1" />
+
+          {/* Enable / Disable */}
+          {!stat || isEnabled ? (
+            <button
+              onClick={async () => { await onAction('disable'); onRefresh(); }}
+              disabled={acting || loadingStat}
+              className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded bg-red-600 hover:bg-red-700 text-white disabled:opacity-50"
+            >
+              {acting ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Power className="w-3 h-3" />}
+              Disable Port
+            </button>
+          ) : (
+            <button
+              onClick={async () => { await onAction('enable'); onRefresh(); }}
+              disabled={acting || loadingStat}
+              className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+            >
+              {acting ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Power className="w-3 h-3" />}
+              Enable Port
+            </button>
+          )}
         </div>
       </div>
     </div>

@@ -1045,8 +1045,8 @@ func (h *OLTHandler) UpdateONU(c fiber.Ctx) error {
 	var body struct {
 		Name        *string `json:"name"`
 		Description *string `json:"description"`
-		OdpID       *string `json:"odpId"`      // set ODP assignment (UUID of network_odps)
-		ClearOdp    bool    `json:"clearOdp"`   // true to remove ODP link
+		OdpID       *string `json:"odpId"`    // set ODP assignment (UUID of network_odps)
+		ClearOdp    bool    `json:"clearOdp"` // true to remove ODP link
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid body"})
