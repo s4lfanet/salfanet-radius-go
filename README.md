@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.86 — 2026-05-31
+
+### Fixed
+- **Fix adminStatus PON port selalu "Enabled"** — Parser `parsePONInterfaceStat` di `olt_pon_stat.go` menggunakan `strings.Contains(lower, "activate")` yang juga match kata "**de**activate" → semua port disabled terbaca sebagai enabled. Fix: cek "deactivate" lebih dulu sebelum "activate".
+- **Fix ONU name/description terhapus saat poll** — Upsert poller menggunakan `AssignmentColumns` yang selalu update kolom `description` dengan nilai baru (termasuk NULL jika OLT tidak mengembalikan deskripsi). Akibatnya nama ONU yang sudah di-set manual terhapus saat poll berikutnya. Fix: gunakan `COALESCE(VALUES(description), description)` agar nilai lama dipertahankan jika nilai baru NULL. Berlaku juga untuk `serialNumber`.
+### Files
+- `internal/api/handlers/olt_pon_stat.go` — Fix urutan cek `deactivate` vs `activate` di `parsePONInterfaceStat`
+- `internal/olt/poller/poller.go` — Ganti `AssignmentColumns` ke `clause.Assignments` dengan `COALESCE` untuk `description` dan `serialNumber`
+
 ### v2.52.85 — 2026-05-31
 
 ### Added
@@ -529,22 +538,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/olt.go` — `GetOLT`: tambah filter `isResolved = false` + `Limit(50)` pada `Preload("Alerts")`
 - `src/app/admin/olt/[id]/page.tsx` — Badge tab "Alerts" dan konten tab kini filter `!a.isResolved`
-
-### v2.52.81 — 2026-05-23
-
-### Added
-- **PON port enable/disable & description edit** — Tambahkan handler `POST /api/olt/:id/pon` dengan action `enable`, `disable`, `setDescription`. Frontend: di panel detail port PON (expanded card), muncul tombol Enable/Disable dan "Edit Desc" dengan inline input.
-- **ONU name/description edit** — Tambahkan handler `PATCH /api/olt/:id/onus/:onuId` untuk update `description` di DB dan perintah `name` + `description` via Telnet ke OLT. Frontend: tombol **Edit** di list ONU membuka modal `ONUEditModal`.
-- **WA + Telegram alert saat ONU offline** — Poller `checkAlerts` kini mengirim notifikasi WhatsApp (ke `Company.AdminPhone`) dan Telegram (ke `TelegramBackupSettings`) saat ONU baru go offline. Set `notifiedViaWhatsapp = true` pada record alert.
-- **Auto-resolve alert + notifikasi recovery** — Saat ONU yang sebelumnya offline kembali online, alert `onu_offline` di-resolve (`isResolved = true`, `resolvedAt = now`) dan dikirim pesan 🟢 recovery via WA + Telegram.
-- **Fix alert deduplication bug** — `checkAlerts` sebelumnya menggunakan `s.ID` (UUID baru tiap poll) alih-alih DB ID ONU nyata, sehingga duplikat alert dibuat setiap siklus poll. Fix: fetch real DB IDs by (frame, slot, port, onuId) terlebih dahulu.
-- **`internal/notify/telegram.go`** — Fungsi paket-level `notify.SendTelegramMessage(botToken, chatId, text)` yang dapat digunakan oleh poller (di luar package `handlers`).
-### Files
-- `internal/notify/telegram.go` — New: `SendTelegramMessage` helper
-- `internal/api/handlers/olt.go` — Add `PONPortAction` + `UpdateONU` handlers
-- `internal/api/router.go` — Register `POST /:id/pon` + `PATCH /:id/onus/:onuId`
-- `internal/olt/poller/poller.go` — Fix `checkAlerts` deduplication; add recovery detection; add WA+Telegram notifications via `notifyAlert()`
-- `src/app/admin/olt/[id]/page.tsx` — PON port action buttons + inline desc editor; ONU Edit button + `ONUEditModal`
 
 <!-- AUTO-CHANGELOG:END -->
 
