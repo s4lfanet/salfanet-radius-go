@@ -491,6 +491,17 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.84 — 2026-05-31
+
+### Added
+- **Assign ODP ke ONU dari tabel ONU list** — Klik kolom ODP (menampilkan "— assign" jika belum ada) di tabel ONU list membuka modal pilih ODP. Modal menampilkan daftar semua ODP (`GET /api/network/odps`) dengan pencarian, preview ODP aktif, dan opsi hapus link. Simpan via `PATCH /api/olt/:id/onus/:onuId` dengan body `{odpId: "..."}` atau `{clearOdp: true}`. Setelah simpan, tabel live-refresh otomatis.
+- **Field `odpId` pada `olt_onu_status`** — Tambah kolom `odpId VARCHAR(191)` ke tabel `olt_onu_status` untuk link langsung per-ONU ke ODP (sebelumnya join by port — tidak akurat karena 1 port bisa punya banyak ODP).
+- **Perbaikan SQL JOIN `ListONUs`** — JOIN dari `ponPort`-based (tidak akurat) diganti ke direct `o.odpId = odp.id` sehingga setiap ONU menampilkan ODP yang tepat.
+### Files
+- `internal/db/models/olt.go` — `OLTONUStatus`: tambah `OdpID *string \`gorm:"index;column:odpId"\``
+- `internal/api/handlers/olt.go` — `ListONUs`: SQL JOIN ke `network_odps` via `o.odpId`; `UpdateONU`: tambah handling `odpId` + `clearOdp`
+- `src/app/admin/olt/[id]/page.tsx` — Kolom ODP kini clickable → `ONUOdpAssignModal`; state `assigningOdpToOnu`; komponen `ONUOdpAssignModal`
+
 ### v2.52.83 — 2026-05-25
 
 ### Added
@@ -536,15 +547,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/olt.go` — Add `GetAssignONUCandidates` GET handler; fix `AssignONU` to accept null customerId for unassign
 - `internal/api/router.go` — Register `GET /:id/onus/:onuId/assign` route
-
-### v2.52.79 — 2026-05-22
-
-### Fixed
-- **Reboot ONU tidak berfungsi** — `RebootONU` handler sebelumnya hanya stub (return success tanpa melakukan apa-apa). Perintah `reset gpon-onu_F/S/P:N` tidak valid di ZTE C320 V2.1 (error 20200/20204). Fix: implementasi nyata via Telnet dengan `shutdown` + `no shutdown` pada interface ONU, yang memaksa ONU offline dan re-registrasi (terbukti dari log: `Online Duration: 0h 00m 02s` setelah reboot).
-- **Batch Reboot ONU tidak berfungsi** — `BatchRebootONUs` handler juga stub. Fix: implementasi nyata — query ONUs dari DB, build commands `configure terminal` → `interface gpon-onu_F/S/P:N` → `shutdown` → `no shutdown` → `exit` untuk setiap ONU, kemudian `end`.
-- **ONU Detail modal banyak field N/A** — `onuParseDetailInfo` menggunakan alias field yang salah (`SN` alih-alih `Serial number`, `Match mode` alih-alih `Authentication mode`, `Control flag` alih-alih `Admin state`, dll) dan skip nilai kosong (`if val == "" { continue }`) sehingga `OMCI BW Profile` selalu ter-skip. Fix: hapus alias mapping (frontend menggunakan nama field ZTE C320 asli langsung), izinkan empty values, dan perbaiki summary map dengan nama field yang benar (`Authentication mode`, `SN Bind`, `Admin state`, `Current channel`, `Configured channel`, `DBA Mode`, `Vport mode`, `Line Profile`, `Service Profile`, `OMCI BW Profile`, `Serial number`).
-### Files
-- `internal/api/handlers/misc_handler.go` — Implement `RebootONU` via shutdown/no-shutdown; implement `BatchRebootONUs`; fix `onuParseDetailInfo` aliases and summary fields
 
 <!-- AUTO-CHANGELOG:END -->
 
