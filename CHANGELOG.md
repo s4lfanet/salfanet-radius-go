@@ -6,6 +6,18 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.83] — 2026-05-25
+### Added
+- **Rx power degradation alerts (WA + Telegram)** — Poller kini mendeteksi sinyal ONU lemah (Rx < -27 dBm) dan membuat alert tipe `rx_degradation`. Saat Rx membaik (>= -27 dBm), alert otomatis di-resolve. Juga mendeteksi degradasi massal: jika ≥ 3 atau ≥ 50% ONU online pada satu PON port memiliki sinyal lemah, dibuat alert tipe `bulk_rx_degrade` (severity: critical) dengan notifikasi WA + Telegram.
+- **Real-time auto-refresh tabel ONU** — List ONU di tab detail OLT kini refresh otomatis setiap 30 detik via `GET /api/olt/:id/onus?all=true`. Ditampilkan indikator "Updated Xs ago" di header tabel. Data awal langsung dimuat saat halaman dibuka.
+- **Kolom ODP di tabel ONU** — Kolom baru "ODP" di tabel list ONU, diisi dari join `network_odps` berdasarkan `ponPort = onu.port` (query SQL di `ListONUs`). Menampilkan nama ODP yang terhubung ke port tersebut.
+- **Fix PON port enable/disable (stale closure)** — Tombol Enable/Disable PON port kini bekerja dengan benar untuk port yang sedang enabled maupun disabled. Fix stale closure di `handlePONAction`: gunakan `useRef` (`fetchPONStatRef`) agar `fetchPONStat` dengan cache terbaru selalu dipanggil setelah aksi.
+### Files
+- `internal/db/models/olt.go` — Tambah `AlertRxDegradation` + `AlertBulkRxDegrade` ke `OltAlertType`
+- `internal/api/handlers/olt.go` — `ListONUs` ditulis ulang: raw SQL dengan LEFT JOIN ke `network_odps` + support `?all=true` untuk polling tanpa pagination; fix `const baseSQL` → `var baseSQL`
+- `internal/olt/poller/poller.go` — `checkAlerts`: tambah Rx power degradation check (single ONU + bulk per PON port) dengan create/resolve alert + WA+Telegram notifikasi
+- `src/app/admin/olt/[id]/page.tsx` — `liveOnus` state + `fetchLiveOnus` (30s interval); ODP column di tabel ONU; refresh indicator; fix PON stale closure via `fetchPONStatRef`
+
 ## [2.52.82] — 2026-05-24
 ### Fixed
 - **Sinkronisasi alert OLT detail vs halaman global** — Badge "Alerts" di tab detail OLT menghitung semua alert (termasuk yang sudah resolved) karena `Preload("Alerts")` tanpa filter. Kini backend hanya preload alert `isResolved = false`, dan frontend juga memfilter `!a.isResolved` sehingga badge dan konten tab hanya menampilkan alert aktif — konsisten dengan halaman global OLT Alerts.
