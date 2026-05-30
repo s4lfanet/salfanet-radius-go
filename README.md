@@ -491,6 +491,22 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.81 — 2026-05-23
+
+### Added
+- **PON port enable/disable & description edit** — Tambahkan handler `POST /api/olt/:id/pon` dengan action `enable`, `disable`, `setDescription`. Frontend: di panel detail port PON (expanded card), muncul tombol Enable/Disable dan "Edit Desc" dengan inline input.
+- **ONU name/description edit** — Tambahkan handler `PATCH /api/olt/:id/onus/:onuId` untuk update `description` di DB dan perintah `name` + `description` via Telnet ke OLT. Frontend: tombol **Edit** di list ONU membuka modal `ONUEditModal`.
+- **WA + Telegram alert saat ONU offline** — Poller `checkAlerts` kini mengirim notifikasi WhatsApp (ke `Company.AdminPhone`) dan Telegram (ke `TelegramBackupSettings`) saat ONU baru go offline. Set `notifiedViaWhatsapp = true` pada record alert.
+- **Auto-resolve alert + notifikasi recovery** — Saat ONU yang sebelumnya offline kembali online, alert `onu_offline` di-resolve (`isResolved = true`, `resolvedAt = now`) dan dikirim pesan 🟢 recovery via WA + Telegram.
+- **Fix alert deduplication bug** — `checkAlerts` sebelumnya menggunakan `s.ID` (UUID baru tiap poll) alih-alih DB ID ONU nyata, sehingga duplikat alert dibuat setiap siklus poll. Fix: fetch real DB IDs by (frame, slot, port, onuId) terlebih dahulu.
+- **`internal/notify/telegram.go`** — Fungsi paket-level `notify.SendTelegramMessage(botToken, chatId, text)` yang dapat digunakan oleh poller (di luar package `handlers`).
+### Files
+- `internal/notify/telegram.go` — New: `SendTelegramMessage` helper
+- `internal/api/handlers/olt.go` — Add `PONPortAction` + `UpdateONU` handlers
+- `internal/api/router.go` — Register `POST /:id/pon` + `PATCH /:id/onus/:onuId`
+- `internal/olt/poller/poller.go` — Fix `checkAlerts` deduplication; add recovery detection; add WA+Telegram notifications via `notifyAlert()`
+- `src/app/admin/olt/[id]/page.tsx` — PON port action buttons + inline desc editor; ONU Edit button + `ONUEditModal`
+
 ### v2.52.80 — 2026-05-22
 
 ### Fixed
@@ -531,15 +547,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/olt.go` — Fix `uplinkParsePortStatus` column indices; fix `uplinkParseInterfaceStatus` stateRe + admin mapping; fix `case "config"` raw error handling
 - `src/app/admin/olt/[id]/page.tsx` — Fix `statusTone` dari inline styles ke Tailwind dark: classes; fix `dark:bg-gray-850` → `dark:bg-gray-900`
-
-### v2.52.76 — 2026-05-22
-
-### Fixed
-- **Distance via Telnet** — SNMP OID `.18` (equalization delay × 0.112) memberikan nilai yang tidak akurat untuk sebagian ONU (contoh: ONU 1/1/1:12 menampilkan "101.07 dBm" karena nilai raw OID terpetakan ke RxPower ONU lain akibat bug index). Fix: ambil jarak dari Telnet `show gpon onu detail-info gpon-onu_1/{slot}/{port}:{onuId}` yang langsung melaporkan `ONU Distance: Xm` (diukur dari proses ranging OLT). Semua ONU terdaftar di-query dalam satu sesi Telnet via `ExecuteMultiple`. Hasil Telnet override nilai SNMP; jika Telnet gagal, nilai SNMP tetap dipakai sebagai fallback.
-- **Frontend tidak update** — Next.js berjalan via PM2 (`salfanet-radius`), bukan `systemctl salfanet-api`. Deploy sebelumnya hanya restart Go binary tanpa restart PM2, sehingga UI lama masih terbuffer. Fix: `rm -rf .next && npm run build && pm2 restart salfanet-radius`.
-### Files
-- `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetDistances(pool, onus)` dan `parseTelnetDistances(raw)` untuk parsing `ONU Distance: Xm` dari combined Telnet output
-- `internal/olt/poller/poller.go` — Di `poll()`: retrieve pool dari `p.pools[olt.ID]`; panggil `zte.FetchTelnetDistances` setelah SNMP discovery; override `onu.Distance` untuk setiap ONU yang mendapat data Telnet
 
 <!-- AUTO-CHANGELOG:END -->
 
