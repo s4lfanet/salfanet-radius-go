@@ -2300,8 +2300,8 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
           <TabsTrigger value="portmap">Port Map</TabsTrigger>
           <TabsTrigger value="alerts">
             Alerts
-            {olt.alerts.length > 0 && (
-              <Badge variant="destructive" className="ml-2">{olt.alerts.length}</Badge>
+            {olt.alerts.filter((a: any) => !a.isResolved).length > 0 && (
+              <Badge variant="destructive" className="ml-2">{olt.alerts.filter((a: any) => !a.isResolved).length}</Badge>
             )}
           </TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -2552,12 +2552,12 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
 
         {/* Alerts Tab */}
         <TabsContent value="alerts" className="space-y-3">
-          {olt.alerts.length === 0 ? (
+          {olt.alerts.filter((a: any) => !a.isResolved).length === 0 ? (
             <Card>
               <CardContent className="text-center py-8 text-gray-400">No active alerts</CardContent>
             </Card>
           ) : (
-            olt.alerts.map((alert: any) => (
+            olt.alerts.filter((a: any) => !a.isResolved).map((alert: any) => (
               <Card key={alert.id} className={alert.severity === 'critical' ? 'border-red-300' : ''}>
                 <CardContent className="pt-4 pb-4">
                   <div className="flex items-start gap-3">

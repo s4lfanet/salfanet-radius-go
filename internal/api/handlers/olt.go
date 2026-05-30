@@ -133,7 +133,9 @@ func (h *OLTHandler) GetOLT(c fiber.Ctx) error {
 	var olt models.NetworkOLT
 	if err := h.db.
 		Preload("ONUStatuses").
-		Preload("Alerts").
+		Preload("Alerts", func(db *gorm.DB) *gorm.DB {
+			return db.Where("isResolved = ?", false).Order("createdAt DESC").Limit(50)
+		}).
 		Preload("Routers.Router").
 		Preload("MonitoringLogs", func(db *gorm.DB) *gorm.DB {
 			return db.Order("createdAt DESC").Limit(100)

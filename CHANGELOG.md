@@ -6,6 +6,13 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.82] — 2026-05-24
+### Fixed
+- **Sinkronisasi alert OLT detail vs halaman global** — Badge "Alerts" di tab detail OLT menghitung semua alert (termasuk yang sudah resolved) karena `Preload("Alerts")` tanpa filter. Kini backend hanya preload alert `isResolved = false`, dan frontend juga memfilter `!a.isResolved` sehingga badge dan konten tab hanya menampilkan alert aktif — konsisten dengan halaman global OLT Alerts.
+### Files
+- `internal/api/handlers/olt.go` — `GetOLT`: tambah filter `isResolved = false` + `Limit(50)` pada `Preload("Alerts")`
+- `src/app/admin/olt/[id]/page.tsx` — Badge tab "Alerts" dan konten tab kini filter `!a.isResolved`
+
 ## [2.52.81] — 2026-05-23
 ### Added
 - **PON port enable/disable & description edit** — Tambahkan handler `POST /api/olt/:id/pon` dengan action `enable`, `disable`, `setDescription`. Frontend: di panel detail port PON (expanded card), muncul tombol Enable/Disable dan "Edit Desc" dengan inline input.
