@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.90 — 2026-05-31
+
+### Fixed
+- **Ghost ONU cleanup tidak berjalan (GORM bug)** — `Model(&models.OLTONUStatus{})` dengan primary key kosong menyebabkan GORM menambah kondisi `WHERE id = ''` secara diam-diam, membuat batch UPDATE tidak pernah mengeksekusi satu baris pun. Fix: ganti ke `.Table("olt_onu_status")` yang tidak punya kondisi PK implisit.
+- **Ghost ONUs tidak masuk `checkAlerts`** — Karena ghost ONUs di-append setelah `allStatuses` dibuat, mereka tidak diproses oleh alert engine → tidak ada alert offline yang dibuat. Fix: load ghost ONUs terlebih dulu via `Find`, lalu append ke `allStatuses` SEBELUM `checkAlerts` dipanggil.
+- **`totalONU` tidak menghitung ghost ONUs** — Summary OLT (`onlineOnu`, `offlineOnu`, `totalOnu`) tidak mencerminkan ONUs yang hilang dari SNMP walk. Sekarang ghost ONUs masuk ke `allStatuses` sehingga `totalONU` dan `offlineOnu` dihitung dengan benar.
+### Files
+- `internal/olt/poller/poller.go` — Rewrite ghost ONU cleanup: `Find` + `Table("olt_onu_status")` + append ke `allStatuses` sebelum `totalONU` dihitung
+
 ### v2.52.89 — 2026-05-31
 
 ### Fixed
@@ -535,13 +544,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/olt_pon_stat.go` — Fix urutan cek `deactivate` vs `activate` di `parsePONInterfaceStat`
 - `internal/olt/poller/poller.go` — Ganti `AssignmentColumns` ke `clause.Assignments` dengan `COALESCE` untuk `description` dan `serialNumber`
-
-### v2.52.85 — 2026-05-31
-
-### Added
-- **Enable/Disable PON Port dari Rack Diagram** — Klik titik PON port di diagram rack ZTE C320 membuka modal PON port. Modal menampilkan status admin (Enabled/Disabled), link proto (UP/DOWN), statistik ONU (Total/Online/Offline), suhu dan TX power optik. Tombol **Disable Port** mengirim `shutdown` ke interface `gpon-olt_1/{slot}/{port}` via Telnet; tombol **Enable Port** mengirim `no shutdown`. Tidak perlu login CLI lagi.
-### Files
-- `src/app/admin/olt/[id]/page.tsx` — PON dot `<div>` → `<button>` klikable; state `selectedPON`; modal render `PONPortModal`; komponen `PONPortModal`
 
 <!-- AUTO-CHANGELOG:END -->
 
