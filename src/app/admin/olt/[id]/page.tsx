@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, use, useMemo } from 'react';
+import { useState, useEffect, useCallback, use, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,8 @@ interface ONU {
   distance: number | null;
   lastSeenAt: string | null;
   customer: { id: string; username: string; name: string; phone: string } | null;
+  odpId?: string | null;
+  odpName?: string | null;
 }
 
 interface OLTDetail {
@@ -420,6 +422,10 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
     setPonStatCache(prev => { const n = { ...prev }; delete n[portKey]; return n; });
   }, []);
 
+  // Keep a ref to always have the latest fetchPONStat (avoids stale closure in setTimeout)
+  const fetchPONStatRef = useRef<(portKey: string) => void>(() => {});
+  useEffect(() => { fetchPONStatRef.current = fetchPONStat; }, [fetchPONStat]);
+
   const handlePONAction = useCallback(async (portKey: string, action: string, description?: string) => {
     const [slotStr, portStr] = portKey.split('/');
     setPonActing(portKey);
@@ -431,14 +437,15 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
       });
       if (res.ok) {
         refreshPONStat(portKey);
-        setTimeout(() => fetchPONStat(portKey), 500);
+        // Use ref so the latest fetchPONStat (with cleared cache) is called after React re-renders
+        setTimeout(() => fetchPONStatRef.current(portKey), 1500);
       }
     } catch {
       // ignore
     } finally {
       setPonActing(null);
     }
-  }, [olt.id, fetchPONStat, refreshPONStat]);
+  }, [olt.id, refreshPONStat]);
 
   // ── Port stats from ONU list ──────────────────────────────────────────────
   const portStats: Record<string, { total: number; online: number; offline: number; los: number; dyingGasp: number; unregistered: number; rxPowers: number[] }> = {};
@@ -1888,6 +1895,11 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
   const [testing, setTesting] = useState<string | null>(null);
   const [onuStatusFilter, setOnuStatusFilter] = useState(urlFilter ?? 'all');
 
+  // Real-time ONU list (auto-refreshes every 30s)
+  const [liveOnus, setLiveOnus] = useState<ONU[] | null>(null);
+  const [onuLastRefresh, setOnuLastRefresh] = useState<Date | null>(null);
+  const [onuRefreshSecs, setOnuRefreshSecs] = useState(0);
+
   // Batch reboot
   const [selectedOnus, setSelectedOnus] = useState<Set<string>>(new Set());
   const [rebootingOnu, setRebootingOnu] = useState<string | null>(null);
@@ -1964,6 +1976,56 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
   }, [id, router]);
 
   useEffect(() => { fetchOLT(); }, [fetchOLT]);
+
+  // Live ONU list — fetches from /onus?all=true and shapes data into ONU[]
+  const fetchLiveOnus = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/olt/${id}/onus?all=true`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const shaped: ONU[] = (data.onus ?? []).map((o: any) => ({
+        id: o.id,
+        frame: o.frame,
+        slot: o.slot,
+        port: o.port,
+        onuId: o.onuId,
+        onuType: o.onuType ?? null,
+        serialNumber: o.serialNumber ?? null,
+        macAddress: o.macAddress ?? null,
+        status: o.status,
+        description: o.description ?? null,
+        rxPower: o.rxPower ?? null,
+        txPower: o.txPower ?? null,
+        temperature: o.temperature ?? null,
+        distance: o.distance ?? null,
+        lastSeenAt: o.lastSeenAt ?? null,
+        odpId: o.odpId ?? null,
+        odpName: o.odpName ?? null,
+        customer: o.customerName
+          ? { id: o.customerId ?? '', name: o.customerName, username: o.customerUsername ?? '', phone: o.customerPhone ?? '' }
+          : null,
+      }));
+      setLiveOnus(shaped);
+      setOnuLastRefresh(new Date());
+      setOnuRefreshSecs(0);
+    } catch {
+      // silently skip on network error
+    }
+  }, [id]);
+
+  // Start auto-refresh of ONU list every 30s
+  useEffect(() => {
+    fetchLiveOnus();
+    const interval = setInterval(fetchLiveOnus, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchLiveOnus]);
+
+  // Countdown ticker: increments every second so we can show "Updated Xs ago"
+  useEffect(() => {
+    if (!onuLastRefresh) return;
+    const tick = setInterval(() => setOnuRefreshSecs(s => s + 1), 1_000);
+    return () => clearInterval(tick);
+  }, [onuLastRefresh]);
 
   useEffect(() => {
     if (urlFilter) setOnuStatusFilter(urlFilter);
@@ -2188,7 +2250,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
     }
   };
 
-  const filteredOnus = (olt?.onuStatuses ?? []).filter((o) =>
+  const filteredOnus = (liveOnus ?? olt?.onuStatuses ?? []).filter((o) =>
     onuStatusFilter === 'all' || o.status === onuStatusFilter
   );
 
@@ -2325,6 +2387,14 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
               </SelectContent>
             </Select>
             <span className="text-sm text-gray-500 self-center">{filteredOnus.length} ONUs</span>
+            {onuLastRefresh && (
+              <span className="text-xs text-gray-400 self-center flex items-center gap-1">
+                <RefreshCw className="w-3 h-3" />
+                {onuRefreshSecs < 5
+                  ? 'Updated just now'
+                  : `Updated ${onuRefreshSecs}s ago`}
+              </span>
+            )}
             {selectedOnus.size > 0 && (
               <>
                 <span className="text-sm font-medium text-blue-600">{selectedOnus.size} selected</span>
@@ -2385,6 +2455,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                   <th className="py-2.5 pr-4 font-medium">Signal</th>
                   <th className="py-2.5 pr-4 font-medium">RX Power</th>
                   <th className="py-2.5 pr-4 font-medium">Distance</th>
+                  <th className="py-2.5 pr-4 font-medium">ODP</th>
                   <th className="py-2.5 pr-4 font-medium">Customer</th>
                   <th className="py-2.5 pr-4 font-medium">Last Seen</th>
                   <th className="py-2.5 pr-3 font-medium">Actions</th>
@@ -2442,6 +2513,11 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                         {onu.distance !== null ? (
                           <span className="font-mono text-gray-700 dark:text-gray-300">{onu.distance} m</span>
                         ) : <span className="text-gray-400">—</span>}
+                      </td>
+                      <td className="py-2.5 pr-4 text-xs">
+                        {onu.odpName
+                          ? <span className="font-medium text-indigo-700 dark:text-indigo-400">{onu.odpName}</span>
+                          : <span className="text-gray-400">—</span>}
                       </td>
                       <td className="py-2.5 pr-4">
                         {onu.customer ? (
@@ -2540,7 +2616,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                 })}
                 {filteredOnus.length === 0 && (
                   <tr>
-                    <td colSpan={11} className="py-8 text-center text-gray-400">
+                    <td colSpan={12} className="py-8 text-center text-gray-400">
                       No ONUs found
                     </td>
                   </tr>

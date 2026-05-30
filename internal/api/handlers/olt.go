@@ -316,46 +316,108 @@ func (h *OLTHandler) SyncOLT(c fiber.Ctx) error {
 // ─── ONU endpoints ───────────────────────────────────────────────────────────
 
 // ListONUs godoc
-// GET /api/olt/:id/onus
+// GET /api/olt/:id/onus — returns ONU statuses with customer + ODP info.
+// ?all=true returns all ONUs without pagination (for real-time polling).
 func (h *OLTHandler) ListONUs(c fiber.Ctx) error {
 	id := c.Params("id")
 
-	var onuStatuses []models.OLTONUStatus
-	query := h.db.Where("oltId = ?", id)
+	type onuRow struct {
+		ID               string     `json:"id"`
+		Frame            int        `json:"frame"`
+		Slot             int        `json:"slot"`
+		Port             int        `json:"port"`
+		OnuID            int        `json:"onuId"`
+		OnuIndex         int        `json:"onuIndex"`
+		SerialNumber     *string    `json:"serialNumber"`
+		MACAddress       *string    `json:"macAddress"`
+		Description      *string    `json:"description"`
+		Status           string     `json:"status"`
+		RxPower          *float64   `json:"rxPower"`
+		TxPower          *float64   `json:"txPower"`
+		Distance         *int       `json:"distance"`
+		Temperature      *float64   `json:"temperature"`
+		Voltage          *float64   `json:"voltage"`
+		BiasCurrent      *float64   `json:"biasCurrent"`
+		BandwidthUp      int64      `json:"bandwidthUp"`
+		BandwidthDown    int64      `json:"bandwidthDown"`
+		CustomerID       *string    `json:"customerId"`
+		CustomerName     *string    `json:"customerName"`
+		CustomerUsername *string    `json:"customerUsername"`
+		CustomerPhone    *string    `json:"customerPhone"`
+		LastSeenAt       *time.Time `json:"lastSeenAt"`
+		LastOfflineAt    *time.Time `json:"lastOfflineAt"`
+		OdpID            *string    `json:"odpId"`
+		OdpName          *string    `json:"odpName"`
+	}
 
-	// Optional filters
+	whereClause := "o.oltId = ?"
+	args := []interface{}{id}
 	if status := c.Query("status"); status != "" {
-		query = query.Where("status = ?", status)
+		whereClause += " AND o.status = ?"
+		args = append(args, status)
 	}
 	if search := c.Query("search"); search != "" {
-		query = query.Where("serialNumber LIKE ? OR description LIKE ?", "%"+search+"%", "%"+search+"%")
+		whereClause += " AND (o.serialNumber LIKE ? OR o.description LIKE ?)"
+		args = append(args, "%"+search+"%", "%"+search+"%")
 	}
 
+	baseSQL := `
+		SELECT o.id, o.frame, o.slot, o.port, o.onuId, o.onuIndex,
+		       o.serialNumber, o.macAddress, o.description, o.status,
+		       o.rxPower, o.txPower, o.distance, o.temperature, o.voltage, o.biasCurrent,
+		       o.bandwidthUp, o.bandwidthDown, o.customerId,
+		       o.lastSeenAt, o.lastOfflineAt,
+		       u.name  AS customerName,
+		       u.username AS customerUsername,
+		       u.phone AS customerPhone,
+		       odp.id   AS odpId,
+		       odp.name AS odpName
+		FROM olt_onu_status o
+		LEFT JOIN pppoe_users u ON u.id = o.customerId
+		LEFT JOIN (
+		    SELECT oltId, ponPort, MIN(id) AS id, MIN(name) AS name
+		    FROM network_odps
+		    WHERE oltId IS NOT NULL AND ponPort IS NOT NULL
+		    GROUP BY oltId, ponPort
+		) odp ON odp.oltId = o.oltId AND odp.ponPort = o.port
+		WHERE ` + whereClause + `
+		ORDER BY o.slot, o.port, o.onuId`
+
+	// ?all=true → skip pagination
+	if c.Query("all") == "true" {
+		var rows []onuRow
+		if err := h.db.Raw(baseSQL, args...).Scan(&rows).Error; err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+		return c.JSON(fiber.Map{"success": true, "onus": rows, "total": len(rows)})
+	}
+
+	// Paginated response
 	page := 1
 	if v, err := strconv.Atoi(c.Query("page")); err == nil && v > 0 {
 		page = v
 	}
-	pageSize := 50
+	pageSize := 200
 	if v, err := strconv.Atoi(c.Query("pageSize")); err == nil && v > 0 {
 		pageSize = v
 	}
-	if pageSize > 500 {
-		pageSize = 500
+	if pageSize > 1000 {
+		pageSize = 1000
 	}
 	offset := (page - 1) * pageSize
 
 	var total int64
-	query.Model(&models.OLTONUStatus{}).Count(&total)
+	h.db.Model(&models.OLTONUStatus{}).Where("oltId = ?", id).Count(&total)
 
-	if err := query.Preload("Customer").
-		Order("frame, slot, port, onuId").
-		Limit(pageSize).Offset(offset).
-		Find(&onuStatuses).Error; err != nil {
+	var rows []onuRow
+	paginatedSQL := baseSQL + fmt.Sprintf(" LIMIT %d OFFSET %d", pageSize, offset)
+	if err := h.db.Raw(paginatedSQL, args...).Scan(&rows).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.JSON(fiber.Map{
-		"data":     onuStatuses,
+		"success":  true,
+		"onus":     rows,
 		"total":    total,
 		"page":     page,
 		"pageSize": pageSize,

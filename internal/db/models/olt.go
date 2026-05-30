@@ -25,6 +25,8 @@ const (
 	AlertHighErrors      OltAlertType = "high_errors"
 	AlertDyingGasp       OltAlertType = "dying_gasp"
 	AlertUnauthorizedONU OltAlertType = "unauthorized_onu"
+	AlertRxDegradation   OltAlertType = "rx_degradation"   // single ONU Rx power drop
+	AlertBulkRxDegrade   OltAlertType = "bulk_rx_degrade"  // multiple ONUs on same PON port
 )
 
 type OltAlertSeverity string

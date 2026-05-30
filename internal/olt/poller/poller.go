@@ -322,6 +322,13 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 		realIDs[onuKey{o.Frame, o.Slot, o.Port, o.OnuID}] = o.ID
 	}
 
+	// Track per-port Rx power for bulk degradation check.
+	type portStat struct {
+		total   int
+		degraded int // Rx < -27 dBm
+	}
+	portRx := make(map[int]*portStat) // key: port number
+
 	for _, s := range statuses {
 		realID, ok := realIDs[onuKey{s.Frame, s.Slot, s.Port, s.OnuID}]
 		if !ok {
@@ -363,16 +370,102 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 				olt.ID, realID, models.AlertONUOffline, false,
 			).First(&existing).Error
 			if err != nil {
-				continue // No open alert to resolve
+				// no open offline alert — still check Rx power below
+			} else {
+				now := time.Now()
+				p.db.WithContext(ctx).Model(&existing).Updates(map[string]interface{}{
+					"isResolved": true,
+					"resolvedAt": &now,
+				})
+				message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) is back online",
+					strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID)
+				go p.notifyAlert(olt.Name, message, true) //nolint:errcheck
 			}
+		}
+
+		// ── Rx power degradation check (online ONUs only) ──────────────────
+		if s.Status == models.OnuOnline && s.RxPower != nil {
+			const rxThreshold = -27.0 // dBm — "Poor" signal boundary
+			if _, ok2 := portRx[s.Port]; !ok2 {
+				portRx[s.Port] = &portStat{}
+			}
+			portRx[s.Port].total++
+			if *s.RxPower < rxThreshold {
+				portRx[s.Port].degraded++
+
+				// Single-ONU Rx degradation alert (if no open one already).
+				var existing models.OLTAlert
+				err := p.db.WithContext(ctx).Where(
+					"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
+					olt.ID, realID, models.AlertRxDegradation, false,
+				).First(&existing).Error
+				if err != nil { // no open alert → create one
+					msg := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) sinyal lemah: Rx %.2f dBm (ambang -27 dBm)",
+						strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID, *s.RxPower)
+					alert := models.OLTAlert{
+						ID:        uuid.NewString(),
+						OltID:     &olt.ID,
+						OnuID:     &realID,
+						AlertType: models.AlertRxDegradation,
+						Severity:  models.SeverityWarning,
+						Message:   msg,
+					}
+					if waErr := p.notifyAlert(olt.Name, msg, false); waErr == nil {
+						alert.NotifiedViaWhatsapp = true
+					}
+					p.db.WithContext(ctx).Create(&alert)
+				}
+			} else {
+				// Rx recovered — resolve any open single-ONU Rx alert.
+				var existing models.OLTAlert
+				if err := p.db.WithContext(ctx).Where(
+					"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
+					olt.ID, realID, models.AlertRxDegradation, false,
+				).First(&existing).Error; err == nil {
+					now := time.Now()
+					p.db.WithContext(ctx).Model(&existing).Updates(map[string]interface{}{
+						"isResolved": true, "resolvedAt": &now,
+					})
+				}
+			}
+		}
+	}
+
+	// ── Bulk Rx degradation check per PON port ─────────────────────────────
+	// If >= 3 ONUs or >= 50% of online ONUs on a port have poor Rx → bulk alert.
+	for port, ps := range portRx {
+		if ps.total == 0 {
+			continue
+		}
+		pct := float64(ps.degraded) / float64(ps.total)
+		isBulk := ps.degraded >= 3 || pct >= 0.5
+
+		// Build a portKey-level OltID to use as onuId placeholder (nil for bulk).
+		var existing models.OLTAlert
+		err := p.db.WithContext(ctx).Where(
+			"oltId = ? AND alertType = ? AND isResolved = ? AND message LIKE ?",
+			olt.ID, models.AlertBulkRxDegrade, false, fmt.Sprintf("%%port %d%%", port),
+		).First(&existing).Error
+
+		if isBulk && err != nil { // no open bulk alert → create one
+			msg := fmt.Sprintf("ODP/Port %d: %d dari %d ONU sinyal lemah (Rx < -27 dBm) — kemungkinan gangguan fiber atau splitter",
+				port, ps.degraded, ps.total)
+			alert := models.OLTAlert{
+				ID:        uuid.NewString(),
+				OltID:     &olt.ID,
+				AlertType: models.AlertBulkRxDegrade,
+				Severity:  models.SeverityCritical,
+				Message:   msg,
+			}
+			if waErr := p.notifyAlert(olt.Name, msg, false); waErr == nil {
+				alert.NotifiedViaWhatsapp = true
+			}
+			p.db.WithContext(ctx).Create(&alert)
+		} else if !isBulk && err == nil { // bulk resolved
 			now := time.Now()
 			p.db.WithContext(ctx).Model(&existing).Updates(map[string]interface{}{
-				"isResolved": true,
-				"resolvedAt": &now,
+				"isResolved": true, "resolvedAt": &now,
 			})
-			message := fmt.Sprintf("ONU %s (port %d/%d/%d:%d) is back online",
-				strPtr(s.SerialNumber), s.Frame, s.Slot, s.Port, s.OnuID)
-			go p.notifyAlert(olt.Name, message, true) //nolint:errcheck
 		}
 	}
 }
