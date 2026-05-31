@@ -477,6 +477,14 @@ func (h *HotspotExtHandler) ListAgents(c fiber.Ctx) error {
 var agents []models.Agent
 h.db.Order("name").Find(&agents)
 
+// Fetch all routers for lookup
+var routers []models.Router
+h.db.Find(&routers)
+routerMap := map[string]models.Router{}
+for _, r := range routers {
+routerMap[r.ID] = r
+}
+
 // Enrich with voucherStock and stats
 now := time.Now()
 firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
@@ -523,6 +531,17 @@ result := make([]fiber.Map, 0, len(agents))
 for _, ag := range agents {
 at := allTimeMap[ag.ID]
 cm := curMonthMap[ag.ID]
+var routerData interface{} = nil
+if ag.RouterID != nil {
+if r, ok := routerMap[*ag.RouterID]; ok {
+routerData = fiber.Map{
+"id":        r.ID,
+"name":      r.Name,
+"nasname":   r.NASName,
+"shortname": r.ShortName,
+}
+}
+}
 result = append(result, fiber.Map{
 "id":          ag.ID,
 "name":        ag.Name,
@@ -532,6 +551,7 @@ result = append(result, fiber.Map{
 "balance":     ag.Balance,
 "minBalance":  ag.MinBalance,
 "routerId":    ag.RouterID,
+"router":      routerData,
 "isActive":    ag.IsActive,
 "lastLogin":   ag.LastLogin,
 "createdAt":   ag.CreatedAt,
