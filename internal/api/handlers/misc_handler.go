@@ -1521,7 +1521,7 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	}
 
 	var onuStatus models.OLTONUStatus
-	if err := h.db.Preload("Customer").Where("oltId = ? AND id = ?", oltID, onuID).First(&onuStatus).Error; err != nil {
+	if err := h.db.Preload("Customer.Profile").Where("oltId = ? AND id = ?", oltID, onuID).First(&onuStatus).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"success": false, "error": "ONU not found"})
 	}
 
@@ -1597,6 +1597,29 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 		}
 	}
 
+	// Check GenieACS configuration
+	tr069Info := fiber.Map{"configured": false, "message": "GenieACS belum dikonfigurasi"}
+	var gnSettings models.GenieacsSettings
+	if h.db.Where("isActive = ?", true).First(&gnSettings).Error == nil && gnSettings.Host != "" {
+		tr069Info = fiber.Map{
+			"configured": true,
+			"host":       gnSettings.Host,
+			"message":    "GenieACS terkonfigurasi",
+		}
+	}
+
+	// Build bandwidth info from customer PPPoE profile
+	var bandwidthInfo fiber.Map
+	if onuStatus.Customer != nil && onuStatus.Customer.Profile.Name != "" {
+		p := onuStatus.Customer.Profile
+		bandwidthInfo = fiber.Map{
+			"profileName":   p.Name,
+			"downloadSpeed": p.DownloadSpeed,
+			"uploadSpeed":   p.UploadSpeed,
+			"rateLimit":     p.RateLimit,
+		}
+	}
+
 	return c.JSON(fiber.Map{
 		"success": true,
 		"telnet": fiber.Map{
@@ -1607,9 +1630,11 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 			"traffic":   trafficInfo,
 		},
 		"onu": fiber.Map{
-			"id":       onuStatus.ID,
-			"customer": onuStatus.Customer,
+			"id":        onuStatus.ID,
+			"customer":  onuStatus.Customer,
+			"bandwidth": bandwidthInfo,
 		},
+		"tr069": tr069Info,
 	})
 }
 

@@ -1680,6 +1680,8 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
   const configSummary = detail?.telnet?.config?.summary ?? {};
   const trafficSummary = detail?.telnet?.traffic?.summary ?? {};
   const customer = detail?.onu?.customer;
+  const bandwidth = detail?.onu?.bandwidth;
+  const tr069 = detail?.tr069;
   const detailItems = [
     ['Interface', detail?.telnet?.interface ?? `${onu.frame}/${onu.slot}/${onu.port}:${onu.onuId}`],
     ['Serial Number', parsed['Serial number'] ?? onu.serialNumber ?? 'N/A'],
@@ -1817,7 +1819,42 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                   </div>
                 </div>
 
-                {/* Service Ports Table */}
+                {/* Bandwidth / Traffic Profile dari PPPoE */}
+                {bandwidth && (
+                  <div>
+                    <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Traffic Profile (PPPoE Radius)</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
+                      <div className="rounded-lg bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-800 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-purple-500">Nama Profil</div>
+                        <div className="mt-1 font-medium text-purple-900 dark:text-purple-200">{bandwidth.profileName}</div>
+                      </div>
+                      <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-blue-500">Download Limit</div>
+                        <div className="mt-1 font-mono font-medium text-blue-700 dark:text-blue-300">
+                          {bandwidth.downloadSpeed > 0
+                            ? (bandwidth.downloadSpeed >= 1024
+                              ? `${(bandwidth.downloadSpeed / 1024).toFixed(0)} Mbps`
+                              : `${bandwidth.downloadSpeed} Kbps`)
+                            : 'N/A'}
+                        </div>
+                      </div>
+                      <div className="rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3">
+                        <div className="text-[10px] uppercase tracking-wide text-green-500">Upload Limit</div>
+                        <div className="mt-1 font-mono font-medium text-green-700 dark:text-green-300">
+                          {bandwidth.uploadSpeed > 0
+                            ? (bandwidth.uploadSpeed >= 1024
+                              ? `${(bandwidth.uploadSpeed / 1024).toFixed(0)} Mbps`
+                              : `${bandwidth.uploadSpeed} Kbps`)
+                            : 'N/A'}
+                        </div>
+                      </div>
+                    </div>
+                    {bandwidth.rateLimit && (
+                      <div className="mt-1 text-xs text-gray-500 font-mono">Rate-limit: {bandwidth.rateLimit}</div>
+                    )}
+                  </div>
+                )}
+
                 {Array.isArray(configSummary.servicePorts) && configSummary.servicePorts.length > 0 && (
                   <div className="overflow-x-auto">
                     <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Service Ports</div>
@@ -1937,6 +1974,29 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                     <div><span className="text-gray-500">Status:</span> {customer.status}</div>
                   </div>
                 ) : <div className="text-sm text-gray-400">Belum terhubung ke customer.</div>}
+              </div>
+
+              {/* TR-069 / GenieACS */}
+              <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-3">
+                <div className="text-xs font-semibold text-gray-500 uppercase mb-2">TR-069 / GenieACS</div>
+                {tr069?.configured ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                      <span className="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                      GenieACS terkonfigurasi — <span className="font-mono text-xs">{tr069.host}</span>
+                    </div>
+                    {customer && (
+                      <div className="text-xs text-gray-500">
+                        Untuk melihat perangkat TR-069 customer ini ({customer.username}), kunjungi halaman GenieACS di Settings.
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <span className="inline-block w-2 h-2 rounded-full bg-gray-400"></span>
+                    GenieACS belum dikonfigurasi — fitur TR-069 memerlukan konfigurasi ACS di halaman Settings → GenieACS.
+                  </div>
+                )}
               </div>
 
               {/* Raw Telnet Output */}
