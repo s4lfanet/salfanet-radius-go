@@ -619,8 +619,12 @@ func (h *NetworkHandler) AssignCustomer(c fiber.Ctx) error {
 
 // GET /api/customers/with-location
 func (h *NetworkHandler) CustomersWithLocation(c fiber.Ctx) error {
+	limit := 2000
+	if v, err := strconv.Atoi(c.Query("limit")); err == nil && v > 0 && v <= 5000 {
+		limit = v
+	}
 	var users []models.PppoeUser
 	h.db.Where("latitude IS NOT NULL AND longitude IS NOT NULL").
-		Preload("Area").Find(&users)
-	return c.JSON(fiber.Map{"success": true, "customers": users})
+		Preload("Area").Limit(limit).Find(&users)
+	return c.JSON(fiber.Map{"success": true, "data": users, "count": len(users)})
 }

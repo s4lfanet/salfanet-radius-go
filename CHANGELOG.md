@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.6] — 2026-06-01
+### Fixed
+- **Error 401 pada Peta Jaringan — `GET /api/customers/with-location`** — Cloudflare (Flexible SSL) dapat memproses request ke Go backend tanpa meneruskan cookie `__Secure-next-auth.session-token` dengan benar, sehingga `CombinedAuthMiddleware` gagal validasi dan return 401. Fix: pindahkan route ke Next.js sebagai API route (`src/app/api/customers/with-location/route.ts`) menggunakan `getServerSession` (server-side, tidak bergantung pada cookie forwarding). Nginx perlu diupdate: tambahkan `location /api/customers/` → port 3000 sebelum catch-all `location /api/`.
+- **Response format `GET /api/customers/with-location` salah (Go handler)** — Go handler mengembalikan `{success, customers:[]}` tapi frontend menggunakan `customersData.data`. Fix: response format diubah ke `{success: true, data: [...], count: N}`. Tambah juga support query param `?limit=` (default 2000, max 5000).
+
+### Files
+- `src/app/api/customers/with-location/route.ts` — **NEW** Next.js API route handler dengan Prisma query dan `checkAuth()`
+- `internal/api/handlers/network_ext.go` — Fix response format `customers` → `data`, tambah `count`, support `?limit`
+
+---
+
 ## [2.53.5] — 2026-06-01
 ### Fixed
 - **`GET /api/settings/isolation` 500** — Handler memanggil `db.First(&company)` dan return 500 saat tabel `companies` kosong. Sekarang `ErrRecordNotFound` ditangani: return `{success:true, data:{}}` (default kosong). `UpdateIsolationSettings` juga difix untuk tidak 500 saat tidak ada company.
