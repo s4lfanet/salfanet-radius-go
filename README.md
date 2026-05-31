@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.95 — 2026-05-31
+
+### Added
+- **ONU detail: Traffic Profile dari PPPoE** — Karena ZTE C320 tidak mengekspos DBA/bandwidth profile via CLI, limit bandwidth sekarang diambil dari profil PPPoE customer yang terhubung. Menampilkan nama profil, download limit, dan upload limit (dalam Kbps/Mbps) di section "ONT Build Configuration".
+- **ONU detail: TR-069 / GenieACS status** — Section baru menampilkan apakah GenieACS sudah dikonfigurasi di sistem. Jika ya, tampilkan host dan username; jika tidak, tampilkan pesan panduan konfigurasi.
+- **ONU detail: preload Customer.Profile** — Backend sekarang melakukan `Preload("Customer.Profile")` sehingga data profil PPPoE (nama, kecepatan download/upload) tersedia di respons API.
+### Files
+- `internal/api/handlers/misc_handler.go` — Ganti `Preload("Customer")` ke `Preload("Customer.Profile")`, tambah GenieACS settings check, tambah `bandwidth` dan `tr069` ke respons
+- `src/app/admin/olt/[id]/page.tsx` — Tambah `bandwidth` dan `tr069` dari respons API, tambah "Traffic Profile (PPPoE Radius)" cards di ONT Build Config, tambah section "TR-069 / GenieACS"
+
 ### v2.52.94 — 2026-05-31
 
 ### Added
@@ -537,17 +547,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **`totalONU` tidak menghitung ghost ONUs** — Summary OLT (`onlineOnu`, `offlineOnu`, `totalOnu`) tidak mencerminkan ONUs yang hilang dari SNMP walk. Sekarang ghost ONUs masuk ke `allStatuses` sehingga `totalONU` dan `offlineOnu` dihitung dengan benar.
 ### Files
 - `internal/olt/poller/poller.go` — Rewrite ghost ONU cleanup: `Find` + `Table("olt_onu_status")` + append ke `allStatuses` sebelum `totalONU` dihitung
-
-### v2.52.89 — 2026-05-31
-
-### Fixed
-- **ONU DyingGasp tidak terdeteksi** — `decodeOperState` hanya mengenal nilai 4 dan 5 (online) dan semua nilai lainnya sebagai offline, sehingga nilai 6 (DyingGasp dari ZTE MIB: `zxAnGponOnuRegOperStatus`) ikut dibaca sebagai offline biasa. Fix: tambah `case 6 → dying_gasp`.
-- **ONU offline tetapi terbaca online di tabel** — Jika ONU mati mendadak (tanpa dying gasp), ZTE bisa menghapusnya dari tabel SNMP `zxAnGponOnuRegTable` sepenuhnya. Poller tidak memproses ONU tersebut sama sekali → status lama di DB (`online`) tidak diupdate → ONU kelihatan online padahal sudah mati. Fix: setelah upsert, semua ONU yang `updatedAt < poll_start` (tidak tersentuh upsert = tidak ada di SNMP walk) ditandai offline secara otomatis.
-- **Alert DyingGasp belum ada** — `checkAlerts` hanya menangani `OnuOffline` dan `OnuOnline`, tidak ada penanganan `OnuDyingGasp`. Fix: tambah case DyingGasp → create alert dengan severity `critical` dan pesan "kemungkinan listrik mati mendadak". Alert DyingGasp juga di-resolve saat ONU kembali online.
-- **Recovery message (online kembali) lebih akurat** — Sebelumnya hanya resolve alert `onu_offline`. Sekarang juga resolve `dying_gasp` alert saat ONU recovery.
-### Files
-- `internal/olt/vendors/zte/zte.go` — `decodeOperState`: tambah `case 6 → OnuDyingGasp`
-- `internal/olt/poller/poller.go` — Ghost ONU cleanup setelah upsert; DyingGasp case di `checkAlerts`; resolve loop untuk `onu_offline` + `dying_gasp` di case online
 
 <!-- AUTO-CHANGELOG:END -->
 
