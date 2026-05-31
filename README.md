@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.5 — 2026-06-01
+
+### Fixed
+- **Error 500 saat tambah agent voucher** — Go struct `Agent` memiliki field `PIN string` tanpa tag `gorm:"-"`, menyebabkan GORM mencoba INSERT ke kolom `pin` yang tidak ada di tabel `agents` database. Fix: tambah `gorm:"-"` ke field `PIN`.
+
+### Files
+- `internal/db/models/extra.go` — Tambah `gorm:"-"` ke field `PIN` di struct `Agent`
+
 ### v2.54.4 — 2026-06-01
 
 ### Fixed
@@ -526,14 +534,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `src/app/admin/pppoe/profiles/page.tsx` — `loadRouterList` & `handleSyncMikrotik`: parse `data.routers` bukan `data`
 - `internal/api/handlers/pppoe_ext.go` — `SyncProfilesRadius`: fallback build rateLimit dari speed fields
-
-### v2.54.0 — 2026-06-01
-
-### Fixed
-- **Status RADIUS tetap "Pending" setelah sync** — `SyncProfilesRadius` melakukan sync ke `radgroupreply` tapi tidak meng-update field `syncedToRadius` di tabel `pppoe_profiles`. Fix: tambah `h.db.Model(&p).Update("syncedToRadius", true)` setelah setiap profil berhasil di-sync.
-
-### Files
-- `internal/api/handlers/pppoe_ext.go` — Update `syncedToRadius = true` setelah sync radius berhasil
 
 <!-- AUTO-CHANGELOG:END -->
 
