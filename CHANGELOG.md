@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.92] — 2026-05-31
+### Fixed
+- **RX Power / TX Power / Distance menjadi kosong (—) setelah poll** — Upsert menggunakan `VALUES(rxPower)` yang selalu menimpa nilai DB, termasuk dengan NULL. Jika SNMP tidak berhasil mendapat data optik dalam satu siklus poll (karena OLT sibuk, Telnet overlap, dll), nilai yang sebelumnya valid terhapus. Fix: ubah ke `COALESCE(VALUES(rxPower), rxPower)` — sama seperti yang sudah dipakai untuk `serialNumber`/`description`. Berlaku juga untuk `txPower` dan `distance`.
+### Files
+- `internal/olt/poller/poller.go` — `rxPower`, `txPower`, `distance` di DoUpdates upsert kini pakai COALESCE
+
 ## [2.52.91] — 2026-05-31
 ### Fixed
 - **ONU dying-gasp/offline tampil sebagai "online"** — Root cause: ZTE C320 SNMP OperState agent **tidak segera update** saat ONU dying gasp; SNMP masih return `working` (4/5) meski ONU sudah mati. Fix: tambah `FetchTelnetONUStates()` yang menjalankan `show gpon onu state gpon-olt_F/S/P` via Telnet CLI per PON port (batch dalam 1 sesi), lalu override status SNMP dengan kolom "Phase State" dari output ZTE.
