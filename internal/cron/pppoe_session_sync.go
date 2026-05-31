@@ -20,6 +20,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	radiussvc "github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
 
 var pppoeSessionSyncMu sync.Mutex
@@ -217,10 +218,16 @@ func (s *Scheduler) jobFreeRADIUSHealth() {
 	h := s.startHistory("freeradius_health")
 	defer func() { s.completeHistory(h, recover()) }()
 
-	// Sync NAS clients from DB to FreeRADIUS clients table
+	// Regenerate /etc/freeradius/3.0/clients.d/nas-from-db.conf from DB (no-op if unchanged).
+	if err := radiussvc.SyncNASClients(s.db); err != nil {
+		log.Error().Err(err).Msg("freeradius_health: NAS sync error")
+		s.failHistory(h, err)
+		return
+	}
+
 	count, err := syncNASClients(s.db)
 	if err != nil {
-		log.Error().Err(err).Msg("freeradius_health: NAS sync error")
+		log.Error().Err(err).Msg("freeradius_health: NAS count error")
 		s.failHistory(h, err)
 		return
 	}

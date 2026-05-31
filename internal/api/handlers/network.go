@@ -3,9 +3,11 @@ package handlers
 import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
 
 // NetworkHandler handles network map endpoints (OLT, ODC, ODP, OTB, Router).
@@ -230,6 +232,9 @@ func (h *NetworkHandler) CreateRouter(c fiber.Ctx) error {
 	body.Router.Secret = body.Secret
 	if err := h.db.Create(&body.Router).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	if err := radius.SyncNASClients(h.db); err != nil {
+		log.Warn().Err(err).Msg("freeradius: nas sync after create failed")
 	}
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"router": body.Router})
 }

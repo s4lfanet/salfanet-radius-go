@@ -9,8 +9,10 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
 
 // ─── NetworkHandler extensions ────────────────────────────────────────────────
@@ -63,6 +65,9 @@ func (h *NetworkHandler) UpdateRouter(c fiber.Ctx) error {
 	delete(body, "id")
 	body["updatedAt"] = time.Now()
 	h.db.Model(&router).Updates(body)
+	if err := radius.SyncNASClients(h.db); err != nil {
+		log.Warn().Err(err).Msg("freeradius: nas sync after update failed")
+	}
 	return c.JSON(fiber.Map{"success": true, "router": router})
 }
 
@@ -71,6 +76,9 @@ func (h *NetworkHandler) DeleteRouter(c fiber.Ctx) error {
 	id := c.Params("id")
 	if err := h.db.Delete(&models.Router{}, "id = ?", id).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	if err := radius.SyncNASClients(h.db); err != nil {
+		log.Warn().Err(err).Msg("freeradius: nas sync after delete failed")
 	}
 	return c.JSON(fiber.Map{"success": true})
 }
