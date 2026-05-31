@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.4] — 2026-06-01
+### Fixed
+- **Status RADIUS tetap "Pending" setelah sync** — Root cause: Go struct `PppoeProfile` tidak memiliki field `SyncedToRadius`, padahal kolom `syncedToRadius` ada di database (Prisma schema). Akibatnya `h.db.Model(&p).Update("syncedToRadius", true)` silently fail karena GORM tidak menemukan field di struct. Fix: tambah `SyncedToRadius bool \`gorm:"default:false;column:syncedToRadius"\`` ke struct + ganti update dengan `h.db.Exec("UPDATE pppoe_profiles SET syncedToRadius = 1 WHERE id = ?", p.ID)` agar pasti berhasil.
+
+### Files
+- `internal/db/models/models.go` — Tambah `SyncedToRadius` ke `PppoeProfile` struct
+- `internal/api/handlers/pppoe_ext.go` — Ganti `Model(&p).Update` dengan `Exec` langsung
+
+---
+
 ## [2.54.3] — 2026-06-01
 ### Added / Fixed
 - **Implementasi Sync PPPoE Profile ke MikroTik** — Handler `SyncProfilesMikrotik` sebelumnya selalu return 501 Not Implemented. Sekarang: connect ke setiap router via RouterOS API (port 8728, fallback 8729), buat/update IP pool (jika `poolRanges` diisi), buat/update PPP profile dengan `rate-limit`, `remote-address` (pool), `local-address`. Simpan `ipPoolName`, `ipPoolRange`, `localAddress`, `rateLimit` ke database. Return `savedProfile` agar frontend update state tanpa reload.
