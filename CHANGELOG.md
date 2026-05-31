@@ -6,7 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [2.52.93] — 2026-05-31
+## [2.52.94] — 2026-05-31
+### Added
+- **ONU detail modal: traffic statistics realtime** — Tambah command `show interface gpon-onu_F/S/P:N` ke Telnet fetch. Downstream/upstream rate, bandwidth throughput %, peak rate, dan total bytes sekarang tampil di section "Traffic Statistics (Realtime)".
+- **ONU detail modal: service ports table** — Running-config parser sekarang mengekstrak setiap `service-port` sebagai objek `{servicePort, vport, userVlan, vlan}` dan ditampilkan sebagai tabel di section "ONT Build Configuration".
+- **ONU detail modal: TCONT & GEM port tables** — Setiap `tcont N profile <name>` dan `gemport N tcont M` diparsing dan ditampilkan sebagai tabel terpisah.
+- **ONU detail modal: riwayat koneksi ONU** — Tabel auth history dari `show gpon onu detail-info` (AuthpassTime / OfflineTime / Cause) sekarang diparsing dan ditampilkan di section "Riwayat Koneksi ONU".
+- **ONU detail modal: field tambahan** — Tambah FEC, ONU Status, Multicast Encryption, dan Description ke technical items. TX Power juga ditampilkan di basic info.
+### Fixed
+- **Description di summary** — Sebelumnya menggunakan `kv["Name"]` (nama pendek), sekarang menggunakan `kv["Description"]` (deskripsi lengkap) dari ZTE output.
+- **Empty string OMCI BW Profile menampilkan blank** — Ganti `??` ke `||` di frontend agar string kosong juga di-fallback ke 'N/A'.
+- **Downstream Profile selalu N/A** — ZTE C320 running-config tidak memiliki keyword "downstream" untuk ONU tanpa traffic-limit config. Label diubah menjadi info yang lebih akurat `(dari TCONT)`.
+### Files
+- `internal/api/handlers/misc_handler.go` — Tambah `show interface` command, `onuParseInterfaceStats()`, perbaikan `onuParseDetailInfo()` (auth history, lebih banyak field), perbaikan `onuParseRunningConfig()` (servicePorts, gemports, tconts, name, description)
+- `src/app/admin/olt/[id]/page.tsx` — Update `ONUDetailModal`: traffic stats section, build config tables (service ports, TCONT, GEM), auth history table, field tambahan
+
 ### Fixed
 - **RX Power ONU 1/1/1:1 (MARLINARINA) selalu tampil "—"** — Root cause: ONU 1/1/1:1 secara *intermittent* mengembalikan `rxRaw=65535` (0xFFFF = sentinel ZTE "no measurement") via SNMP, terjadi bergantian dengan nilai valid (misal 7465 → -15.07 dBm). Sebelum v2.52.92, setiap kali SNMP mengembalikan 65535, upsert menimpa nilai DB dengan NULL (karena `VALUES(rxPower)` tanpa COALESCE). Akibatnya rxPower selalu NULL karena siklus overwrite terus berulang. Fix v2.52.92 (COALESCE) sudah menyelesaikan masalah ini — dikonfirmasi via debug log bahwa DB sekarang menyimpan -15.07 dBm untuk ONU 1. Debug log dihapus setelah analisis selesai.
 ### Files
