@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.91] — 2026-05-31
+### Fixed
+- **ONU dying-gasp/offline tampil sebagai "online"** — Root cause: ZTE C320 SNMP OperState agent **tidak segera update** saat ONU mengalami dying gasp atau LOS — SNMP masih melaporkan `working` (nilai 4 atau 5) padahal ONU sudah tidak aktif. Aplikasi lain yang membaca via Telnet CLI langsung mendapat status aktual.
+  Fix: tambah `FetchTelnetONUStates()` yang menjalankan `show gpon onu state gpon-olt_F/S/P` sekali per PON port (batch dalam 1 sesi Telnet), lalu override status SNMP dengan status Telnet CLI. Jika Telnet melaporkan `dying-gasp` tapi SNMP melaporkan `working`, status ONU di DB akan di-set `dying_gasp` (bukan `online`).
+  Mapping Telnet state → model status: `working/active` → online, `dying-gasp*` → dying_gasp, `los/lofi` → los, sisanya → offline.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetONUStates()` dan `parseONUStateOutput()`
+- `internal/olt/poller/poller.go` — Panggil `FetchTelnetONUStates` setelah distance enrichment, override `onu.Status` sebelum upsert ke DB
+
 ## [2.52.90] — 2026-05-31
 ### Fixed
 - **Ghost ONU cleanup tidak berjalan (GORM bug)** — `Model(&models.OLTONUStatus{})` dengan primary key kosong menyebabkan GORM menambah kondisi `WHERE id = ''` secara diam-diam, membuat batch UPDATE tidak pernah mengeksekusi satu baris pun. Fix: ganti ke `.Table("olt_onu_status")` yang tidak punya kondisi PK implisit.
