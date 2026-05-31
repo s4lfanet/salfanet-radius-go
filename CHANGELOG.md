@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.6] — 2026-06-01
+### Fixed
+- **Kolom Router tabel agen selalu "Belum ditugaskan"** — `GET /api/hotspot/agents` hanya mengirim `routerId` tapi tidak menyertakan object router. Frontend mengecek `agent.router?.name` yang selalu null. Fix: backend sekarang fetch semua router, lookup berdasarkan `routerId`, dan sertakan `{ id, name, nasname, shortname }` di setiap item response.
+
+### Files
+- `internal/api/handlers/hotspot_ext.go` — `ListAgents`: tambah lookup router map + sertakan `router` object di response
+
+---
+
 ## [2.54.5] — 2026-06-01
 ### Fixed
 - **Error 500 saat tambah agent voucher** — Go struct `Agent` memiliki field `PIN string` tanpa tag `gorm:"-"`, menyebabkan GORM mencoba INSERT ke kolom `pin` yang tidak ada di tabel `agents` database. Fix: tambah `gorm:"-"` ke field `PIN`.
