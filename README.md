@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.53.5 — 2026-06-01
+
+### Fixed
+- **`GET /api/settings/isolation` 500** — Handler memanggil `db.First(&company)` dan return 500 saat tabel `companies` kosong. Sekarang `ErrRecordNotFound` ditangani: return `{success:true, data:{}}` (default kosong). `UpdateIsolationSettings` juga difix untuk tidak 500 saat tidak ada company.
+- **Menu Isolir (IsolatedUsers) format response salah** — Handler lama: field names salah (`profile`/`price`/`unpaidAmt`/`unpaidCnt` bukan `profileName`/`profilePrice`/`totalUnpaid`/`unpaidInvoicesCount`), tidak ada `success:true`, tidak ada `stats`, tidak ada field `email`, `customerId`, `isOnline`, `ipAddress`, `loginTime`, `nasIp`, `unpaidInvoices[]`. Handler ditulis ulang lengkap dengan JOIN radacct untuk status online dan batch query unpaid invoices.
+
+### Files
+- `internal/api/handlers/settings.go` — Fix `GetIsolationSettings` dan `UpdateIsolationSettings` handle `ErrRecordNotFound`
+- `internal/api/handlers/admin.go` — Rewrite `IsolatedUsers` handler dengan response format lengkap
+
 ### v2.53.4 — 2026-05-31
 
 ### Fixed
@@ -557,21 +567,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **FreeRADIUS tidak merespons RADIUS request dari MikroTik (`radius timeout`)** — Root cause: `systemctl reload-or-restart` (SIGHUP) tidak me-reload `clients.d` di FreeRADIUS 3.x; client list hanya terbaca saat full restart. Akibatnya meski `nas-from-db.conf` sudah berisi entry NAS yang benar, FreeRADIUS tetap menganggap MikroTik sebagai unknown client dan drop packet tanpa respons. Fix: ganti ke `systemctl restart freeradius` di `nas_sync.go`.
 ### Files
 - `internal/radius/nas_sync.go` — `reload-or-restart` → `restart` agar clients.d selalu ter-load
-
-### v2.52.99 — 2026-05-31
-
-### Fixed
-- **FreeRADIUS integration: NAS tidak ter-trigger ke `clients.d/nas-from-db.conf`** — Saat router/NAS ditambah via UI, handler Go `CreateRouter/UpdateRouter/DeleteRouter` hanya menulis ke DB tanpa men-sync ke file FreeRADIUS clients. File `nas-from-db.conf` di VPS kosong (hanya header), akibatnya MikroTik tidak dikenali sebagai client RADIUS sah → autentikasi PPPoE tidak bisa terjadi. Sync sebelumnya hanya ada di TypeScript service yang sudah tidak dipanggil.
-- **Manual immediate fix di VPS** — File `/etc/freeradius/3.0/clients.d/nas-from-db.conf` ditulis manual untuk NAS `DST-PASKA` (10.201.0.10) + reload FreeRADIUS. Sekarang FreeRADIUS aktif listen di `0.0.0.0:1812` dengan NAS dikenali.
-### Added
-- **`internal/radius/nas_sync.go` — `SyncNASClients(db)`** — Helper Go yang membaca tabel `nas` (LEFT JOIN `vpn_clients` + `vpn_servers`), generate file `nas-from-db.conf` (per-NAS client + CHR VPN gateway entries untuk kasus masquerade), tulis hanya jika berubah, lalu `systemctl reload-or-restart freeradius`. Mutex + cooldown 3 detik untuk anti-burst.
-- **Auto-trigger di handler** — `CreateRouter`, `UpdateRouter`, `DeleteRouter` sekarang memanggil `radius.SyncNASClients(h.db)` setelah perubahan DB.
-- **Cron `freeradius_health` regenerate file** — Cron tetap berfungsi sebagai self-healing kalau ada drift atau file dihapus.
-### Files
-- `internal/radius/nas_sync.go` — File baru: NAS → clients.d sync + reload
-- `internal/api/handlers/network.go` — `CreateRouter` panggil `SyncNASClients`
-- `internal/api/handlers/network_ext.go` — `UpdateRouter` & `DeleteRouter` panggil `SyncNASClients`
-- `internal/cron/pppoe_session_sync.go` — `jobFreeRADIUSHealth` panggil `SyncNASClients` per run
 
 <!-- AUTO-CHANGELOG:END -->
 
