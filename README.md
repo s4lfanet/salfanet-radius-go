@@ -491,6 +491,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.53.8 — 2026-06-01
+
+### Fixed
+- **PPPoE Paket Layanan tidak tampil setelah tambah** — `ListProfiles` Go handler mengembalikan array langsung (`[...]`) sedangkan frontend menggunakan `data.profiles || []`. Fix: bungkus response dalam `{profiles: [...]}` agar konsisten dengan HotspotHandler.
+- **Hotspot profile error 400 saat tambah** — Frontend mengirim `costPrice`, `resellerFee`, `sharedUsers`, `validityValue` sebagai string dari formData, tapi Go model ekspektasi `int`. Fix: parse dengan `parseInt()` sebelum dikirim.
+- **PPPoE & Hotspot profile edit (PUT) gagal** — URL PUT tidak menyertakan `:id` di path (`/api/pppoe/profiles` instead of `/api/pppoe/profiles/:id`). Fix: ubah URL dynamis ke `/api/pppoe/profiles/${id}` dan `/api/hotspot/profiles/${id}` saat edit.
+
+### Files
+- `internal/api/handlers/pppoe.go` — Wrap `ListProfiles` response dalam `fiber.Map{"profiles": profiles}`
+- `src/app/admin/hotspot/profile/page.tsx` — Parse costPrice, resellerFee, sharedUsers, validityValue ke int; fix PUT URL
+- `src/app/admin/pppoe/profiles/page.tsx` — Fix PUT URL menyertakan `/:id`
+
 ### v2.53.7 — 2026-06-01
 
 ### Fixed
@@ -548,23 +560,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **Template Excel import PPPoE tidak punya field koordinat peta & field lainnya** — Template hanya punya 12 kolom, tidak ada `latitude`, `longitude`, `macAddress`, `billingDay`, `comment`. Form tambah pelanggan sudah punya semua field ini tapi file Excel template/export tidak bisa mengisinya. Ditambahkan ke template (17 kolom), export, dan parser import.
 ### Files
 - `internal/api/handlers/pppoe_ext.go` — `BulkGet` template headers & example row, export headers & per-row output; `BulkImport` parser field baru
-
-### v2.53.2 — 2026-05-31
-
-### Fixed
-- **Suspend Requests handler** — Response format tidak cocok dengan frontend: response key `data` → `rows`, status uppercase mismatch, fields lengkap (startDate, endDate, adminNotes, approvedAt, approvedBy). Rewrite handler pakai GORM Preload bukan raw SQL custom struct.
-- **Topup Requests — model salah** — Backend query `agent_deposits` (deposit agen) padahal frontend menampilkan top-up PPPoE customer. Dibuat model baru `TopupRequest` + tabel `topup_requests` (CREATE TABLE IF NOT EXISTS di runMigrations), customer portal `CreateTopupRequest` sekarang menyimpan ke tabel baru, admin handler query tabel yang benar, status `PENDING`/`SUCCESS`/`FAILED`.
-- **BulkCreateUsers tanpa RADIUS sync** — User dibuat di DB tapi tidak disync ke FreeRADIUS `radcheck`. Ditambahkan upsert `Cleartext-Password` ke `radcheck` setelah setiap user berhasil dibuat.
-- **SyncProfilesRadius adalah stub** — Hanya menghitung jumlah profil. Sekarang benar-benar upsert `Mikrotik-Rate-Limit` ke tabel `radgroupreply` untuk setiap profil aktif yang memiliki `rateLimit` dan `groupName`.
-- **SyncProfilesMikrotik return fake 200** — Diganti return `501 Not Implemented` dengan pesan jelas bahwa fitur ini belum diimplementasi.
-### TypeScript
-- TSC check: **0 errors** (npx tsc --noEmit exit 0)
-### Files
-- `internal/api/handlers/admin.go` — Rewrite `TopupRequests`, `ApproveTopup`, `RejectTopup`, `SuspendRequests`
-- `internal/api/handlers/customer_portal.go` — `CreateTopupRequest` simpan ke `topup_requests` bukan `transactions`
-- `internal/api/handlers/pppoe_ext.go` — `BulkCreateUsers` + RADIUS sync, `SyncProfilesRadius` implementasi nyata, `SyncProfilesMikrotik` → 501
-- `internal/db/models/extra.go` — Tambah model `TopupRequest`
-- `internal/db/db.go` — Tambah `CREATE TABLE IF NOT EXISTS topup_requests` di `runMigrations`
 
 <!-- AUTO-CHANGELOG:END -->
 
