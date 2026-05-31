@@ -6,6 +6,26 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.98] — 2026-05-31
+### Fixed / Improved
+- **PageSpeed Accessibility** — Hapus `userScalable: false` & `maximumScale: 1` dari viewport di 3 layout (root, agent, technician) agar pinch-zoom tidak diblokir
+- **PageSpeed Accessibility** — Tambah `aria-label` pada tombol ikon tanpa teks: show/hide password (admin login) dan toggle tema (customer login)
+- **PageSpeed Accessibility** — Ubah wrapper root admin login dari `<div>` menjadi `<main>` landmark
+- **PageSpeed Best Practices** — Tambah header `Cross-Origin-Opener-Policy: same-origin-allow-popups` dan `Cross-Origin-Resource-Policy: same-site` di `next.config.ts`
+- **PageSpeed SEO** — Perbaiki `robots.txt`: izinkan `/customer/login` diindex (halaman produk utama), blokir hanya path sensitif
+- **PageSpeed SEO** — Perbaiki metadata customer layout: tambah `description`, `robots: index`, `openGraph`
+- **Performance** — Kurangi weight Outfit font dari 5 ke 4 (hapus weight 300 yang tidak terpakai)
+- **Dependency** — Tambah `qrcode.react` yang sebelumnya missing dari `package.json`
+### Files
+- `src/app/layout.tsx` — Hapus userScalable, kurangi Outfit weight ke 400/500/600/700
+- `src/app/agent/layout.tsx` — Hapus userScalable dari viewport
+- `src/app/technician/layout.tsx` — Hapus userScalable dari viewport
+- `src/app/admin/login/page.tsx` — aria-label show/hide password, wrap dalam `<main>`
+- `src/app/customer/login/page.tsx` — aria-label theme toggle
+- `src/app/customer/layout.tsx` — Metadata description + openGraph + robots
+- `next.config.ts` — Tambah COOP + CORP header
+- `public/robots.txt` — Allow customer portal, block sensitive paths saja
+
 ## [2.52.97] — 2026-06-01
 ### Fixed
 - **ONUDetail: telnet pool race condition → ONU count naik 55→66, banyak offline** — Handler `ONUDetail` sebelumnya memakai shared telnet pool milik poller (`h.poller.GetPool`). Pool `acquire()` tidak menahan lock per-batch, sehingga dua goroutine bisa mendapat sesi yang sama dan command saling interleave. Akibatnya `FetchTelnetONUStates` mendapat output kacau → override state gagal → SNMP state yang lag dipakai → ONU tampil offline; sesi telnet crash di tengah poll → ghost ONU cleanup salah menandai ONU sebagai offline dan jumlah ONU melonjak. Solusi: ONUDetail **selalu membuat private telnet pool** (bukan reuse shared pool), agar poller tidak terganggu.
