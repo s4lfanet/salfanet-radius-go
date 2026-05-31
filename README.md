@@ -494,12 +494,12 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### v2.52.91 — 2026-05-31
 
 ### Fixed
-- **ONU dying-gasp/offline tampil sebagai "online"** — Root cause: ZTE C320 SNMP OperState agent **tidak segera update** saat ONU mengalami dying gasp atau LOS — SNMP masih melaporkan `working` (nilai 4 atau 5) padahal ONU sudah tidak aktif. Aplikasi lain yang membaca via Telnet CLI langsung mendapat status aktual.
-  Fix: tambah `FetchTelnetONUStates()` yang menjalankan `show gpon onu state gpon-olt_F/S/P` sekali per PON port (batch dalam 1 sesi Telnet), lalu override status SNMP dengan status Telnet CLI. Jika Telnet melaporkan `dying-gasp` tapi SNMP melaporkan `working`, status ONU di DB akan di-set `dying_gasp` (bukan `online`).
-  Mapping Telnet state → model status: `working/active` → online, `dying-gasp*` → dying_gasp, `los/lofi` → los, sisanya → offline.
+- **ONU dying-gasp/offline tampil sebagai "online"** — Root cause: ZTE C320 SNMP OperState agent **tidak segera update** saat ONU dying gasp; SNMP masih return `working` (4/5) meski ONU sudah mati. Fix: tambah `FetchTelnetONUStates()` yang menjalankan `show gpon onu state gpon-olt_F/S/P` via Telnet CLI per PON port (batch dalam 1 sesi), lalu override status SNMP dengan kolom "Phase State" dari output ZTE.
+- **Bug regresi: semua ONU offline** — Fix pertama memiliki bug parser: ZTE C320 V2.1 menggunakan 5 kolom (`OnuIndex | Admin State | OMCC State | Phase State | Channel`), oper state ada di kolom ke-4 (fields[3]), bukan fields[2]. Parser lama membaca "OMCC State" = "enable" → jatuh ke default offline. Fix: scan SEMUA fields setelah ONU index untuk kata state yang dikenal; jika tidak dikenal, status tidak dioverride (SNMP preserved).
+  Kata state yang dikenali: `working`/`active`/`online`/`up` → online, `dying*` → dying_gasp, `los`/`lofi` → los, `inactive`/`not-present`/`offline`/`down` → offline.
 ### Files
-- `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetONUStates()` dan `parseONUStateOutput()`
-- `internal/olt/poller/poller.go` — Panggil `FetchTelnetONUStates` setelah distance enrichment, override `onu.Status` sebelum upsert ke DB
+- `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetONUStates()` + `parseONUStateOutput()` (scan semua fields)
+- `internal/olt/poller/poller.go` — Panggil `FetchTelnetONUStates` setelah distance enrichment, override `onu.Status` hanya saat state dikenali
 
 ### v2.52.90 — 2026-05-31
 
