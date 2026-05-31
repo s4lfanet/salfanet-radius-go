@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.3] — 2026-05-31
+### Fixed
+- **Template Excel import PPPoE tidak punya field koordinat peta & field lainnya** — Template hanya punya 12 kolom, tidak ada `latitude`, `longitude`, `macAddress`, `billingDay`, `comment`. Form tambah pelanggan sudah punya semua field ini tapi file Excel template/export tidak bisa mengisinya. Ditambahkan ke template (17 kolom), export, dan parser import.
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `BulkGet` template headers & example row, export headers & per-row output; `BulkImport` parser field baru
+
+---
+
 ## [2.53.2] — 2026-05-31
 ### Fixed
 - **Suspend Requests handler** — Response format tidak cocok dengan frontend: response key `data` → `rows`, status uppercase mismatch, fields lengkap (startDate, endDate, adminNotes, approvedAt, approvedBy). Rewrite handler pakai GORM Preload bukan raw SQL custom struct.

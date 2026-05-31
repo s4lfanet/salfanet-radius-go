@@ -135,8 +135,8 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	t := c.Query("type", "template")
 	format := c.Query("format", "csv")
 
-	tplHeaders := []string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "areaName", "subscriptionType", "expiredAt"}
-	tplExample := [][]string{{"user001", "pass123", "John Doe", "08123456789", "", "", "", "Paket 10 Mbps", "Router 1", "", "POSTPAID", "2025-12-31"}}
+	tplHeaders := []string{"username", "password", "name", "phone", "email", "address", "latitude", "longitude", "ipAddress", "macAddress", "profileName", "routerName", "areaName", "subscriptionType", "billingDay", "expiredAt", "comment"}
+	tplExample := [][]string{{"user001", "pass123", "John Doe", "08123456789", "", "Jl. Merdeka No. 1", "-6.200000", "106.816666", "", "", "Paket 10 Mbps", "Router 1", "", "POSTPAID", "1", "2025-12-31", ""}}
 
 	if t == "template" {
 		if format == "xlsx" {
@@ -171,7 +171,7 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	}
 	q.Find(&users)
 
-	expHeaders := []string{"username", "password", "name", "phone", "email", "address", "ipAddress", "profileName", "routerName", "areaName", "subscriptionType", "status", "expiredAt"}
+	expHeaders := []string{"username", "password", "name", "phone", "email", "address", "latitude", "longitude", "ipAddress", "macAddress", "profileName", "routerName", "areaName", "subscriptionType", "billingDay", "status", "expiredAt", "comment"}
 	var expRows [][]string
 	for _, u := range users {
 		expStr := ""
@@ -198,7 +198,27 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 		if u.IPAddress != nil {
 			ipStr = *u.IPAddress
 		}
-		expRows = append(expRows, []string{u.Username, u.Password, u.Name, u.Phone, emailStr, addrStr, ipStr, u.Profile.Name, routerName, areaName2, string(u.SubscriptionType), u.Status, expStr})
+		latStr := ""
+		if u.Latitude != nil {
+			latStr = strconv.FormatFloat(*u.Latitude, 'f', 6, 64)
+		}
+		lngStr := ""
+		if u.Longitude != nil {
+			lngStr = strconv.FormatFloat(*u.Longitude, 'f', 6, 64)
+		}
+		macStr := ""
+		if u.MACAddress != nil {
+			macStr = *u.MACAddress
+		}
+		billingDayStr := "1"
+		if u.BillingDay != nil {
+			billingDayStr = strconv.Itoa(*u.BillingDay)
+		}
+		commentStr := ""
+		if u.Comment != nil {
+			commentStr = *u.Comment
+		}
+		expRows = append(expRows, []string{u.Username, u.Password, u.Name, u.Phone, emailStr, addrStr, latStr, lngStr, ipStr, macStr, u.Profile.Name, routerName, areaName2, string(u.SubscriptionType), billingDayStr, u.Status, expStr, commentStr})
 	}
 
 	if format == "xlsx" {
@@ -400,6 +420,11 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 		emailStr := col(row, "email")
 		addrStr := col(row, "address")
 		ipStr := col(row, "ipaddress")
+		latStr := col(row, "latitude")
+		lngStr := col(row, "longitude")
+		macStr := col(row, "macaddress")
+		billingDayStr := col(row, "billingday")
+		commentStr := col(row, "comment")
 		expiredAtStr := col(row, "expiredat")
 
 		user := models.PppoeUser{
@@ -422,6 +447,27 @@ func (h *PppoeExtHandler) BulkImport(c fiber.Ctx) error {
 		}
 		if ipStr != "" {
 			user.IPAddress = &ipStr
+		}
+		if macStr != "" {
+			user.MACAddress = &macStr
+		}
+		if commentStr != "" {
+			user.Comment = &commentStr
+		}
+		if latStr != "" {
+			if lat, err2 := strconv.ParseFloat(latStr, 64); err2 == nil {
+				user.Latitude = &lat
+			}
+		}
+		if lngStr != "" {
+			if lng, err2 := strconv.ParseFloat(lngStr, 64); err2 == nil {
+				user.Longitude = &lng
+			}
+		}
+		if billingDayStr != "" {
+			if bd, err2 := strconv.Atoi(billingDayStr); err2 == nil && bd >= 1 && bd <= 31 {
+				user.BillingDay = &bd
+			}
 		}
 		if expiredAtStr != "" {
 			if t2, err2 := time.Parse("2006-01-02", expiredAtStr); err2 == nil {
