@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.3] — 2026-06-01
+### Added / Fixed
+- **Implementasi Sync PPPoE Profile ke MikroTik** — Handler `SyncProfilesMikrotik` sebelumnya selalu return 501 Not Implemented. Sekarang: connect ke setiap router via RouterOS API (port 8728, fallback 8729), buat/update IP pool (jika `poolRanges` diisi), buat/update PPP profile dengan `rate-limit`, `remote-address` (pool), `local-address`. Simpan `ipPoolName`, `ipPoolRange`, `localAddress`, `rateLimit` ke database. Return `savedProfile` agar frontend update state tanpa reload.
+
+### Files
+- `internal/api/handlers/pppoe_ext.go` — Implementasi penuh `SyncProfilesMikrotik`
+
+---
+
 ## [2.54.2] — 2026-06-01
 ### Fixed
 - **Test Koneksi MikroTik 404** — Frontend mengirim `PUT /api/pppoe/profiles/sync-mikrotik` tapi Go router tidak punya handler untuk method `PUT` di path tersebut → 404. Fix: tambah handler `TestMikrotikConnection` yang connect ke MikroTik via RouterOS API, test identity + PPP profile read/write, return detail hasil per port (8728/8729).
