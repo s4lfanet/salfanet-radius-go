@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.99] — 2026-05-31
+### Fixed
+- **FreeRADIUS integration: NAS tidak ter-trigger ke `clients.d/nas-from-db.conf`** — Saat router/NAS ditambah via UI, handler Go `CreateRouter/UpdateRouter/DeleteRouter` hanya menulis ke DB tanpa men-sync ke file FreeRADIUS clients. File `nas-from-db.conf` di VPS kosong (hanya header), akibatnya MikroTik tidak dikenali sebagai client RADIUS sah → autentikasi PPPoE tidak bisa terjadi. Sync sebelumnya hanya ada di TypeScript service yang sudah tidak dipanggil.
+- **Manual immediate fix di VPS** — File `/etc/freeradius/3.0/clients.d/nas-from-db.conf` ditulis manual untuk NAS `DST-PASKA` (10.201.0.10) + reload FreeRADIUS. Sekarang FreeRADIUS aktif listen di `0.0.0.0:1812` dengan NAS dikenali.
+### Added
+- **`internal/radius/nas_sync.go` — `SyncNASClients(db)`** — Helper Go yang membaca tabel `nas` (LEFT JOIN `vpn_clients` + `vpn_servers`), generate file `nas-from-db.conf` (per-NAS client + CHR VPN gateway entries untuk kasus masquerade), tulis hanya jika berubah, lalu `systemctl reload-or-restart freeradius`. Mutex + cooldown 3 detik untuk anti-burst.
+- **Auto-trigger di handler** — `CreateRouter`, `UpdateRouter`, `DeleteRouter` sekarang memanggil `radius.SyncNASClients(h.db)` setelah perubahan DB.
+- **Cron `freeradius_health` regenerate file** — Cron tetap berfungsi sebagai self-healing kalau ada drift atau file dihapus.
+### Files
+- `internal/radius/nas_sync.go` — File baru: NAS → clients.d sync + reload
+- `internal/api/handlers/network.go` — `CreateRouter` panggil `SyncNASClients`
+- `internal/api/handlers/network_ext.go` — `UpdateRouter` & `DeleteRouter` panggil `SyncNASClients`
+- `internal/cron/pppoe_session_sync.go` — `jobFreeRADIUSHealth` panggil `SyncNASClients` per run
+
 ## [2.52.98] — 2026-05-31
 ### Fixed / Improved
 - **PageSpeed Accessibility** — Hapus `userScalable: false` & `maximumScale: 1` dari viewport di 3 layout (root, agent, technician) agar pinch-zoom tidak diblokir
