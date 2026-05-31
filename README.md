@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.53.0 — 2026-05-31
+
+### Fixed
+- **FreeRADIUS tidak merespons RADIUS request dari MikroTik (`radius timeout`)** — Root cause: `systemctl reload-or-restart` (SIGHUP) tidak me-reload `clients.d` di FreeRADIUS 3.x; client list hanya terbaca saat full restart. Akibatnya meski `nas-from-db.conf` sudah berisi entry NAS yang benar, FreeRADIUS tetap menganggap MikroTik sebagai unknown client dan drop packet tanpa respons. Fix: ganti ke `systemctl restart freeradius` di `nas_sync.go`.
+### Files
+- `internal/radius/nas_sync.go` — `reload-or-restart` → `restart` agar clients.d selalu ter-load
+
 ### v2.52.99 — 2026-05-31
 
 ### Fixed
@@ -549,16 +556,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/olt/vendors/zte/zte.go` — Perbaiki `GetTcontProfiles` + `parseTcontProfiles`, tambah `TrafficProfile` type + `GetTrafficProfiles` + `parseTrafficProfiles`
 - `internal/api/handlers/olt.go` — Tambah `GetTrafficProfiles` call dan `trafficProfiles` ke response metadata
 - `src/app/admin/olt/[id]/page.tsx` — Tambah `oltProfiles`, `buildScript`, `usedTcontProfile`, `activeTrafficProfiles`; update card TCONT + Traffic Profile; tambah section Build Script
-
-### v2.52.95 — 2026-05-31
-
-### Added
-- **ONU detail: Traffic Profile dari PPPoE** — Karena ZTE C320 tidak mengekspos DBA/bandwidth profile via CLI, limit bandwidth sekarang diambil dari profil PPPoE customer yang terhubung. Menampilkan nama profil, download limit, dan upload limit (dalam Kbps/Mbps) di section "ONT Build Configuration".
-- **ONU detail: TR-069 / GenieACS status** — Section baru menampilkan apakah GenieACS sudah dikonfigurasi di sistem. Jika ya, tampilkan host dan username; jika tidak, tampilkan pesan panduan konfigurasi.
-- **ONU detail: preload Customer.Profile** — Backend sekarang melakukan `Preload("Customer.Profile")` sehingga data profil PPPoE (nama, kecepatan download/upload) tersedia di respons API.
-### Files
-- `internal/api/handlers/misc_handler.go` — Ganti `Preload("Customer")` ke `Preload("Customer.Profile")`, tambah GenieACS settings check, tambah `bandwidth` dan `tr069` ke respons
-- `src/app/admin/olt/[id]/page.tsx` — Tambah `bandwidth` dan `tr069` dari respons API, tambah "Traffic Profile (PPPoE Radius)" cards di ONT Build Config, tambah section "TR-069 / GenieACS"
 
 <!-- AUTO-CHANGELOG:END -->
 
