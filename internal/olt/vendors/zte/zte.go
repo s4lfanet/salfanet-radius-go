@@ -906,3 +906,86 @@ func parseTelnetDistances(raw string) map[string]int {
 
 	return distances
 }
+
+// ─── Telnet ONU State Collection ─────────────────────────────────────────────
+
+// FetchTelnetONUStates fetches the authoritative operational state for every
+// registered ONU by running "show gpon onu state gpon-olt_F/S/P" once per
+// unique PON port in a single batched Telnet session.
+//
+// ZTE C320's SNMP OperState agent may lag (reporting a dying-gasp or LOS ONU
+// as still "working") while the CLI reflects the real state immediately.
+// Callers should override the SNMP-derived Status field with this map.
+//
+// Returns a map of "F/S/P:ID" → OltOnuStatus.
+func FetchTelnetONUStates(pool *telnet.Pool, onus []*ONUInfo) map[string]models.OltOnuStatus {
+	// Collect unique PON ports from registered ONUs.
+	type portKey struct{ frame, slot, port int }
+	seen := make(map[portKey]bool)
+	for _, o := range onus {
+		if o.Registered {
+			seen[portKey{o.Frame, o.Slot, o.Port}] = true
+		}
+	}
+	if len(seen) == 0 {
+		return nil
+	}
+
+	// Build one command per unique port, execute in a single Telnet session.
+	cmds := make([]string, 0, len(seen))
+	for pk := range seen {
+		cmds = append(cmds, fmt.Sprintf("show gpon onu state gpon-olt_%d/%d/%d", pk.frame, pk.slot, pk.port))
+	}
+
+	output, err := pool.ExecuteMultiple(cmds)
+	if err != nil {
+		log.Warn().Err(err).Int("ports", len(cmds)).Msg("zte: telnet ONU state fetch failed")
+		return nil
+	}
+
+	return parseONUStateOutput(output)
+}
+
+// parseONUStateOutput parses the combined Telnet output of one or more
+// "show gpon onu state gpon-olt_F/S/P" commands.
+//
+// Expected line format (with or without "gpon-onu_" prefix):
+//
+//	gpon-onu_1/1/1:38  enable  dying-gasp  pass
+//	1/1/1:39           enable  working     pass
+func parseONUStateOutput(output string) map[string]models.OltOnuStatus {
+	result := make(map[string]models.OltOnuStatus)
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimSpace(line)
+		// Strip optional "gpon-onu_" prefix
+		line = strings.TrimPrefix(line, "gpon-onu_")
+		// Must start with a digit (frame number)
+		if len(line) == 0 || line[0] < '0' || line[0] > '9' {
+			continue
+		}
+		fields := strings.Fields(line)
+		// Minimum columns: OnuIndex, AdminState, OperState
+		if len(fields) < 3 {
+			continue
+		}
+		onuIdx := fields[0] // "F/S/P:ID"
+		if !strings.Contains(onuIdx, "/") || !strings.Contains(onuIdx, ":") {
+			continue
+		}
+		operState := strings.ToLower(fields[2])
+		var status models.OltOnuStatus
+		switch {
+		case operState == "working" || operState == "active":
+			status = models.OnuOnline
+		case strings.HasPrefix(operState, "dying"):
+			status = models.OnuDyingGasp
+		case operState == "los" || operState == "lofi":
+			status = models.OnuLOS
+		default:
+			// inactive, not-present, notpresent, activating, etc.
+			status = models.OnuOffline
+		}
+		result[onuIdx] = status
+	}
+	return result
+}

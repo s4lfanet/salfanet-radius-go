@@ -184,6 +184,29 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 			}
 			log.Debug().Str("olt", olt.ID).Int("distances", len(telnetDist)).Msg("poller: telnet distances enriched")
 		}
+
+		// Override SNMP-derived status with authoritative Telnet CLI state.
+		// ZTE C320's SNMP agent may lag for dying-gasp/LOS events — the CLI
+		// reflects the real state immediately.
+		if telnetStates := zte.FetchTelnetONUStates(pool, onus); len(telnetStates) > 0 {
+			overrideCount := 0
+			for _, onu := range onus {
+				if !onu.Registered {
+					continue
+				}
+				key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
+				if state, ok := telnetStates[key]; ok && state != onu.Status {
+					log.Debug().Str("olt", olt.ID).Str("onu", key).
+						Str("snmp", string(onu.Status)).Str("telnet", string(state)).
+						Msg("poller: telnet overrides SNMP status")
+					onu.Status = state
+					overrideCount++
+				}
+			}
+			if overrideCount > 0 {
+				log.Info().Str("olt", olt.ID).Int("overridden", overrideCount).Msg("poller: telnet ONU states applied")
+			}
+		}
 	}
 
 	// Fetch sysUpTime via SNMP (OID 1.3.6.1.2.1.1.3.0, value in centiseconds)
