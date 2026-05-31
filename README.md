@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.97 — 2026-06-01
+
+### Fixed
+- **ONUDetail: telnet pool race condition → ONU count naik 55→66, banyak offline** — Handler `ONUDetail` sebelumnya memakai shared telnet pool milik poller (`h.poller.GetPool`). Pool `acquire()` tidak menahan lock per-batch, sehingga dua goroutine bisa mendapat sesi yang sama dan command saling interleave. Akibatnya `FetchTelnetONUStates` mendapat output kacau → override state gagal → SNMP state yang lag dipakai → ONU tampil offline; sesi telnet crash di tengah poll → ghost ONU cleanup salah menandai ONU sebagai offline dan jumlah ONU melonjak. Solusi: ONUDetail **selalu membuat private telnet pool** (bukan reuse shared pool), agar poller tidak terganggu.
+### Files
+- `internal/api/handlers/misc_handler.go` — Ganti `h.poller.GetPool(oltID)` + conditional `ownPool` menjadi selalu `telnet.NewPool(tcfg)` + `defer pool.Close()`
+
 ### v2.52.96 — 2026-06-01
 
 ### Added
@@ -544,16 +551,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **RX Power / TX Power / Distance menjadi kosong (—) setelah poll** — Upsert menggunakan `VALUES(rxPower)` yang selalu menimpa nilai DB, termasuk dengan NULL. Jika SNMP tidak berhasil mendapat data optik dalam satu siklus poll (karena OLT sibuk, Telnet overlap, dll), nilai yang sebelumnya valid terhapus. Fix: ubah ke `COALESCE(VALUES(rxPower), rxPower)` — sama seperti yang sudah dipakai untuk `serialNumber`/`description`. Berlaku juga untuk `txPower` dan `distance`.
 ### Files
 - `internal/olt/poller/poller.go` — `rxPower`, `txPower`, `distance` di DoUpdates upsert kini pakai COALESCE
-
-### v2.52.91 — 2026-05-31
-
-### Fixed
-- **ONU dying-gasp/offline tampil sebagai "online"** — Root cause: ZTE C320 SNMP OperState agent **tidak segera update** saat ONU dying gasp; SNMP masih return `working` (4/5) meski ONU sudah mati. Fix: tambah `FetchTelnetONUStates()` yang menjalankan `show gpon onu state gpon-olt_F/S/P` via Telnet CLI per PON port (batch dalam 1 sesi), lalu override status SNMP dengan kolom "Phase State" dari output ZTE.
-- **Bug regresi: semua ONU offline** — Fix pertama memiliki bug parser: ZTE C320 V2.1 menggunakan 5 kolom (`OnuIndex | Admin State | OMCC State | Phase State | Channel`), oper state ada di kolom ke-4 (fields[3]), bukan fields[2]. Parser lama membaca "OMCC State" = "enable" → jatuh ke default offline. Fix: scan SEMUA fields setelah ONU index untuk kata state yang dikenal; jika tidak dikenal, status tidak dioverride (SNMP preserved).
-  Kata state yang dikenali: `working`/`active`/`online`/`up` → online, `dying*` → dying_gasp, `los`/`lofi` → los, `inactive`/`not-present`/`offline`/`down` → offline.
-### Files
-- `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetONUStates()` + `parseONUStateOutput()` (scan semua fields)
-- `internal/olt/poller/poller.go` — Panggil `FetchTelnetONUStates` setelah distance enrichment, override `onu.Status` hanya saat state dikenali
 
 <!-- AUTO-CHANGELOG:END -->
 
