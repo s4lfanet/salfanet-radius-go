@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.91 — 2026-05-31
+
+### Fixed
+- **ONU dying-gasp/offline tampil sebagai "online"** — Root cause: ZTE C320 SNMP OperState agent **tidak segera update** saat ONU mengalami dying gasp atau LOS — SNMP masih melaporkan `working` (nilai 4 atau 5) padahal ONU sudah tidak aktif. Aplikasi lain yang membaca via Telnet CLI langsung mendapat status aktual.
+  Fix: tambah `FetchTelnetONUStates()` yang menjalankan `show gpon onu state gpon-olt_F/S/P` sekali per PON port (batch dalam 1 sesi Telnet), lalu override status SNMP dengan status Telnet CLI. Jika Telnet melaporkan `dying-gasp` tapi SNMP melaporkan `working`, status ONU di DB akan di-set `dying_gasp` (bukan `online`).
+  Mapping Telnet state → model status: `working/active` → online, `dying-gasp*` → dying_gasp, `los/lofi` → los, sisanya → offline.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetONUStates()` dan `parseONUStateOutput()`
+- `internal/olt/poller/poller.go` — Panggil `FetchTelnetONUStates` setelah distance enrichment, override `onu.Status` sebelum upsert ke DB
+
 ### v2.52.90 — 2026-05-31
 
 ### Fixed
@@ -535,15 +545,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/router.go` — Tambah route `POST /:id/onus/:onuId/clean-config` dan `DELETE /:id/onus/:onuId/delete`
 - `internal/olt/poller/poller.go` — Tambah `TxPower` ke base struct dan upsert `DoUpdates`
 - `src/app/admin/olt/[id]/page.tsx` — State `cleaningConfigOnu`; handler `handleCleanConfigOnu`; tombol "Clean" di action column; refresh 15s; import `Eraser`
-
-### v2.52.86 — 2026-05-31
-
-### Fixed
-- **Fix adminStatus PON port selalu "Enabled"** — Parser `parsePONInterfaceStat` di `olt_pon_stat.go` menggunakan `strings.Contains(lower, "activate")` yang juga match kata "**de**activate" → semua port disabled terbaca sebagai enabled. Fix: cek "deactivate" lebih dulu sebelum "activate".
-- **Fix ONU name/description terhapus saat poll** — Upsert poller menggunakan `AssignmentColumns` yang selalu update kolom `description` dengan nilai baru (termasuk NULL jika OLT tidak mengembalikan deskripsi). Akibatnya nama ONU yang sudah di-set manual terhapus saat poll berikutnya. Fix: gunakan `COALESCE(VALUES(description), description)` agar nilai lama dipertahankan jika nilai baru NULL. Berlaku juga untuk `serialNumber`.
-### Files
-- `internal/api/handlers/olt_pon_stat.go` — Fix urutan cek `deactivate` vs `activate` di `parsePONInterfaceStat`
-- `internal/olt/poller/poller.go` — Ganti `AssignmentColumns` ke `clause.Assignments` dengan `COALESCE` untuk `description` dan `serialNumber`
 
 <!-- AUTO-CHANGELOG:END -->
 
