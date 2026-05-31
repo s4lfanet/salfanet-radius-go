@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.53.6 — 2026-06-01
+
+### Fixed
+- **Error 401 pada Peta Jaringan — `GET /api/customers/with-location`** — Cloudflare (Flexible SSL) dapat memproses request ke Go backend tanpa meneruskan cookie `__Secure-next-auth.session-token` dengan benar, sehingga `CombinedAuthMiddleware` gagal validasi dan return 401. Fix: pindahkan route ke Next.js sebagai API route (`src/app/api/customers/with-location/route.ts`) menggunakan `getServerSession` (server-side, tidak bergantung pada cookie forwarding). Nginx perlu diupdate: tambahkan `location /api/customers/` → port 3000 sebelum catch-all `location /api/`.
+- **Response format `GET /api/customers/with-location` salah (Go handler)** — Go handler mengembalikan `{success, customers:[]}` tapi frontend menggunakan `customersData.data`. Fix: response format diubah ke `{success: true, data: [...], count: N}`. Tambah juga support query param `?limit=` (default 2000, max 5000).
+
+### Files
+- `src/app/api/customers/with-location/route.ts` — **NEW** Next.js API route handler dengan Prisma query dan `checkAuth()`
+- `internal/api/handlers/network_ext.go` — Fix response format `customers` → `data`, tambah `count`, support `?limit`
+
 ### v2.53.5 — 2026-06-01
 
 ### Fixed
@@ -560,13 +570,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - Script backup `scripts/backup-freeradius-local.sh` diperbaiki permission (sebelumnya `-rw-r--r--`, tidak executable)
 ### Files
 - `internal/api/handlers/admin_misc_handler.go` — Implementasi penuh semua 5 FreeRADIUS backup handler
-
-### v2.53.0 — 2026-05-31
-
-### Fixed
-- **FreeRADIUS tidak merespons RADIUS request dari MikroTik (`radius timeout`)** — Root cause: `systemctl reload-or-restart` (SIGHUP) tidak me-reload `clients.d` di FreeRADIUS 3.x; client list hanya terbaca saat full restart. Akibatnya meski `nas-from-db.conf` sudah berisi entry NAS yang benar, FreeRADIUS tetap menganggap MikroTik sebagai unknown client dan drop packet tanpa respons. Fix: ganti ke `systemctl restart freeradius` di `nas_sync.go`.
-### Files
-- `internal/radius/nas_sync.go` — `reload-or-restart` → `restart` agar clients.d selalu ter-load
 
 <!-- AUTO-CHANGELOG:END -->
 
