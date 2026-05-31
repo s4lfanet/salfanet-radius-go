@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.53.3 — 2026-05-31
+
+### Fixed
+- **Template Excel import PPPoE tidak punya field koordinat peta & field lainnya** — Template hanya punya 12 kolom, tidak ada `latitude`, `longitude`, `macAddress`, `billingDay`, `comment`. Form tambah pelanggan sudah punya semua field ini tapi file Excel template/export tidak bisa mengisinya. Ditambahkan ke template (17 kolom), export, dan parser import.
+### Files
+- `internal/api/handlers/pppoe_ext.go` — `BulkGet` template headers & example row, export headers & per-row output; `BulkImport` parser field baru
+
 ### v2.53.2 — 2026-05-31
 
 ### Fixed
@@ -542,27 +549,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/network.go` — `CreateRouter` panggil `SyncNASClients`
 - `internal/api/handlers/network_ext.go` — `UpdateRouter` & `DeleteRouter` panggil `SyncNASClients`
 - `internal/cron/pppoe_session_sync.go` — `jobFreeRADIUSHealth` panggil `SyncNASClients` per run
-
-### v2.52.98 — 2026-05-31
-
-### Fixed / Improved
-- **PageSpeed Accessibility** — Hapus `userScalable: false` & `maximumScale: 1` dari viewport di 3 layout (root, agent, technician) agar pinch-zoom tidak diblokir
-- **PageSpeed Accessibility** — Tambah `aria-label` pada tombol ikon tanpa teks: show/hide password (admin login) dan toggle tema (customer login)
-- **PageSpeed Accessibility** — Ubah wrapper root admin login dari `<div>` menjadi `<main>` landmark
-- **PageSpeed Best Practices** — Tambah header `Cross-Origin-Opener-Policy: same-origin-allow-popups` dan `Cross-Origin-Resource-Policy: same-site` di `next.config.ts`
-- **PageSpeed SEO** — Perbaiki `robots.txt`: izinkan `/customer/login` diindex (halaman produk utama), blokir hanya path sensitif
-- **PageSpeed SEO** — Perbaiki metadata customer layout: tambah `description`, `robots: index`, `openGraph`
-- **Performance** — Kurangi weight Outfit font dari 5 ke 4 (hapus weight 300 yang tidak terpakai)
-- **Dependency** — Tambah `qrcode.react` yang sebelumnya missing dari `package.json`
-### Files
-- `src/app/layout.tsx` — Hapus userScalable, kurangi Outfit weight ke 400/500/600/700
-- `src/app/agent/layout.tsx` — Hapus userScalable dari viewport
-- `src/app/technician/layout.tsx` — Hapus userScalable dari viewport
-- `src/app/admin/login/page.tsx` — aria-label show/hide password, wrap dalam `<main>`
-- `src/app/customer/login/page.tsx` — aria-label theme toggle
-- `src/app/customer/layout.tsx` — Metadata description + openGraph + robots
-- `next.config.ts` — Tambah COOP + CORP header
-- `public/robots.txt` — Allow customer portal, block sensitive paths saja
 
 <!-- AUTO-CHANGELOG:END -->
 
