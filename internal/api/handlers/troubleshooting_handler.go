@@ -110,3 +110,88 @@ func (h *TroubleshootingHandler) JobMaterials(c fiber.Ctx) error {
 	h.db.Where("jobId = ?", jobID).Find(&materials)
 	return c.JSON(fiber.Map{"success": true, "materials": materials})
 }
+
+// PUT /api/troubleshooting/checklists/:id
+func (h *TroubleshootingHandler) UpdateChecklist(c fiber.Ctx) error {
+	id := c.Params("id")
+	var body struct {
+		Title       string  `json:"title"`
+		Description *string `json:"description"`
+		Category    string  `json:"category"`
+		Steps       string  `json:"steps"`
+		IsActive    *bool   `json:"isActive"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+	upd := map[string]any{}
+	if body.Title != "" {
+		upd["title"] = body.Title
+	}
+	if body.Description != nil {
+		upd["description"] = body.Description
+	}
+	if body.Category != "" {
+		upd["category"] = body.Category
+	}
+	if body.Steps != "" {
+		upd["steps"] = body.Steps
+	}
+	if body.IsActive != nil {
+		upd["isActive"] = body.IsActive
+	}
+	if err := h.db.Model(&troubleshootingChecklist{}).Where("id = ?", id).Updates(upd).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to update checklist"})
+	}
+	var row troubleshootingChecklist
+	h.db.Where("id = ?", id).First(&row)
+	return c.JSON(fiber.Map{"success": true, "checklist": row})
+}
+
+// DELETE /api/troubleshooting/checklists/:id
+func (h *TroubleshootingHandler) DeleteChecklist(c fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		id = c.Query("id")
+	}
+	if err := h.db.Delete(&troubleshootingChecklist{}, "id = ?", id).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to delete checklist"})
+	}
+	return c.JSON(fiber.Map{"success": true})
+}
+
+// POST /api/troubleshooting/jobs
+func (h *TroubleshootingHandler) CreateJob(c fiber.Ctx) error {
+	var body struct {
+		Title        string  `json:"title"`
+		Description  *string `json:"description"`
+		ChecklistID  *string `json:"checklistId"`
+		AssignedToID *string `json:"assignedToId"`
+		Status       string  `json:"status"`
+		Priority     string  `json:"priority"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || body.Title == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "title is required"})
+	}
+	if body.Status == "" {
+		body.Status = "OPEN"
+	}
+	if body.Priority == "" {
+		body.Priority = "MEDIUM"
+	}
+	job := troubleshootingJob{
+		ID:           uuid.New().String(),
+		Title:        body.Title,
+		Description:  body.Description,
+		ChecklistID:  body.ChecklistID,
+		AssignedToID: body.AssignedToID,
+		Status:       body.Status,
+		Priority:     body.Priority,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
+	if err := h.db.Create(&job).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to create job"})
+	}
+	return c.Status(201).JSON(fiber.Map{"success": true, "job": job})
+}

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -140,9 +141,23 @@ func (h *KeuanganHandler) CreateTransaction(c fiber.Ctx) error {
 	return c.Status(201).JSON(tx)
 }
 
-// DELETE /api/keuangan/transactions/:id
+// DELETE /api/keuangan/transactions/:id  (also accepts ?id= or ?ids= without path param)
 func (h *KeuanganHandler) DeleteTransaction(c fiber.Ctx) error {
 	id := c.Params("id")
+	if id == "" {
+		id = c.Query("id")
+	}
+	// Bulk delete via ?ids=id1,id2,...
+	if ids := c.Query("ids"); ids != "" {
+		idList := strings.Split(ids, ",")
+		if err := h.db.Delete(&models.Transaction{}, "id IN ?", idList).Error; err != nil {
+			return c.Status(500).JSON(fiber.Map{"error": "Failed to bulk delete transactions"})
+		}
+		return c.JSON(fiber.Map{"success": true, "deleted": len(idList)})
+	}
+	if id == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "id required"})
+	}
 	if err := h.db.Delete(&models.Transaction{}, "id = ?", id).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete transaction"})
 	}

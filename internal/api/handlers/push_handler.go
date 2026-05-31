@@ -24,6 +24,43 @@ func (h *PushHandler) ListBroadcasts(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "broadcasts": notifs})
 }
 
+// GET /api/push/send — stats (action=stats) or recent broadcasts (limit=N)
+func (h *PushHandler) GetStats(c fiber.Ctx) error {
+	if c.Query("action") == "stats" {
+		// Subscriber counts by role
+		var totalSubs int64
+		h.db.Model(&models.PushSubscription{}).Count(&totalSubs)
+
+		type areaRow struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		}
+		var areas []areaRow
+		h.db.Raw("SELECT id, name FROM areas ORDER BY name").Scan(&areas)
+
+		// Broadcasts sent this month
+		var monthCount int64
+		h.db.Model(&models.Notification{}).Where("type = ? AND createdAt >= DATE_FORMAT(NOW(),'%Y-%m-01')", "BROADCAST").Count(&monthCount)
+
+		return c.JSON(fiber.Map{
+			"success": true,
+			"stats": fiber.Map{
+				"totalSubscribers":    totalSubs,
+				"broadcastsThisMonth": monthCount,
+				"areas":               areas,
+			},
+		})
+	}
+	// Default: return recent broadcasts (same as ListBroadcasts)
+	limit := 30
+	if v, err := strconv.Atoi(c.Query("limit")); err == nil && v > 0 {
+		limit = v
+	}
+	var notifs []models.Notification
+	h.db.Where("type = ?", "BROADCAST").Order("createdAt desc").Limit(limit).Find(&notifs)
+	return c.JSON(fiber.Map{"success": true, "broadcasts": notifs})
+}
+
 // POST /api/push/send — broadcast push
 func (h *PushHandler) Send(c fiber.Ctx) error {
 	var body struct {

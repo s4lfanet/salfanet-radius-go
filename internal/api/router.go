@@ -433,15 +433,21 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	inv := api.Group("/inventory")
 	inv.Get("/categories", inventoryH.ListCategories)
 	inv.Post("/categories", inventoryH.CreateCategory)
+	inv.Put("/categories", inventoryH.UpdateCategory) // id in body
 	inv.Put("/categories/:id", inventoryH.UpdateCategory)
+	inv.Delete("/categories", inventoryH.DeleteCategory) // ?id= in query
 	inv.Delete("/categories/:id", inventoryH.DeleteCategory)
 	inv.Get("/suppliers", inventoryH.ListSuppliers)
 	inv.Post("/suppliers", inventoryH.CreateSupplier)
+	inv.Put("/suppliers", inventoryH.UpdateSupplier) // id in body
 	inv.Put("/suppliers/:id", inventoryH.UpdateSupplier)
+	inv.Delete("/suppliers", inventoryH.DeleteSupplier) // ?id= in query
 	inv.Delete("/suppliers/:id", inventoryH.DeleteSupplier)
 	inv.Get("/items", inventoryH.ListItems)
 	inv.Post("/items", inventoryH.CreateItem)
+	inv.Put("/items", inventoryH.UpdateItem) // id in body
 	inv.Put("/items/:id", inventoryH.UpdateItem)
+	inv.Delete("/items", inventoryH.DeleteItem) // ?id= in query
 	inv.Delete("/items/:id", inventoryH.DeleteItem)
 	inv.Get("/movements", inventoryH.ListMovements)
 	inv.Post("/movements", inventoryH.CreateMovement)
@@ -450,6 +456,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	keu := api.Group("/keuangan")
 	keu.Get("/transactions", keuanganH.ListTransactions)
 	keu.Post("/transactions", keuanganH.CreateTransaction)
+	keu.Delete("/transactions", keuanganH.DeleteTransaction) // ?id= or ?ids= in query
 	keu.Delete("/transactions/:id", keuanganH.DeleteTransaction)
 	keu.Get("/categories", keuanganH.ListCategories)
 	keu.Post("/categories", keuanganH.CreateCategory)
@@ -673,6 +680,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// Push Notifications
 	api.Get("/admin/push-notifications", pushH.ListBroadcasts)
+	api.Get("/push/send", pushH.GetStats) // GET for stats + history
 	api.Post("/push/send", pushH.Send)
 	api.Post("/push/subscribe", pushH.Subscribe)
 	api.Delete("/push/unsubscribe", pushH.Unsubscribe)
@@ -1074,7 +1082,10 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 9: Troubleshooting ────────────────────────────────────────────
 	api.Get("/troubleshooting/checklists", troubleshootH.ListChecklists)
 	api.Post("/troubleshooting/checklists", troubleshootH.CreateChecklist)
+	api.Put("/troubleshooting/checklists/:id", troubleshootH.UpdateChecklist)
+	api.Delete("/troubleshooting/checklists/:id", troubleshootH.DeleteChecklist)
 	api.Get("/troubleshooting/jobs", troubleshootH.ListJobs)
+	api.Post("/troubleshooting/jobs", troubleshootH.CreateJob)
 	api.Get("/troubleshooting/jobs/:id", troubleshootH.GetJob)
 	api.Get("/troubleshooting/jobs/:id/materials", troubleshootH.JobMaterials)
 

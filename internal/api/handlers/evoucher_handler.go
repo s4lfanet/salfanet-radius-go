@@ -32,10 +32,10 @@ func (h *EvoucherHandler) ListProfiles(c fiber.Ctx) error {
 // POST /api/evoucher/purchase — create a voucher order
 func (h *EvoucherHandler) Purchase(c fiber.Ctx) error {
 	var body struct {
-		ProfileID    string `json:"profileId"`
-		CustomerName string `json:"customerName"`
+		ProfileID     string `json:"profileId"`
+		CustomerName  string `json:"customerName"`
 		CustomerPhone string `json:"customerPhone"`
-		Qty          int    `json:"qty"`
+		Qty           int    `json:"qty"`
 	}
 	if err := c.Bind().JSON(&body); err != nil || body.ProfileID == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "profileId required"})

@@ -60,11 +60,15 @@ func (h *InventoryHandler) CreateCategory(c fiber.Ctx) error {
 func (h *InventoryHandler) UpdateCategory(c fiber.Ctx) error {
 	id := c.Params("id")
 	var body struct {
+		ID          string  `json:"id"`
 		Name        string  `json:"name"`
 		Description *string `json:"description"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid body"})
+	}
+	if id == "" {
+		id = body.ID
 	}
 	upd := map[string]any{"updatedAt": time.Now()}
 	if body.Name != "" {
@@ -83,6 +87,9 @@ func (h *InventoryHandler) UpdateCategory(c fiber.Ctx) error {
 
 func (h *InventoryHandler) DeleteCategory(c fiber.Ctx) error {
 	id := c.Params("id")
+	if id == "" {
+		id = c.Query("id")
+	}
 	if err := h.db.Delete(&models.InventoryCategory{}, "id = ?", id).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete category"})
 	}
@@ -150,6 +157,12 @@ func (h *InventoryHandler) UpdateSupplier(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid body"})
 	}
+	if id == "" {
+		if v, ok := body["id"].(string); ok {
+			id = v
+		}
+	}
+	delete(body, "id")
 	body["updatedAt"] = time.Now()
 	if err := h.db.Model(&models.InventorySupplier{}).Where("id = ?", id).Updates(body).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to update supplier"})
@@ -161,6 +174,9 @@ func (h *InventoryHandler) UpdateSupplier(c fiber.Ctx) error {
 
 func (h *InventoryHandler) DeleteSupplier(c fiber.Ctx) error {
 	id := c.Params("id")
+	if id == "" {
+		id = c.Query("id")
+	}
 	if err := h.db.Delete(&models.InventorySupplier{}, "id = ?", id).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete supplier"})
 	}
@@ -285,6 +301,12 @@ func (h *InventoryHandler) UpdateItem(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid body"})
 	}
+	if id == "" {
+		if v, ok := body["id"].(string); ok {
+			id = v
+		}
+	}
+	delete(body, "id")
 	body["updatedAt"] = time.Now()
 	if err := h.db.Model(&models.InventoryItem{}).Where("id = ?", id).Updates(body).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to update item"})
@@ -296,6 +318,9 @@ func (h *InventoryHandler) UpdateItem(c fiber.Ctx) error {
 
 func (h *InventoryHandler) DeleteItem(c fiber.Ctx) error {
 	id := c.Params("id")
+	if id == "" {
+		id = c.Query("id")
+	}
 	if err := h.db.Delete(&models.InventoryItem{}, "id = ?", id).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to delete item"})
 	}
