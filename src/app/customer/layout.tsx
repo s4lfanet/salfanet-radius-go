@@ -19,8 +19,15 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const name = await getCompanyName();
   return {
-    title: `Customer Portal - ${name}`,
+    title: `Portal Pelanggan - ${name}`,
+    description: `Cek tagihan, bayar online, dan pantau status langganan internet Anda di ${name}. Portal pelanggan ISP mudah dan cepat.`,
     manifest: '/manifest-customer.json',
+    robots: { index: true, follow: true },
+    openGraph: {
+      title: `Portal Pelanggan - ${name}`,
+      description: `Cek tagihan & bayar online langganan internet Anda di ${name}.`,
+      type: 'website',
+    },
   };
 }
 

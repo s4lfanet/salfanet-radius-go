@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -44,8 +44,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   minimumScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // maximumScale and userScalable intentionally NOT set — allow pinch-zoom
+  // (Lighthouse accessibility: user-scalable=no harms visually impaired users)
 };
 
 const swScript = `

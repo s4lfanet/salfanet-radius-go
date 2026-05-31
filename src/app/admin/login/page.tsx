@@ -192,7 +192,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-background">
+    <main className="min-h-screen flex flex-col lg:flex-row bg-background">
       {/* ── Mobile Brand Header (mobile only) ── */}
       <div className="lg:hidden bg-gradient-to-br from-blue-600 to-indigo-600 px-6 pt-10 pb-8 relative overflow-hidden flex-shrink-0">
         <div className="absolute top-[-50px] right-[-50px] w-40 h-40 bg-white/10 rounded-full pointer-events-none" />
@@ -288,7 +288,7 @@ function LoginForm() {
                     disabled={loading}
                     className="flex-1 px-4 py-3 text-sm bg-transparent text-gray-900 dark:text-slate-100 placeholder:text-gray-400 dark:placeholder:text-slate-500 focus:outline-none"
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors" disabled={loading}>
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'} className="pr-3 text-gray-400 hover:text-gray-600 dark:hover:text-slate-300 transition-colors" disabled={loading}>
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
@@ -429,7 +429,7 @@ function LoginForm() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
 

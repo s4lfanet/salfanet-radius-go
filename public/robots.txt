@@ -1,16 +1,20 @@
-# Production: Allow all
+# Production: Allow all crawlers by default
 User-agent: *
 Allow: /
 
-# Block admin, API, and customer areas
-User-agent: *
+# Block sensitive areas (admin panel, API, payment flows)
 Disallow: /admin/
 Disallow: /api/
-Disallow: /customer/
-Disallow: /technician/
 Disallow: /pay-manual/
 Disallow: /pay/
-Disallow: /login
 
-# Sitemap (optional - create if needed)
-# Sitemap: https://yourdomain.com/sitemap.xml
+# Customer & agent login pages: allow indexing (public-facing product)
+# Specific sub-paths that should NOT be indexed
+Disallow: /customer/dashboard
+Disallow: /customer/profile
+Disallow: /customer/invoices/
+Disallow: /agent/
+Disallow: /technician/
+
+# Sitemap
+# Sitemap: https://radius.hotspotapp.net/sitemap.xml

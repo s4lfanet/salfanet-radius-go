@@ -28,9 +28,8 @@ export async function generateMetadata(): Promise<Metadata> {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: '#465fff',
+  // maximumScale and userScalable intentionally NOT set — allow pinch-zoom
 };
 
 export default function AgentLayout({

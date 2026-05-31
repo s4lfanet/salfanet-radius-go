@@ -105,6 +105,18 @@ const nextConfig: NextConfig = {
             key: 'Permissions-Policy',
             value: 'camera=(self), microphone=(), geolocation=(self), payment=(self), usb=()',
           },
+          // Cross-Origin-Opener-Policy: isolates browsing context to prevent
+          // cross-origin window attacks. "same-origin-allow-popups" is used
+          // instead of "same-origin" to preserve payment popup flows (Midtrans etc.)
+          {
+            key: 'Cross-Origin-Opener-Policy',
+            value: 'same-origin-allow-popups',
+          },
+          // Cross-Origin-Resource-Policy: prevent cross-origin reads of our assets
+          {
+            key: 'Cross-Origin-Resource-Policy',
+            value: 'same-site',
+          },
         ],
       },
       // API routes: disable caching untuk semua endpoint sensitif

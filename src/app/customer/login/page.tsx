@@ -170,6 +170,7 @@ export default function CustomerLoginPage() {
         {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
+          aria-label={isDark ? 'Mode Terang' : 'Mode Gelap'}
           className="absolute top-4 right-4 p-2 rounded-xl border border-border bg-muted hover:bg-muted/80 text-muted-foreground transition-all shadow-sm"
           title={isDark ? 'Mode Terang' : 'Mode Gelap'}
         >
