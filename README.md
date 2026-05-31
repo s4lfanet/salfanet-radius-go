@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.2 — 2026-06-01
+
+### Fixed
+- **Test Koneksi MikroTik 404** — Frontend mengirim `PUT /api/pppoe/profiles/sync-mikrotik` tapi Go router tidak punya handler untuk method `PUT` di path tersebut → 404. Fix: tambah handler `TestMikrotikConnection` yang connect ke MikroTik via RouterOS API, test identity + PPP profile read/write, return detail hasil per port (8728/8729).
+
+### Files
+- `internal/api/handlers/pppoe_ext.go` — Tambah `TestMikrotikConnection` handler (PUT)
+- `internal/api/router.go` — Register `PUT /profiles/sync-mikrotik → TestMikrotikConnection`
+
 ### v2.54.1 — 2026-06-01
 
 ### Fixed
@@ -530,14 +539,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/pppoe.go` — Wrap `ListProfiles` response dalam `fiber.Map{"profiles": profiles}`
 - `src/app/admin/hotspot/profile/page.tsx` — Parse costPrice, resellerFee, sharedUsers, validityValue ke int; fix PUT URL
 - `src/app/admin/pppoe/profiles/page.tsx` — Fix PUT URL menyertakan `/:id`
-
-### v2.53.7 — 2026-06-01
-
-### Fixed
-- **CSP violation — Leaflet CSS dari `cdnjs.cloudflare.com` diblokir** — `src/proxy.ts` (Next.js middleware) set `Content-Security-Policy` header tanpa `https://cdnjs.cloudflare.com` di `style-src` dan `font-src`. Halaman `/admin/network/map` dan `/admin/network/unified-map` menggunakan Leaflet CSS dari CDN tersebut sehingga stylesheet diblokir browser. Fix: tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di `proxy.ts`.
-
-### Files
-- `src/proxy.ts` — Tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di CSP header
 
 <!-- AUTO-CHANGELOG:END -->
 
