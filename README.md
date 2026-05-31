@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.53.7 — 2026-06-01
+
+### Fixed
+- **CSP violation — Leaflet CSS dari `cdnjs.cloudflare.com` diblokir** — `src/proxy.ts` (Next.js middleware) set `Content-Security-Policy` header tanpa `https://cdnjs.cloudflare.com` di `style-src` dan `font-src`. Halaman `/admin/network/map` dan `/admin/network/unified-map` menggunakan Leaflet CSS dari CDN tersebut sehingga stylesheet diblokir browser. Fix: tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di `proxy.ts`.
+
+### Files
+- `src/proxy.ts` — Tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di CSP header
+
 ### v2.53.6 — 2026-06-01
 
 ### Fixed
@@ -557,19 +565,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/pppoe_ext.go` — `BulkCreateUsers` + RADIUS sync, `SyncProfilesRadius` implementasi nyata, `SyncProfilesMikrotik` → 501
 - `internal/db/models/extra.go` — Tambah model `TopupRequest`
 - `internal/db/db.go` — Tambah `CREATE TABLE IF NOT EXISTS topup_requests` di `runMigrations`
-
-### v2.53.1 — 2026-05-31
-
-### Fixed
-- **FreeRADIUS backup/restore/download/upload semua stub** — Semua 5 handler di `admin_misc_handler.go` hanya menyimpan ke DB atau return dummy response tanpa melakukan operasi nyata. Diimplementasi ulang sepenuhnya:
-  - `ListFreeradiusBackups` → scan filesystem `/var/www/salfanet-radius/backups/freeradius/*.tar.gz` + baca `/tmp/salfanet-fr-backup.log`
-  - `CreateFreeradiusBackup` → jalankan `scripts/backup-freeradius-local.sh` di background goroutine, log ke `/tmp/salfanet-fr-backup.log`
-  - `DownloadFreeradiusBackup` → `c.Download()` file langsung dari disk (bukan return URL JSON)
-  - `RestoreFreeradiusBackup` → extract tar.gz → copy ke `/etc/freeradius/3.0/` → fix ownership `freerad:freerad` → `systemctl restart freeradius`
-  - `UploadFreeradiusBackup` → `c.SaveFile()` ke backup dir → return `{savedAs: filename}` sesuai kontrak frontend
-- Script backup `scripts/backup-freeradius-local.sh` diperbaiki permission (sebelumnya `-rw-r--r--`, tidak executable)
-### Files
-- `internal/api/handlers/admin_misc_handler.go` — Implementasi penuh semua 5 FreeRADIUS backup handler
 
 <!-- AUTO-CHANGELOG:END -->
 
