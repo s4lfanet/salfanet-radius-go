@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.7] — 2026-06-01
+### Fixed
+- **Generate voucher error Duplicate entry** — `generateVoucherCode` menggunakan rumus deterministik berbasis waktu (`t + i*31337`) sehingga mudah tabrakan dengan kode yang sudah ada. Fix: (1) ganti ke `crypto/rand` untuk randomness yang sesungguhnya, (2) fetch semua kode existing sebelum generate dan lakukan retry max 20x jika ada collision.
+
+### Files
+- `internal/api/handlers/hotspot.go` — `generateVoucherCode` pakai `crypto/rand`; `GenerateVouchers` precheck existing codes + retry loop
+
+---
+
 ## [2.54.6] — 2026-06-01
 ### Fixed
 - **Kolom Router tabel agen selalu "Belum ditugaskan"** — `GET /api/hotspot/agents` hanya mengirim `routerId` tapi tidak menyertakan object router. Frontend mengecek `agent.router?.name` yang selalu null. Fix: backend sekarang fetch semua router, lookup berdasarkan `routerId`, dan sertakan `{ id, name, nasname, shortname }` di setiap item response.
