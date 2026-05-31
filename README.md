@@ -491,6 +491,13 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.93 — 2026-05-31
+
+### Fixed
+- **RX Power ONU 1/1/1:1 (MARLINARINA) selalu tampil "—"** — Root cause: ONU 1/1/1:1 secara *intermittent* mengembalikan `rxRaw=65535` (0xFFFF = sentinel ZTE "no measurement") via SNMP, terjadi bergantian dengan nilai valid (misal 7465 → -15.07 dBm). Sebelum v2.52.92, setiap kali SNMP mengembalikan 65535, upsert menimpa nilai DB dengan NULL (karena `VALUES(rxPower)` tanpa COALESCE). Akibatnya rxPower selalu NULL karena siklus overwrite terus berulang. Fix v2.52.92 (COALESCE) sudah menyelesaikan masalah ini — dikonfirmasi via debug log bahwa DB sekarang menyimpan -15.07 dBm untuk ONU 1. Debug log dihapus setelah analisis selesai.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Hapus debug logging sementara (tidak ada perubahan logic)
+
 ### v2.52.92 — 2026-05-31
 
 ### Fixed
@@ -527,16 +534,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/olt/vendors/zte/zte.go` — `decodeOperState`: tambah `case 6 → OnuDyingGasp`
 - `internal/olt/poller/poller.go` — Ghost ONU cleanup setelah upsert; DyingGasp case di `checkAlerts`; resolve loop untuk `onu_offline` + `dying_gasp` di case online
-
-### v2.52.88 — 2026-05-31
-
-### Fixed
-- **RX Power / TX Power tampil 101.07 dBm** — ZTE C320 mengembalikan `0xFFFF` (65535) via SNMP sebagai nilai sentinel "no data". Sebelumnya nilai ini lolos filter `rxRaw > 0` dan dihitung: `65535/500 - 30 = 101.07 dBm`. Fix: tambah filter `rxRaw != 0xFFFF` di parser ZTE SNMP. Fix juga di layer SQL `ListONUs`: `CASE WHEN rxPower <= 30 THEN rxPower ELSE NULL END` agar nilai lama di DB tidak tampil sampai poller update berikutnya.
-- **Data ONU lambat aktual** — Default minimum poller interval diubah dari 60s → 30s. Sebelumnya jika `PollingInterval` tidak dikonfigurasi (0), interval fallback ke 60s. Sekarang fallback ke 30s sehingga data DB maksimal 30s dari kondisi aktual OLT.
-### Files
-- `internal/olt/vendors/zte/zte.go` — Filter `rxRaw != 0xFFFF` dan `txRaw != 0xFFFF` di dua blok ONUInfo builder
-- `internal/olt/poller/poller.go` — Default minimum interval: 60s → 30s
-- `internal/api/handlers/olt.go` — Filter SQL `CASE WHEN rxPower/txPower <= 30` di `ListONUs`
 
 <!-- AUTO-CHANGELOG:END -->
 
