@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	ros "github.com/go-routeros/routeros/v3"
 	excelize "github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 
@@ -694,6 +695,108 @@ func (h *PppoeExtHandler) BulkCreateCustomers(c fiber.Ctx) error {
 		}
 	}
 	return c.Status(201).JSON(fiber.Map{"success": true, "created": created})
+}
+
+// PUT /api/pppoe/profiles/sync-mikrotik — test koneksi ke MikroTik router
+func (h *PppoeExtHandler) TestMikrotikConnection(c fiber.Ctx) error {
+	var body struct {
+		RouterID string `json:"routerId"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || body.RouterID == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "routerId wajib diisi"})
+	}
+
+	var router models.Router
+	if err := h.db.First(&router, "id = ?", body.RouterID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Router tidak ditemukan"})
+	}
+
+	// Decrypt password
+	routerPass := decryptVPNPassword(router.Password)
+
+	type portResult struct {
+		Port        int    `json:"port"`
+		Success     bool   `json:"success"`
+		Identity    string `json:"identity"`
+		Error       string `json:"error,omitempty"`
+		PPPRead     bool   `json:"pppRead"`
+		PPPWrite    bool   `json:"pppWrite"`
+		PPPReadError string `json:"pppReadError,omitempty"`
+		PPPWriteError string `json:"pppWriteError,omitempty"`
+	}
+
+	tryPort := func(port int) portResult {
+		addr := fmt.Sprintf("%s:%d", router.IPAddress, port)
+		client, err := ros.DialTimeout(addr, router.Username, routerPass, 8*time.Second)
+		if err != nil {
+			return portResult{Port: port, Success: false, Error: err.Error()}
+		}
+		defer client.Close()
+
+		identity := ""
+		if reply, err := client.Run("/system/identity/print"); err == nil && len(reply.Re) > 0 {
+			identity = reply.Re[0].Map["name"]
+		}
+
+		// Test PPP profile read
+		pppRead := false
+		pppReadErr := ""
+		if _, err := client.Run("/ppp/profile/print"); err != nil {
+			pppReadErr = err.Error()
+		} else {
+			pppRead = true
+			pppReadErr = "OK"
+		}
+
+		// Test PPP profile write (add temporary test profile then remove)
+		pppWrite := false
+		pppWriteErr := ""
+		testName := "salfanet-test-tmp"
+		if _, err := client.Run("/ppp/profile/add", "=name="+testName); err != nil {
+			pppWriteErr = err.Error()
+		} else {
+			pppWrite = true
+			// cleanup
+			if rep, err := client.Run("/ppp/profile/print", "?name="+testName); err == nil && len(rep.Re) > 0 {
+				_, _ = client.Run("/ppp/profile/remove", "=.id="+rep.Re[0].Map[".id"])
+			}
+		}
+
+		return portResult{Port: port, Success: true, Identity: identity, PPPRead: pppRead, PPPReadError: pppReadErr, PPPWrite: pppWrite, PPPWriteError: pppWriteErr}
+	}
+
+	// Try non-SSL port first (8728), fallback to apiPort
+	ports := []int{router.Port, router.APIPort}
+	if router.Port == 0 {
+		ports[0] = 8728
+	}
+	if router.APIPort == 0 {
+		ports[1] = 8729
+	}
+
+	results := make([]portResult, 0, len(ports))
+	for _, p := range ports {
+		r := tryPort(p)
+		results = append(results, r)
+		if r.Success {
+			break
+		}
+	}
+
+	hint := ""
+	ok := len(results) > 0 && results[len(results)-1].Success
+	if !ok {
+		hint = "Pastikan API port MikroTik (8728/8729) dapat diakses dari server VPS dan kredensial admin benar."
+	}
+
+	return c.JSON(fiber.Map{
+		"success":    ok,
+		"routerName": router.Name,
+		"user":       router.Username,
+		"host":       router.IPAddress,
+		"results":    results,
+		"hint":       hint,
+	})
 }
 
 // POST /api/pppoe/profiles/sync-mikrotik — sync profiles to Mikrotik (not yet implemented)

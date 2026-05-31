@@ -238,6 +238,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	pppoe.Get("/profiles", pppoeH.ListProfiles)
 	pppoe.Post("/profiles", pppoeH.CreateProfile)
+	pppoe.Put("/profiles/sync-mikrotik", pppoeExtH.TestMikrotikConnection) // test koneksi
 	pppoe.Post("/profiles/sync-mikrotik", pppoeExtH.SyncProfilesMikrotik) // before :id
 	pppoe.Post("/profiles/sync-radius", pppoeExtH.SyncProfilesRadius)     // before :id
 	pppoe.Put("/profiles/:id", pppoeH.UpdateProfile)
