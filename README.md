@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.53.9 — 2026-06-01
+
+### Fixed
+- **Hotspot profile Harga Jual selalu Rp 0** — Field `sellingPrice` tidak disertakan dalam request body saat create/update. Frontend hanya menghitung `sellingPrice` untuk tampilan form saja, tidak mengirimkannya ke API. Fix: tambah `sellingPrice: costPrice + resellerFee` ke body request.
+- **Sync PPPoE ke FreeRADIUS tidak berfungsi** — Tabel `radgroupreply` tidak memiliki UNIQUE constraint pada `(groupname, attribute)`, hanya index biasa. `ON DUPLICATE KEY UPDATE` tidak pernah trigger sehingga setiap sync insert baris baru (duplikat) tanpa update. Fix: ganti dengan `DELETE WHERE groupname+attribute` lalu `INSERT`. Sekaligus support sync per-profile (berdasarkan `id` dari body request).
+
+### Files
+- `src/app/admin/hotspot/profile/page.tsx` — Tambah `sellingPrice` ke body API
+- `internal/api/handlers/pppoe_ext.go` — Fix `SyncProfilesRadius`: DELETE+INSERT, support sync by `id`
+
 ### v2.53.8 — 2026-06-01
 
 ### Fixed
@@ -530,36 +540,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/api/handlers/settings.go` — Fix `GetIsolationSettings` dan `UpdateIsolationSettings` handle `ErrRecordNotFound`
 - `internal/api/handlers/admin.go` — Rewrite `IsolatedUsers` handler dengan response format lengkap
-
-### v2.53.4 — 2026-05-31
-
-### Fixed
-- **Hotspot — Model Go tidak cocok dengan skema DB nyata** — Model `HotspotProfile` memakai field lama (`Price`, `Duration`, `BandwidthDown`, dll) yang tidak ada di DB. Model sekarang memakai kolom DB yang benar: `costPrice`, `sellingPrice`, `resellerFee`, `validityValue`, `validityUnit`, `speed`, `groupProfile`, `sharedUsers`, `agentAccess`, `eVoucherAccess`. Model `HotspotVoucher` difix: kolom `batchId` → `batchCode`, status `UNUSED` → `WAITING`, ditambah `routerId`, `voucherType`, `codeType`, `firstLoginAt`. Model `Agent` difix: ditambah `minBalance`, `routerId`, `lastLogin`.
-- **`ListProfiles` response salah** — Mengembalikan array biasa `[]`, frontend expect `{profiles:[]}`. Sekarang dibungkus dengan `fiber.Map{"profiles": profiles}`.
-- **`ListVouchers` rusak total** — Query param `batchId` (tidak ada di frontend), response `{data,total}` (frontend expect `{vouchers,batches,totalPages,total,stats}`). Ditulis ulang: filter `profileId`, `batchCode`, `status`, `agentId`, `routerId`; response lengkap dengan distinct batch list dan stats (total/waiting/active/expired).
-- **`GenerateVouchers` field salah** — Body `count` → `quantity`, tidak ada `batchCode`/`codeLength`/`voucherType`/`codeType`. Response `batchId` → `batchCode`. Status `UNUSED` → `WAITING`.
-- **`RekapVoucher` struktur salah** — Return `{success, data:[{profileId,profileName,total,used,unused}]}`. Ditulis ulang: per-batch SQL GROUP BY, join profil & agen, kalkulasi finansial (`sold`, `totalRevenue`, `agentProfit`, `adminEarnings`). Response `{rekap:[...], agents:[], profiles:[]}`.
-- **`ExportRekap` return JSON bukan blob** — Sekarang generate XLSX menggunakan excelize, Content-Type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`.
-- **`AgentHistory` abaikan year/month filter** — Frontend kirim `?year=X&month=X` untuk detail bulan, `GET` tanpa param untuk rekap bulanan. Sekarang keduanya didukung. Tanpa param → monthly breakdown 12 bulan terakhir. Dengan param → detail sales bulan tersebut.
-- **9 route hilang** — Ditambahkan: `POST /hotspot/agents`, `PUT /hotspot/agents`, `DELETE /hotspot/agents`, `POST /hotspot/agents/balance`, `DELETE /hotspot/voucher`, `POST /hotspot/voucher/delete-expired`, `GET /hotspot/voucher/bulk`, `PATCH /hotspot/voucher`, `GET /hotspot/voucher`.
-- **`ListAgents` tidak ada `voucherStock` dan `stats`** — Diperkaya dengan `voucherStock` (count WAITING voucher per agen) dan `stats.currentMonth`/`stats.allTime` dari tabel `agent_sales`.
-- **BulkGenerate menggunakan `BatchID` lama** — Difix ke `BatchCode`, status `WAITING`, support `codeLength`/`voucherType`/`codeType`.
-- **Sisa bug**: `BulkDelete` & `ValidateVoucher` status `UNUSED` → `WAITING`, `DeleteExpired` kolom `expires_at` → `expiresAt`.
-
-### Files
-- `internal/db/models/extra.go` — Rewrite `HotspotProfile`, `HotspotVoucher`, `Agent`, `AgentSale` sesuai DB schema
-- `internal/api/handlers/hotspot.go` — Rewrite `ListProfiles`, `ListVouchers`, `GenerateVouchers`
-- `internal/api/handlers/hotspot_ext.go` — Rewrite total: semua handler fix, tambah `BulkGetOrExport`, `BulkEdit`, `DeleteBatch`, `CreateAgent`, `UpdateAgent`, `DeleteAgent`, `AdjustBalance`
-- `internal/api/router.go` — Tambah 9 route yang hilang
-- `internal/cron/pppoe_session_sync.go` — Fix `agent.Commission` (field tidak ada di DB)
-- `internal/api/handlers/agent.go` — Fix `AgentSale` struct literal (`VoucherID` tidak ada)
-- `internal/api/handlers/evoucher_handler.go` — Fix `profile.price` → `profile.SellingPrice`
-
-
-### Fixed
-- **Template Excel import PPPoE tidak punya field koordinat peta & field lainnya** — Template hanya punya 12 kolom, tidak ada `latitude`, `longitude`, `macAddress`, `billingDay`, `comment`. Form tambah pelanggan sudah punya semua field ini tapi file Excel template/export tidak bisa mengisinya. Ditambahkan ke template (17 kolom), export, dan parser import.
-### Files
-- `internal/api/handlers/pppoe_ext.go` — `BulkGet` template headers & example row, export headers & per-row output; `BulkImport` parser field baru
 
 <!-- AUTO-CHANGELOG:END -->
 
