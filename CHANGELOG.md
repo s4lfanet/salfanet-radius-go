@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.93] — 2026-05-31
+### Fixed
+- **RX Power ONU 1/1/1:1 (MARLINARINA) selalu tampil "—"** — Root cause: ONU 1/1/1:1 secara *intermittent* mengembalikan `rxRaw=65535` (0xFFFF = sentinel ZTE "no measurement") via SNMP, terjadi bergantian dengan nilai valid (misal 7465 → -15.07 dBm). Sebelum v2.52.92, setiap kali SNMP mengembalikan 65535, upsert menimpa nilai DB dengan NULL (karena `VALUES(rxPower)` tanpa COALESCE). Akibatnya rxPower selalu NULL karena siklus overwrite terus berulang. Fix v2.52.92 (COALESCE) sudah menyelesaikan masalah ini — dikonfirmasi via debug log bahwa DB sekarang menyimpan -15.07 dBm untuk ONU 1. Debug log dihapus setelah analisis selesai.
+### Files
+- `internal/olt/vendors/zte/zte.go` — Hapus debug logging sementara (tidak ada perubahan logic)
+
 ## [2.52.92] — 2026-05-31
 ### Fixed
 - **RX Power / TX Power / Distance menjadi kosong (—) setelah poll** — Upsert menggunakan `VALUES(rxPower)` yang selalu menimpa nilai DB, termasuk dengan NULL. Jika SNMP tidak berhasil mendapat data optik dalam satu siklus poll (karena OLT sibuk, Telnet overlap, dll), nilai yang sebelumnya valid terhapus. Fix: ubah ke `COALESCE(VALUES(rxPower), rxPower)` — sama seperti yang sudah dipakai untuk `serialNumber`/`description`. Berlaku juga untuk `txPower` dan `distance`.

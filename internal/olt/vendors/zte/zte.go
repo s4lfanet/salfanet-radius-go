@@ -211,24 +211,8 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 
 	onuMap := make(map[IndexKey]*ONUInfo)
 
-	// DEBUG: log map contents for port 268501248 ONU 1
-	if v, ok := merged.regStatus[IndexKey{PonIndex: 268501248, OnuID: 1}]; ok {
-		log.Debug().Int64("regVal", v).Msg("zte: DEBUG regStatus ONU1/268501248 FOUND")
-	} else {
-		log.Debug().Msg("zte: DEBUG regStatus ONU1/268501248 MISSING")
-	}
-	if v, ok := merged.rxPower[IndexKey{PonIndex: 268501248, OnuID: 1}]; ok {
-		log.Debug().Int64("rxRaw", v).Msg("zte: DEBUG rxPower ONU1/268501248 FOUND")
-	} else {
-		log.Debug().Msg("zte: DEBUG rxPower ONU1/268501248 MISSING")
-	}
-	log.Debug().Int("totalRegStatus", len(merged.regStatus)).Int("totalRxPower", len(merged.rxPower)).Msg("zte: DEBUG merged map sizes")
-
 	// ── Registered ONUs (regStatus=1 normal; regStatus=2 = SB mode, used by FiberHome ONUs) ───
 	for k, regVal := range merged.regStatus {
-		if k.PonIndex == 268501248 && k.OnuID == 1 {
-			log.Debug().Int64("regVal", regVal).Msg("zte: DEBUG ONU1 IN LOOP")
-		}
 		if regVal != 1 && regVal != 2 {
 			continue
 		}
@@ -252,20 +236,9 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		// Formula: dBm = raw/500.0 - 30.0
 		// Verified from live device: raw=6751 → -16.50 dBm; raw=5085 → -19.83 dBm.
 		// 0xFFFF (65535) is a ZTE sentinel meaning "no data" → must be excluded.
-		if rxRaw, ok := merged.rxPower[k]; ok {
-			log.Debug().
-				Int64("ponIdx", k.PonIndex).Int("onuId", k.OnuID).
-				Int64("rxRaw", rxRaw).
-				Bool("positive", rxRaw > 0).Bool("notSentinel", rxRaw != 0xFFFF).
-				Msg("zte: rxPower lookup")
-			if rxRaw > 0 && rxRaw != 0xFFFF {
-				dbm := float64(rxRaw)/500.0 - 30.0
-				info.RxPower = &dbm
-			}
-		} else {
-			log.Debug().
-				Int64("ponIdx", k.PonIndex).Int("onuId", k.OnuID).
-				Msg("zte: rxPower NOT FOUND in merged map")
+		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 && rxRaw != 0xFFFF {
+			dbm := float64(rxRaw)/500.0 - 30.0
+			info.RxPower = &dbm
 		}
 		// TxPower: same encoding and same sentinel
 		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 && txRaw != 0xFFFF {
