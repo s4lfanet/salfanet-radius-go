@@ -949,43 +949,59 @@ func FetchTelnetONUStates(pool *telnet.Pool, onus []*ONUInfo) map[string]models.
 // parseONUStateOutput parses the combined Telnet output of one or more
 // "show gpon onu state gpon-olt_F/S/P" commands.
 //
-// Expected line format (with or without "gpon-onu_" prefix):
+// ZTE C320 column format (verified on firmware V2.1):
 //
-//	gpon-onu_1/1/1:38  enable  dying-gasp  pass
-//	1/1/1:39           enable  working     pass
+//	OnuIndex  Admin State  OMCC State  Phase State  Channel
+//	1/1/1:1   enable       enable      working      1(GPON)
+//	1/1/1:38  enable       enable      dying-gasp   1(GPON)
+//
+// The operational state ("Phase State") is at column index 3. To handle
+// firmware variations without hardcoding a column index, we scan ALL
+// fields after the ONU index for a known state keyword. If no state is
+// recognized the ONU is omitted so the SNMP-derived status is preserved.
 func parseONUStateOutput(output string) map[string]models.OltOnuStatus {
 	result := make(map[string]models.OltOnuStatus)
 	for _, line := range strings.Split(output, "\n") {
 		line = strings.TrimSpace(line)
-		// Strip optional "gpon-onu_" prefix
+		// Strip optional "gpon-onu_" prefix (some firmware versions include it)
 		line = strings.TrimPrefix(line, "gpon-onu_")
 		// Must start with a digit (frame number)
 		if len(line) == 0 || line[0] < '0' || line[0] > '9' {
 			continue
 		}
 		fields := strings.Fields(line)
-		// Minimum columns: OnuIndex, AdminState, OperState
-		if len(fields) < 3 {
+		if len(fields) < 2 {
 			continue
 		}
 		onuIdx := fields[0] // "F/S/P:ID"
 		if !strings.Contains(onuIdx, "/") || !strings.Contains(onuIdx, ":") {
 			continue
 		}
-		operState := strings.ToLower(fields[2])
+		// Scan all remaining fields for a recognisable oper-state keyword.
+		// ZTE C320 V2.1: OnuIndex | Admin State | OMCC State | Phase State | Channel
+		// Scanning avoids brittle hardcoded column indices across firmware versions.
 		var status models.OltOnuStatus
-		switch {
-		case operState == "working" || operState == "active":
-			status = models.OnuOnline
-		case strings.HasPrefix(operState, "dying"):
-			status = models.OnuDyingGasp
-		case operState == "los" || operState == "lofi":
-			status = models.OnuLOS
-		default:
-			// inactive, not-present, notpresent, activating, etc.
-			status = models.OnuOffline
+		found := false
+		for _, f := range fields[1:] {
+			f = strings.ToLower(f)
+			switch {
+			case f == "working" || f == "active" || f == "online" || f == "up":
+				status, found = models.OnuOnline, true
+			case strings.HasPrefix(f, "dying"):
+				status, found = models.OnuDyingGasp, true
+			case f == "los" || f == "lofi":
+				status, found = models.OnuLOS, true
+			case f == "inactive" || f == "not-present" || f == "notpresent" || f == "offline" || f == "down":
+				status, found = models.OnuOffline, true
+			}
+			if found {
+				break
+			}
 		}
-		result[onuIdx] = status
+		// Only override when we positively identified the state.
+		if found {
+			result[onuIdx] = status
+		}
 	}
 	return result
 }
