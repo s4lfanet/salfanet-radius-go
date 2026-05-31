@@ -1539,6 +1539,10 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	type opticalResult struct {
 		Raw string `json:"raw"`
 	}
+	type trafficResult struct {
+		Raw     string                 `json:"raw"`
+		Summary map[string]interface{} `json:"summary"`
+	}
 
 	detailInfo := detailResult{
 		Parsed:  map[string]string{},
@@ -1546,6 +1550,7 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	}
 	configInfo := configResult{Summary: map[string]interface{}{}}
 	opticalInfo := opticalResult{}
+	trafficInfo := trafficResult{Summary: map[string]interface{}{}}
 
 	if (olt.TelnetEnabled || olt.SSHEnabled) && olt.Username != nil && olt.Password != nil {
 		// Reuse the poller's persistent Telnet pool if available; otherwise create a temporary one.
@@ -1573,6 +1578,7 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 		out, err := pool.ExecuteMultiple([]string{
 			"show gpon onu detail-info " + iface,
 			"show running-config interface " + iface,
+			"show interface " + iface,
 		})
 		if err == nil {
 			parts := splitAtPrompt(out)
@@ -1584,6 +1590,10 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 				configInfo.Raw = strings.TrimSpace(parts[1])
 				configInfo.Summary = onuParseRunningConfig(parts[1])
 			}
+			if len(parts) >= 3 {
+				trafficInfo.Raw = strings.TrimSpace(parts[2])
+				trafficInfo.Summary = onuParseInterfaceStats(parts[2])
+			}
 		}
 	}
 
@@ -1594,6 +1604,7 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 			"detail":    detailInfo,
 			"config":    configInfo,
 			"optical":   opticalInfo,
+			"traffic":   trafficInfo,
 		},
 		"onu": fiber.Map{
 			"id":       onuStatus.ID,
@@ -1608,15 +1619,52 @@ func onuParseDetailInfo(raw string) (map[string]string, map[string]interface{}) 
 	parsed := map[string]string{}
 	kv := map[string]string{}
 
+	// Auth history table rows: "  N   YYYY-MM-DD HH:MM:SS    ..."
+	authHistoryRe := regexp.MustCompile(`^\s*(\d+)\s+([\d-]{10}\s[\d:]{8}|0000-00-00\s00:00:00)\s+([\d-]{10}\s[\d:]{8}|0000-00-00\s00:00:00)\s*(\S*)\s*$`)
+	type authEntry struct {
+		Index        string `json:"index"`
+		AuthpassAt   string `json:"authpassAt"`
+		OfflineAt    string `json:"offlineAt"`
+		OfflineCause string `json:"offlineCause"`
+	}
+	var authHistory []authEntry
+
+	inHistory := false
 	for _, line := range strings.Split(raw, "\n") {
+		trimmed := strings.TrimSpace(line)
+		// Detect the start of the auth history section
+		if strings.Contains(trimmed, "Authpass Time") && strings.Contains(trimmed, "OfflineTime") {
+			inHistory = true
+			continue
+		}
+		if inHistory {
+			m := authHistoryRe.FindStringSubmatch(line)
+			if m != nil {
+				authpassAt := strings.TrimSpace(m[2])
+				offlineAt := strings.TrimSpace(m[3])
+				cause := strings.TrimSpace(m[4])
+				// Only include rows with real timestamps
+				if authpassAt != "0000-00-00 00:00:00" {
+					authHistory = append(authHistory, authEntry{
+						Index:        m[1],
+						AuthpassAt:   authpassAt,
+						OfflineAt:    offlineAt,
+						OfflineCause: cause,
+					})
+				}
+			}
+			continue
+		}
+
+		// Parse key: value lines (find first colon that has a non-empty key before it)
 		idx := strings.Index(line, ":")
 		if idx < 1 {
 			continue
 		}
 		key := strings.TrimSpace(line[:idx])
 		val := strings.TrimSpace(line[idx+1:])
-		if key == "" {
-			continue
+		if key == "" || strings.ContainsAny(key, " \t") == false && len(key) > 40 {
+			continue // skip garbage
 		}
 		kv[key] = val
 		parsed[key] = val
@@ -1624,19 +1672,23 @@ func onuParseDetailInfo(raw string) (map[string]string, map[string]interface{}) 
 
 	// Build summary using actual ZTE C320 field names
 	summary := map[string]interface{}{
-		"authenticationMode": kv["Authentication mode"],
-		"snBind":             kv["SN Bind"],
-		"adminState":         kv["Admin state"],
-		"currentChannel":     kv["Current channel"],
-		"configuredChannel":  kv["Configured channel"],
-		"dbaMode":            kv["DBA Mode"],
-		"vportMode":          kv["Vport mode"],
-		"lineProfile":        kv["Line Profile"],
-		"serviceProfile":     kv["Service Profile"],
-		"omciBwProfile":      kv["OMCI BW Profile"],
-		"vendor":             onuVendorFromSN(kv["Serial number"]),
-		"description":        kv["Name"],
-		"serialPrefix":       onuSNPrefix(kv["Serial number"]),
+		"authenticationMode":  kv["Authentication mode"],
+		"snBind":              kv["SN Bind"],
+		"adminState":          kv["Admin state"],
+		"currentChannel":      kv["Current channel"],
+		"configuredChannel":   kv["Configured channel"],
+		"dbaMode":             kv["DBA Mode"],
+		"vportMode":           kv["Vport mode"],
+		"lineProfile":         kv["Line Profile"],
+		"serviceProfile":      kv["Service Profile"],
+		"omciBwProfile":       kv["OMCI BW Profile"],
+		"vendor":              onuVendorFromSN(kv["Serial number"]),
+		"description":         kv["Description"],
+		"serialPrefix":        onuSNPrefix(kv["Serial number"]),
+		"fec":                 kv["FEC"],
+		"onuStatus":           kv["ONU Status"],
+		"multicastEncryption": kv["Multicast encryption"],
+		"authHistory":         authHistory,
 	}
 
 	return parsed, summary
@@ -1648,51 +1700,212 @@ func onuParseRunningConfig(raw string) map[string]interface{} {
 	tcontProfiles := []string{}
 	downstreamProfiles := []string{}
 
+	type servicePortEntry struct {
+		ServicePort string `json:"servicePort"`
+		Vport       string `json:"vport"`
+		UserVlan    string `json:"userVlan"`
+		Vlan        string `json:"vlan"`
+	}
+	type gemportEntry struct {
+		GemPort string `json:"gemPort"`
+		Tcont   string `json:"tcont"`
+		Profile string `json:"profile,omitempty"`
+	}
+	type tcontEntry struct {
+		TcontID string `json:"tcontId"`
+		Profile string `json:"profile"`
+	}
+
+	var servicePorts []servicePortEntry
+	var gemports []gemportEntry
+	var tconts []tcontEntry
+	var onuName, onuDescription string
+
 	for _, line := range strings.Split(raw, "\n") {
 		line = strings.TrimSpace(line)
-		// Extract VLAN IDs from service-port lines: "service-port N vport M user-vlan X vlan Y"
-		if strings.HasPrefix(line, "service-port") {
-			fields := strings.Fields(line)
-			for i, f := range fields {
-				if (f == "vlan" || f == "user-vlan") && i+1 < len(fields) {
-					v := fields[i+1]
-					if v != "untagged" && !contains(serviceVlans, v) {
-						serviceVlans = append(serviceVlans, v)
-					}
-				}
-			}
+
+		// Extract name
+		if strings.HasPrefix(line, "name ") {
+			onuName = strings.TrimPrefix(line, "name ")
 		}
-		// Extract TCONT profiles: "tcont N profile <name>"
+		// Extract description
+		if strings.HasPrefix(line, "description ") {
+			onuDescription = strings.TrimPrefix(line, "description ")
+		}
+
+		// Extract TCONT entries: "tcont N profile <name>"
 		if strings.HasPrefix(line, "tcont") {
 			fields := strings.Fields(line)
+			var tcontID, profile string
+			if len(fields) >= 2 {
+				tcontID = fields[1]
+			}
 			for i, f := range fields {
 				if f == "profile" && i+1 < len(fields) {
-					p := fields[i+1]
-					if !contains(tcontProfiles, p) {
-						tcontProfiles = append(tcontProfiles, p)
+					profile = fields[i+1]
+					if !contains(tcontProfiles, profile) {
+						tcontProfiles = append(tcontProfiles, profile)
 					}
 				}
 			}
+			if tcontID != "" {
+				tconts = append(tconts, tcontEntry{TcontID: tcontID, Profile: profile})
+			}
 		}
-		// Extract downstream profiles: "gem add N eth-port N traffic-limit downstream <profile>"
-		if strings.Contains(line, "downstream") {
+
+		// Extract GEM port entries: "gemport N tcont M [traffic-limit downstream <profile>]"
+		if strings.HasPrefix(line, "gemport") {
 			fields := strings.Fields(line)
+			entry := gemportEntry{}
+			if len(fields) >= 2 {
+				entry.GemPort = fields[1]
+			}
 			for i, f := range fields {
+				if f == "tcont" && i+1 < len(fields) {
+					entry.Tcont = fields[i+1]
+				}
 				if f == "downstream" && i+1 < len(fields) {
-					p := fields[i+1]
-					if !contains(downstreamProfiles, p) {
-						downstreamProfiles = append(downstreamProfiles, p)
+					entry.Profile = fields[i+1]
+					if !contains(downstreamProfiles, fields[i+1]) {
+						downstreamProfiles = append(downstreamProfiles, fields[i+1])
 					}
+				}
+			}
+			if entry.GemPort != "" {
+				gemports = append(gemports, entry)
+			}
+		}
+
+		// Extract service-port entries: "service-port N vport M user-vlan X vlan Y"
+		if strings.HasPrefix(line, "service-port") {
+			fields := strings.Fields(line)
+			entry := servicePortEntry{}
+			if len(fields) >= 2 {
+				entry.ServicePort = fields[1]
+			}
+			for i, f := range fields {
+				if f == "vport" && i+1 < len(fields) {
+					entry.Vport = fields[i+1]
+				}
+				if f == "user-vlan" && i+1 < len(fields) {
+					entry.UserVlan = fields[i+1]
+					if fields[i+1] != "untagged" && !contains(serviceVlans, fields[i+1]) {
+						serviceVlans = append(serviceVlans, fields[i+1])
+					}
+				}
+				if f == "vlan" && i+1 < len(fields) {
+					entry.Vlan = fields[i+1]
+					if fields[i+1] != "untagged" && !contains(serviceVlans, fields[i+1]) {
+						serviceVlans = append(serviceVlans, fields[i+1])
+					}
+				}
+			}
+			if entry.ServicePort != "" {
+				servicePorts = append(servicePorts, entry)
+			}
+		}
+	}
+
+	// Remove VLAN duplicates that were added from both user-vlan and vlan fields
+	uniqueVlans := []string{}
+	seen := map[string]bool{}
+	for _, v := range serviceVlans {
+		if !seen[v] {
+			seen[v] = true
+			uniqueVlans = append(uniqueVlans, v)
+		}
+	}
+
+	return map[string]interface{}{
+		"name":               onuName,
+		"description":        onuDescription,
+		"serviceVlans":       uniqueVlans,
+		"tcontProfiles":      tcontProfiles,
+		"downstreamProfiles": downstreamProfiles,
+		"servicePorts":       servicePorts,
+		"gemports":           gemports,
+		"tconts":             tconts,
+	}
+}
+
+// onuParseInterfaceStats parses ZTE C320 "show interface gpon-onu_F/S/P:N" output.
+// Returns a summary map with downstream/upstream rates and totals.
+func onuParseInterfaceStats(raw string) map[string]interface{} {
+	summary := map[string]interface{}{}
+
+	// Normalize: remove extra whitespace in values like "0 Bps                0 pps"
+	spaceRe := regexp.MustCompile(`\s{2,}`)
+
+	for _, line := range strings.Split(raw, "\n") {
+		trimmed := strings.TrimSpace(line)
+
+		// "Input rate :   N Bps   N pps"
+		if strings.HasPrefix(trimmed, "Input rate") {
+			parts := strings.SplitN(trimmed, ":", 2)
+			if len(parts) == 2 {
+				val := strings.TrimSpace(spaceRe.ReplaceAllString(parts[1], " "))
+				summary["inputRate"] = val
+			}
+		}
+		// "Output rate:   N Bps   N pps"
+		if strings.HasPrefix(trimmed, "Output rate") {
+			parts := strings.SplitN(trimmed, ":", 2)
+			if len(parts) == 2 {
+				val := strings.TrimSpace(spaceRe.ReplaceAllString(parts[1], " "))
+				summary["outputRate"] = val
+			}
+		}
+		// "Input bandwidth thoughput :N%"
+		if strings.Contains(trimmed, "Input bandwidth") {
+			parts := strings.SplitN(trimmed, ":", 2)
+			if len(parts) == 2 {
+				summary["inputBandwidth"] = strings.TrimSpace(parts[1])
+			}
+		}
+		// "Output bandwidth thoughput: N%"
+		if strings.Contains(trimmed, "Output bandwidth") {
+			parts := strings.SplitN(trimmed, ":", 2)
+			if len(parts) == 2 {
+				summary["outputBandwidth"] = strings.TrimSpace(parts[1])
+			}
+		}
+		// "Input peak rate :   N Bps   N pps"
+		if strings.HasPrefix(trimmed, "Input peak rate") {
+			parts := strings.SplitN(trimmed, ":", 2)
+			if len(parts) == 2 {
+				val := strings.TrimSpace(spaceRe.ReplaceAllString(parts[1], " "))
+				summary["inputPeakRate"] = val
+			}
+		}
+		// "Output peak rate:   N Bps   N pps"
+		if strings.HasPrefix(trimmed, "Output peak rate") {
+			parts := strings.SplitN(trimmed, ":", 2)
+			if len(parts) == 2 {
+				val := strings.TrimSpace(spaceRe.ReplaceAllString(parts[1], " "))
+				summary["outputPeakRate"] = val
+			}
+		}
+		// "Bytes:N          Packets:N"
+		if strings.Contains(trimmed, "Bytes:") && strings.Contains(trimmed, "Packets:") {
+			// Determine if this is Input or Output by checking preceding context
+			// We use a simple heuristic: track last seen "Input:" / "Output:"
+			bytesRe := regexp.MustCompile(`Bytes:(\d+)`)
+			packetsRe := regexp.MustCompile(`Packets:(\d+)`)
+			bm := bytesRe.FindStringSubmatch(trimmed)
+			pm := packetsRe.FindStringSubmatch(trimmed)
+			if bm != nil && pm != nil {
+				if _, ok := summary["totalInputBytes"]; !ok {
+					summary["totalInputBytes"] = bm[1]
+					summary["totalInputPackets"] = pm[1]
+				} else if _, ok := summary["totalOutputBytes"]; !ok {
+					summary["totalOutputBytes"] = bm[1]
+					summary["totalOutputPackets"] = pm[1]
 				}
 			}
 		}
 	}
 
-	return map[string]interface{}{
-		"serviceVlans":       serviceVlans,
-		"tcontProfiles":      tcontProfiles,
-		"downstreamProfiles": downstreamProfiles,
-	}
+	return summary
 }
 
 func onuVendorFromSN(sn string) string {

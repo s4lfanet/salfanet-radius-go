@@ -1678,33 +1678,37 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
   const parsed = detail?.telnet?.detail?.parsed ?? {};
   const detailSummary = detail?.telnet?.detail?.summary ?? {};
   const configSummary = detail?.telnet?.config?.summary ?? {};
+  const trafficSummary = detail?.telnet?.traffic?.summary ?? {};
   const customer = detail?.onu?.customer;
   const detailItems = [
     ['Interface', detail?.telnet?.interface ?? `${onu.frame}/${onu.slot}/${onu.port}:${onu.onuId}`],
     ['Serial Number', parsed['Serial number'] ?? onu.serialNumber ?? 'N/A'],
-    ['Name', parsed.Name ?? onu.description ?? 'N/A'],
-    ['Type', parsed.Type ?? 'N/A'],
+    ['Name', parsed['Name'] ?? onu.description ?? 'N/A'],
+    ['Type', parsed['Type'] ?? 'N/A'],
     ['ONT Vendor', detailSummary.vendor ?? 'N/A'],
-    ['State', parsed.State ?? onu.status],
+    ['State', parsed['State'] ?? onu.status],
     ['Phase', parsed['Phase state'] ?? 'N/A'],
     ['Config', parsed['Config state'] ?? 'N/A'],
     ['Distance', parsed['ONU Distance'] ?? (onu.distance !== null ? `${onu.distance}m` : 'N/A')],
     ['Online Duration', parsed['Online Duration'] ?? 'N/A'],
-    ['RX Power', onu.rxPower !== null ? `${onu.rxPower.toFixed(2)} dBm` : 'N/A'],
+    ['RX Power (OLT→ONU)', onu.rxPower !== null ? `${onu.rxPower.toFixed(2)} dBm` : (parsed['Rx optical power'] ?? 'N/A')],
+    ['TX Power (ONU→OLT)', onu.txPower !== null ? `${onu.txPower.toFixed(2)} dBm` : (parsed['Tx optical power'] ?? 'N/A')],
   ];
   const technicalItems = [
-    ['Auth Mode', detailSummary.authenticationMode ?? 'N/A'],
-    ['SN Bind', detailSummary.snBind ?? 'N/A'],
-    ['Admin State', detailSummary.adminState ?? 'N/A'],
-    ['Current Channel', detailSummary.currentChannel ?? 'N/A'],
-    ['Configured Channel', detailSummary.configuredChannel ?? 'N/A'],
-    ['DBA Mode', detailSummary.dbaMode ?? 'N/A'],
-    ['Vport Mode', detailSummary.vportMode ?? 'N/A'],
-    ['Line Profile', detailSummary.lineProfile ?? 'N/A'],
-    ['Service Profile', detailSummary.serviceProfile ?? 'N/A'],
-    ['OMCI BW Profile', detailSummary.omciBwProfile ?? 'N/A'],
-    ['Description', detailSummary.description ?? 'N/A'],
-    ['Serial Prefix', detailSummary.serialPrefix ?? 'N/A'],
+    ['Auth Mode', detailSummary.authenticationMode || 'N/A'],
+    ['SN Bind', detailSummary.snBind || 'N/A'],
+    ['Admin State', detailSummary.adminState || 'N/A'],
+    ['ONU Status', detailSummary.onuStatus || 'N/A'],
+    ['Current Channel', detailSummary.currentChannel || 'N/A'],
+    ['Configured Channel', detailSummary.configuredChannel || 'N/A'],
+    ['DBA Mode', detailSummary.dbaMode || 'N/A'],
+    ['Vport Mode', detailSummary.vportMode || 'N/A'],
+    ['Line Profile', detailSummary.lineProfile || 'N/A'],
+    ['Service Profile', detailSummary.serviceProfile || 'N/A'],
+    ['OMCI BW Profile', detailSummary.omciBwProfile || 'N/A'],
+    ['FEC', detailSummary.fec || 'N/A'],
+    ['Description', detailSummary.description || parsed['Description'] || 'N/A'],
+    ['Multicast Encrypt', detailSummary.multicastEncryption || 'N/A'],
   ];
   const serviceVlans = Array.isArray(configSummary.serviceVlans) && configSummary.serviceVlans.length > 0
     ? configSummary.serviceVlans.join(', ')
@@ -1714,11 +1718,12 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
     : 'N/A';
   const downstreamProfiles = Array.isArray(configSummary.downstreamProfiles) && configSummary.downstreamProfiles.length > 0
     ? configSummary.downstreamProfiles.join(', ')
-    : 'N/A';
+    : '(dari TCONT)';
+  const authHistory: any[] = Array.isArray(detailSummary.authHistory) ? detailSummary.authHistory : [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-800">
           <div>
             <h2 className="font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -1733,6 +1738,7 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
           {error && <div className="px-3 py-2 rounded bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300 text-sm">{error}</div>}
           {!loading && !error && detail && (
             <>
+              {/* ONU Basic Info */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {detailItems.map(([label, value]) => (
                   <div key={label} className="p-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950">
@@ -1742,6 +1748,7 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                 ))}
               </div>
 
+              {/* Technical Details */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {technicalItems.map(([label, value]) => (
                   <div key={label} className="p-3 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950">
@@ -1751,15 +1758,57 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                 ))}
               </div>
 
+              {/* Traffic Statistics */}
+              {(trafficSummary.inputRate || trafficSummary.outputRate) && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-3 space-y-3">
+                  <div className="text-xs font-semibold text-gray-500 uppercase">Traffic Statistics (Realtime)</div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
+                      <div className="text-[10px] uppercase tracking-wide text-blue-500">Downstream Rate</div>
+                      <div className="mt-1 font-mono font-medium text-blue-700 dark:text-blue-300">{trafficSummary.outputRate ?? 'N/A'}</div>
+                    </div>
+                    <div className="rounded-lg bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 p-3">
+                      <div className="text-[10px] uppercase tracking-wide text-green-500">Upstream Rate</div>
+                      <div className="mt-1 font-mono font-medium text-green-700 dark:text-green-300">{trafficSummary.inputRate ?? 'N/A'}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
+                      <div className="text-[10px] uppercase tracking-wide text-gray-500">DL Bandwidth %</div>
+                      <div className="mt-1 font-mono font-medium text-gray-700 dark:text-gray-300">{trafficSummary.outputBandwidth ?? 'N/A'}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
+                      <div className="text-[10px] uppercase tracking-wide text-gray-500">UL Bandwidth %</div>
+                      <div className="mt-1 font-mono font-medium text-gray-700 dark:text-gray-300">{trafficSummary.inputBandwidth ?? 'N/A'}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
+                      <div className="text-[10px] uppercase tracking-wide text-gray-500">DL Peak Rate</div>
+                      <div className="mt-1 font-mono font-medium text-gray-700 dark:text-gray-300">{trafficSummary.outputPeakRate ?? 'N/A'}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
+                      <div className="text-[10px] uppercase tracking-wide text-gray-500">UL Peak Rate</div>
+                      <div className="mt-1 font-mono font-medium text-gray-700 dark:text-gray-300">{trafficSummary.inputPeakRate ?? 'N/A'}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
+                      <div className="text-[10px] uppercase tracking-wide text-gray-500">Total DL Bytes</div>
+                      <div className="mt-1 font-mono font-medium text-gray-700 dark:text-gray-300">{trafficSummary.totalOutputBytes ? Number(trafficSummary.totalOutputBytes).toLocaleString() : 'N/A'}</div>
+                    </div>
+                    <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
+                      <div className="text-[10px] uppercase tracking-wide text-gray-500">Total UL Bytes</div>
+                      <div className="mt-1 font-mono font-medium text-gray-700 dark:text-gray-300">{trafficSummary.totalInputBytes ? Number(trafficSummary.totalInputBytes).toLocaleString() : 'N/A'}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ONT Build Configuration */}
               <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-3 space-y-3">
-                <div className="text-xs font-semibold text-gray-500 uppercase">ONT Service Summary</div>
+                <div className="text-xs font-semibold text-gray-500 uppercase">ONT Build Configuration</div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
                   <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
                     <div className="text-[10px] uppercase tracking-wide text-gray-500">Service VLANs</div>
                     <div className="mt-1 font-medium text-gray-900 dark:text-white break-words">{serviceVlans}</div>
                   </div>
                   <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
-                    <div className="text-[10px] uppercase tracking-wide text-gray-500">TCONT Profiles</div>
+                    <div className="text-[10px] uppercase tracking-wide text-gray-500">TCONT / Upstream Profiles</div>
                     <div className="mt-1 font-medium text-gray-900 dark:text-white break-words">{tcontProfiles}</div>
                   </div>
                   <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
@@ -1767,24 +1816,75 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                     <div className="mt-1 font-medium text-gray-900 dark:text-white break-words">{downstreamProfiles}</div>
                   </div>
                 </div>
+
+                {/* Service Ports Table */}
                 {Array.isArray(configSummary.servicePorts) && configSummary.servicePorts.length > 0 && (
                   <div className="overflow-x-auto">
+                    <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Service Ports</div>
                     <table className="w-full text-sm border-separate border-spacing-y-1">
                       <thead>
                         <tr className="text-left text-[10px] uppercase tracking-wide text-gray-500">
-                          <th className="px-2 py-1">Service Port</th>
+                          <th className="px-2 py-1">Port</th>
                           <th className="px-2 py-1">VPort</th>
                           <th className="px-2 py-1">User VLAN</th>
                           <th className="px-2 py-1">VLAN</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {configSummary.servicePorts.map((servicePort: any) => (
-                          <tr key={`${servicePort.servicePort}-${servicePort.vport}`} className="bg-gray-50 dark:bg-gray-950">
-                            <td className="px-2 py-2 rounded-l border-y border-l border-gray-200 dark:border-gray-800 font-mono">{servicePort.servicePort}</td>
-                            <td className="px-2 py-2 border-y border-gray-200 dark:border-gray-800 font-mono">{servicePort.vport}</td>
-                            <td className="px-2 py-2 border-y border-gray-200 dark:border-gray-800 font-mono">{servicePort.userVlan}</td>
-                            <td className="px-2 py-2 rounded-r border-y border-r border-gray-200 dark:border-gray-800 font-mono">{servicePort.vlan}</td>
+                        {configSummary.servicePorts.map((sp: any) => (
+                          <tr key={`${sp.servicePort}-${sp.vport}`} className="bg-gray-50 dark:bg-gray-950">
+                            <td className="px-2 py-2 rounded-l border-y border-l border-gray-200 dark:border-gray-800 font-mono">{sp.servicePort}</td>
+                            <td className="px-2 py-2 border-y border-gray-200 dark:border-gray-800 font-mono">{sp.vport}</td>
+                            <td className="px-2 py-2 border-y border-gray-200 dark:border-gray-800 font-mono">{sp.userVlan}</td>
+                            <td className="px-2 py-2 rounded-r border-y border-r border-gray-200 dark:border-gray-800 font-mono">{sp.vlan}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* TCONT Table */}
+                {Array.isArray(configSummary.tconts) && configSummary.tconts.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">TCONT Config</div>
+                    <table className="w-full text-sm border-separate border-spacing-y-1">
+                      <thead>
+                        <tr className="text-left text-[10px] uppercase tracking-wide text-gray-500">
+                          <th className="px-2 py-1">TCONT</th>
+                          <th className="px-2 py-1">Upstream Profile</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {configSummary.tconts.map((t: any) => (
+                          <tr key={t.tcontId} className="bg-gray-50 dark:bg-gray-950">
+                            <td className="px-2 py-2 rounded-l border-y border-l border-gray-200 dark:border-gray-800 font-mono">{t.tcontId}</td>
+                            <td className="px-2 py-2 rounded-r border-y border-r border-gray-200 dark:border-gray-800 font-mono">{t.profile || 'N/A'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* GEM Port Table */}
+                {Array.isArray(configSummary.gemports) && configSummary.gemports.length > 0 && (
+                  <div className="overflow-x-auto">
+                    <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">GEM Ports</div>
+                    <table className="w-full text-sm border-separate border-spacing-y-1">
+                      <thead>
+                        <tr className="text-left text-[10px] uppercase tracking-wide text-gray-500">
+                          <th className="px-2 py-1">GEM Port</th>
+                          <th className="px-2 py-1">TCONT</th>
+                          <th className="px-2 py-1">DL Profile</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {configSummary.gemports.map((g: any) => (
+                          <tr key={g.gemPort} className="bg-gray-50 dark:bg-gray-950">
+                            <td className="px-2 py-2 rounded-l border-y border-l border-gray-200 dark:border-gray-800 font-mono">{g.gemPort}</td>
+                            <td className="px-2 py-2 border-y border-gray-200 dark:border-gray-800 font-mono">{g.tcont}</td>
+                            <td className="px-2 py-2 rounded-r border-y border-r border-gray-200 dark:border-gray-800 font-mono">{g.profile || '(dari TCONT)'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1793,6 +1893,36 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                 )}
               </div>
 
+              {/* Auth History */}
+              {authHistory.length > 0 && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-3">
+                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Riwayat Koneksi ONU</div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm border-separate border-spacing-y-1">
+                      <thead>
+                        <tr className="text-left text-[10px] uppercase tracking-wide text-gray-500">
+                          <th className="px-2 py-1">#</th>
+                          <th className="px-2 py-1">Auth / Online</th>
+                          <th className="px-2 py-1">Offline</th>
+                          <th className="px-2 py-1">Cause</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {authHistory.map((h: any) => (
+                          <tr key={h.index} className="bg-gray-50 dark:bg-gray-950">
+                            <td className="px-2 py-1.5 rounded-l border-y border-l border-gray-200 dark:border-gray-800 font-mono">{h.index}</td>
+                            <td className="px-2 py-1.5 border-y border-gray-200 dark:border-gray-800 font-mono text-green-600 dark:text-green-400">{h.authpassAt}</td>
+                            <td className="px-2 py-1.5 border-y border-gray-200 dark:border-gray-800 font-mono text-red-600 dark:text-red-400">{h.offlineAt === '0000-00-00 00:00:00' ? 'Masih Online' : h.offlineAt}</td>
+                            <td className="px-2 py-1.5 rounded-r border-y border-r border-gray-200 dark:border-gray-800 font-mono">{h.offlineCause || '-'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* Customer Assignment */}
               <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-3">
                 <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Customer Assignment</div>
                 {customer ? (
@@ -1809,9 +1939,16 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                 ) : <div className="text-sm text-gray-400">Belum terhubung ke customer.</div>}
               </div>
 
+              {/* Raw Telnet Output */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                <pre className="text-[11px] font-mono bg-gray-950 text-green-300 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">{detail?.telnet?.detail?.raw || 'No detail output'}</pre>
-                <pre className="text-[11px] font-mono bg-gray-950 text-blue-300 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">{detail?.telnet?.config?.raw || detail?.telnet?.optical?.raw || 'No config/optical output'}</pre>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Detail Info (Raw)</div>
+                  <pre className="text-[11px] font-mono bg-gray-950 text-green-300 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">{detail?.telnet?.detail?.raw || 'No detail output'}</pre>
+                </div>
+                <div>
+                  <div className="text-[10px] uppercase tracking-wide text-gray-500 mb-1">Running Config (Raw)</div>
+                  <pre className="text-[11px] font-mono bg-gray-950 text-blue-300 rounded-lg p-3 overflow-auto max-h-64 whitespace-pre-wrap">{detail?.telnet?.config?.raw || 'No config output'}</pre>
+                </div>
               </div>
             </>
           )}
