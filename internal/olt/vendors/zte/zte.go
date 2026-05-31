@@ -211,6 +211,14 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 
 	onuMap := make(map[IndexKey]*ONUInfo)
 
+	// DEBUG: log regStatus map contents for port 268501248 ONU 1
+	if v, ok := merged.regStatus[IndexKey{PonIndex: 268501248, OnuID: 1}]; ok {
+		log.Debug().Int64("regVal", v).Msg("zte: DEBUG merged.regStatus has ONU1/port268501248")
+	} else {
+		log.Debug().Msg("zte: DEBUG merged.regStatus MISSING ONU1/port268501248")
+	}
+	log.Debug().Int("totalRegStatus", len(merged.regStatus)).Int("totalRxPower", len(merged.rxPower)).Msg("zte: DEBUG merged map sizes")
+
 	// ── Registered ONUs (regStatus=1 normal; regStatus=2 = SB mode, used by FiberHome ONUs) ───
 	for k, regVal := range merged.regStatus {
 		if regVal != 1 && regVal != 2 {
