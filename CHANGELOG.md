@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.1] — 2026-06-01
+### Fixed
+- **Router list kosong di modal "Sync ke MikroTik"** — `GET /api/network/routers` mengembalikan `{ routers: [...], vpnClients: [...] }` tapi frontend PPPoE profiles melakukan `Array.isArray(data)` yang selalu false → `setRouters([])`. Fix: gunakan `data.routers` sebagai sumber list router.
+- **Status RADIUS tetap "Pending" saat profile belum pernah sync MikroTik** — `SyncProfilesRadius` hanya sync profil yang punya field `rateLimit` terisi (diisi saat sync MikroTik). Profil baru tanpa rateLimit selalu di-skip. Fix: bangun `rateLimit` otomatis dari `uploadSpeed`/`downloadSpeed` dalam format `{up}M/{down}M` jika `rateLimit` nil.
+
+### Files
+- `src/app/admin/pppoe/profiles/page.tsx` — `loadRouterList` & `handleSyncMikrotik`: parse `data.routers` bukan `data`
+- `internal/api/handlers/pppoe_ext.go` — `SyncProfilesRadius`: fallback build rateLimit dari speed fields
+
+---
+
 ## [2.54.0] — 2026-06-01
 ### Fixed
 - **Status RADIUS tetap "Pending" setelah sync** — `SyncProfilesRadius` melakukan sync ke `radgroupreply` tapi tidak meng-update field `syncedToRadius` di tabel `pppoe_profiles`. Fix: tambah `h.db.Model(&p).Update("syncedToRadius", true)` setelah setiap profil berhasil di-sync.
