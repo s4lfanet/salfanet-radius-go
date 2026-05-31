@@ -61,7 +61,7 @@ type Agent struct {
 	Balance    int        `gorm:"default:0" json:"balance"`
 	MinBalance int        `gorm:"column:minBalance;default:0" json:"minBalance"`
 	RouterID   *string    `gorm:"column:routerId;index" json:"routerId"`
-	PIN        string     `json:"-"` // hashed
+	PIN        string     `gorm:"-" json:"-"` // hashed, stored separately if needed
 	IsActive   bool       `gorm:"default:true" json:"isActive"`
 	LastLogin  *time.Time `gorm:"column:lastLogin" json:"lastLogin"`
 	CreatedAt  time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
