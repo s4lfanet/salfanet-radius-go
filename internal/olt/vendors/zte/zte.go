@@ -236,9 +236,20 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		// Formula: dBm = raw/500.0 - 30.0
 		// Verified from live device: raw=6751 → -16.50 dBm; raw=5085 → -19.83 dBm.
 		// 0xFFFF (65535) is a ZTE sentinel meaning "no data" → must be excluded.
-		if rxRaw, ok := merged.rxPower[k]; ok && rxRaw > 0 && rxRaw != 0xFFFF {
-			dbm := float64(rxRaw)/500.0 - 30.0
-			info.RxPower = &dbm
+		if rxRaw, ok := merged.rxPower[k]; ok {
+			log.Debug().
+				Int64("ponIdx", k.PonIndex).Int("onuId", k.OnuID).
+				Int64("rxRaw", rxRaw).
+				Bool("positive", rxRaw > 0).Bool("notSentinel", rxRaw != 0xFFFF).
+				Msg("zte: rxPower lookup")
+			if rxRaw > 0 && rxRaw != 0xFFFF {
+				dbm := float64(rxRaw)/500.0 - 30.0
+				info.RxPower = &dbm
+			}
+		} else {
+			log.Debug().
+				Int64("ponIdx", k.PonIndex).Int("onuId", k.OnuID).
+				Msg("zte: rxPower NOT FOUND in merged map")
 		}
 		// TxPower: same encoding and same sentinel
 		if txRaw, ok := merged.txPower[k]; ok && txRaw > 0 && txRaw != 0xFFFF {
