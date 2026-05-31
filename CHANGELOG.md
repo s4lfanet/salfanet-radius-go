@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.5] — 2026-06-01
+### Fixed
+- **Error 500 saat tambah agent voucher** — Go struct `Agent` memiliki field `PIN string` tanpa tag `gorm:"-"`, menyebabkan GORM mencoba INSERT ke kolom `pin` yang tidak ada di tabel `agents` database. Fix: tambah `gorm:"-"` ke field `PIN`.
+
+### Files
+- `internal/db/models/extra.go` — Tambah `gorm:"-"` ke field `PIN` di struct `Agent`
+
+---
+
 ## [2.54.4] — 2026-06-01
 ### Fixed
 - **Status RADIUS tetap "Pending" setelah sync** — Root cause: Go struct `PppoeProfile` tidak memiliki field `SyncedToRadius`, padahal kolom `syncedToRadius` ada di database (Prisma schema). Akibatnya `h.db.Model(&p).Update("syncedToRadius", true)` silently fail karena GORM tidak menemukan field di struct. Fix: tambah `SyncedToRadius bool \`gorm:"default:false;column:syncedToRadius"\`` ke struct + ganti update dengan `h.db.Exec("UPDATE pppoe_profiles SET syncedToRadius = 1 WHERE id = ?", p.ID)` agar pasti berhasil.
