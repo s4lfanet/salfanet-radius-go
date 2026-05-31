@@ -6,6 +6,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.2] — 2026-05-31
+### Fixed
+- **Suspend Requests handler** — Response format tidak cocok dengan frontend: response key `data` → `rows`, status uppercase mismatch, fields lengkap (startDate, endDate, adminNotes, approvedAt, approvedBy). Rewrite handler pakai GORM Preload bukan raw SQL custom struct.
+- **Topup Requests — model salah** — Backend query `agent_deposits` (deposit agen) padahal frontend menampilkan top-up PPPoE customer. Dibuat model baru `TopupRequest` + tabel `topup_requests` (CREATE TABLE IF NOT EXISTS di runMigrations), customer portal `CreateTopupRequest` sekarang menyimpan ke tabel baru, admin handler query tabel yang benar, status `PENDING`/`SUCCESS`/`FAILED`.
+- **BulkCreateUsers tanpa RADIUS sync** — User dibuat di DB tapi tidak disync ke FreeRADIUS `radcheck`. Ditambahkan upsert `Cleartext-Password` ke `radcheck` setelah setiap user berhasil dibuat.
+- **SyncProfilesRadius adalah stub** — Hanya menghitung jumlah profil. Sekarang benar-benar upsert `Mikrotik-Rate-Limit` ke tabel `radgroupreply` untuk setiap profil aktif yang memiliki `rateLimit` dan `groupName`.
+- **SyncProfilesMikrotik return fake 200** — Diganti return `501 Not Implemented` dengan pesan jelas bahwa fitur ini belum diimplementasi.
+### TypeScript
+- TSC check: **0 errors** (npx tsc --noEmit exit 0)
+### Files
+- `internal/api/handlers/admin.go` — Rewrite `TopupRequests`, `ApproveTopup`, `RejectTopup`, `SuspendRequests`
+- `internal/api/handlers/customer_portal.go` — `CreateTopupRequest` simpan ke `topup_requests` bukan `transactions`
+- `internal/api/handlers/pppoe_ext.go` — `BulkCreateUsers` + RADIUS sync, `SyncProfilesRadius` implementasi nyata, `SyncProfilesMikrotik` → 501
+- `internal/db/models/extra.go` — Tambah model `TopupRequest`
+- `internal/db/db.go` — Tambah `CREATE TABLE IF NOT EXISTS topup_requests` di `runMigrations`
+
+---
+
 ## [2.53.1] — 2026-05-31
 ### Fixed
 - **FreeRADIUS backup/restore/download/upload semua stub** — Semua 5 handler di `admin_misc_handler.go` hanya menyimpan ke DB atau return dummy response tanpa melakukan operasi nyata. Diimplementasi ulang sepenuhnya:
