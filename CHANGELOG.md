@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.9] — 2026-06-01
+### Fixed
+- **Hotspot profile Harga Jual selalu Rp 0** — Field `sellingPrice` tidak disertakan dalam request body saat create/update. Frontend hanya menghitung `sellingPrice` untuk tampilan form saja, tidak mengirimkannya ke API. Fix: tambah `sellingPrice: costPrice + resellerFee` ke body request.
+- **Sync PPPoE ke FreeRADIUS tidak berfungsi** — Tabel `radgroupreply` tidak memiliki UNIQUE constraint pada `(groupname, attribute)`, hanya index biasa. `ON DUPLICATE KEY UPDATE` tidak pernah trigger sehingga setiap sync insert baris baru (duplikat) tanpa update. Fix: ganti dengan `DELETE WHERE groupname+attribute` lalu `INSERT`. Sekaligus support sync per-profile (berdasarkan `id` dari body request).
+
+### Files
+- `src/app/admin/hotspot/profile/page.tsx` — Tambah `sellingPrice` ke body API
+- `internal/api/handlers/pppoe_ext.go` — Fix `SyncProfilesRadius`: DELETE+INSERT, support sync by `id`
+
+---
+
 ## [2.53.8] — 2026-06-01
 ### Fixed
 - **PPPoE Paket Layanan tidak tampil setelah tambah** — `ListProfiles` Go handler mengembalikan array langsung (`[...]`) sedangkan frontend menggunakan `data.profiles || []`. Fix: bungkus response dalam `{profiles: [...]}` agar konsisten dengan HotspotHandler.

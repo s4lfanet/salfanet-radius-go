@@ -245,6 +245,7 @@ export default function HotspotProfilePage() {
         name: formData.name,
         costPrice: parseInt(formData.costPrice) || 0,
         resellerFee: parseInt(formData.resellerFee) || 0,
+        sellingPrice: (parseInt(formData.costPrice) || 0) + (parseInt(formData.resellerFee) || 0),
         speed: buildHotspotSpeed(),
         groupProfile: formData.groupProfile,
         sharedUsers: parseInt(formData.sharedUsers) || 1,

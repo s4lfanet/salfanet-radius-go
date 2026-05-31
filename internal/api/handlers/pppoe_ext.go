@@ -706,20 +706,27 @@ func (h *PppoeExtHandler) SyncProfilesMikrotik(c fiber.Ctx) error {
 
 // POST /api/pppoe/profiles/sync-radius — sync profiles rate limits to FreeRADIUS radgroupreply
 func (h *PppoeExtHandler) SyncProfilesRadius(c fiber.Ctx) error {
+	// Support syncing a single profile by ID (from action button)
+	var reqBody struct {
+		ID string `json:"id"`
+	}
+	_ = c.Bind().JSON(&reqBody)
+
 	var profiles []models.PppoeProfile
-	h.db.Where("isActive = ?", true).Find(&profiles)
+	q := h.db.Where("isActive = ?", true)
+	if reqBody.ID != "" {
+		q = q.Where("id = ?", reqBody.ID)
+	}
+	q.Find(&profiles)
 
 	synced := 0
 	for _, p := range profiles {
 		if p.RateLimit == nil || *p.RateLimit == "" || p.GroupName == "" {
 			continue
 		}
-		// Upsert Mikrotik-Rate-Limit in radgroupreply
-		h.db.Exec(`
-			INSERT INTO radgroupreply (groupname, attribute, op, value)
-			VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)
-			ON DUPLICATE KEY UPDATE value = VALUES(value)
-		`, p.GroupName, *p.RateLimit)
+		// Delete existing then insert fresh (no UNIQUE constraint on radgroupreply)
+		h.db.Exec(`DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Mikrotik-Rate-Limit'`, p.GroupName)
+		h.db.Exec(`INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)`, p.GroupName, *p.RateLimit)
 		synced++
 	}
 	return c.JSON(fiber.Map{"success": true, "synced": synced, "message": fmt.Sprintf("synced %d profiles to FreeRADIUS radgroupreply", synced)})
