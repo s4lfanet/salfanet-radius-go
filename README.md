@@ -491,6 +491,22 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.96 — 2026-06-01
+
+### Added
+- **ONU detail: TCONT/DBA profile bandwidth** — Panel "TCONT / DBA Profile (Upload)" kini menampilkan bandwidth type dan max bandwidth (Mbps) dari profil DBA yang digunakan ONU, diambil via `show gpon profile tcont`.
+- **ONU detail: Traffic Profile (Download) nama + bandwidth** — Panel "Traffic Profile (Download)" menampilkan nama profil (misal DOWN-PPPOE) beserta SIR/PIR dalam Mbps, diambil via `show gpon profile traffic`. Sebelumnya selalu tampil "(dari TCONT)".
+- **ONU detail: Build Script lengkap** — Section baru "Build Script (Reproducible Config)" menampilkan skrip CLI ZTE lengkap 3 step: Step 1 registrasi ONU di OLT port, Step 2 konfigurasi interface ONU (tcont/gemport/service-port), Step 3 pon-onu-mng OMCI (service-gemport-vlan + TR-069 jika GenieACS aktif).
+- **GetTrafficProfiles** — Fungsi baru di zte.go untuk mengambil daftar downstream traffic profile dari OLT.
+- **GetRegisterMetadata: trafficProfiles** — API `/api/olt/:id/register-metadata` sekarang juga mengembalikan `trafficProfiles[]` untuk keperluan form registrasi.
+### Fixed
+- **GetTcontProfiles command invalid** — Sebelumnya menggunakan `show gpon traffic-profile` (tidak valid di ZTE C320 V2.1), diganti ke `show gpon profile tcont` yang benar.
+### Files
+- `internal/api/handlers/misc_handler.go` — Tambah `oltIface`, 3 command baru ke `ExecuteMultiple`, tipe `GponTcontProfile`/`GponTrafficProfile`, fungsi `parseGponTcontProfiles`, `parseGponTrafficProfiles`, `parseOltRegistrationLine`, `generateONUBuildScript`; update response `oltProfiles` dan `buildScript`
+- `internal/olt/vendors/zte/zte.go` — Perbaiki `GetTcontProfiles` + `parseTcontProfiles`, tambah `TrafficProfile` type + `GetTrafficProfiles` + `parseTrafficProfiles`
+- `internal/api/handlers/olt.go` — Tambah `GetTrafficProfiles` call dan `trafficProfiles` ke response metadata
+- `src/app/admin/olt/[id]/page.tsx` — Tambah `oltProfiles`, `buildScript`, `usedTcontProfile`, `activeTrafficProfiles`; update card TCONT + Traffic Profile; tambah section Build Script
+
 ### v2.52.95 — 2026-05-31
 
 ### Added
@@ -538,15 +554,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/olt/vendors/zte/zte.go` — Tambah `FetchTelnetONUStates()` + `parseONUStateOutput()` (scan semua fields)
 - `internal/olt/poller/poller.go` — Panggil `FetchTelnetONUStates` setelah distance enrichment, override `onu.Status` hanya saat state dikenali
-
-### v2.52.90 — 2026-05-31
-
-### Fixed
-- **Ghost ONU cleanup tidak berjalan (GORM bug)** — `Model(&models.OLTONUStatus{})` dengan primary key kosong menyebabkan GORM menambah kondisi `WHERE id = ''` secara diam-diam, membuat batch UPDATE tidak pernah mengeksekusi satu baris pun. Fix: ganti ke `.Table("olt_onu_status")` yang tidak punya kondisi PK implisit.
-- **Ghost ONUs tidak masuk `checkAlerts`** — Karena ghost ONUs di-append setelah `allStatuses` dibuat, mereka tidak diproses oleh alert engine → tidak ada alert offline yang dibuat. Fix: load ghost ONUs terlebih dulu via `Find`, lalu append ke `allStatuses` SEBELUM `checkAlerts` dipanggil.
-- **`totalONU` tidak menghitung ghost ONUs** — Summary OLT (`onlineOnu`, `offlineOnu`, `totalOnu`) tidak mencerminkan ONUs yang hilang dari SNMP walk. Sekarang ghost ONUs masuk ke `allStatuses` sehingga `totalONU` dan `offlineOnu` dihitung dengan benar.
-### Files
-- `internal/olt/poller/poller.go` — Rewrite ghost ONU cleanup: `Find` + `Table("olt_onu_status")` + append ke `allStatuses` sebelum `totalONU` dihitung
 
 <!-- AUTO-CHANGELOG:END -->
 
