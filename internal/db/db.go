@@ -158,6 +158,22 @@ func runMigrations(db *gorm.DB) error {
 			PRIMARY KEY (id),
 			INDEX idx_vps_peers_type (type)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		// topup_requests: customer top-up/balance requests submitted via the customer portal
+		`CREATE TABLE IF NOT EXISTS topup_requests (
+			id            VARCHAR(191) NOT NULL,
+			userId        VARCHAR(191) NOT NULL,
+			amount        INT          NOT NULL DEFAULT 0,
+			paymentMethod VARCHAR(255) NOT NULL DEFAULT '',
+			description   TEXT         NULL,
+			status        VARCHAR(50)  NOT NULL DEFAULT 'PENDING',
+			proofUrl      VARCHAR(500) NULL,
+			metadata      TEXT         NULL,
+			createdAt     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			processedAt   DATETIME(3)  NULL,
+			PRIMARY KEY (id),
+			INDEX idx_topup_requests_userId (userId),
+			INDEX idx_topup_requests_status (status)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 	}
 	for _, stmt := range statements {
 		if _, err := sqlDB.Exec(stmt); err != nil {

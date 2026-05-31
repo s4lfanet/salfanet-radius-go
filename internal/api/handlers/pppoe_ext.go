@@ -468,7 +468,7 @@ func (h *PppoeExtHandler) BulkDelete(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "deleted": result.RowsAffected})
 }
 
-// POST /api/pppoe/users/bulk — bulk create users (stub — requires radius sync)
+// POST /api/pppoe/users/bulk — bulk create users with RADIUS sync
 func (h *PppoeExtHandler) BulkCreateUsers(c fiber.Ctx) error {
 	var body []models.PppoeUser
 	if err := c.Bind().JSON(&body); err != nil {
@@ -479,6 +479,15 @@ func (h *PppoeExtHandler) BulkCreateUsers(c fiber.Ctx) error {
 		body[i].ID = generateID()
 		if err := h.db.Create(&body[i]).Error; err == nil {
 			created++
+			// Sync to FreeRADIUS radcheck
+			rc := models.Radcheck{
+				Username:  body[i].Username,
+				Attribute: "Cleartext-Password",
+				Op:        ":=",
+				Value:     body[i].Password,
+			}
+			h.db.Where("username = ? AND attribute = ?", body[i].Username, "Cleartext-Password").
+				Assign(rc).FirstOrCreate(&rc)
 		}
 	}
 	return c.Status(201).JSON(fiber.Map{"success": true, "created": created})
@@ -641,17 +650,33 @@ func (h *PppoeExtHandler) BulkCreateCustomers(c fiber.Ctx) error {
 	return c.Status(201).JSON(fiber.Map{"success": true, "created": created})
 }
 
-// POST /api/pppoe/profiles/sync-mikrotik — sync profiles to Mikrotik (stub)
+// POST /api/pppoe/profiles/sync-mikrotik — sync profiles to Mikrotik (not yet implemented)
 func (h *PppoeExtHandler) SyncProfilesMikrotik(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "message": "mikrotik profile sync triggered"})
+	return c.Status(501).JSON(fiber.Map{
+		"success": false,
+		"message": "MikroTik profile sync is not yet implemented. Please configure profiles manually on your MikroTik router.",
+	})
 }
 
-// POST /api/pppoe/profiles/sync-radius — sync profiles to RADIUS
+// POST /api/pppoe/profiles/sync-radius — sync profiles rate limits to FreeRADIUS radgroupreply
 func (h *PppoeExtHandler) SyncProfilesRadius(c fiber.Ctx) error {
 	var profiles []models.PppoeProfile
 	h.db.Where("isActive = ?", true).Find(&profiles)
-	synced := len(profiles)
-	return c.JSON(fiber.Map{"success": true, "synced": synced, "message": fmt.Sprintf("synced %d profiles", synced)})
+
+	synced := 0
+	for _, p := range profiles {
+		if p.RateLimit == nil || *p.RateLimit == "" || p.GroupName == "" {
+			continue
+		}
+		// Upsert Mikrotik-Rate-Limit in radgroupreply
+		h.db.Exec(`
+			INSERT INTO radgroupreply (groupname, attribute, op, value)
+			VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)
+			ON DUPLICATE KEY UPDATE value = VALUES(value)
+		`, p.GroupName, *p.RateLimit)
+		synced++
+	}
+	return c.JSON(fiber.Map{"success": true, "synced": synced, "message": fmt.Sprintf("synced %d profiles to FreeRADIUS radgroupreply", synced)})
 }
 
 // GET /api/pppoe/users/:id/sync-radius — sync single user to RADIUS

@@ -353,38 +353,24 @@ func (h *CustomerPortalHandler) CreateTopupRequest(c fiber.Ctx) error {
 	var user models.PppoeUser
 	h.db.First(&user, "id = ?", userID)
 
-	var cat models.TransactionCategory
-	h.db.Where("name = ?", "DEPOSIT_REQUEST").FirstOrCreate(&cat, models.TransactionCategory{
-		ID:   uuid.New().String(),
-		Name: "DEPOSIT_REQUEST",
-		Type: "INCOME",
-	})
-
-	now := time.Now()
-	notes := fmt.Sprintf(
-		`{"status":"PENDING","pppoeUserId":"%s","pppoeUsername":"%s","paymentMethod":"%s","note":"%s","requestedAt":"%s"}`,
-		user.ID, user.Username, body.PaymentMethod, body.Note, now.Format(time.RFC3339),
-	)
-	txn := models.Transaction{
-		ID:          fmt.Sprintf("txn-%d", now.UnixMilli()),
-		Date:        now,
-		Type:        "INCOME",
-		CategoryID:  cat.ID,
-		Description: fmt.Sprintf("Topup request - %s (Rp %d)", user.Username, body.Amount),
-		Amount:      body.Amount,
-		Notes:       &notes,
+	req := models.TopupRequest{
+		ID:            uuid.New().String(),
+		UserID:        userID,
+		Amount:        body.Amount,
+		PaymentMethod: body.PaymentMethod,
+		Description:   body.Note,
+		Status:        "PENDING",
 	}
-	if err := h.db.Create(&txn).Error; err != nil {
+	if err := h.db.Create(&req).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{
 		"success": true,
 		"message": "Topup request created",
-		"transaction": fiber.Map{
-			"id":        txn.ID,
-			"amount":    txn.Amount,
-			"reference": fmt.Sprintf("TOPUP-%s-%d", userID, now.Unix()),
-			"status":    "PENDING",
+		"request": fiber.Map{
+			"id":     req.ID,
+			"amount": req.Amount,
+			"status": req.Status,
 		},
 	})
 }

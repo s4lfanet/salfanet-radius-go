@@ -5,6 +5,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -345,43 +346,31 @@ func (h *AdminHandler) IsolatedUsers(c fiber.Ctx) error {
 }
 
 // TopupRequests godoc
-// GET /api/admin/topup-requests
+// GET /api/admin/topup-requests — list PPPoE customer top-up requests
 func (h *AdminHandler) TopupRequests(c fiber.Ctx) error {
-	status := c.Query("status", "pending")
+	status := c.Query("status", "PENDING")
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "20"))
 	if page < 1 {
 		page = 1
 	}
-	if limit < 1 || limit > 100 {
+	if limit < 1 || limit > 200 {
 		limit = 20
 	}
 
-	type topupRow struct {
-		ID          string     `json:"id"`
-		AgentName   string     `json:"agentName"`
-		AgentID     string     `json:"agentId"`
-		Amount      int64      `json:"amount"`
-		Status      string     `json:"status"`
-		ProofURL    *string    `json:"proofUrl"`
-		CreatedAt   time.Time  `json:"createdAt"`
-		ProcessedAt *time.Time `json:"processedAt"`
-	}
-	var rows []topupRow
+	var requests []models.TopupRequest
 	var total int64
 
-	q := h.db.Table("agent_deposits").
-		Select("agent_deposits.id, ag.name as agentName, agent_deposits.agentId, agent_deposits.amount, agent_deposits.status, agent_deposits.proofUrl, agent_deposits.createdAt, agent_deposits.processedAt").
-		Joins("LEFT JOIN agents ag ON ag.id = agent_deposits.agentId")
-	if status != "all" {
-		q = q.Where("agent_deposits.status = ?", status)
+	q := h.db.Model(&models.TopupRequest{}).Preload("User")
+	if status != "all" && status != "ALL" {
+		q = q.Where("status = ?", strings.ToUpper(status))
 	}
 	q.Count(&total)
-	q.Order("agent_deposits.createdAt DESC").
+	q.Order("createdAt DESC").
 		Offset((page - 1) * limit).Limit(limit).
-		Scan(&rows)
+		Find(&requests)
 
-	return c.JSON(fiber.Map{"data": rows, "total": total, "page": page})
+	return c.JSON(fiber.Map{"requests": requests, "total": total, "page": page})
 }
 
 // ApproveTopup godoc
@@ -390,28 +379,15 @@ func (h *AdminHandler) ApproveTopup(c fiber.Ctx) error {
 	id := c.Params("id")
 	now := time.Now()
 
-	// Get deposit record
-	var dep struct {
-		ID      string
-		AgentID string
-		Amount  int64
-		Status  string
+	var req models.TopupRequest
+	if err := h.db.First(&req, "id = ?", id).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "request not found"})
 	}
-	if err := h.db.Raw("SELECT id, agentId, amount, status FROM agent_deposits WHERE id = ?", id).Scan(&dep).Error; err != nil || dep.ID == "" {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "deposit not found"})
-	}
-	if dep.Status != "pending" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "deposit already processed"})
+	if req.Status != "PENDING" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "request already processed"})
 	}
 
-	// Update deposit + credit agent balance in transaction
-	err := h.db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Exec("UPDATE agent_deposits SET status='approved', processedAt=? WHERE id=?", now, id).Error; err != nil {
-			return err
-		}
-		return tx.Exec("UPDATE agents SET balance = balance + ? WHERE id = ?", dep.Amount, dep.AgentID).Error
-	})
-	if err != nil {
+	if err := h.db.Model(&req).Updates(map[string]interface{}{"status": "SUCCESS", "processedAt": now}).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"message": "approved"})
@@ -423,9 +399,10 @@ func (h *AdminHandler) RejectTopup(c fiber.Ctx) error {
 	id := c.Params("id")
 	now := time.Now()
 
-	res := h.db.Exec("UPDATE agent_deposits SET status='rejected', processedAt=? WHERE id=? AND status='pending'", now, id)
+	res := h.db.Model(&models.TopupRequest{}).Where("id = ? AND status = 'PENDING'", id).
+		Updates(map[string]interface{}{"status": "FAILED", "processedAt": now})
 	if res.RowsAffected == 0 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "deposit not found or already processed"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "request not found or already processed"})
 	}
 	return c.JSON(fiber.Map{"message": "rejected"})
 }
@@ -433,41 +410,29 @@ func (h *AdminHandler) RejectTopup(c fiber.Ctx) error {
 // SuspendRequests godoc
 // GET /api/admin/suspend-requests
 func (h *AdminHandler) SuspendRequests(c fiber.Ctx) error {
-	status := c.Query("status", "pending")
+	status := c.Query("status", "PENDING")
 	page, _ := strconv.Atoi(c.Query("page", "1"))
 	limit, _ := strconv.Atoi(c.Query("limit", "20"))
 	if page < 1 {
 		page = 1
 	}
-	if limit < 1 || limit > 100 {
+	if limit < 1 || limit > 500 {
 		limit = 20
 	}
 
-	type suspendRow struct {
-		ID          string     `json:"id"`
-		UserID      string     `json:"userId"`
-		Username    string     `json:"username"`
-		UserName    string     `json:"userName"`
-		Reason      *string    `json:"reason"`
-		Status      string     `json:"status"`
-		CreatedAt   time.Time  `json:"createdAt"`
-		ProcessedAt *time.Time `json:"processedAt"`
-	}
-	var rows []suspendRow
+	var rows []models.SuspendRequest
 	var total int64
 
-	q := h.db.Table("suspend_requests sr").
-		Select("sr.id, sr.userId, u.username, u.name as userName, sr.reason, sr.status, sr.createdAt, sr.processedAt").
-		Joins("LEFT JOIN pppoe_users u ON u.id = sr.userId")
-	if status != "all" {
-		q = q.Where("sr.status = ?", status)
+	q := h.db.Model(&models.SuspendRequest{}).Preload("User")
+	if status != "all" && status != "ALL" {
+		q = q.Where("status = ?", strings.ToUpper(status))
 	}
 	q.Count(&total)
-	q.Order("sr.createdAt DESC").
+	q.Order("requestedAt DESC").
 		Offset((page - 1) * limit).Limit(limit).
-		Scan(&rows)
+		Find(&rows)
 
-	return c.JSON(fiber.Map{"data": rows, "total": total, "page": page})
+	return c.JSON(fiber.Map{"rows": rows, "total": total, "page": page})
 }
 
 // ApproveSuspend godoc

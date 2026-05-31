@@ -253,6 +253,26 @@ type SuspendRequest struct {
 
 func (SuspendRequest) TableName() string { return "suspend_requests" }
 
+// ─── TopupRequest ─────────────────────────────────────────────────────────────
+
+// TopupRequest represents a customer's manual top-up (balance) request submitted via the customer portal.
+type TopupRequest struct {
+	ID            string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	UserID        string     `gorm:"index;column:userId" json:"userId"`
+	Amount        int        `json:"amount"`
+	PaymentMethod string     `gorm:"column:paymentMethod" json:"paymentMethod"`
+	Description   string     `gorm:"type:text" json:"description"`
+	Status        string     `gorm:"default:PENDING;index" json:"status"` // PENDING / SUCCESS / FAILED
+	ProofURL      *string    `gorm:"column:proofUrl" json:"proofUrl"`
+	Metadata      *string    `gorm:"type:text" json:"metadata"`
+	CreatedAt     time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	ProcessedAt   *time.Time `gorm:"column:processedAt" json:"processedAt"`
+
+	User *PppoeUser `gorm:"foreignKey:UserID;references:ID" json:"user,omitempty"`
+}
+
+func (TopupRequest) TableName() string { return "topup_requests" }
+
 // ─── TicketCategory ─────────────────────────────────────────────────────────────────────────
 
 type TicketCategory struct {
