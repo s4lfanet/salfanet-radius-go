@@ -168,76 +168,180 @@ func (h *AdminMiscHandler) SystemInfo(c fiber.Ctx) error {
 
 // ─── FreeRADIUS Backup ───────────────────────────────────────────────────────
 
-type freeradiusBackup struct {
-	ID        string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	FileName  string    `json:"fileName"`
-	FilePath  string    `json:"filePath"`
-	SizeBytes int64     `json:"sizeBytes"`
+const (
+	frBackupDir  = "/var/www/salfanet-radius/backups/freeradius"
+	frConfigDir  = "/etc/freeradius/3.0"
+	frBackupLog  = "/tmp/salfanet-fr-backup.log"
+	frScriptPath = "/var/www/salfanet-radius/scripts/backup-freeradius-local.sh"
+)
+
+type frBackupEntry struct {
+	Name      string    `json:"name"`
+	Size      int64     `json:"size"`
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (freeradiusBackup) TableName() string { return "freeradius_backups" }
-
 // GET /api/admin/system/freeradius-backup
 func (h *AdminMiscHandler) ListFreeradiusBackups(c fiber.Ctx) error {
-	var backups []freeradiusBackup
-	h.db.Order("createdAt desc").Limit(50).Find(&backups)
-	return c.JSON(fiber.Map{"success": true, "backups": backups})
+	var entries []frBackupEntry
+	files, _ := os.ReadDir(frBackupDir)
+	for _, f := range files {
+		if f.IsDir() || !strings.HasSuffix(f.Name(), ".tar.gz") {
+			continue
+		}
+		info, err := f.Info()
+		if err != nil {
+			continue
+		}
+		entries = append(entries, frBackupEntry{Name: f.Name(), Size: info.Size(), CreatedAt: info.ModTime()})
+	}
+	// Reverse so newest first (filenames are timestamped alphabetically)
+	for i, j := 0, len(entries)-1; i < j; i, j = i+1, j-1 {
+		entries[i], entries[j] = entries[j], entries[i]
+	}
+	if entries == nil {
+		entries = []frBackupEntry{}
+	}
+
+	logContent := ""
+	if raw, err := os.ReadFile(frBackupLog); err == nil {
+		logContent = string(raw)
+	}
+
+	return c.JSON(fiber.Map{"success": true, "backups": entries, "log": logContent})
 }
 
-// POST /api/admin/system/freeradius-backup — create new backup
+// POST /api/admin/system/freeradius-backup — start async backup
 func (h *AdminMiscHandler) CreateFreeradiusBackup(c fiber.Ctx) error {
-	now := time.Now()
-	backup := freeradiusBackup{
-		ID:        uuid.New().String(),
-		FileName:  "freeradius-backup-" + now.Format("20060102-150405") + ".tar.gz",
-		FilePath:  "/var/backups/freeradius/",
-		CreatedAt: now,
+	if _, err := os.Stat(frConfigDir); os.IsNotExist(err) {
+		return c.Status(500).JSON(fiber.Map{"success": false, "error": "FreeRADIUS config directory not found"})
 	}
-	h.db.Create(&backup)
-	return c.Status(201).JSON(fiber.Map{"success": true, "backup": backup})
+	_ = os.MkdirAll(frBackupDir, 0755)
+	_ = os.WriteFile(frBackupLog, []byte(""), 0644)
+
+	go func() {
+		cmd := exec.Command("/bin/bash", frScriptPath)
+		cmd.Env = append(os.Environ(),
+			"SALFANET_APP_DIR=/var/www/salfanet-radius",
+			"SALFANET_BACKUP_DIR="+frBackupDir,
+		)
+		out, _ := cmd.CombinedOutput()
+		_ = os.WriteFile(frBackupLog, out, 0644)
+	}()
+
+	return c.JSON(fiber.Map{"success": true, "message": "Backup dimulai"})
 }
 
-// GET /api/admin/system/freeradius-backup/download — download backup
+// GET /api/admin/system/freeradius-backup/download?file=xxx.tar.gz
 func (h *AdminMiscHandler) DownloadFreeradiusBackup(c fiber.Ctx) error {
-	id := c.Query("id")
-	var backup freeradiusBackup
-	if id != "" {
-		h.db.First(&backup, "id = ?", id)
-	} else {
-		h.db.Order("createdAt desc").First(&backup)
+	name := filepath.Base(c.Query("file"))
+	if name == "" || name == "." || !strings.HasSuffix(name, ".tar.gz") {
+		return c.Status(400).JSON(fiber.Map{"error": "valid file parameter required"})
 	}
-	if backup.ID == "" {
-		return c.Status(404).JSON(fiber.Map{"error": "backup not found"})
+	fullPath := filepath.Join(frBackupDir, name)
+	if _, err := os.Stat(fullPath); err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "file not found"})
 	}
-	return c.JSON(fiber.Map{"success": true, "downloadUrl": backup.FilePath + backup.FileName})
+	return c.Download(fullPath, name)
 }
 
-// POST /api/admin/system/freeradius-backup/restore
+// POST /api/admin/system/freeradius-backup/restore — restore from backup file
 func (h *AdminMiscHandler) RestoreFreeradiusBackup(c fiber.Ctx) error {
 	var body struct {
-		ID string `json:"id"`
+		File string `json:"file"`
 	}
-	c.Bind().JSON(&body)
-	return c.JSON(fiber.Map{"success": true, "message": "FreeRADIUS restore queued", "id": body.ID})
+	if err := c.Bind().JSON(&body); err != nil || body.File == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "file required"})
+	}
+	name := filepath.Base(body.File)
+	if !strings.HasSuffix(name, ".tar.gz") {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid file type"})
+	}
+	archivePath := filepath.Join(frBackupDir, name)
+	if _, err := os.Stat(archivePath); err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "backup file not found"})
+	}
+
+	// Extract to temp dir
+	tmpDir, err := os.MkdirTemp("", "fr-restore-*")
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "cannot create temp dir: " + err.Error()})
+	}
+	defer os.RemoveAll(tmpDir)
+
+	if out, err := exec.Command("tar", "-xzf", archivePath, "-C", tmpDir).CombinedOutput(); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "extract failed: " + strings.TrimSpace(string(out))})
+	}
+
+	// Determine extracted root (archive wraps everything under "3.0/" dir)
+	extractedBase := tmpDir
+	entries, _ := os.ReadDir(tmpDir)
+	if len(entries) == 1 && entries[0].IsDir() {
+		extractedBase = filepath.Join(tmpDir, entries[0].Name())
+	}
+
+	// Copy files into /etc/freeradius/3.0/
+	var logBuf strings.Builder
+	restored := 0
+	_ = filepath.Walk(extractedBase, func(src string, info os.FileInfo, werr error) error {
+		if werr != nil {
+			return nil
+		}
+		rel, _ := filepath.Rel(extractedBase, src)
+		dst := filepath.Join(frConfigDir, rel)
+		if info.IsDir() {
+			return os.MkdirAll(dst, 0750)
+		}
+		raw, err := os.ReadFile(src)
+		if err != nil {
+			logBuf.WriteString("SKIP " + rel + ": " + err.Error() + "\n")
+			return nil
+		}
+		if err := os.WriteFile(dst, raw, 0640); err != nil {
+			logBuf.WriteString("ERROR " + rel + ": " + err.Error() + "\n")
+			return nil
+		}
+		logBuf.WriteString("OK " + rel + "\n")
+		restored++
+		return nil
+	})
+
+	// Fix ownership so freerad daemon can read configs
+	exec.Command("chown", "-R", "freerad:freerad", frConfigDir).Run() //nolint:errcheck
+
+	// Restart freeradius (restart required for clients.d to reload)
+	if out, err := exec.Command("systemctl", "restart", "freeradius").CombinedOutput(); err != nil {
+		logBuf.WriteString("freeradius restart failed: " + strings.TrimSpace(string(out)) + "\n")
+		return c.Status(500).JSON(fiber.Map{
+			"success":  false,
+			"error":    "restore OK but freeradius restart failed",
+			"log":      logBuf.String(),
+			"restored": restored,
+		})
+	}
+	logBuf.WriteString("freeradius restarted OK\n")
+
+	return c.JSON(fiber.Map{"success": true, "restored": restored, "log": logBuf.String()})
 }
 
-// POST /api/admin/system/freeradius-backup/upload — upload backup file
+// POST /api/admin/system/freeradius-backup/upload — upload .tar.gz from another VPS
 func (h *AdminMiscHandler) UploadFreeradiusBackup(c fiber.Ctx) error {
 	file, err := c.FormFile("file")
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "file required"})
 	}
-	now := time.Now()
-	backup := freeradiusBackup{
-		ID:        uuid.New().String(),
-		FileName:  filepath.Base(file.Filename),
-		FilePath:  "/var/backups/freeradius/",
-		SizeBytes: file.Size,
-		CreatedAt: now,
+	name := filepath.Base(file.Filename)
+	if !strings.HasSuffix(name, ".tar.gz") {
+		return c.Status(400).JSON(fiber.Map{"error": "only .tar.gz files allowed"})
 	}
-	h.db.Create(&backup)
-	return c.Status(201).JSON(fiber.Map{"success": true, "backup": backup})
+	if err := os.MkdirAll(frBackupDir, 0755); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "cannot create backup dir"})
+	}
+	dst := filepath.Join(frBackupDir, name)
+	if err := c.SaveFile(file, dst); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "save failed: " + err.Error()})
+	}
+	return c.JSON(fiber.Map{"success": true, "savedAs": name})
 }
 
 // ─── Admin Profile 2FA ───────────────────────────────────────────────────────
