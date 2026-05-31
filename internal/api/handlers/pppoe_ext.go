@@ -727,6 +727,8 @@ func (h *PppoeExtHandler) SyncProfilesRadius(c fiber.Ctx) error {
 		// Delete existing then insert fresh (no UNIQUE constraint on radgroupreply)
 		h.db.Exec(`DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Mikrotik-Rate-Limit'`, p.GroupName)
 		h.db.Exec(`INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)`, p.GroupName, *p.RateLimit)
+		// Update syncedToRadius flag in pppoe_profiles table
+		h.db.Model(&p).Update("syncedToRadius", true)
 		synced++
 	}
 	return c.JSON(fiber.Map{"success": true, "synced": synced, "message": fmt.Sprintf("synced %d profiles to FreeRADIUS radgroupreply", synced)})
