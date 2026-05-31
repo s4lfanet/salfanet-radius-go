@@ -491,6 +491,27 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.52.98 — 2026-05-31
+
+### Fixed / Improved
+- **PageSpeed Accessibility** — Hapus `userScalable: false` & `maximumScale: 1` dari viewport di 3 layout (root, agent, technician) agar pinch-zoom tidak diblokir
+- **PageSpeed Accessibility** — Tambah `aria-label` pada tombol ikon tanpa teks: show/hide password (admin login) dan toggle tema (customer login)
+- **PageSpeed Accessibility** — Ubah wrapper root admin login dari `<div>` menjadi `<main>` landmark
+- **PageSpeed Best Practices** — Tambah header `Cross-Origin-Opener-Policy: same-origin-allow-popups` dan `Cross-Origin-Resource-Policy: same-site` di `next.config.ts`
+- **PageSpeed SEO** — Perbaiki `robots.txt`: izinkan `/customer/login` diindex (halaman produk utama), blokir hanya path sensitif
+- **PageSpeed SEO** — Perbaiki metadata customer layout: tambah `description`, `robots: index`, `openGraph`
+- **Performance** — Kurangi weight Outfit font dari 5 ke 4 (hapus weight 300 yang tidak terpakai)
+- **Dependency** — Tambah `qrcode.react` yang sebelumnya missing dari `package.json`
+### Files
+- `src/app/layout.tsx` — Hapus userScalable, kurangi Outfit weight ke 400/500/600/700
+- `src/app/agent/layout.tsx` — Hapus userScalable dari viewport
+- `src/app/technician/layout.tsx` — Hapus userScalable dari viewport
+- `src/app/admin/login/page.tsx` — aria-label show/hide password, wrap dalam `<main>`
+- `src/app/customer/login/page.tsx` — aria-label theme toggle
+- `src/app/customer/layout.tsx` — Metadata description + openGraph + robots
+- `next.config.ts` — Tambah COOP + CORP header
+- `public/robots.txt` — Allow customer portal, block sensitive paths saja
+
 ### v2.52.97 — 2026-06-01
 
 ### Fixed
@@ -544,13 +565,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **RX Power ONU 1/1/1:1 (MARLINARINA) selalu tampil "—"** — Root cause: ONU 1/1/1:1 secara *intermittent* mengembalikan `rxRaw=65535` (0xFFFF = sentinel ZTE "no measurement") via SNMP, terjadi bergantian dengan nilai valid (misal 7465 → -15.07 dBm). Sebelum v2.52.92, setiap kali SNMP mengembalikan 65535, upsert menimpa nilai DB dengan NULL (karena `VALUES(rxPower)` tanpa COALESCE). Akibatnya rxPower selalu NULL karena siklus overwrite terus berulang. Fix v2.52.92 (COALESCE) sudah menyelesaikan masalah ini — dikonfirmasi via debug log bahwa DB sekarang menyimpan -15.07 dBm untuk ONU 1. Debug log dihapus setelah analisis selesai.
 ### Files
 - `internal/olt/vendors/zte/zte.go` — Hapus debug logging sementara (tidak ada perubahan logic)
-
-### v2.52.92 — 2026-05-31
-
-### Fixed
-- **RX Power / TX Power / Distance menjadi kosong (—) setelah poll** — Upsert menggunakan `VALUES(rxPower)` yang selalu menimpa nilai DB, termasuk dengan NULL. Jika SNMP tidak berhasil mendapat data optik dalam satu siklus poll (karena OLT sibuk, Telnet overlap, dll), nilai yang sebelumnya valid terhapus. Fix: ubah ke `COALESCE(VALUES(rxPower), rxPower)` — sama seperti yang sudah dipakai untuk `serialNumber`/`description`. Berlaku juga untuk `txPower` dan `distance`.
-### Files
-- `internal/olt/poller/poller.go` — `rxPower`, `txPower`, `distance` di DoUpdates upsert kini pakai COALESCE
 
 <!-- AUTO-CHANGELOG:END -->
 
