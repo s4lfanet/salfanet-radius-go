@@ -19,10 +19,10 @@ const nasClientsFile = "/etc/freeradius/3.0/clients.d/nas-from-db.conf"
 const clientsConf = "/etc/freeradius/3.0/clients.conf"
 
 var (
-	syncMu          sync.Mutex
-	lastReloadAt    time.Time
-	reloadCooldown  = 3 * time.Second
-	shortnameSanRe  = regexp.MustCompile(`[^a-zA-Z0-9_\-]`)
+	syncMu         sync.Mutex
+	lastReloadAt   time.Time
+	reloadCooldown = 3 * time.Second
+	shortnameSanRe = regexp.MustCompile(`[^a-zA-Z0-9_\-]`)
 )
 
 type nasRow struct {

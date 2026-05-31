@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.1] — 2026-05-31
+### Fixed
+- **FreeRADIUS backup/restore/download/upload semua stub** — Semua 5 handler di `admin_misc_handler.go` hanya menyimpan ke DB atau return dummy response tanpa melakukan operasi nyata. Diimplementasi ulang sepenuhnya:
+  - `ListFreeradiusBackups` → scan filesystem `/var/www/salfanet-radius/backups/freeradius/*.tar.gz` + baca `/tmp/salfanet-fr-backup.log`
+  - `CreateFreeradiusBackup` → jalankan `scripts/backup-freeradius-local.sh` di background goroutine, log ke `/tmp/salfanet-fr-backup.log`
+  - `DownloadFreeradiusBackup` → `c.Download()` file langsung dari disk (bukan return URL JSON)
+  - `RestoreFreeradiusBackup` → extract tar.gz → copy ke `/etc/freeradius/3.0/` → fix ownership `freerad:freerad` → `systemctl restart freeradius`
+  - `UploadFreeradiusBackup` → `c.SaveFile()` ke backup dir → return `{savedAs: filename}` sesuai kontrak frontend
+- Script backup `scripts/backup-freeradius-local.sh` diperbaiki permission (sebelumnya `-rw-r--r--`, tidak executable)
+### Files
+- `internal/api/handlers/admin_misc_handler.go` — Implementasi penuh semua 5 FreeRADIUS backup handler
+
+---
+
 ## [2.53.0] — 2026-05-31
 ### Fixed
 - **FreeRADIUS tidak merespons RADIUS request dari MikroTik (`radius timeout`)** — Root cause: `systemctl reload-or-restart` (SIGHUP) tidak me-reload `clients.d` di FreeRADIUS 3.x; client list hanya terbaca saat full restart. Akibatnya meski `nas-from-db.conf` sudah berisi entry NAS yang benar, FreeRADIUS tetap menganggap MikroTik sebagai unknown client dan drop packet tanpa respons. Fix: ganti ke `systemctl restart freeradius` di `nas_sync.go`.
