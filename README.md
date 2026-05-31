@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.0 — 2026-06-01
+
+### Fixed
+- **Status RADIUS tetap "Pending" setelah sync** — `SyncProfilesRadius` melakukan sync ke `radgroupreply` tapi tidak meng-update field `syncedToRadius` di tabel `pppoe_profiles`. Fix: tambah `h.db.Model(&p).Update("syncedToRadius", true)` setelah setiap profil berhasil di-sync.
+
+### Files
+- `internal/api/handlers/pppoe_ext.go` — Update `syncedToRadius = true` setelah sync radius berhasil
+
 ### v2.53.9 — 2026-06-01
 
 ### Fixed
@@ -530,16 +538,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `src/app/api/customers/with-location/route.ts` — **NEW** Next.js API route handler dengan Prisma query dan `checkAuth()`
 - `internal/api/handlers/network_ext.go` — Fix response format `customers` → `data`, tambah `count`, support `?limit`
-
-### v2.53.5 — 2026-06-01
-
-### Fixed
-- **`GET /api/settings/isolation` 500** — Handler memanggil `db.First(&company)` dan return 500 saat tabel `companies` kosong. Sekarang `ErrRecordNotFound` ditangani: return `{success:true, data:{}}` (default kosong). `UpdateIsolationSettings` juga difix untuk tidak 500 saat tidak ada company.
-- **Menu Isolir (IsolatedUsers) format response salah** — Handler lama: field names salah (`profile`/`price`/`unpaidAmt`/`unpaidCnt` bukan `profileName`/`profilePrice`/`totalUnpaid`/`unpaidInvoicesCount`), tidak ada `success:true`, tidak ada `stats`, tidak ada field `email`, `customerId`, `isOnline`, `ipAddress`, `loginTime`, `nasIp`, `unpaidInvoices[]`. Handler ditulis ulang lengkap dengan JOIN radacct untuk status online dan batch query unpaid invoices.
-
-### Files
-- `internal/api/handlers/settings.go` — Fix `GetIsolationSettings` dan `UpdateIsolationSettings` handle `ErrRecordNotFound`
-- `internal/api/handlers/admin.go` — Rewrite `IsolatedUsers` handler dengan response format lengkap
 
 <!-- AUTO-CHANGELOG:END -->
 
