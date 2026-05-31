@@ -226,6 +226,9 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 
 	// ── Registered ONUs (regStatus=1 normal; regStatus=2 = SB mode, used by FiberHome ONUs) ───
 	for k, regVal := range merged.regStatus {
+		if k.PonIndex == 268501248 && k.OnuID == 1 {
+			log.Debug().Int64("regVal", regVal).Msg("zte: DEBUG ONU1 IN LOOP")
+		}
 		if regVal != 1 && regVal != 2 {
 			continue
 		}
