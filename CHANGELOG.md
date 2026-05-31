@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.7] — 2026-06-01
+### Fixed
+- **CSP violation — Leaflet CSS dari `cdnjs.cloudflare.com` diblokir** — `src/proxy.ts` (Next.js middleware) set `Content-Security-Policy` header tanpa `https://cdnjs.cloudflare.com` di `style-src` dan `font-src`. Halaman `/admin/network/map` dan `/admin/network/unified-map` menggunakan Leaflet CSS dari CDN tersebut sehingga stylesheet diblokir browser. Fix: tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di `proxy.ts`.
+
+### Files
+- `src/proxy.ts` — Tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di CSP header
+
+---
+
 ## [2.53.6] — 2026-06-01
 ### Fixed
 - **Error 401 pada Peta Jaringan — `GET /api/customers/with-location`** — Cloudflare (Flexible SSL) dapat memproses request ke Go backend tanpa meneruskan cookie `__Secure-next-auth.session-token` dengan benar, sehingga `CombinedAuthMiddleware` gagal validasi dan return 401. Fix: pindahkan route ke Next.js sebagai API route (`src/app/api/customers/with-location/route.ts`) menggunakan `getServerSession` (server-side, tidak bergantung pada cookie forwarding). Nginx perlu diupdate: tambahkan `location /api/customers/` → port 3000 sebelum catch-all `location /api/`.
