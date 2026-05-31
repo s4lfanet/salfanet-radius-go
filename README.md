@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.4 — 2026-06-01
+
+### Fixed
+- **Status RADIUS tetap "Pending" setelah sync** — Root cause: Go struct `PppoeProfile` tidak memiliki field `SyncedToRadius`, padahal kolom `syncedToRadius` ada di database (Prisma schema). Akibatnya `h.db.Model(&p).Update("syncedToRadius", true)` silently fail karena GORM tidak menemukan field di struct. Fix: tambah `SyncedToRadius bool \`gorm:"default:false;column:syncedToRadius"\`` ke struct + ganti update dengan `h.db.Exec("UPDATE pppoe_profiles SET syncedToRadius = 1 WHERE id = ?", p.ID)` agar pasti berhasil.
+
+### Files
+- `internal/db/models/models.go` — Tambah `SyncedToRadius` ke `PppoeProfile` struct
+- `internal/api/handlers/pppoe_ext.go` — Ganti `Model(&p).Update` dengan `Exec` langsung
+
 ### v2.54.3 — 2026-06-01
 
 ### Added / Fixed
@@ -525,16 +534,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/api/handlers/pppoe_ext.go` — Update `syncedToRadius = true` setelah sync radius berhasil
-
-### v2.53.9 — 2026-06-01
-
-### Fixed
-- **Hotspot profile Harga Jual selalu Rp 0** — Field `sellingPrice` tidak disertakan dalam request body saat create/update. Frontend hanya menghitung `sellingPrice` untuk tampilan form saja, tidak mengirimkannya ke API. Fix: tambah `sellingPrice: costPrice + resellerFee` ke body request.
-- **Sync PPPoE ke FreeRADIUS tidak berfungsi** — Tabel `radgroupreply` tidak memiliki UNIQUE constraint pada `(groupname, attribute)`, hanya index biasa. `ON DUPLICATE KEY UPDATE` tidak pernah trigger sehingga setiap sync insert baris baru (duplikat) tanpa update. Fix: ganti dengan `DELETE WHERE groupname+attribute` lalu `INSERT`. Sekaligus support sync per-profile (berdasarkan `id` dari body request).
-
-### Files
-- `src/app/admin/hotspot/profile/page.tsx` — Tambah `sellingPrice` ke body API
-- `internal/api/handlers/pppoe_ext.go` — Fix `SyncProfilesRadius`: DELETE+INSERT, support sync by `id`
 
 <!-- AUTO-CHANGELOG:END -->
 
