@@ -491,6 +491,19 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.8 — 2026-06-01
+
+### Fixed
+- **`toLocaleString` crash** — `deleteOverlay.count` bisa undefined saat hapus expired, crash dengan `TypeError: Cannot read properties of undefined`. Fix: tambah `?? 0` guard.
+- **Hapus voucher (selected) gagal** — Frontend kirim `voucherIds` tapi backend `DeleteMultiple` hanya baca `ids`. Fix: backend sekarang baca keduanya.
+- **`delete-expired` count undefined** — Backend return `deleted` tapi frontend baca `data.count`. Fix: frontend baca `data.deleted ?? data.count ?? 0`; backend juga tambah alias `count`.
+- **Pagination per-page tidak berubah** — `pageParams` di backend baca `pageSize` tapi frontend kirim `limit`. Fix: baca keduanya, cap dinaikkan ke 2000.
+
+### Files
+- `internal/api/handlers/helpers.go` — `pageParams` terima `limit` alias + cap 2000
+- `internal/api/handlers/hotspot_ext.go` — `DeleteMultiple` terima `voucherIds`; `DeleteExpired` tambah alias `count`
+- `src/app/admin/hotspot/voucher/page.tsx` — guard `toLocaleString`, baca `data.deleted` dari delete-expired
+
 ### v2.54.7 — 2026-06-01
 
 ### Fixed
@@ -523,14 +536,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/db/models/models.go` — Tambah `SyncedToRadius` ke `PppoeProfile` struct
 - `internal/api/handlers/pppoe_ext.go` — Ganti `Model(&p).Update` dengan `Exec` langsung
-
-### v2.54.3 — 2026-06-01
-
-### Added / Fixed
-- **Implementasi Sync PPPoE Profile ke MikroTik** — Handler `SyncProfilesMikrotik` sebelumnya selalu return 501 Not Implemented. Sekarang: connect ke setiap router via RouterOS API (port 8728, fallback 8729), buat/update IP pool (jika `poolRanges` diisi), buat/update PPP profile dengan `rate-limit`, `remote-address` (pool), `local-address`. Simpan `ipPoolName`, `ipPoolRange`, `localAddress`, `rateLimit` ke database. Return `savedProfile` agar frontend update state tanpa reload.
-
-### Files
-- `internal/api/handlers/pppoe_ext.go` — Implementasi penuh `SyncProfilesMikrotik`
 
 <!-- AUTO-CHANGELOG:END -->
 
