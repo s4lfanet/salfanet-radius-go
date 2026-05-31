@@ -96,7 +96,8 @@ export default function PPPoEProfilesPage() {
     try {
       const res = await fetch('/api/network/routers');
       const data = await res.json();
-      setRouters(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data.routers) ? data.routers : Array.isArray(data) ? data : [];
+      setRouters(list);
     } catch { setRouters([]); }
   };
 
@@ -277,7 +278,7 @@ export default function PPPoEProfilesPage() {
     try {
       const res = await fetch('/api/network/routers');
       const data = await res.json();
-      const freshRouters: RouterOption[] = Array.isArray(data) ? data : [];
+      const freshRouters: RouterOption[] = Array.isArray(data.routers) ? data.routers : Array.isArray(data) ? data : [];
       setRouters(freshRouters);
       setSelectedRouterIds(freshRouters.map(r => r.id));
     } catch {
