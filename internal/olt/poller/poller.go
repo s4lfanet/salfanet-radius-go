@@ -263,6 +263,9 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 	// Upsert registered ONUs with full column set.
 	// COALESCE ensures we never overwrite an existing description/serialNumber
 	// with NULL when the OLT didn't return one for that poll cycle.
+	// Same for optical data (rxPower, txPower, distance): if SNMP/Telnet
+	// returns null this cycle (OLT busy, timing, etc.), keep the last valid
+	// value so the UI never shows stale-then-blank flicker.
 	if len(registeredStatuses) > 0 {
 		if e := p.db.Clauses(clause.OnConflict{
 			Columns: []clause.Column{
@@ -272,9 +275,9 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 				"serialNumber": gorm.Expr("COALESCE(VALUES(serialNumber), serialNumber)"),
 				"description":  gorm.Expr("COALESCE(VALUES(description), description)"),
 				"status":       gorm.Expr("VALUES(status)"),
-				"rxPower":      gorm.Expr("VALUES(rxPower)"),
-				"txPower":      gorm.Expr("VALUES(txPower)"),
-				"distance":     gorm.Expr("VALUES(distance)"),
+				"rxPower":      gorm.Expr("COALESCE(VALUES(rxPower), rxPower)"),
+				"txPower":      gorm.Expr("COALESCE(VALUES(txPower), txPower)"),
+				"distance":     gorm.Expr("COALESCE(VALUES(distance), distance)"),
 				"lastSeenAt":   gorm.Expr("VALUES(lastSeenAt)"),
 				"updatedAt":    gorm.Expr("VALUES(updatedAt)"),
 			}),
