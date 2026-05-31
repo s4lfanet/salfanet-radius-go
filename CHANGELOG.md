@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.8] — 2026-06-01
+### Fixed
+- **`toLocaleString` crash** — `deleteOverlay.count` bisa undefined saat hapus expired, crash dengan `TypeError: Cannot read properties of undefined`. Fix: tambah `?? 0` guard.
+- **Hapus voucher (selected) gagal** — Frontend kirim `voucherIds` tapi backend `DeleteMultiple` hanya baca `ids`. Fix: backend sekarang baca keduanya.
+- **`delete-expired` count undefined** — Backend return `deleted` tapi frontend baca `data.count`. Fix: frontend baca `data.deleted ?? data.count ?? 0`; backend juga tambah alias `count`.
+- **Pagination per-page tidak berubah** — `pageParams` di backend baca `pageSize` tapi frontend kirim `limit`. Fix: baca keduanya, cap dinaikkan ke 2000.
+
+### Files
+- `internal/api/handlers/helpers.go` — `pageParams` terima `limit` alias + cap 2000
+- `internal/api/handlers/hotspot_ext.go` — `DeleteMultiple` terima `voucherIds`; `DeleteExpired` tambah alias `count`
+- `src/app/admin/hotspot/voucher/page.tsx` — guard `toLocaleString`, baca `data.deleted` dari delete-expired
+
+---
+
 ## [2.54.7] — 2026-06-01
 ### Fixed
 - **Generate voucher error Duplicate entry** — `generateVoucherCode` menggunakan rumus deterministik berbasis waktu (`t + i*31337`) sehingga mudah tabrakan dengan kode yang sudah ada. Fix: (1) ganti ke `crypto/rand` untuk randomness yang sesungguhnya, (2) fetch semua kode existing sebelum generate dan lakukan retry max 20x jika ada collision.
