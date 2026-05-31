@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.1 — 2026-06-01
+
+### Fixed
+- **Router list kosong di modal "Sync ke MikroTik"** — `GET /api/network/routers` mengembalikan `{ routers: [...], vpnClients: [...] }` tapi frontend PPPoE profiles melakukan `Array.isArray(data)` yang selalu false → `setRouters([])`. Fix: gunakan `data.routers` sebagai sumber list router.
+- **Status RADIUS tetap "Pending" saat profile belum pernah sync MikroTik** — `SyncProfilesRadius` hanya sync profil yang punya field `rateLimit` terisi (diisi saat sync MikroTik). Profil baru tanpa rateLimit selalu di-skip. Fix: bangun `rateLimit` otomatis dari `uploadSpeed`/`downloadSpeed` dalam format `{up}M/{down}M` jika `rateLimit` nil.
+
+### Files
+- `src/app/admin/pppoe/profiles/page.tsx` — `loadRouterList` & `handleSyncMikrotik`: parse `data.routers` bukan `data`
+- `internal/api/handlers/pppoe_ext.go` — `SyncProfilesRadius`: fallback build rateLimit dari speed fields
+
 ### v2.54.0 — 2026-06-01
 
 ### Fixed
@@ -528,16 +538,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `src/proxy.ts` — Tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di CSP header
-
-### v2.53.6 — 2026-06-01
-
-### Fixed
-- **Error 401 pada Peta Jaringan — `GET /api/customers/with-location`** — Cloudflare (Flexible SSL) dapat memproses request ke Go backend tanpa meneruskan cookie `__Secure-next-auth.session-token` dengan benar, sehingga `CombinedAuthMiddleware` gagal validasi dan return 401. Fix: pindahkan route ke Next.js sebagai API route (`src/app/api/customers/with-location/route.ts`) menggunakan `getServerSession` (server-side, tidak bergantung pada cookie forwarding). Nginx perlu diupdate: tambahkan `location /api/customers/` → port 3000 sebelum catch-all `location /api/`.
-- **Response format `GET /api/customers/with-location` salah (Go handler)** — Go handler mengembalikan `{success, customers:[]}` tapi frontend menggunakan `customersData.data`. Fix: response format diubah ke `{success: true, data: [...], count: N}`. Tambah juga support query param `?limit=` (default 2000, max 5000).
-
-### Files
-- `src/app/api/customers/with-location/route.ts` — **NEW** Next.js API route handler dengan Prisma query dan `checkAuth()`
-- `internal/api/handlers/network_ext.go` — Fix response format `customers` → `data`, tambah `count`, support `?limit`
 
 <!-- AUTO-CHANGELOG:END -->
 
