@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.3 — 2026-06-01
+
+### Added / Fixed
+- **Implementasi Sync PPPoE Profile ke MikroTik** — Handler `SyncProfilesMikrotik` sebelumnya selalu return 501 Not Implemented. Sekarang: connect ke setiap router via RouterOS API (port 8728, fallback 8729), buat/update IP pool (jika `poolRanges` diisi), buat/update PPP profile dengan `rate-limit`, `remote-address` (pool), `local-address`. Simpan `ipPoolName`, `ipPoolRange`, `localAddress`, `rateLimit` ke database. Return `savedProfile` agar frontend update state tanpa reload.
+
+### Files
+- `internal/api/handlers/pppoe_ext.go` — Implementasi penuh `SyncProfilesMikrotik`
+
 ### v2.54.2 — 2026-06-01
 
 ### Fixed
@@ -527,18 +535,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `src/app/admin/hotspot/profile/page.tsx` — Tambah `sellingPrice` ke body API
 - `internal/api/handlers/pppoe_ext.go` — Fix `SyncProfilesRadius`: DELETE+INSERT, support sync by `id`
-
-### v2.53.8 — 2026-06-01
-
-### Fixed
-- **PPPoE Paket Layanan tidak tampil setelah tambah** — `ListProfiles` Go handler mengembalikan array langsung (`[...]`) sedangkan frontend menggunakan `data.profiles || []`. Fix: bungkus response dalam `{profiles: [...]}` agar konsisten dengan HotspotHandler.
-- **Hotspot profile error 400 saat tambah** — Frontend mengirim `costPrice`, `resellerFee`, `sharedUsers`, `validityValue` sebagai string dari formData, tapi Go model ekspektasi `int`. Fix: parse dengan `parseInt()` sebelum dikirim.
-- **PPPoE & Hotspot profile edit (PUT) gagal** — URL PUT tidak menyertakan `:id` di path (`/api/pppoe/profiles` instead of `/api/pppoe/profiles/:id`). Fix: ubah URL dynamis ke `/api/pppoe/profiles/${id}` dan `/api/hotspot/profiles/${id}` saat edit.
-
-### Files
-- `internal/api/handlers/pppoe.go` — Wrap `ListProfiles` response dalam `fiber.Map{"profiles": profiles}`
-- `src/app/admin/hotspot/profile/page.tsx` — Parse costPrice, resellerFee, sharedUsers, validityValue ke int; fix PUT URL
-- `src/app/admin/pppoe/profiles/page.tsx` — Fix PUT URL menyertakan `/:id`
 
 <!-- AUTO-CHANGELOG:END -->
 
