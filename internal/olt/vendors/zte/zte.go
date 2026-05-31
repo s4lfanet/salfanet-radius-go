@@ -211,11 +211,16 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 
 	onuMap := make(map[IndexKey]*ONUInfo)
 
-	// DEBUG: log regStatus map contents for port 268501248 ONU 1
+	// DEBUG: log map contents for port 268501248 ONU 1
 	if v, ok := merged.regStatus[IndexKey{PonIndex: 268501248, OnuID: 1}]; ok {
-		log.Debug().Int64("regVal", v).Msg("zte: DEBUG merged.regStatus has ONU1/port268501248")
+		log.Debug().Int64("regVal", v).Msg("zte: DEBUG regStatus ONU1/268501248 FOUND")
 	} else {
-		log.Debug().Msg("zte: DEBUG merged.regStatus MISSING ONU1/port268501248")
+		log.Debug().Msg("zte: DEBUG regStatus ONU1/268501248 MISSING")
+	}
+	if v, ok := merged.rxPower[IndexKey{PonIndex: 268501248, OnuID: 1}]; ok {
+		log.Debug().Int64("rxRaw", v).Msg("zte: DEBUG rxPower ONU1/268501248 FOUND")
+	} else {
+		log.Debug().Msg("zte: DEBUG rxPower ONU1/268501248 MISSING")
 	}
 	log.Debug().Int("totalRegStatus", len(merged.regStatus)).Int("totalRxPower", len(merged.rxPower)).Msg("zte: DEBUG merged map sizes")
 
