@@ -5,37 +5,47 @@ import "time"
 // ─── Hotspot ──────────────────────────────────────────────────────────────────
 
 type HotspotProfile struct {
-	ID            string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Name          string    `gorm:"uniqueIndex;not null" json:"name"`
-	Price         int       `json:"price"`
-	Duration      int       `json:"duration"`                          // in minutes
-	DurationUnit  string    `gorm:"default:HOURS" json:"durationUnit"` // MINUTES/HOURS/DAYS
-	BandwidthDown int       `json:"bandwidthDown"`                     // Kbps
-	BandwidthUp   int       `json:"bandwidthUp"`                       // Kbps
-	SharedUser    bool      `gorm:"default:true" json:"sharedUser"`
-	IsActive      bool      `gorm:"default:true" json:"isActive"`
-	RouterID      *string   `gorm:"index" json:"routerId"`
-	Description   *string   `json:"description"`
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
+	ID             string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Name           string    `gorm:"uniqueIndex;not null" json:"name"`
+	CostPrice      int       `gorm:"column:costPrice;default:0" json:"costPrice"`
+	SellingPrice   int       `gorm:"column:sellingPrice;default:0" json:"sellingPrice"`
+	ResellerFee    int       `gorm:"column:resellerFee;default:0" json:"resellerFee"`
+	Speed          string    `gorm:"default:''" json:"speed"`
+	GroupProfile   *string   `gorm:"column:groupProfile" json:"groupProfile"`
+	SharedUsers    int       `gorm:"column:sharedUsers;default:1" json:"sharedUsers"`
+	ValidityValue  int       `gorm:"column:validityValue;default:1" json:"validityValue"`
+	ValidityUnit   string    `gorm:"column:validityUnit;default:HOURS" json:"validityUnit"` // MINUTES/HOURS/DAYS/MONTHS
+	UsageQuota     *int64    `gorm:"column:usageQuota" json:"usageQuota"`
+	UsageDuration  *int      `gorm:"column:usageDuration" json:"usageDuration"`
+	AgentAccess    bool      `gorm:"column:agentAccess;default:true" json:"agentAccess"`
+	EVoucherAccess bool      `gorm:"column:eVoucherAccess;default:true" json:"eVoucherAccess"`
+	IsActive       bool      `gorm:"default:true" json:"isActive"`
+	CreatedAt      time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	UpdatedAt      time.Time `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
 }
 
 func (HotspotProfile) TableName() string { return "hotspot_profiles" }
 
 type HotspotVoucher struct {
-	ID        string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Code      string     `gorm:"uniqueIndex;not null" json:"code"`
-	ProfileID string     `gorm:"index" json:"profileId"`
-	AgentID   *string    `gorm:"index" json:"agentId"`
-	BatchID   *string    `gorm:"index" json:"batchId"`
-	Status    string     `gorm:"default:UNUSED;index" json:"status"` // UNUSED/ACTIVE/EXPIRED/USED
-	UsedBy    *string    `json:"usedBy"`
-	UsedAt    *time.Time `json:"usedAt"`
-	ExpiresAt *time.Time `json:"expiresAt"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
+	ID           string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Code         string     `gorm:"uniqueIndex;not null" json:"code"`
+	Password     *string    `json:"password"`
+	ProfileID    string     `gorm:"index;column:profileId;type:varchar(191)" json:"profileId"`
+	RouterID     *string    `gorm:"index;column:routerId;type:varchar(191)" json:"routerId"`
+	AgentID      *string    `gorm:"index;column:agentId;type:varchar(191)" json:"agentId"`
+	BatchCode    *string    `gorm:"index;column:batchCode;type:varchar(191)" json:"batchCode"`
+	VoucherType  string     `gorm:"column:voucherType;default:same" json:"voucherType"`
+	CodeType     string     `gorm:"column:codeType;default:alphanumeric" json:"codeType"`
+	Status       string     `gorm:"default:WAITING;index" json:"status"` // WAITING/ACTIVE/EXPIRED/USED
+	ExpiresAt    *time.Time `gorm:"column:expiresAt" json:"expiresAt"`
+	FirstLoginAt *time.Time `gorm:"column:firstLoginAt" json:"firstLoginAt"`
+	LastUsedBy   *string    `gorm:"column:lastUsedBy" json:"lastUsedBy"`
+	OrderID      *string    `gorm:"column:orderId" json:"orderId"`
+	CreatedAt    time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	UpdatedAt    time.Time  `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
 
 	Profile *HotspotProfile `gorm:"foreignKey:ProfileID" json:"profile,omitempty"`
+	Agent   *Agent          `gorm:"foreignKey:AgentID" json:"agent,omitempty"`
 }
 
 func (HotspotVoucher) TableName() string { return "hotspot_vouchers" }
@@ -43,31 +53,35 @@ func (HotspotVoucher) TableName() string { return "hotspot_vouchers" }
 // ─── Agent ────────────────────────────────────────────────────────────────────
 
 type Agent struct {
-	ID         string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Name       string    `json:"name"`
-	Phone      string    `gorm:"uniqueIndex" json:"phone"`
-	Email      *string   `json:"email"`
-	Address    *string   `gorm:"type:text" json:"address"`
-	Balance    int       `gorm:"default:0" json:"balance"`
-	PIN        string    `json:"-"` // hashed
-	IsActive   bool      `gorm:"default:true" json:"isActive"`
-	Commission int       `gorm:"default:0" json:"commission"` // percentage
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	ID         string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Name       string     `json:"name"`
+	Phone      string     `gorm:"uniqueIndex" json:"phone"`
+	Email      *string    `json:"email"`
+	Address    *string    `gorm:"type:text" json:"address"`
+	Balance    int        `gorm:"default:0" json:"balance"`
+	MinBalance int        `gorm:"column:minBalance;default:0" json:"minBalance"`
+	RouterID   *string    `gorm:"column:routerId;index" json:"routerId"`
+	PIN        string     `json:"-"` // hashed
+	IsActive   bool       `gorm:"default:true" json:"isActive"`
+	LastLogin  *time.Time `gorm:"column:lastLogin" json:"lastLogin"`
+	CreatedAt  time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	UpdatedAt  time.Time  `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
 }
 
 func (Agent) TableName() string { return "agents" }
 
 type AgentSale struct {
-	ID         string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	AgentID    string    `gorm:"index" json:"agentId"`
-	VoucherID  string    `gorm:"index" json:"voucherId"`
-	Amount     int       `json:"amount"`
-	Commission int       `json:"commission"`
-	CreatedAt  time.Time `json:"createdAt"`
+	ID            string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	AgentID       string     `gorm:"index;column:agentId;type:varchar(191)" json:"agentId"`
+	VoucherCode   string     `gorm:"column:voucherCode" json:"voucherCode"`
+	ProfileName   string     `gorm:"column:profileName" json:"profileName"`
+	Amount        int        `json:"amount"`
+	PaymentStatus string     `gorm:"column:paymentStatus;default:UNPAID" json:"paymentStatus"`
+	PaymentDate   *time.Time `gorm:"column:paymentDate" json:"paymentDate"`
+	PaidAmount    int        `gorm:"column:paidAmount;default:0" json:"paidAmount"`
+	CreatedAt     time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
 
-	Agent   *Agent          `gorm:"foreignKey:AgentID" json:"agent,omitempty"`
-	Voucher *HotspotVoucher `gorm:"foreignKey:VoucherID" json:"voucher,omitempty"`
+	Agent *Agent `gorm:"foreignKey:AgentID" json:"agent,omitempty"`
 }
 
 func (AgentSale) TableName() string { return "agent_sales" }

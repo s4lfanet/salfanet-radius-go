@@ -348,7 +348,7 @@ func (s *Scheduler) jobAgentSalesRecording() {
 		if err := s.db.First(&agent, "id = ?", row.AgentID).Error; err != nil {
 			continue
 		}
-		commission := row.Amount * agent.Commission / 100
+		commission := 0 // commission field not in DB schema
 		err := s.db.Exec(`
 			INSERT IGNORE INTO agent_sales (id, agent_id, voucher_id, amount, commission, created_at)
 			SELECT ?, ?, NULL, ?, ?, NOW()

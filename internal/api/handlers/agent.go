@@ -182,9 +182,8 @@ func (h *AgentHandler) RecordSales(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	sale := models.AgentSale{
-		ID:        uuid.New().String(),
-		AgentID:   agentID,
-		VoucherID: body.VoucherID,
+		ID:      uuid.New().String(),
+		AgentID: agentID,
 	}
 	h.db.Create(&sale)
 	return c.JSON(fiber.Map{"success": true, "sale": sale})

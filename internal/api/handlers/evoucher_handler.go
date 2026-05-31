@@ -56,7 +56,7 @@ func (h *EvoucherHandler) Purchase(c fiber.Ctx) error {
 		Quantity:      body.Qty,
 		CustomerName:  body.CustomerName,
 		CustomerPhone: body.CustomerPhone,
-		TotalAmount:   profile.Price * body.Qty,
+		TotalAmount:   profile.SellingPrice * body.Qty,
 		Status:        "PENDING",
 		PaymentToken:  &paymentToken,
 		CreatedAt:     time.Now(),

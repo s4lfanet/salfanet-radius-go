@@ -603,20 +603,33 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// Hotspot extensions (singular /voucher for individual ops)
 	hotspot.Get("/voucher/export", hotspotExtH.Export)
+	hotspot.Get("/voucher/bulk", hotspotExtH.BulkGetOrExport) // GET ?type=template|export
 	hotspot.Post("/voucher/bulk", hotspotExtH.BulkGenerate)
 	hotspot.Post("/voucher/bulk-delete", hotspotExtH.BulkDelete)
 	hotspot.Post("/voucher/resync", hotspotExtH.Resync)
 	hotspot.Post("/voucher/send-whatsapp", hotspotExtH.SendWhatsapp)
 	hotspot.Delete("/voucher/delete-expired", hotspotExtH.DeleteExpired)
+	hotspot.Post("/voucher/delete-expired", hotspotExtH.DeleteExpired) // frontend uses POST
 	hotspot.Get("/vouchers/validate", hotspotExtH.ValidateVoucher)
 	hotspot.Post("/vouchers/validate", hotspotExtH.ValidateVoucher) // frontend sends POST
 	hotspot.Get("/voucher/:id", hotspotExtH.GetVoucher)
 	hotspot.Delete("/voucher/:id", hotspotExtH.DeleteVoucher)
+	hotspot.Get("/voucher", hotspotH.ListVouchers)      // GET /api/hotspot/voucher?... — list vouchers
+	hotspot.Post("/voucher", hotspotH.GenerateVouchers) // POST /api/hotspot/voucher
+	hotspot.Delete("/voucher", hotspotExtH.DeleteBatch) // DELETE /api/hotspot/voucher?batchCode=X
+	hotspot.Patch("/voucher", hotspotExtH.BulkEdit)     // PATCH /api/hotspot/voucher — bulk edit
 	hotspot.Get("/rekap-voucher/export", hotspotExtH.ExportRekap)
 	hotspot.Get("/rekap-voucher", hotspotExtH.RekapVoucher)
 	hotspot.Get("/agents/balance", hotspotExtH.AgentBalance)
+	hotspot.Post("/agents/balance", hotspotExtH.AdjustBalance) // POST balance adjust
 	hotspot.Get("/agents/:id/history", hotspotExtH.AgentHistory)
 	hotspot.Get("/agents", hotspotExtH.ListAgents)
+	hotspot.Post("/agents", hotspotExtH.CreateAgent)   // create agent
+	hotspot.Put("/agents", hotspotExtH.UpdateAgent)    // update agent (id in body)
+	hotspot.Delete("/agents", hotspotExtH.DeleteAgent) // delete agent ?id=X
+
+	// ─── Batch 12: Hotspot extras ─────────────────────────────────────────────
+	hotspot.Post("/voucher/delete-multiple", hotspotExtH.DeleteMultiple)
 
 	// Voucher Templates
 	api.Get("/voucher-templates", voucherTplH.List)
