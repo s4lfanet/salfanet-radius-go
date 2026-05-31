@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.95] — 2026-05-31
+### Added
+- **ONU detail: Traffic Profile dari PPPoE** — Karena ZTE C320 tidak mengekspos DBA/bandwidth profile via CLI, limit bandwidth sekarang diambil dari profil PPPoE customer yang terhubung. Menampilkan nama profil, download limit, dan upload limit (dalam Kbps/Mbps) di section "ONT Build Configuration".
+- **ONU detail: TR-069 / GenieACS status** — Section baru menampilkan apakah GenieACS sudah dikonfigurasi di sistem. Jika ya, tampilkan host dan username; jika tidak, tampilkan pesan panduan konfigurasi.
+- **ONU detail: preload Customer.Profile** — Backend sekarang melakukan `Preload("Customer.Profile")` sehingga data profil PPPoE (nama, kecepatan download/upload) tersedia di respons API.
+### Files
+- `internal/api/handlers/misc_handler.go` — Ganti `Preload("Customer")` ke `Preload("Customer.Profile")`, tambah GenieACS settings check, tambah `bandwidth` dan `tr069` ke respons
+- `src/app/admin/olt/[id]/page.tsx` — Tambah `bandwidth` dan `tr069` dari respons API, tambah "Traffic Profile (PPPoE Radius)" cards di ONT Build Config, tambah section "TR-069 / GenieACS"
+
 ## [2.52.94] — 2026-05-31
 ### Added
 - **ONU detail modal: traffic statistics realtime** — Tambah command `show interface gpon-onu_F/S/P:N` ke Telnet fetch. Downstream/upstream rate, bandwidth throughput %, peak rate, dan total bytes sekarang tampil di section "Traffic Statistics (Realtime)".
