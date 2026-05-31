@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.0] — 2026-06-01
+### Fixed
+- **Status RADIUS tetap "Pending" setelah sync** — `SyncProfilesRadius` melakukan sync ke `radgroupreply` tapi tidak meng-update field `syncedToRadius` di tabel `pppoe_profiles`. Fix: tambah `h.db.Model(&p).Update("syncedToRadius", true)` setelah setiap profil berhasil di-sync.
+
+### Files
+- `internal/api/handlers/pppoe_ext.go` — Update `syncedToRadius = true` setelah sync radius berhasil
+
+---
+
 ## [2.53.9] — 2026-06-01
 ### Fixed
 - **Hotspot profile Harga Jual selalu Rp 0** — Field `sellingPrice` tidak disertakan dalam request body saat create/update. Frontend hanya menghitung `sellingPrice` untuk tampilan form saja, tidak mengirimkannya ke API. Fix: tambah `sellingPrice: costPrice + resellerFee` ke body request.
