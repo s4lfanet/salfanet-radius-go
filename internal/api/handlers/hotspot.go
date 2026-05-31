@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -177,9 +179,28 @@ func (h *HotspotHandler) GenerateVouchers(c fiber.Ctx) error {
 		body.CodeType = "alphanumeric"
 	}
 
+	// Fetch existing codes to avoid duplicates
+	var existingCodes []string
+	h.db.Model(&models.HotspotVoucher{}).Pluck("code", &existingCodes)
+	existingSet := make(map[string]struct{}, len(existingCodes))
+	for _, c := range existingCodes {
+		existingSet[c] = struct{}{}
+	}
+
 	var created []models.HotspotVoucher
 	for i := 0; i < body.Quantity; i++ {
-		code := body.Prefix + generateVoucherCode(body.CodeLength)
+		var code string
+		for attempt := 0; attempt < 20; attempt++ {
+			candidate := body.Prefix + generateVoucherCode(body.CodeLength)
+			if _, dup := existingSet[candidate]; !dup {
+				code = candidate
+				existingSet[code] = struct{}{}
+				break
+			}
+		}
+		if code == "" {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "gagal generate kode unik setelah 20 percobaan, coba panjang kode lebih besar"})
+		}
 		v := models.HotspotVoucher{
 			ID:          uuid.New().String(),
 			Code:        code,
@@ -217,10 +238,14 @@ func (h *HotspotHandler) DeleteVoucher(c fiber.Ctx) error {
 func generateVoucherCode(length int) string {
 	const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 	code := make([]byte, length)
-	// Use time-based seed for determinism in single goroutine
-	t := time.Now().UnixNano()
 	for i := range code {
-		code[i] = chars[(t+int64(i)*31337)%int64(len(chars))]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(chars))))
+		if err != nil {
+			// fallback to time-based if crypto/rand fails
+			code[i] = chars[time.Now().UnixNano()%int64(len(chars))]
+		} else {
+			code[i] = chars[n.Int64()]
+		}
 	}
-	return fmt.Sprintf("%s", code)
+	return string(code)
 }
