@@ -92,6 +92,7 @@ type PppoeProfile struct {
 	PPNActive           bool      `gorm:"default:false;column:ppnActive" json:"ppnActive"`
 	PPNRate             int       `gorm:"default:11;column:ppnRate" json:"ppnRate"`
 	IsActive            bool      `gorm:"default:true;column:isActive" json:"isActive"`
+	SyncedToRadius      bool      `gorm:"default:false;column:syncedToRadius" json:"syncedToRadius"`
 	ValidityUnit        string    `gorm:"default:MONTHS;column:validityUnit" json:"validityUnit"`
 	ValidityValue       int       `gorm:"default:1;column:validityValue" json:"validityValue"`
 	SharedUser          bool      `gorm:"default:true;column:sharedUser" json:"sharedUser"`
