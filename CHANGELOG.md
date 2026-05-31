@@ -6,6 +6,19 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.8] — 2026-06-01
+### Fixed
+- **PPPoE Paket Layanan tidak tampil setelah tambah** — `ListProfiles` Go handler mengembalikan array langsung (`[...]`) sedangkan frontend menggunakan `data.profiles || []`. Fix: bungkus response dalam `{profiles: [...]}` agar konsisten dengan HotspotHandler.
+- **Hotspot profile error 400 saat tambah** — Frontend mengirim `costPrice`, `resellerFee`, `sharedUsers`, `validityValue` sebagai string dari formData, tapi Go model ekspektasi `int`. Fix: parse dengan `parseInt()` sebelum dikirim.
+- **PPPoE & Hotspot profile edit (PUT) gagal** — URL PUT tidak menyertakan `:id` di path (`/api/pppoe/profiles` instead of `/api/pppoe/profiles/:id`). Fix: ubah URL dynamis ke `/api/pppoe/profiles/${id}` dan `/api/hotspot/profiles/${id}` saat edit.
+
+### Files
+- `internal/api/handlers/pppoe.go` — Wrap `ListProfiles` response dalam `fiber.Map{"profiles": profiles}`
+- `src/app/admin/hotspot/profile/page.tsx` — Parse costPrice, resellerFee, sharedUsers, validityValue ke int; fix PUT URL
+- `src/app/admin/pppoe/profiles/page.tsx` — Fix PUT URL menyertakan `/:id`
+
+---
+
 ## [2.53.7] — 2026-06-01
 ### Fixed
 - **CSP violation — Leaflet CSS dari `cdnjs.cloudflare.com` diblokir** — `src/proxy.ts` (Next.js middleware) set `Content-Security-Policy` header tanpa `https://cdnjs.cloudflare.com` di `style-src` dan `font-src`. Halaman `/admin/network/map` dan `/admin/network/unified-map` menggunakan Leaflet CSS dari CDN tersebut sehingga stylesheet diblokir browser. Fix: tambah `https://cdnjs.cloudflare.com` ke `style-src` dan `font-src` di `proxy.ts`.

@@ -238,17 +238,17 @@ export default function HotspotProfilePage() {
         ? parseInt(formData.usageDuration)
         : null
 
-      const url = '/api/hotspot/profiles'
+      const url = editingProfile ? `/api/hotspot/profiles/${editingProfile.id}` : '/api/hotspot/profiles'
       const method = editingProfile ? 'PUT' : 'POST'
       const body = {
         ...(editingProfile ? { id: editingProfile.id } : {}),
         name: formData.name,
-        costPrice: formData.costPrice,
-        resellerFee: formData.resellerFee,
+        costPrice: parseInt(formData.costPrice) || 0,
+        resellerFee: parseInt(formData.resellerFee) || 0,
         speed: buildHotspotSpeed(),
         groupProfile: formData.groupProfile,
-        sharedUsers: formData.sharedUsers,
-        validityValue: formData.validityValue,
+        sharedUsers: parseInt(formData.sharedUsers) || 1,
+        validityValue: parseInt(formData.validityValue) || 1,
         validityUnit: formData.validityUnit,
         usageDurationUnit: formData.usageDurationUnit,
         agentAccess: formData.agentAccess,

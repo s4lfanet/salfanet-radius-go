@@ -154,6 +154,7 @@ export default function PPPoEProfilesPage() {
     setIsSaving(true);
     try {
       const method = editingProfile ? 'PUT' : 'POST';
+      const url = editingProfile ? `/api/pppoe/profiles/${editingProfile.id}` : '/api/pppoe/profiles';
       const generatedGroupName = formData.groupName.trim() || getAutoGroupName(formData.name);
       const rateLimit = buildRateLimit(formData, showBurst);
       const dlMbps = speedToMbps(formData.downloadSpeed, formData.speedUnit);
@@ -175,7 +176,7 @@ export default function PPPoEProfilesPage() {
         isActive: formData.isActive,
         ppnRate: formData.ppnActive ? (parseInt(formData.ppnRate) || 11) : null,
       };
-      const res = await fetch('/api/pppoe/profiles', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const result = await res.json();
       if (res.ok) {
         setIsDialogOpen(false); setEditingProfile(null); resetForm(); loadProfiles(); setFieldErrors({});

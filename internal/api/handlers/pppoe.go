@@ -67,7 +67,7 @@ func (h *PPPoEHandler) DeleteArea(c fiber.Ctx) error {
 func (h *PPPoEHandler) ListProfiles(c fiber.Ctx) error {
 	var profiles []models.PppoeProfile
 	h.db.Order("name").Find(&profiles)
-	return c.JSON(profiles)
+	return c.JSON(fiber.Map{"profiles": profiles})
 }
 
 func (h *PPPoEHandler) CreateProfile(c fiber.Ctx) error {
