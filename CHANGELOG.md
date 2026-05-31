@@ -6,6 +6,14 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.0] — 2026-05-31
+### Fixed
+- **FreeRADIUS tidak merespons RADIUS request dari MikroTik (`radius timeout`)** — Root cause: `systemctl reload-or-restart` (SIGHUP) tidak me-reload `clients.d` di FreeRADIUS 3.x; client list hanya terbaca saat full restart. Akibatnya meski `nas-from-db.conf` sudah berisi entry NAS yang benar, FreeRADIUS tetap menganggap MikroTik sebagai unknown client dan drop packet tanpa respons. Fix: ganti ke `systemctl restart freeradius` di `nas_sync.go`.
+### Files
+- `internal/radius/nas_sync.go` — `reload-or-restart` → `restart` agar clients.d selalu ter-load
+
+---
+
 ## [2.52.99] — 2026-05-31
 ### Fixed
 - **FreeRADIUS integration: NAS tidak ter-trigger ke `clients.d/nas-from-db.conf`** — Saat router/NAS ditambah via UI, handler Go `CreateRouter/UpdateRouter/DeleteRouter` hanya menulis ke DB tanpa men-sync ke file FreeRADIUS clients. File `nas-from-db.conf` di VPS kosong (hanya header), akibatnya MikroTik tidak dikenali sebagai client RADIUS sah → autentikasi PPPoE tidak bisa terjadi. Sync sebelumnya hanya ada di TypeScript service yang sudah tidak dipanggil.
