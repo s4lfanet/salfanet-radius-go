@@ -1682,6 +1682,17 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
   const customer = detail?.onu?.customer;
   const bandwidth = detail?.onu?.bandwidth;
   const tr069 = detail?.tr069;
+  const oltProfiles = detail?.oltProfiles ?? {};
+  const oltTcontProfiles: any[] = Array.isArray(oltProfiles.tcont) ? oltProfiles.tcont : [];
+  const oltTrafficProfiles: any[] = Array.isArray(oltProfiles.traffic) ? oltProfiles.traffic : [];
+  const buildScript: string = detail?.buildScript ?? '';
+  // Find the specific TCONT profile used by this ONU
+  const usedTcontName = Array.isArray(configSummary.tcontProfiles) && configSummary.tcontProfiles.length > 0
+    ? configSummary.tcontProfiles[0] : null;
+  const usedTcontProfile = usedTcontName
+    ? oltTcontProfiles.find((p: any) => p.name === usedTcontName) : null;
+  // Active non-default traffic (downstream) profiles
+  const activeTrafficProfiles = oltTrafficProfiles.filter((p: any) => p.name !== 'default');
   const detailItems = [
     ['Interface', detail?.telnet?.interface ?? `${onu.frame}/${onu.slot}/${onu.port}:${onu.onuId}`],
     ['Serial Number', parsed['Serial number'] ?? onu.serialNumber ?? 'N/A'],
@@ -1809,13 +1820,29 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                     <div className="text-[10px] uppercase tracking-wide text-gray-500">Service VLANs</div>
                     <div className="mt-1 font-medium text-gray-900 dark:text-white break-words">{serviceVlans}</div>
                   </div>
-                  <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
-                    <div className="text-[10px] uppercase tracking-wide text-gray-500">TCONT / Upstream Profiles</div>
-                    <div className="mt-1 font-medium text-gray-900 dark:text-white break-words">{tcontProfiles}</div>
+                  <div className="rounded-lg bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 p-3">
+                    <div className="text-[10px] uppercase tracking-wide text-orange-500">TCONT / DBA Profile (Upload)</div>
+                    <div className="mt-1 font-medium text-orange-900 dark:text-orange-200 font-mono">{tcontProfiles}</div>
+                    {usedTcontProfile && (
+                      <div className="mt-1 text-xs text-orange-600 dark:text-orange-400">
+                        Type {usedTcontProfile.bwType} — Max {usedTcontProfile.mbwKbps >= 1000 ? `${(usedTcontProfile.mbwKbps / 1000).toFixed(0)} Mbps` : `${usedTcontProfile.mbwKbps} Kbps`}
+                      </div>
+                    )}
                   </div>
-                  <div className="rounded-lg bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 p-3">
-                    <div className="text-[10px] uppercase tracking-wide text-gray-500">Downstream Profiles</div>
-                    <div className="mt-1 font-medium text-gray-900 dark:text-white break-words">{downstreamProfiles}</div>
+                  <div className="rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-3">
+                    <div className="text-[10px] uppercase tracking-wide text-blue-500">Traffic Profile (Download)</div>
+                    {activeTrafficProfiles.length > 0 ? (
+                      activeTrafficProfiles.map((p: any) => (
+                        <div key={p.name}>
+                          <div className="mt-1 font-medium text-blue-900 dark:text-blue-200 font-mono">{p.name}</div>
+                          <div className="mt-0.5 text-xs text-blue-600 dark:text-blue-400">
+                            SIR {p.sirKbps >= 1000 ? `${(p.sirKbps / 1000).toFixed(0)} Mbps` : `${p.sirKbps} Kbps`} / PIR {p.pirKbps >= 1000 ? `${(p.pirKbps / 1000).toFixed(0)} Mbps` : `${p.pirKbps} Kbps`}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="mt-1 font-medium text-gray-900 dark:text-white break-words">{downstreamProfiles}</div>
+                    )}
                   </div>
                 </div>
 
@@ -1998,6 +2025,14 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                   </div>
                 )}
               </div>
+
+              {/* Build Script */}
+              {buildScript && (
+                <div className="rounded-lg border border-gray-200 dark:border-gray-800 p-3">
+                  <div className="text-xs font-semibold text-gray-500 uppercase mb-2">Build Script (Reproducible Config)</div>
+                  <pre className="text-[11px] font-mono bg-gray-950 text-yellow-300 rounded-lg p-3 overflow-auto max-h-96 whitespace-pre">{buildScript}</pre>
+                </div>
+              )}
 
               {/* Raw Telnet Output */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">

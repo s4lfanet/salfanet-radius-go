@@ -613,6 +613,11 @@ func (h *OLTHandler) GetRegisterMetadata(c fiber.Ctx) error {
 		log.Warn().Err(err).Str("olt", oltID).Msg("failed to fetch TCONT profiles")
 	}
 
+	trafficProfiles, err := zte.GetTrafficProfiles(pool)
+	if err != nil {
+		log.Warn().Err(err).Str("olt", oltID).Msg("failed to fetch traffic profiles")
+	}
+
 	typeNames := make([]string, len(onuTypes))
 	for i, t := range onuTypes {
 		typeNames[i] = t.Name
@@ -623,9 +628,15 @@ func (h *OLTHandler) GetRegisterMetadata(c fiber.Ctx) error {
 		profileNames[i] = p.Name
 	}
 
+	trafficProfileNames := make([]string, len(trafficProfiles))
+	for i, p := range trafficProfiles {
+		trafficProfileNames[i] = p.Name
+	}
+
 	return c.JSON(fiber.Map{
-		"onuTypes":      typeNames,
-		"tcontProfiles": profileNames,
+		"onuTypes":        typeNames,
+		"tcontProfiles":   profileNames,
+		"trafficProfiles": trafficProfileNames,
 	})
 }
 

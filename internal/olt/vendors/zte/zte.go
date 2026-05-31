@@ -718,14 +718,25 @@ func parseONUTypes(output string) []ONUType {
 
 // ─── TCONT Profiles ──────────────────────────────────────────────────────────
 
-// TcontProfile holds a bandwidth profile name.
+// TcontProfile holds a DBA/TCONT profile name and bandwidth info.
 type TcontProfile struct {
-	Name string
+	Name   string
+	BwType int
+	FBW    int
+	ABW    int
+	MBW    int
 }
 
-// GetTcontProfiles fetches available TCONT profiles.
+// TrafficProfile holds a downstream traffic profile name and rate info.
+type TrafficProfile struct {
+	Name string
+	SIR  int
+	PIR  int
+}
+
+// GetTcontProfiles fetches available TCONT/DBA profiles via "show gpon profile tcont".
 func GetTcontProfiles(pool *telnet.Pool) ([]TcontProfile, error) {
-	output, err := pool.Execute("show gpon traffic-profile")
+	output, err := pool.Execute("show gpon profile tcont")
 	if err != nil {
 		return nil, err
 	}
@@ -734,22 +745,103 @@ func GetTcontProfiles(pool *telnet.Pool) ([]TcontProfile, error) {
 
 func parseTcontProfiles(output string) []TcontProfile {
 	var profiles []TcontProfile
-	seen := make(map[string]bool)
+	var current *TcontProfile
+	dataExpected := false
+
 	for _, line := range strings.Split(output, "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "-") || strings.HasPrefix(line, "Profile") {
+		line = strings.TrimRight(line, "\r")
+		trimmed := strings.TrimSpace(line)
+
+		if strings.Contains(trimmed, "Profile name") {
+			if current != nil {
+				profiles = append(profiles, *current)
+			}
+			if idx := strings.LastIndex(trimmed, ":"); idx >= 0 {
+				name := strings.TrimSpace(trimmed[idx+1:])
+				current = &TcontProfile{Name: name}
+				dataExpected = false
+			}
 			continue
 		}
-		fields := strings.Fields(line)
-		if len(fields) == 0 {
+		if strings.Contains(trimmed, "FBW") || strings.Contains(trimmed, "ABW") {
+			dataExpected = true
 			continue
 		}
-		name := fields[0]
-		if seen[name] {
+		if trimmed == "" || strings.HasPrefix(trimmed, "ZXAN") {
 			continue
 		}
-		seen[name] = true
-		profiles = append(profiles, TcontProfile{Name: name})
+		if dataExpected && current != nil {
+			fields := strings.Fields(trimmed)
+			if len(fields) >= 4 {
+				t, _ := strconv.Atoi(fields[0])
+				fbw, _ := strconv.Atoi(fields[1])
+				abw, _ := strconv.Atoi(fields[2])
+				mbw, _ := strconv.Atoi(fields[3])
+				current.BwType = t
+				current.FBW = fbw
+				current.ABW = abw
+				current.MBW = mbw
+				dataExpected = false
+			}
+		}
+	}
+	if current != nil {
+		profiles = append(profiles, *current)
+	}
+	return profiles
+}
+
+// GetTrafficProfiles fetches available downstream traffic profiles via "show gpon profile traffic".
+func GetTrafficProfiles(pool *telnet.Pool) ([]TrafficProfile, error) {
+	output, err := pool.Execute("show gpon profile traffic")
+	if err != nil {
+		return nil, err
+	}
+	return parseTrafficProfiles(output), nil
+}
+
+func parseTrafficProfiles(output string) []TrafficProfile {
+	var profiles []TrafficProfile
+	var current *TrafficProfile
+	awaitData := false
+
+	for _, line := range strings.Split(output, "\n") {
+		line = strings.TrimRight(line, "\r")
+		trimmed := strings.TrimSpace(line)
+
+		if strings.Contains(trimmed, "Profile name") {
+			if current != nil {
+				profiles = append(profiles, *current)
+			}
+			if idx := strings.LastIndex(trimmed, ":"); idx >= 0 {
+				name := strings.TrimSpace(trimmed[idx+1:])
+				current = &TrafficProfile{Name: name}
+				awaitData = false
+			}
+			continue
+		}
+		if strings.Contains(trimmed, "SIR") || strings.Contains(trimmed, "PIR") {
+			awaitData = true
+			continue
+		}
+		if trimmed == "" || strings.HasPrefix(trimmed, "ZXAN") {
+			continue
+		}
+		if awaitData && current != nil && current.SIR == 0 {
+			fields := strings.Fields(trimmed)
+			if len(fields) >= 2 {
+				sir, e1 := strconv.Atoi(fields[0])
+				pir, e2 := strconv.Atoi(fields[1])
+				if e1 == nil && e2 == nil {
+					current.SIR = sir
+					current.PIR = pir
+					awaitData = false
+				}
+			}
+		}
+	}
+	if current != nil {
+		profiles = append(profiles, *current)
 	}
 	return profiles
 }

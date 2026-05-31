@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1526,6 +1527,7 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	}
 
 	iface := fmt.Sprintf("gpon-onu_%d/%d/%d:%d", onuStatus.Frame, onuStatus.Slot, onuStatus.Port, onuStatus.OnuID)
+	oltIface := fmt.Sprintf("gpon-olt_%d/%d/%d", onuStatus.Frame, onuStatus.Slot, onuStatus.Port)
 
 	type detailResult struct {
 		Raw     string                 `json:"raw"`
@@ -1552,6 +1554,10 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	opticalInfo := opticalResult{}
 	trafficInfo := trafficResult{Summary: map[string]interface{}{}}
 
+	var tcontProfileDetails []GponTcontProfile
+	var trafficProfileDetails []GponTrafficProfile
+	var regOnuType, regSerial string
+
 	if (olt.TelnetEnabled || olt.SSHEnabled) && olt.Username != nil && olt.Password != nil {
 		// Reuse the poller's persistent Telnet pool if available; otherwise create a temporary one.
 		var pool *telnet.Pool
@@ -1571,7 +1577,7 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 			defer pool.Close()
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 		defer cancel()
 		_ = ctx // telnet pool uses its own CommandTimeout; context reserved for future use
 
@@ -1579,6 +1585,9 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 			"show gpon onu detail-info " + iface,
 			"show running-config interface " + iface,
 			"show interface " + iface,
+			"show gpon profile tcont",
+			"show gpon profile traffic",
+			"show running-config interface " + oltIface,
 		})
 		if err == nil {
 			parts := splitAtPrompt(out)
@@ -1593,6 +1602,15 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 			if len(parts) >= 3 {
 				trafficInfo.Raw = strings.TrimSpace(parts[2])
 				trafficInfo.Summary = onuParseInterfaceStats(parts[2])
+			}
+			if len(parts) >= 4 {
+				tcontProfileDetails = parseGponTcontProfiles(parts[3])
+			}
+			if len(parts) >= 5 {
+				trafficProfileDetails = parseGponTrafficProfiles(parts[4])
+			}
+			if len(parts) >= 6 {
+				regOnuType, regSerial = parseOltRegistrationLine(parts[5], onuStatus.OnuID)
 			}
 		}
 	}
@@ -1620,6 +1638,8 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 		}
 	}
 
+	buildScript := generateONUBuildScript(iface, oltIface, onuStatus.OnuID, regOnuType, regSerial, configInfo.Raw, &gnSettings)
+
 	return c.JSON(fiber.Map{
 		"success": true,
 		"telnet": fiber.Map{
@@ -1635,6 +1655,11 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 			"bandwidth": bandwidthInfo,
 		},
 		"tr069": tr069Info,
+		"oltProfiles": fiber.Map{
+			"tcont":   tcontProfileDetails,
+			"traffic": trafficProfileDetails,
+		},
+		"buildScript": buildScript,
 	})
 }
 
@@ -1965,6 +1990,253 @@ func contains(slice []string, s string) bool {
 		}
 	}
 	return false
+}
+
+// ─── GPON Profile Types ───────────────────────────────────────────────────────
+
+// GponTcontProfile holds DBA/TCONT profile info from "show gpon profile tcont".
+type GponTcontProfile struct {
+	Name   string `json:"name"`
+	BwType int    `json:"bwType"`
+	FBW    int    `json:"fbwKbps"`
+	ABW    int    `json:"abwKbps"`
+	MBW    int    `json:"mbwKbps"`
+}
+
+// GponTrafficProfile holds downstream traffic profile info from "show gpon profile traffic".
+type GponTrafficProfile struct {
+	Name string `json:"name"`
+	SIR  int    `json:"sirKbps"`
+	PIR  int    `json:"pirKbps"`
+}
+
+// parseGponTcontProfiles parses "show gpon profile tcont" output into a list of profiles.
+func parseGponTcontProfiles(raw string) []GponTcontProfile {
+	var profiles []GponTcontProfile
+	var current *GponTcontProfile
+	dataExpected := false
+
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimRight(line, "\r")
+		trimmed := strings.TrimSpace(line)
+
+		if strings.Contains(trimmed, "Profile name") {
+			if current != nil {
+				profiles = append(profiles, *current)
+			}
+			if idx := strings.LastIndex(trimmed, ":"); idx >= 0 {
+				name := strings.TrimSpace(trimmed[idx+1:])
+				current = &GponTcontProfile{Name: name}
+				dataExpected = false
+			}
+			continue
+		}
+		if strings.Contains(trimmed, "FBW") || strings.Contains(trimmed, "ABW") {
+			dataExpected = true
+			continue
+		}
+		if trimmed == "" || strings.HasPrefix(trimmed, "ZXAN") || strings.HasPrefix(trimmed, "show") {
+			continue
+		}
+		if dataExpected && current != nil {
+			fields := strings.Fields(trimmed)
+			if len(fields) >= 4 {
+				t, _ := strconv.Atoi(fields[0])
+				fbw, _ := strconv.Atoi(fields[1])
+				abw, _ := strconv.Atoi(fields[2])
+				mbw, _ := strconv.Atoi(fields[3])
+				current.BwType = t
+				current.FBW = fbw
+				current.ABW = abw
+				current.MBW = mbw
+				dataExpected = false
+			}
+		}
+	}
+	if current != nil {
+		profiles = append(profiles, *current)
+	}
+	return profiles
+}
+
+// parseGponTrafficProfiles parses "show gpon profile traffic" output into a list of profiles.
+func parseGponTrafficProfiles(raw string) []GponTrafficProfile {
+	var profiles []GponTrafficProfile
+	var current *GponTrafficProfile
+	awaitData := false
+
+	for _, line := range strings.Split(raw, "\n") {
+		line = strings.TrimRight(line, "\r")
+		trimmed := strings.TrimSpace(line)
+
+		if strings.Contains(trimmed, "Profile name") {
+			if current != nil {
+				profiles = append(profiles, *current)
+			}
+			if idx := strings.LastIndex(trimmed, ":"); idx >= 0 {
+				name := strings.TrimSpace(trimmed[idx+1:])
+				current = &GponTrafficProfile{Name: name}
+				awaitData = false
+			}
+			continue
+		}
+		if strings.Contains(trimmed, "SIR") || strings.Contains(trimmed, "PIR") {
+			awaitData = true
+			continue
+		}
+		if trimmed == "" || strings.HasPrefix(trimmed, "ZXAN") || strings.HasPrefix(trimmed, "show") {
+			continue
+		}
+		if awaitData && current != nil && current.SIR == 0 {
+			fields := strings.Fields(trimmed)
+			if len(fields) >= 2 {
+				sir, err1 := strconv.Atoi(fields[0])
+				pir, err2 := strconv.Atoi(fields[1])
+				if err1 == nil && err2 == nil {
+					current.SIR = sir
+					current.PIR = pir
+					awaitData = false
+				}
+			}
+		}
+	}
+	if current != nil {
+		profiles = append(profiles, *current)
+	}
+	return profiles
+}
+
+// parseOltRegistrationLine extracts the ONU type and serial number from
+// "show running-config interface gpon-olt_F/S/P" output for a given onuId.
+func parseOltRegistrationLine(raw string, onuId int) (onuType, serialNumber string) {
+	prefix := fmt.Sprintf("onu %d ", onuId)
+	for _, line := range strings.Split(raw, "\n") {
+		trimmed := strings.TrimSpace(strings.TrimRight(line, "\r"))
+		if strings.HasPrefix(trimmed, prefix) {
+			fields := strings.Fields(trimmed)
+			for i, f := range fields {
+				if f == "type" && i+1 < len(fields) {
+					onuType = fields[i+1]
+				}
+				if f == "sn" && i+1 < len(fields) {
+					serialNumber = fields[i+1]
+				}
+			}
+			return
+		}
+	}
+	return
+}
+
+// generateONUBuildScript generates a complete ZTE CLI build script for the ONU
+// based on its running-config and global profile data.
+func generateONUBuildScript(onuIface, oltIface string, onuId int, onuType, serialNumber, configRaw string, gnSettings *models.GenieacsSettings) string {
+	var sb strings.Builder
+
+	// Parse config lines from raw interface running-config
+	var onuName, description string
+	var tcontLines, gemportLines, servicePortLines []string
+
+	for _, line := range strings.Split(configRaw, "\n") {
+		trimmed := strings.TrimSpace(strings.TrimRight(line, "\r"))
+		if trimmed == "" || strings.HasPrefix(trimmed, "!") ||
+			strings.HasPrefix(trimmed, "interface") ||
+			strings.HasPrefix(trimmed, "ZXAN") ||
+			strings.HasPrefix(trimmed, "show") {
+			continue
+		}
+		switch {
+		case strings.HasPrefix(trimmed, "name "):
+			onuName = strings.TrimPrefix(trimmed, "name ")
+		case strings.HasPrefix(trimmed, "description "):
+			description = strings.TrimPrefix(trimmed, "description ")
+		case strings.HasPrefix(trimmed, "tcont"):
+			tcontLines = append(tcontLines, trimmed)
+		case strings.HasPrefix(trimmed, "gemport"):
+			gemportLines = append(gemportLines, trimmed)
+		case strings.HasPrefix(trimmed, "service-port"):
+			servicePortLines = append(servicePortLines, trimmed)
+		}
+	}
+
+	// Step 1: OLT registration
+	sb.WriteString("! === Step 1: Registrasi ONU di OLT ===\n")
+	sb.WriteString("conf t\n")
+	sb.WriteString("interface " + oltIface + "\n")
+	if onuType != "" && serialNumber != "" {
+		sb.WriteString(fmt.Sprintf("  onu %d type %s sn %s\n", onuId, onuType, serialNumber))
+	} else {
+		sb.WriteString(fmt.Sprintf("  ! onu %d type <type> sn <serial-number>\n", onuId))
+	}
+	sb.WriteString("exit\n!\n")
+
+	// Step 2: ONU interface config
+	sb.WriteString("! === Step 2: Konfigurasi Interface ONU ===\n")
+	sb.WriteString("conf t\n")
+	sb.WriteString("interface " + onuIface + "\n")
+	if onuName != "" {
+		sb.WriteString("  name " + onuName + "\n")
+	}
+	if description != "" {
+		sb.WriteString("  description " + description + "\n")
+	}
+	for _, l := range tcontLines {
+		sb.WriteString("  " + l + "\n")
+	}
+	for _, l := range gemportLines {
+		sb.WriteString("  " + l + "\n")
+	}
+	for _, l := range servicePortLines {
+		sb.WriteString("  " + l + "\n")
+	}
+	sb.WriteString("exit\n!\n")
+
+	// Step 3: pon-onu-mng (OMCI management)
+	sb.WriteString("! === Step 3: OMCI Management (pon-onu-mng) ===\n")
+	sb.WriteString("pon-onu-mng " + onuIface + "\n")
+
+	// Generate service-to-gemport mappings from service-port lines
+	// "service-port N vport M user-vlan X vlan Y" → "service N gemport N vlan X"
+	for _, sp := range servicePortLines {
+		fields := strings.Fields(sp)
+		if len(fields) < 2 {
+			continue
+		}
+		spNum := fields[1]
+		userVlan := ""
+		for i, f := range fields {
+			if f == "user-vlan" && i+1 < len(fields) {
+				userVlan = fields[i+1]
+				break
+			}
+		}
+		if userVlan != "" {
+			sb.WriteString(fmt.Sprintf("  service %s gemport %s vlan %s\n", spNum, spNum, userVlan))
+		}
+	}
+
+	// TR-069 management section
+	if gnSettings != nil && gnSettings.IsActive && gnSettings.Host != "" {
+		acsURL := strings.TrimRight(gnSettings.Host, "/")
+		// GenieACS CWMP port is 7547 by default
+		if !strings.Contains(acsURL, ":7547") && !strings.Contains(acsURL, ":") {
+			acsURL = acsURL + ":7547"
+		} else if idx := strings.LastIndex(acsURL, ":"); idx > 8 {
+			// already has a port after the scheme
+		} else {
+			acsURL = acsURL + ":7547"
+		}
+		sb.WriteString("  tr069-mgmt 1 state unlock\n")
+		sb.WriteString(fmt.Sprintf("  tr069-mgmt 1 acs %s validate basic username acs password acs\n", acsURL))
+	} else {
+		sb.WriteString("  ! tr069-mgmt 1 state unlock\n")
+		sb.WriteString("  ! tr069-mgmt 1 acs <ACS_URL>:7547 validate basic username acs password acs\n")
+	}
+	sb.WriteString("exit\n!\n")
+	sb.WriteString("end\n")
+	sb.WriteString("write\n")
+
+	return sb.String()
 }
 
 // ─── Batch 13 additions ───────────────────────────────────────────────────────
