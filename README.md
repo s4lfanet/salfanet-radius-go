@@ -491,6 +491,19 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.53.1 — 2026-05-31
+
+### Fixed
+- **FreeRADIUS backup/restore/download/upload semua stub** — Semua 5 handler di `admin_misc_handler.go` hanya menyimpan ke DB atau return dummy response tanpa melakukan operasi nyata. Diimplementasi ulang sepenuhnya:
+  - `ListFreeradiusBackups` → scan filesystem `/var/www/salfanet-radius/backups/freeradius/*.tar.gz` + baca `/tmp/salfanet-fr-backup.log`
+  - `CreateFreeradiusBackup` → jalankan `scripts/backup-freeradius-local.sh` di background goroutine, log ke `/tmp/salfanet-fr-backup.log`
+  - `DownloadFreeradiusBackup` → `c.Download()` file langsung dari disk (bukan return URL JSON)
+  - `RestoreFreeradiusBackup` → extract tar.gz → copy ke `/etc/freeradius/3.0/` → fix ownership `freerad:freerad` → `systemctl restart freeradius`
+  - `UploadFreeradiusBackup` → `c.SaveFile()` ke backup dir → return `{savedAs: filename}` sesuai kontrak frontend
+- Script backup `scripts/backup-freeradius-local.sh` diperbaiki permission (sebelumnya `-rw-r--r--`, tidak executable)
+### Files
+- `internal/api/handlers/admin_misc_handler.go` — Implementasi penuh semua 5 FreeRADIUS backup handler
+
 ### v2.53.0 — 2026-05-31
 
 ### Fixed
@@ -540,22 +553,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - **ONUDetail: telnet pool race condition → ONU count naik 55→66, banyak offline** — Handler `ONUDetail` sebelumnya memakai shared telnet pool milik poller (`h.poller.GetPool`). Pool `acquire()` tidak menahan lock per-batch, sehingga dua goroutine bisa mendapat sesi yang sama dan command saling interleave. Akibatnya `FetchTelnetONUStates` mendapat output kacau → override state gagal → SNMP state yang lag dipakai → ONU tampil offline; sesi telnet crash di tengah poll → ghost ONU cleanup salah menandai ONU sebagai offline dan jumlah ONU melonjak. Solusi: ONUDetail **selalu membuat private telnet pool** (bukan reuse shared pool), agar poller tidak terganggu.
 ### Files
 - `internal/api/handlers/misc_handler.go` — Ganti `h.poller.GetPool(oltID)` + conditional `ownPool` menjadi selalu `telnet.NewPool(tcfg)` + `defer pool.Close()`
-
-### v2.52.96 — 2026-06-01
-
-### Added
-- **ONU detail: TCONT/DBA profile bandwidth** — Panel "TCONT / DBA Profile (Upload)" kini menampilkan bandwidth type dan max bandwidth (Mbps) dari profil DBA yang digunakan ONU, diambil via `show gpon profile tcont`.
-- **ONU detail: Traffic Profile (Download) nama + bandwidth** — Panel "Traffic Profile (Download)" menampilkan nama profil (misal DOWN-PPPOE) beserta SIR/PIR dalam Mbps, diambil via `show gpon profile traffic`. Sebelumnya selalu tampil "(dari TCONT)".
-- **ONU detail: Build Script lengkap** — Section baru "Build Script (Reproducible Config)" menampilkan skrip CLI ZTE lengkap 3 step: Step 1 registrasi ONU di OLT port, Step 2 konfigurasi interface ONU (tcont/gemport/service-port), Step 3 pon-onu-mng OMCI (service-gemport-vlan + TR-069 jika GenieACS aktif).
-- **GetTrafficProfiles** — Fungsi baru di zte.go untuk mengambil daftar downstream traffic profile dari OLT.
-- **GetRegisterMetadata: trafficProfiles** — API `/api/olt/:id/register-metadata` sekarang juga mengembalikan `trafficProfiles[]` untuk keperluan form registrasi.
-### Fixed
-- **GetTcontProfiles command invalid** — Sebelumnya menggunakan `show gpon traffic-profile` (tidak valid di ZTE C320 V2.1), diganti ke `show gpon profile tcont` yang benar.
-### Files
-- `internal/api/handlers/misc_handler.go` — Tambah `oltIface`, 3 command baru ke `ExecuteMultiple`, tipe `GponTcontProfile`/`GponTrafficProfile`, fungsi `parseGponTcontProfiles`, `parseGponTrafficProfiles`, `parseOltRegistrationLine`, `generateONUBuildScript`; update response `oltProfiles` dan `buildScript`
-- `internal/olt/vendors/zte/zte.go` — Perbaiki `GetTcontProfiles` + `parseTcontProfiles`, tambah `TrafficProfile` type + `GetTrafficProfiles` + `parseTrafficProfiles`
-- `internal/api/handlers/olt.go` — Tambah `GetTrafficProfiles` call dan `trafficProfiles` ke response metadata
-- `src/app/admin/olt/[id]/page.tsx` — Tambah `oltProfiles`, `buildScript`, `usedTcontProfile`, `activeTrafficProfiles`; update card TCONT + Traffic Profile; tambah section Build Script
 
 <!-- AUTO-CHANGELOG:END -->
 
