@@ -174,12 +174,14 @@ func SyncNASClients(db *gorm.DB) error {
 	}
 	lastReloadAt = time.Now()
 
-	out, err := exec.Command("systemctl", "reload-or-restart", "freeradius").CombinedOutput()
+	// Must use restart (not reload/SIGHUP) because FreeRADIUS 3.x does not
+	// re-read the clients.d directory on SIGHUP — only on full restart.
+	out, err := exec.Command("systemctl", "restart", "freeradius").CombinedOutput()
 	if err != nil {
-		log.Error().Err(err).Str("out", string(out)).Msg("freeradius: reload failed")
-		return fmt.Errorf("reload freeradius: %w (%s)", err, strings.TrimSpace(string(out)))
+		log.Error().Err(err).Str("out", string(out)).Msg("freeradius: restart failed")
+		return fmt.Errorf("restart freeradius: %w (%s)", err, strings.TrimSpace(string(out)))
 	}
-	log.Info().Int("nas", len(rows)).Int("vpn_gw", len(gateways)).Msg("freeradius: nas-from-db.conf updated and service reloaded")
+	log.Info().Int("nas", len(rows)).Int("vpn_gw", len(gateways)).Msg("freeradius: nas-from-db.conf updated and service restarted")
 	return nil
 }
 
