@@ -6,6 +6,21 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.96] — 2026-06-01
+### Added
+- **ONU detail: TCONT/DBA profile bandwidth** — Panel "TCONT / DBA Profile (Upload)" kini menampilkan bandwidth type dan max bandwidth (Mbps) dari profil DBA yang digunakan ONU, diambil via `show gpon profile tcont`.
+- **ONU detail: Traffic Profile (Download) nama + bandwidth** — Panel "Traffic Profile (Download)" menampilkan nama profil (misal DOWN-PPPOE) beserta SIR/PIR dalam Mbps, diambil via `show gpon profile traffic`. Sebelumnya selalu tampil "(dari TCONT)".
+- **ONU detail: Build Script lengkap** — Section baru "Build Script (Reproducible Config)" menampilkan skrip CLI ZTE lengkap 3 step: Step 1 registrasi ONU di OLT port, Step 2 konfigurasi interface ONU (tcont/gemport/service-port), Step 3 pon-onu-mng OMCI (service-gemport-vlan + TR-069 jika GenieACS aktif).
+- **GetTrafficProfiles** — Fungsi baru di zte.go untuk mengambil daftar downstream traffic profile dari OLT.
+- **GetRegisterMetadata: trafficProfiles** — API `/api/olt/:id/register-metadata` sekarang juga mengembalikan `trafficProfiles[]` untuk keperluan form registrasi.
+### Fixed
+- **GetTcontProfiles command invalid** — Sebelumnya menggunakan `show gpon traffic-profile` (tidak valid di ZTE C320 V2.1), diganti ke `show gpon profile tcont` yang benar.
+### Files
+- `internal/api/handlers/misc_handler.go` — Tambah `oltIface`, 3 command baru ke `ExecuteMultiple`, tipe `GponTcontProfile`/`GponTrafficProfile`, fungsi `parseGponTcontProfiles`, `parseGponTrafficProfiles`, `parseOltRegistrationLine`, `generateONUBuildScript`; update response `oltProfiles` dan `buildScript`
+- `internal/olt/vendors/zte/zte.go` — Perbaiki `GetTcontProfiles` + `parseTcontProfiles`, tambah `TrafficProfile` type + `GetTrafficProfiles` + `parseTrafficProfiles`
+- `internal/api/handlers/olt.go` — Tambah `GetTrafficProfiles` call dan `trafficProfiles` ke response metadata
+- `src/app/admin/olt/[id]/page.tsx` — Tambah `oltProfiles`, `buildScript`, `usedTcontProfile`, `activeTrafficProfiles`; update card TCONT + Traffic Profile; tambah section Build Script
+
 ## [2.52.95] — 2026-05-31
 ### Added
 - **ONU detail: Traffic Profile dari PPPoE** — Karena ZTE C320 tidak mengekspos DBA/bandwidth profile via CLI, limit bandwidth sekarang diambil dari profil PPPoE customer yang terhubung. Menampilkan nama profil, download limit, dan upload limit (dalam Kbps/Mbps) di section "ONT Build Configuration".
