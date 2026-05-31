@@ -555,7 +555,7 @@ export default function HotspotVoucherPage() {
             )}
             {deleteOverlay.phase === 'done' && (
               <div className="mt-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg text-center">
-                <p className="text-sm font-semibold text-green-400">{deleteOverlay.count.toLocaleString()} voucher berhasil dihapus</p>
+                <p className="text-sm font-semibold text-green-400">{(deleteOverlay.count ?? 0).toLocaleString()} voucher berhasil dihapus</p>
                 <p className="text-xs text-muted-foreground mt-0.5">Halaman akan diperbarui otomatis...</p>
               </div>
             )}
@@ -908,7 +908,7 @@ export default function HotspotVoucherPage() {
               </>
             )}
             {filterBatch && filterBatch !== 'all' && <button onClick={handlePrintBatch} className="px-2 py-1 text-[10px] bg-muted-foreground text-background rounded flex items-center gap-0.5"><Printer className="h-2.5 w-2.5" />Batch</button>}
-            {stats.expired > 0 && <button onClick={async () => { const c = await showConfirm(`${t('common.delete')} ${t('hotspot.expired')}?`); if (!c) return; setDeleteOverlay({ open: true, phase: 'deleting', count: stats.expired, label: `${stats.expired} voucher expired`, errorMsg: '' }); const res = await fetch('/api/hotspot/voucher/delete-expired', { method: 'POST' }); const data = await res.json(); if (res.ok) { setDeleteOverlay({ open: true, phase: 'done', count: data.count, label: '', errorMsg: '' }); loadVouchers(); setTimeout(() => setDeleteOverlay({ open: false, phase: '', count: 0, label: '', errorMsg: '' }), 2500); } else { setDeleteOverlay({ open: true, phase: 'error', count: 0, label: '', errorMsg: data.error || t('common.failed') }); } }} className="px-2 py-1 text-[10px] bg-destructive text-destructive-foreground rounded flex items-center gap-0.5"><Trash2 className="h-2.5 w-2.5" />{t('hotspot.expired')} ({stats.expired})</button>}
+            {stats.expired > 0 && <button onClick={async () => { const c = await showConfirm(`${t('common.delete')} ${t('hotspot.expired')}?`); if (!c) return; setDeleteOverlay({ open: true, phase: 'deleting', count: stats.expired, label: `${stats.expired} voucher expired`, errorMsg: '' }); const res = await fetch('/api/hotspot/voucher/delete-expired', { method: 'POST' }); const data = await res.json(); if (res.ok) { setDeleteOverlay({ open: true, phase: 'done', count: data.deleted ?? data.count ?? 0, label: '', errorMsg: '' }); loadVouchers(); setTimeout(() => setDeleteOverlay({ open: false, phase: '', count: 0, label: '', errorMsg: '' }), 2500); } else { setDeleteOverlay({ open: true, phase: 'error', count: 0, label: '', errorMsg: data.error || t('common.failed') }); } }} className="px-2 py-1 text-[10px] bg-destructive text-destructive-foreground rounded flex items-center gap-0.5"><Trash2 className="h-2.5 w-2.5" />{t('hotspot.expired')} ({stats.expired})</button>}
             {filterBatch && filterBatch !== 'all' && <button onClick={() => setDeleteBatchCode(filterBatch)} className="px-2 py-1 text-[10px] bg-destructive text-destructive-foreground rounded flex items-center gap-0.5"><Trash2 className="h-2.5 w-2.5" />{t('common.delete')} Batch</button>}
           </div>
         </div>

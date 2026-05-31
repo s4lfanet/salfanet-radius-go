@@ -20,8 +20,12 @@ func pageParams(c fiber.Ctx) (page, pageSize int) {
 	if v, err := strconv.Atoi(c.Query("page")); err == nil && v > 0 {
 		page = v
 	}
-	if v, err := strconv.Atoi(c.Query("pageSize")); err == nil && v > 0 && v <= 500 {
-		pageSize = v
+	// Accept both "pageSize" and "limit" query params
+	for _, key := range []string{"pageSize", "limit"} {
+		if v, err := strconv.Atoi(c.Query(key)); err == nil && v > 0 && v <= 2000 {
+			pageSize = v
+			break
+		}
 	}
 	return
 }
