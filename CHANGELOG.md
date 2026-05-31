@@ -6,6 +6,12 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.52.97] — 2026-06-01
+### Fixed
+- **ONUDetail: telnet pool race condition → ONU count naik 55→66, banyak offline** — Handler `ONUDetail` sebelumnya memakai shared telnet pool milik poller (`h.poller.GetPool`). Pool `acquire()` tidak menahan lock per-batch, sehingga dua goroutine bisa mendapat sesi yang sama dan command saling interleave. Akibatnya `FetchTelnetONUStates` mendapat output kacau → override state gagal → SNMP state yang lag dipakai → ONU tampil offline; sesi telnet crash di tengah poll → ghost ONU cleanup salah menandai ONU sebagai offline dan jumlah ONU melonjak. Solusi: ONUDetail **selalu membuat private telnet pool** (bukan reuse shared pool), agar poller tidak terganggu.
+### Files
+- `internal/api/handlers/misc_handler.go` — Ganti `h.poller.GetPool(oltID)` + conditional `ownPool` menjadi selalu `telnet.NewPool(tcfg)` + `defer pool.Close()`
+
 ## [2.52.96] — 2026-06-01
 ### Added
 - **ONU detail: TCONT/DBA profile bandwidth** — Panel "TCONT / DBA Profile (Upload)" kini menampilkan bandwidth type dan max bandwidth (Mbps) dari profil DBA yang digunakan ONU, diambil via `show gpon profile tcont`.

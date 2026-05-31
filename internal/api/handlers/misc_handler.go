@@ -1559,23 +1559,19 @@ func (h *MiscHandler) ONUDetail(c fiber.Ctx) error {
 	var regOnuType, regSerial string
 
 	if (olt.TelnetEnabled || olt.SSHEnabled) && olt.Username != nil && olt.Password != nil {
-		// Reuse the poller's persistent Telnet pool if available; otherwise create a temporary one.
-		var pool *telnet.Pool
-		var ownPool bool
-		pool = h.poller.GetPool(oltID)
-		if pool == nil {
-			tport := olt.TelnetPort
-			if tport == 0 {
-				tport = 23
-			}
-			tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
-			tcfg.CommandTimeout = 20 * time.Second
-			pool = telnet.NewPool(tcfg)
-			ownPool = true
+		// Always use a private Telnet pool for ONUDetail — never reuse the poller's shared pool.
+		// The shared pool is used concurrently by the background poller (FetchTelnetDistances,
+		// FetchTelnetONUStates). The pool's acquire() has no per-batch locking, so commands from
+		// different goroutines can interleave on the same session, corrupting telnet output and
+		// causing ONU states to fall back to (lagging) SNMP values → many ONUs appear offline.
+		tport := olt.TelnetPort
+		if tport == 0 {
+			tport = 23
 		}
-		if ownPool {
-			defer pool.Close()
-		}
+		tcfg := telnet.DefaultConfig(olt.IPAddress, tport, *olt.Username, *olt.Password)
+		tcfg.CommandTimeout = 20 * time.Second
+		pool := telnet.NewPool(tcfg)
+		defer pool.Close()
 
 		ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 		defer cancel()
