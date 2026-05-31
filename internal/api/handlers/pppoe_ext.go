@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v3"
 	ros "github.com/go-routeros/routeros/v3"
+	"github.com/gofiber/fiber/v3"
 	excelize "github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 
@@ -715,13 +715,13 @@ func (h *PppoeExtHandler) TestMikrotikConnection(c fiber.Ctx) error {
 	routerPass := decryptVPNPassword(router.Password)
 
 	type portResult struct {
-		Port        int    `json:"port"`
-		Success     bool   `json:"success"`
-		Identity    string `json:"identity"`
-		Error       string `json:"error,omitempty"`
-		PPPRead     bool   `json:"pppRead"`
-		PPPWrite    bool   `json:"pppWrite"`
-		PPPReadError string `json:"pppReadError,omitempty"`
+		Port          int    `json:"port"`
+		Success       bool   `json:"success"`
+		Identity      string `json:"identity"`
+		Error         string `json:"error,omitempty"`
+		PPPRead       bool   `json:"pppRead"`
+		PPPWrite      bool   `json:"pppWrite"`
+		PPPReadError  string `json:"pppReadError,omitempty"`
 		PPPWriteError string `json:"pppWriteError,omitempty"`
 	}
 
@@ -799,11 +799,140 @@ func (h *PppoeExtHandler) TestMikrotikConnection(c fiber.Ctx) error {
 	})
 }
 
-// POST /api/pppoe/profiles/sync-mikrotik — sync profiles to Mikrotik (not yet implemented)
+// POST /api/pppoe/profiles/sync-mikrotik — sync PPPoE profile ke MikroTik router(s)
 func (h *PppoeExtHandler) SyncProfilesMikrotik(c fiber.Ctx) error {
-	return c.Status(501).JSON(fiber.Map{
-		"success": false,
-		"message": "MikroTik profile sync is not yet implemented. Please configure profiles manually on your MikroTik router.",
+	var body struct {
+		ID           string   `json:"id"`
+		RouterIDs    []string `json:"routerIds"`
+		IPPoolName   string   `json:"ipPoolName"`
+		LocalAddress string   `json:"localAddress"`
+		PoolRanges   string   `json:"poolRanges"`
+	}
+	if err := c.Bind().JSON(&body); err != nil || body.ID == "" || len(body.RouterIDs) == 0 {
+		return c.Status(400).JSON(fiber.Map{"error": "id dan routerIds wajib diisi"})
+	}
+
+	var profile models.PppoeProfile
+	if err := h.db.First(&profile, "id = ?", body.ID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Profile tidak ditemukan"})
+	}
+
+	// Build rate limit string
+	rateLimit := ""
+	if profile.RateLimit != nil && *profile.RateLimit != "" {
+		rateLimit = *profile.RateLimit
+	} else {
+		rateLimit = fmt.Sprintf("%dM/%dM", profile.UploadSpeed, profile.DownloadSpeed)
+	}
+
+	debugLines := []string{}
+	successCount := 0
+
+	for _, routerID := range body.RouterIDs {
+		var router models.Router
+		if err := h.db.First(&router, "id = ?", routerID).Error; err != nil {
+			debugLines = append(debugLines, fmt.Sprintf("[%s] router tidak ditemukan di database", routerID))
+			continue
+		}
+
+		pass := decryptVPNPassword(router.Password)
+		port := router.Port
+		if port == 0 {
+			port = 8728
+		}
+		addr := fmt.Sprintf("%s:%d", router.IPAddress, port)
+		client, err := ros.DialTimeout(addr, router.Username, pass, 10*time.Second)
+		if err != nil {
+			// fallback ke apiPort
+			apiPort := router.APIPort
+			if apiPort == 0 {
+				apiPort = 8729
+			}
+			addr2 := fmt.Sprintf("%s:%d", router.IPAddress, apiPort)
+			client, err = ros.DialTimeout(addr2, router.Username, pass, 10*time.Second)
+			if err != nil {
+				debugLines = append(debugLines, fmt.Sprintf("[%s] gagal konek: %s", router.Name, err.Error()))
+				continue
+			}
+		}
+
+		// Buat / update IP pool jika poolRanges diisi
+		if body.PoolRanges != "" && body.IPPoolName != "" {
+			poolReply, _ := client.Run("/ip/pool/print", "?name="+body.IPPoolName)
+			if len(poolReply.Re) > 0 {
+				_, _ = client.Run("/ip/pool/set", "=.id="+poolReply.Re[0].Map[".id"], "=ranges="+body.PoolRanges)
+				debugLines = append(debugLines, fmt.Sprintf("[%s] pool '%s' diupdate", router.Name, body.IPPoolName))
+			} else {
+				if _, perr := client.Run("/ip/pool/add", "=name="+body.IPPoolName, "=ranges="+body.PoolRanges); perr != nil {
+					debugLines = append(debugLines, fmt.Sprintf("[%s] gagal buat pool: %s", router.Name, perr.Error()))
+				} else {
+					debugLines = append(debugLines, fmt.Sprintf("[%s] pool '%s' dibuat", router.Name, body.IPPoolName))
+				}
+			}
+		}
+
+		// Args tambahan untuk PPP profile
+		extraArgs := []string{"=rate-limit=" + rateLimit}
+		if body.IPPoolName != "" {
+			extraArgs = append(extraArgs, "=remote-address="+body.IPPoolName)
+		}
+		if body.LocalAddress != "" {
+			extraArgs = append(extraArgs, "=local-address="+body.LocalAddress)
+		}
+
+		// Cek apakah PPP profile sudah ada
+		profReply, _ := client.Run("/ppp/profile/print", "?name="+profile.GroupName)
+		if len(profReply.Re) > 0 {
+			// Update existing
+			setArgs := append([]string{"/ppp/profile/set", "=.id=" + profReply.Re[0].Map[".id"]}, extraArgs...)
+			if _, serr := client.Run(setArgs...); serr != nil {
+				debugLines = append(debugLines, fmt.Sprintf("[%s] gagal update PPP profile: %s", router.Name, serr.Error()))
+			} else {
+				debugLines = append(debugLines, fmt.Sprintf("[%s] PPP profile '%s' diupdate ✓", router.Name, profile.GroupName))
+				successCount++
+			}
+		} else {
+			// Buat baru
+			addArgs := append([]string{"/ppp/profile/add", "=name=" + profile.GroupName}, extraArgs...)
+			if _, aerr := client.Run(addArgs...); aerr != nil {
+				debugLines = append(debugLines, fmt.Sprintf("[%s] gagal buat PPP profile: %s", router.Name, aerr.Error()))
+			} else {
+				debugLines = append(debugLines, fmt.Sprintf("[%s] PPP profile '%s' dibuat ✓", router.Name, profile.GroupName))
+				successCount++
+			}
+		}
+		client.Close()
+	}
+
+	// Simpan data pool/localAddress + rateLimit ke profile di DB
+	updates := map[string]interface{}{"rateLimit": rateLimit}
+	if body.IPPoolName != "" {
+		updates["ipPoolName"] = body.IPPoolName
+	}
+	if body.PoolRanges != "" {
+		updates["ipPoolRange"] = body.PoolRanges
+	}
+	if body.LocalAddress != "" {
+		updates["localAddress"] = body.LocalAddress
+	}
+	h.db.Model(&profile).Updates(updates)
+	h.db.First(&profile, "id = ?", body.ID) // reload
+
+	success := successCount > 0
+	msg := fmt.Sprintf("Berhasil sync ke %d dari %d router", successCount, len(body.RouterIDs))
+	if !success {
+		msg = "Gagal sync ke semua router"
+	}
+
+	return c.JSON(fiber.Map{
+		"success": success,
+		"message": msg,
+		"debug":   debugLines,
+		"savedProfile": fiber.Map{
+			"ipPoolName":   profile.IPPoolName,
+			"ipPoolRange":  profile.IPPoolRange,
+			"localAddress": profile.LocalAddress,
+		},
 	})
 }
 
