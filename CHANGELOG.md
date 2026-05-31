@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.2] — 2026-06-01
+### Fixed
+- **Test Koneksi MikroTik 404** — Frontend mengirim `PUT /api/pppoe/profiles/sync-mikrotik` tapi Go router tidak punya handler untuk method `PUT` di path tersebut → 404. Fix: tambah handler `TestMikrotikConnection` yang connect ke MikroTik via RouterOS API, test identity + PPP profile read/write, return detail hasil per port (8728/8729).
+
+### Files
+- `internal/api/handlers/pppoe_ext.go` — Tambah `TestMikrotikConnection` handler (PUT)
+- `internal/api/router.go` — Register `PUT /profiles/sync-mikrotik → TestMikrotikConnection`
+
+---
+
 ## [2.54.1] — 2026-06-01
 ### Fixed
 - **Router list kosong di modal "Sync ke MikroTik"** — `GET /api/network/routers` mengembalikan `{ routers: [...], vpnClients: [...] }` tapi frontend PPPoE profiles melakukan `Array.isArray(data)` yang selalu false → `setRouters([])`. Fix: gunakan `data.routers` sebagai sumber list router.
