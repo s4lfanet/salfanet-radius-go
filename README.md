@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.7 — 2026-06-01
+
+### Fixed
+- **Generate voucher error Duplicate entry** — `generateVoucherCode` menggunakan rumus deterministik berbasis waktu (`t + i*31337`) sehingga mudah tabrakan dengan kode yang sudah ada. Fix: (1) ganti ke `crypto/rand` untuk randomness yang sesungguhnya, (2) fetch semua kode existing sebelum generate dan lakukan retry max 20x jika ada collision.
+
+### Files
+- `internal/api/handlers/hotspot.go` — `generateVoucherCode` pakai `crypto/rand`; `GenerateVouchers` precheck existing codes + retry loop
+
 ### v2.54.6 — 2026-06-01
 
 ### Fixed
@@ -523,15 +531,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/api/handlers/pppoe_ext.go` — Implementasi penuh `SyncProfilesMikrotik`
-
-### v2.54.2 — 2026-06-01
-
-### Fixed
-- **Test Koneksi MikroTik 404** — Frontend mengirim `PUT /api/pppoe/profiles/sync-mikrotik` tapi Go router tidak punya handler untuk method `PUT` di path tersebut → 404. Fix: tambah handler `TestMikrotikConnection` yang connect ke MikroTik via RouterOS API, test identity + PPP profile read/write, return detail hasil per port (8728/8729).
-
-### Files
-- `internal/api/handlers/pppoe_ext.go` — Tambah `TestMikrotikConnection` handler (PUT)
-- `internal/api/router.go` — Register `PUT /profiles/sync-mikrotik → TestMikrotikConnection`
 
 <!-- AUTO-CHANGELOG:END -->
 
