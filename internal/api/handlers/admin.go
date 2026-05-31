@@ -311,38 +311,134 @@ func (h *AdminHandler) Activity(c fiber.Ctx) error {
 // GET /api/admin/isolated-users
 func (h *AdminHandler) IsolatedUsers(c fiber.Ctx) error {
 	type isolatedRow struct {
-		ID        string     `json:"id"`
-		Username  string     `json:"username"`
-		Name      string     `json:"name"`
-		Phone     *string    `json:"phone"`
-		Status    string     `json:"status"`
-		ExpiredAt *time.Time `json:"expiredAt"`
-		AreaName  *string    `json:"areaName"`
-		Profile   *string    `json:"profileName"`
-		Price     *int64     `json:"profilePrice"`
-		UnpaidAmt *int64     `json:"unpaidAmount"`
-		UnpaidCnt int        `json:"unpaidCount"`
+		ID                  string     `gorm:"column:id"          json:"id"`
+		Username            string     `gorm:"column:username"    json:"username"`
+		Name                string     `gorm:"column:name"        json:"name"`
+		Phone               *string    `gorm:"column:phone"       json:"phone"`
+		Email               *string    `gorm:"column:email"       json:"email"`
+		Status              string     `gorm:"column:status"      json:"status"`
+		ExpiredAt           *time.Time `gorm:"column:expiredAt"   json:"expiredAt"`
+		CustomerID          *string    `gorm:"column:customer_id" json:"customerId"`
+		AreaName            *string    `gorm:"column:areaName"    json:"areaName"`
+		ProfileName         *string    `gorm:"column:profileName" json:"profileName"`
+		ProfilePrice        *int64     `gorm:"column:profilePrice" json:"profilePrice"`
+		TotalUnpaid         int64      `gorm:"column:totalUnpaid" json:"totalUnpaid"`
+		UnpaidInvoicesCount int        `gorm:"column:unpaidInvoicesCount" json:"unpaidInvoicesCount"`
+		IsOnline            bool       `gorm:"column:isOnline"    json:"isOnline"`
+		IPAddress           *string    `gorm:"column:ipAddress"   json:"ipAddress"`
+		LoginTime           *time.Time `gorm:"column:loginTime"   json:"loginTime"`
+		NasIP               *string    `gorm:"column:nasIp"       json:"nasIp"`
 	}
 
 	var rows []isolatedRow
 	h.db.Raw(`
 		SELECT
-			u.id, u.username, u.name, u.phone, u.status, u.expiredAt,
+			u.id, u.username, u.name, u.phone, u.email, u.status, u.expiredAt,
+			u.customer_id,
 			a.name  AS areaName,
-			p.name  AS profile,
-			p.price AS price,
-			COALESCE(SUM(CASE WHEN i.status IN ('PENDING','OVERDUE') THEN i.amount ELSE 0 END), 0) AS unpaidAmt,
-			COUNT(CASE WHEN i.status IN ('PENDING','OVERDUE') THEN 1 END)                           AS unpaidCnt
+			p.name  AS profileName,
+			p.price AS profilePrice,
+			COALESCE(SUM(CASE WHEN i.status IN ('PENDING','OVERDUE') THEN i.amount ELSE 0 END), 0) AS totalUnpaid,
+			COUNT(CASE WHEN i.status IN ('PENDING','OVERDUE') THEN 1 END) AS unpaidInvoicesCount,
+			CASE WHEN ra.username IS NOT NULL THEN 1 ELSE 0 END AS isOnline,
+			ra.framedipaddress AS ipAddress,
+			ra.acctstarttime   AS loginTime,
+			ra.nasipaddress    AS nasIp
 		FROM pppoe_users u
 		LEFT JOIN pppoe_areas    a ON u.areaId    = a.id
 		LEFT JOIN pppoe_profiles p ON u.profileId = p.id
 		LEFT JOIN invoices       i ON i.userId    = u.id
+		LEFT JOIN (
+			SELECT username, framedipaddress, acctstarttime, nasipaddress
+			FROM radacct
+			WHERE acctstoptime IS NULL
+		) ra ON ra.username = u.username
 		WHERE u.status IN ('isolated','suspended')
-		GROUP BY u.id
+		GROUP BY u.id, u.username, u.name, u.phone, u.email, u.status, u.expiredAt,
+		         u.customer_id, areaName, profileName, profilePrice, isOnline, ipAddress, loginTime, nasIp
 		ORDER BY u.expiredAt DESC
 	`).Scan(&rows)
 
-	return c.JSON(fiber.Map{"data": rows, "total": len(rows)})
+	if rows == nil {
+		rows = []isolatedRow{}
+	}
+
+	// Fetch unpaid invoices for each user in a single batch query
+	type unpaidInv struct {
+		UserID        string    `gorm:"column:userId"`
+		ID            string    `gorm:"column:id"            json:"id"`
+		InvoiceNumber string    `gorm:"column:invoiceNumber" json:"invoiceNumber"`
+		Amount        int       `gorm:"column:amount"        json:"amount"`
+		DueDate       time.Time `gorm:"column:dueDate"       json:"dueDate"`
+		Status        string    `gorm:"column:status"        json:"status"`
+		PaymentLink   *string   `gorm:"column:paymentLink"   json:"paymentLink"`
+		PaymentToken  *string   `gorm:"column:paymentToken"  json:"paymentToken"`
+	}
+	userIDs := make([]string, len(rows))
+	for i, r := range rows {
+		userIDs[i] = r.ID
+	}
+	var allInvoices []unpaidInv
+	if len(userIDs) > 0 {
+		h.db.Raw(`
+			SELECT userId, id, invoiceNumber, amount, dueDate, status, paymentLink, paymentToken
+			FROM invoices
+			WHERE userId IN ? AND status IN ('PENDING','OVERDUE')
+			ORDER BY dueDate ASC
+		`, userIDs).Scan(&allInvoices)
+	}
+
+	// Build per-user invoice map
+	type invJSON struct {
+		ID            string    `json:"id"`
+		InvoiceNumber string    `json:"invoiceNumber"`
+		Amount        int       `json:"amount"`
+		DueDate       time.Time `json:"dueDate"`
+		Status        string    `json:"status"`
+		PaymentLink   *string   `json:"paymentLink"`
+		PaymentToken  *string   `json:"paymentToken"`
+	}
+	invMap := map[string][]invJSON{}
+	for _, inv := range allInvoices {
+		invMap[inv.UserID] = append(invMap[inv.UserID], invJSON{
+			ID: inv.ID, InvoiceNumber: inv.InvoiceNumber, Amount: inv.Amount,
+			DueDate: inv.DueDate, Status: inv.Status,
+			PaymentLink: inv.PaymentLink, PaymentToken: inv.PaymentToken,
+		})
+	}
+
+	// Build response with unpaidInvoices attached
+	type responseRow struct {
+		isolatedRow
+		UnpaidInvoices []invJSON `json:"unpaidInvoices"`
+	}
+	result := make([]responseRow, len(rows))
+	totalOnline, totalUnpaidAmount, totalUnpaidInvoices := 0, int64(0), 0
+	for i, r := range rows {
+		invs := invMap[r.ID]
+		if invs == nil {
+			invs = []invJSON{}
+		}
+		result[i] = responseRow{isolatedRow: r, UnpaidInvoices: invs}
+		if r.IsOnline {
+			totalOnline++
+		}
+		totalUnpaidAmount += r.TotalUnpaid
+		totalUnpaidInvoices += r.UnpaidInvoicesCount
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"data":    result,
+		"total":   len(result),
+		"stats": fiber.Map{
+			"totalIsolated":       len(result),
+			"totalOnline":         totalOnline,
+			"totalOffline":        len(result) - totalOnline,
+			"totalUnpaidAmount":   totalUnpaidAmount,
+			"totalUnpaidInvoices": totalUnpaidInvoices,
+		},
+	})
 }
 
 // TopupRequests godoc

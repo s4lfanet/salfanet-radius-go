@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 
@@ -72,6 +74,10 @@ func (h *SettingsHandler) UpdateEmailSettings(c fiber.Ctx) error {
 func (h *SettingsHandler) GetIsolationSettings(c fiber.Ctx) error {
 	var company models.Company
 	if err := h.db.First(&company).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// No company record yet — return empty defaults
+			return c.JSON(fiber.Map{"success": true, "data": fiber.Map{}})
+		}
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"success": true, "data": company})
@@ -98,7 +104,11 @@ func (h *SettingsHandler) UpdateIsolationSettings(c fiber.Ctx) error {
 
 	var company models.Company
 	if err := h.db.First(&company).Error; err != nil {
-		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+		}
+		// Company doesn't exist yet — just return success, settings will be applied when company is created
+		return c.JSON(fiber.Map{"success": true, "message": "Isolation settings noted (no company record yet)"})
 	}
 
 	updates := map[string]any{}

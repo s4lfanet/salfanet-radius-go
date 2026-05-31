@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.53.5] — 2026-06-01
+### Fixed
+- **`GET /api/settings/isolation` 500** — Handler memanggil `db.First(&company)` dan return 500 saat tabel `companies` kosong. Sekarang `ErrRecordNotFound` ditangani: return `{success:true, data:{}}` (default kosong). `UpdateIsolationSettings` juga difix untuk tidak 500 saat tidak ada company.
+- **Menu Isolir (IsolatedUsers) format response salah** — Handler lama: field names salah (`profile`/`price`/`unpaidAmt`/`unpaidCnt` bukan `profileName`/`profilePrice`/`totalUnpaid`/`unpaidInvoicesCount`), tidak ada `success:true`, tidak ada `stats`, tidak ada field `email`, `customerId`, `isOnline`, `ipAddress`, `loginTime`, `nasIp`, `unpaidInvoices[]`. Handler ditulis ulang lengkap dengan JOIN radacct untuk status online dan batch query unpaid invoices.
+
+### Files
+- `internal/api/handlers/settings.go` — Fix `GetIsolationSettings` dan `UpdateIsolationSettings` handle `ErrRecordNotFound`
+- `internal/api/handlers/admin.go` — Rewrite `IsolatedUsers` handler dengan response format lengkap
+
+---
+
 ## [2.53.4] — 2026-05-31
 ### Fixed
 - **Hotspot — Model Go tidak cocok dengan skema DB nyata** — Model `HotspotProfile` memakai field lama (`Price`, `Duration`, `BandwidthDown`, dll) yang tidak ada di DB. Model sekarang memakai kolom DB yang benar: `costPrice`, `sellingPrice`, `resellerFee`, `validityValue`, `validityUnit`, `speed`, `groupProfile`, `sharedUsers`, `agentAccess`, `eVoucherAccess`. Model `HotspotVoucher` difix: kolom `batchId` → `batchCode`, status `UNUSED` → `WAITING`, ditambah `routerId`, `voucherType`, `codeType`, `firstLoginAt`. Model `Agent` difix: ditambah `minBalance`, `routerId`, `lastLogin`.
