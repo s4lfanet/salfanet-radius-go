@@ -78,10 +78,10 @@ func PonIndex(board, pon int) int64 {
 
 // ONUInfo holds the collected data for one ONU.
 type ONUInfo struct {
-	Frame        int
-	Slot         int
-	Port         int
-	OnuID        int
+	Frame           int
+	Slot            int
+	Port            int
+	OnuID           int
 	SerialNumber    string
 	Description     string
 	Status          models.OltOnuStatus
@@ -257,6 +257,12 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		}
 		if reason, ok := merged.deregReason[k]; ok {
 			info.LastDeregReason = decodeDeregReason(reason)
+			// ZTE MIB: DeregReason=1 means notApplicable (ONU currently registered).
+			// DeregReason>=2 means ONU is currently DEREGISTERED (offline).
+			// OperState can lag behind in SNMP cache — trust DeregReason over OperState.
+			if reason >= 2 && info.Status == models.OnuOnline {
+				info.Status = models.OnuOffline
+			}
 		}
 		onuMap[k] = info
 	}
@@ -295,6 +301,12 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		}
 		if reason, ok := merged.deregReason[k]; ok {
 			info.LastDeregReason = decodeDeregReason(reason)
+			// ZTE MIB: DeregReason=1 means notApplicable (ONU currently registered).
+			// DeregReason>=2 means ONU is currently DEREGISTERED (offline).
+			// OperState can lag behind in SNMP cache — trust DeregReason over OperState.
+			if reason >= 2 && info.Status == models.OnuOnline {
+				info.Status = models.OnuOffline
+			}
 		}
 		onuMap[k] = info
 	}

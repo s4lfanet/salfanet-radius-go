@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.13] — 2026-06-02
+### Fixed
+- **ONU offline ditampilkan sebagai online** — ZTE C320 SNMP `OperState` bisa tertinggal (cached) dan masih melaporkan nilai `working/active` (4/5) meski ONU sudah deregistrasi (PowerOff, LOS, dsb.). MIB ZTE mendefinisikan `DeregReason=1` = `notApplicable` (ONU sedang online), dan `DeregReason>=2` = ONU sedang offline. Fix: jika `DeregReason>=2` tetapi `OperState` di-decode sebagai `OnuOnline`, status di-override ke `OnuOffline`. Berlaku untuk kedua blok ONU (registered via regStatus dan registered via OperState).
+
+### Files
+- `internal/olt/vendors/zte/zte.go` — Override status ke offline jika DeregReason>=2 (ONU deregistered per ZTE MIB)
+
+---
+
 ## [2.54.12] — 2026-06-02
 ### Fixed
 - **totalONU tidak termasuk ghost ONU** — `totalONU` di header OLT (contoh "0/64") sebelumnya ter-inflate karena ghost ONU dari siklus sebelumnya ikut dihitung. Sekarang hanya ONU yang ditemukan SNMP siklus ini (registered + unregistered) yang masuk ke `totalOnu` di `network_olts`. Ghost ONU tetap di-pass ke `checkAlerts` untuk generate alert, tapi tidak mempengaruhi angka summary.
