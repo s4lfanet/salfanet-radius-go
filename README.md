@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.15 — 2026-06-02
+
+### Fixed
+- **ONU offline kembali online setelah polling** — Saat Telnet tersedia (pool ada) tapi `FetchTelnetONUStates` mengembalikan 0 state (output tidak terbaca: timeout, format CLI tidak dikenali, dsb.), sebelumnya tidak ada log dan tidak ada fallback — SNMP OperState yang ter-cache (lag) langsung menang, semua ONU menjadi online. Fix: jika Telnet return 0 state, ambil status terakhir dari DB sebagai fallback. Setiap ONU yang SNMP-nya bilang `online` tapi DB mencatat `offline/dying_gasp/los` → status SNMP diabaikan dan status DB dipertahankan. Log warning ditambahkan untuk visibilitas.
+
+### Files
+- `internal/olt/poller/poller.go` — DB fallback ketika Telnet return 0 states; log warning untuk Telnet failure
+
 ### v2.54.14 — 2026-06-02
 
 ### Fixed
@@ -525,15 +533,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `internal/olt/vendors/zte/zte.go` — tambah `oidDeregReason`, field `LastDeregReason` di `ONUInfo`, `deregReason` di `ponResult`, BulkWalk OID baru, decode & populate `LastDeregReason`, fungsi `decodeDeregReason()`
 - `internal/olt/poller/poller.go` — set `base.LastDeregReason` dari ONU info; tambah `lastDeregReason` ke COALESCE upsert assignments
-
-### v2.54.10 — 2026-06-02
-
-### Fixed
-- **Semua ONU jadi offline saat SNMP gagal** — Ghost-cleanup poller menandai semua ONU sebagai offline ketika SNMP BulkWalk mengembalikan 0 ONU (misalnya OLT sementara tidak bisa diakses). Seharusnya ghost-cleanup hanya dijalankan bila SNMP berhasil mendeteksi minimal 1 ONU di siklus polling ini. Fix: tambah guard `snmpDiscoveredAny` sebelum ghost-cleanup.
-- **OLT tampil "Online" meski SNMP gagal** — `isOnline` selalu di-set `true` bahkan ketika SNMP gagal. Fix: `isOnline = snmpDiscoveredAny || uptimeSeconds > 0`.
-
-### Files
-- `internal/olt/poller/poller.go` — ghost-cleanup hanya jalan jika SNMP return > 0 ONU; `isOnline` sekarang refleksikan konektivitas nyata
 
 <!-- AUTO-CHANGELOG:END -->
 
