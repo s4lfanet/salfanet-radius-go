@@ -189,22 +189,46 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 		// ZTE C320 SNMP OperState agent lags for dying-gasp/LOS events — the
 		// CLI "Phase State" column reflects the real state immediately.
 		if telnetStates := zte.FetchTelnetONUStates(pool, onus); len(telnetStates) > 0 {
-			overrideCount := 0
+			// Sanity check: if ALL SNMP-online ONUs would be overridden to non-online,
+			// this is almost certainly a Telnet session error (garbled first-connection
+			// output, login banner contamination, etc.) — NOT a real mass-offline event.
+			// In that case, skip the override entirely to prevent false all-offline marking.
+			snmpOnlineCount := 0
+			telnetWouldDropOnline := 0
 			for _, onu := range onus {
 				if !onu.Registered {
 					continue
 				}
-				key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
-				if state, ok := telnetStates[key]; ok && state != onu.Status {
-					log.Debug().Str("olt", olt.ID).Str("onu", key).
-						Str("snmp", string(onu.Status)).Str("telnet", string(state)).
-						Msg("poller: telnet overrides SNMP status")
-					onu.Status = state
-					overrideCount++
+				if onu.Status == models.OnuOnline {
+					snmpOnlineCount++
+					key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
+					if state, ok := telnetStates[key]; ok && state != models.OnuOnline {
+						telnetWouldDropOnline++
+					}
 				}
 			}
-			if overrideCount > 0 {
-				log.Info().Str("olt", olt.ID).Int("overridden", overrideCount).Msg("poller: telnet ONU states applied")
+			if snmpOnlineCount > 0 && telnetWouldDropOnline == snmpOnlineCount {
+				log.Warn().Str("olt", olt.ID).
+					Int("snmpOnline", snmpOnlineCount).
+					Msg("poller: telnet override skipped — semua ONU online menurut SNMP akan jadi offline menurut Telnet (kemungkinan Telnet parse error pada koneksi pertama)")
+			} else {
+				overrideCount := 0
+				for _, onu := range onus {
+					if !onu.Registered {
+						continue
+					}
+					key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
+					if state, ok := telnetStates[key]; ok && state != onu.Status {
+						log.Debug().Str("olt", olt.ID).Str("onu", key).
+							Str("snmp", string(onu.Status)).Str("telnet", string(state)).
+							Msg("poller: telnet overrides SNMP status")
+						onu.Status = state
+						overrideCount++
+					}
+				}
+				if overrideCount > 0 {
+					log.Info().Str("olt", olt.ID).Int("overridden", overrideCount).Msg("poller: telnet ONU states applied")
+				}
 			}
 		}
 	}
@@ -280,8 +304,8 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 				"txPower":         gorm.Expr("COALESCE(VALUES(txPower), txPower)"),
 				"distance":        gorm.Expr("COALESCE(VALUES(distance), distance)"),
 				"lastDeregReason": gorm.Expr("COALESCE(VALUES(lastDeregReason), lastDeregReason)"),
-				"lastSeenAt":   gorm.Expr("VALUES(lastSeenAt)"),
-				"updatedAt":    gorm.Expr("VALUES(updatedAt)"),
+				"lastSeenAt":      gorm.Expr("VALUES(lastSeenAt)"),
+				"updatedAt":       gorm.Expr("VALUES(updatedAt)"),
 			}),
 		}).CreateInBatches(registeredStatuses, 100).Error; e != nil {
 			log.Error().Err(e).Str("olt", olt.ID).Msg("poller: upsert registered ONUs failed")
@@ -340,16 +364,21 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 			log.Debug().Str("olt", olt.ID).Int("count", len(ghostOnus)).Msg("poller: ghost ONUs marked offline")
 			for i := range ghostOnus {
 				ghostOnus[i].Status = models.OnuOffline
-				offlineCount++
+				// Ghost ONUs are NOT counted in offlineCount — they are stale DB entries
+				// that vanished from SNMP, not live offline events. Counting them would
+				// inflate the network_olts.offlineOnu summary counter incorrectly.
 			}
-			// Include ghost ONUs in allStatuses so checkAlerts can raise offline alerts.
+			// Include ghost ONUs in allStatuses so checkAlerts can still raise offline alerts.
 			allStatuses = append(allStatuses, ghostOnus...)
 		}
 	} else {
 		log.Warn().Str("olt", olt.ID).Msg("poller: SNMP returned 0 ONUs — skipping ghost cleanup to avoid false offline marking")
 	}
 
-	totalONU := len(allStatuses)
+	// totalONU: only count SNMP-discovered ONUs (registered + unregistered).
+	// Ghost ONUs are in allStatuses for alert purposes but must NOT inflate the
+	// live summary counter — they are stale DB entries, not real ONUs on the OLT.
+	totalONU := len(registeredStatuses) + len(unregisteredStatuses)
 
 	// Update OLT summary.
 	// isOnline: true when SNMP returned at least 1 ONU OR when uptime > 0.
