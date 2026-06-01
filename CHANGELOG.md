@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.17] — 2026-06-02
+### Fixed
+- **Port Map tidak update setelah polling** — `ZTEChassisView` dipanggil dengan prop `olt` (data statis dari page load), bukan dari `liveOnus` yang auto-refresh tiap 15 detik. Akibatnya color status port di Port Map tidak pernah berubah meski data ONU sudah diperbarui. Fix: tambah prop `onus` ke `ZTEChassisView`, pass `liveOnus ?? olt.onuStatuses` dari parent. Badge counter LOS/DyingGasp di header juga di-fix untuk pakai live data.
+
+### Files
+- `src/app/admin/olt/[id]/page.tsx` — ZTEChassisView terima prop `onus`; Port Map dan badge header pakai `liveOnus`
+
+---
+
 ## [2.54.16] — 2026-06-02
 ### Fixed
 - **Test Connection di tab Settings selalu gagal** — Handler `/api/olt/test-connection` tidak membaca settings OLT dari DB (SSH port, Telnet port, SNMP port/community, protocol enabled). Frontend hanya kirim `{ oltId, protocol }` sehingga: SSH ditest ke port 22 (default), Telnet selalu diskip, SNMP tidak ditest sama sekali. Fix: ketika `oltId` disediakan, load semua settings dari DB; gunakan field `protocol` untuk test hanya protokol yang diminta; tambah SNMP test via SNMP GET sysDescr; pesan error sekarang menampilkan detail (port, error string, waktu respons).
