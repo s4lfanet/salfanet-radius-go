@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.14 — 2026-06-02
+
+### Fixed
+- **Revert v2.54.13** — Fix DeregReason>=2 → force offline ternyata salah. ZTE C320 `DeregReason` menyimpan alasan TERAKHIR ONU offline (historis), bukan status saat ini. ONU yang sudah kembali online tetap punya `DeregReason=PowerOff` dari event sebelumnya, sehingga semua 55 ONU dipaksa ke offline. Revert: `lastDeregReason` hanya dipakai sebagai informasi display, status tetap dari `OperState` SNMP + Telnet override.
+
+### Files
+- `internal/olt/vendors/zte/zte.go` — Revert DeregReason status override (v2.54.13)
+
 ### v2.54.13 — 2026-06-02
 
 ### Fixed
@@ -526,14 +534,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/olt/poller/poller.go` — ghost-cleanup hanya jalan jika SNMP return > 0 ONU; `isOnline` sekarang refleksikan konektivitas nyata
-
-### v2.54.9 — 2026-06-01
-
-### Fixed
-- **ONU power-off tampil "online"** — `parseONUStateOutput` tidak menangani Phase State `power-off` dari CLI ZTE C320 (`show gpon onu state`). Saat ONU mati lampu/power-off, CLI mengembalikan `power-off` tapi karena tidak ada case-nya, Telnet override tidak terjadi dan status SNMP yang stale (`working`/`active`) tetap dipakai. Fix: tambah `power-off`, `power_off`, `poweroff`, `powerdown` → `offline`; juga tambah `losi` → `los` dan `auth-failed` → `auth_failed`.
-
-### Files
-- `internal/olt/vendors/zte/zte.go` — `parseONUStateOutput` + komentar lengkap Phase State ZTE C320
 
 <!-- AUTO-CHANGELOG:END -->
 
