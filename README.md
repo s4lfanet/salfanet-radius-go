@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.16 — 2026-06-02
+
+### Fixed
+- **Test Connection di tab Settings selalu gagal** — Handler `/api/olt/test-connection` tidak membaca settings OLT dari DB (SSH port, Telnet port, SNMP port/community, protocol enabled). Frontend hanya kirim `{ oltId, protocol }` sehingga: SSH ditest ke port 22 (default), Telnet selalu diskip, SNMP tidak ditest sama sekali. Fix: ketika `oltId` disediakan, load semua settings dari DB; gunakan field `protocol` untuk test hanya protokol yang diminta; tambah SNMP test via SNMP GET sysDescr; pesan error sekarang menampilkan detail (port, error string, waktu respons).
+
+### Files
+- `internal/api/handlers/olt.go` — TestConnection rewrite: baca DB settings, handle protocol field, tambah SNMP test
+
 ### v2.54.15 — 2026-06-02
 
 ### Fixed
@@ -524,15 +532,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/olt/poller/poller.go` — Telnet sanity check; totalONU = SNMP count only; hapus offlineCount++ untuk ghost ONU
-
-### v2.54.11 — 2026-06-02
-
-### Added
-- **LastDeregReason ONU dari SNMP** — Alasan terakhir ONU offline (PowerOff, LOS, Reboot, AuthFail, dll.) sekarang dibaca langsung dari SNMP OID `.3.50.12.1.1.7` (zxAnGponOnuRegTable kolom 7 — DeregReason) dan disimpan ke DB field `lastDeregReason`. Upsert menggunakan COALESCE agar nilai tidak tertimpa NULL saat OLT tidak mengembalikan data.
-
-### Files
-- `internal/olt/vendors/zte/zte.go` — tambah `oidDeregReason`, field `LastDeregReason` di `ONUInfo`, `deregReason` di `ponResult`, BulkWalk OID baru, decode & populate `LastDeregReason`, fungsi `decodeDeregReason()`
-- `internal/olt/poller/poller.go` — set `base.LastDeregReason` dari ONU info; tambah `lastDeregReason` ke COALESCE upsert assignments
 
 <!-- AUTO-CHANGELOG:END -->
 
