@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.9 — 2026-06-01
+
+### Fixed
+- **ONU power-off tampil "online"** — `parseONUStateOutput` tidak menangani Phase State `power-off` dari CLI ZTE C320 (`show gpon onu state`). Saat ONU mati lampu/power-off, CLI mengembalikan `power-off` tapi karena tidak ada case-nya, Telnet override tidak terjadi dan status SNMP yang stale (`working`/`active`) tetap dipakai. Fix: tambah `power-off`, `power_off`, `poweroff`, `powerdown` → `offline`; juga tambah `losi` → `los` dan `auth-failed` → `auth_failed`.
+
+### Files
+- `internal/olt/vendors/zte/zte.go` — `parseONUStateOutput` + komentar lengkap Phase State ZTE C320
+
 ### v2.54.8 — 2026-06-01
 
 ### Fixed
@@ -527,15 +535,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/db/models/extra.go` — Tambah `gorm:"-"` ke field `PIN` di struct `Agent`
-
-### v2.54.4 — 2026-06-01
-
-### Fixed
-- **Status RADIUS tetap "Pending" setelah sync** — Root cause: Go struct `PppoeProfile` tidak memiliki field `SyncedToRadius`, padahal kolom `syncedToRadius` ada di database (Prisma schema). Akibatnya `h.db.Model(&p).Update("syncedToRadius", true)` silently fail karena GORM tidak menemukan field di struct. Fix: tambah `SyncedToRadius bool \`gorm:"default:false;column:syncedToRadius"\`` ke struct + ganti update dengan `h.db.Exec("UPDATE pppoe_profiles SET syncedToRadius = 1 WHERE id = ?", p.ID)` agar pasti berhasil.
-
-### Files
-- `internal/db/models/models.go` — Tambah `SyncedToRadius` ke `PppoeProfile` struct
-- `internal/api/handlers/pppoe_ext.go` — Ganti `Model(&p).Update` dengan `Exec` langsung
 
 <!-- AUTO-CHANGELOG:END -->
 
