@@ -308,44 +308,58 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 	// sets updatedAt=now for every ONU visible in this poll; anything older was
 	// not touched and is therefore a "ghost".
 	//
+	// IMPORTANT: Only run when SNMP discovery returned at least 1 ONU. If the
+	// walk returned 0, it almost certainly means the OLT is temporarily
+	// unreachable (network blip, SNMP timeout, etc.) — NOT that all ONUs
+	// disappeared. Running ghost cleanup on an empty result would incorrectly
+	// mark every previously-online ONU as offline.
+	//
 	// NOTE: We use Table("olt_onu_status") — NOT Model(&OLTONUStatus{}) — because
 	// GORM would silently append "WHERE id = ''" when the primary-key field is empty,
 	// making the UPDATE a no-op.
 	allStatuses := append(registeredStatuses, unregisteredStatuses...)
 
+	snmpDiscoveredAny := len(registeredStatuses)+len(unregisteredStatuses) > 0
 	var ghostOnus []models.OLTONUStatus
-	if err := p.db.WithContext(ctx).
-		Where("oltId = ? AND status NOT IN (?, ?) AND updatedAt < ?",
-			olt.ID, string(models.OnuOffline), string(models.OnuUnregistered), start).
-		Find(&ghostOnus).Error; err == nil && len(ghostOnus) > 0 {
-
-		p.db.WithContext(ctx).Table("olt_onu_status").
+	if snmpDiscoveredAny {
+		if err := p.db.WithContext(ctx).
 			Where("oltId = ? AND status NOT IN (?, ?) AND updatedAt < ?",
 				olt.ID, string(models.OnuOffline), string(models.OnuUnregistered), start).
-			Updates(map[string]interface{}{
-				"status":    string(models.OnuOffline),
-				"updatedAt": now,
-			})
+			Find(&ghostOnus).Error; err == nil && len(ghostOnus) > 0 {
 
-		log.Debug().Str("olt", olt.ID).Int("count", len(ghostOnus)).Msg("poller: ghost ONUs marked offline")
-		for i := range ghostOnus {
-			ghostOnus[i].Status = models.OnuOffline
-			offlineCount++
+			p.db.WithContext(ctx).Table("olt_onu_status").
+				Where("oltId = ? AND status NOT IN (?, ?) AND updatedAt < ?",
+					olt.ID, string(models.OnuOffline), string(models.OnuUnregistered), start).
+				Updates(map[string]interface{}{
+					"status":    string(models.OnuOffline),
+					"updatedAt": now,
+				})
+
+			log.Debug().Str("olt", olt.ID).Int("count", len(ghostOnus)).Msg("poller: ghost ONUs marked offline")
+			for i := range ghostOnus {
+				ghostOnus[i].Status = models.OnuOffline
+				offlineCount++
+			}
+			// Include ghost ONUs in allStatuses so checkAlerts can raise offline alerts.
+			allStatuses = append(allStatuses, ghostOnus...)
 		}
-		// Include ghost ONUs in allStatuses so checkAlerts can raise offline alerts.
-		allStatuses = append(allStatuses, ghostOnus...)
+	} else {
+		log.Warn().Str("olt", olt.ID).Msg("poller: SNMP returned 0 ONUs — skipping ghost cleanup to avoid false offline marking")
 	}
 
 	totalONU := len(allStatuses)
 
-	// Update OLT summary
+	// Update OLT summary.
+	// isOnline: true when SNMP returned at least 1 ONU OR when uptime > 0.
+	// When SNMP returns 0 ONUs and uptime is 0, the OLT is unreachable — mark offline.
+	oltIsOnline := snmpDiscoveredAny || uptimeSeconds > 0
 	pollTime := now
 	p.db.Model(olt).Updates(map[string]interface{}{
 		"lastPollAt": pollTime,
 		"totalOnu":   totalONU,
 		"onlineOnu":  onlineCount,
 		"offlineOnu": offlineCount,
-		"isOnline":   true,
+		"isOnline":   oltIsOnline,
 		"uptime":     uptimeSeconds,
 	})
 

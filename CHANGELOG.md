@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.10] — 2026-06-02
+### Fixed
+- **Semua ONU jadi offline saat SNMP gagal** — Ghost-cleanup poller menandai semua ONU sebagai offline ketika SNMP BulkWalk mengembalikan 0 ONU (misalnya OLT sementara tidak bisa diakses). Seharusnya ghost-cleanup hanya dijalankan bila SNMP berhasil mendeteksi minimal 1 ONU di siklus polling ini. Fix: tambah guard `snmpDiscoveredAny` sebelum ghost-cleanup.
+- **OLT tampil "Online" meski SNMP gagal** — `isOnline` selalu di-set `true` bahkan ketika SNMP gagal. Fix: `isOnline = snmpDiscoveredAny || uptimeSeconds > 0`.
+
+### Files
+- `internal/olt/poller/poller.go` — ghost-cleanup hanya jalan jika SNMP return > 0 ONU; `isOnline` sekarang refleksikan konektivitas nyata
+
+---
+
 ## [2.54.9] — 2026-06-01
 ### Fixed
 - **ONU power-off tampil "online"** — `parseONUStateOutput` tidak menangani Phase State `power-off` dari CLI ZTE C320 (`show gpon onu state`). Saat ONU mati lampu/power-off, CLI mengembalikan `power-off` tapi karena tidak ada case-nya, Telnet override tidak terjadi dan status SNMP yang stale (`working`/`active`) tetap dipakai. Fix: tambah `power-off`, `power_off`, `poweroff`, `powerdown` → `offline`; juga tambah `losi` → `los` dan `auth-failed` → `auth_failed`.
