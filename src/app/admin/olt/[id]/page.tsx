@@ -379,7 +379,7 @@ interface PONPortStat {
 }
 
 // ── ZTE Chassis View ─────────────────────────────────────────────────────────
-function ZTEChassisView({ olt }: { olt: OLTDetail }) {
+function ZTEChassisView({ olt, onus: onusProp }: { olt: OLTDetail; onus?: ONU[] }) {
   const [chassisSlots, setChassisSlots] = useState<ApiChassisSlot[]>([]);
   const [selectedUplinkPort, setSelectedUplinkPort] = useState<string | null>(null);
   const [loadingChassis, setLoadingChassis] = useState(false);
@@ -449,8 +449,10 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
   }, [olt.id, refreshPONStat]);
 
   // ── Port stats from ONU list ──────────────────────────────────────────────
+  // Prefer live ONU data (auto-refreshes every 15s) over stale olt.onuStatuses
+  const onusForPortMap = onusProp ?? olt.onuStatuses;
   const portStats: Record<string, { total: number; online: number; offline: number; los: number; dyingGasp: number; unregistered: number; rxPowers: number[] }> = {};
-  for (const onu of olt.onuStatuses) {
+  for (const onu of onusForPortMap) {
     const key = `${onu.slot}/${onu.port}`;
     if (!portStats[key]) portStats[key] = { total: 0, online: 0, offline: 0, los: 0, dyingGasp: 0, unregistered: 0, rxPowers: [] };
     portStats[key].total++;
@@ -469,7 +471,7 @@ function ZTEChassisView({ olt }: { olt: OLTDetail }) {
   } else {
     // Fallback: derive service slots from ONU statuses
     const maxPortPerSlot: Record<number, number> = {};
-    for (const onu of olt.onuStatuses) {
+    for (const onu of onusForPortMap) {
       if (maxPortPerSlot[onu.slot] === undefined || onu.port > maxPortPerSlot[onu.slot])
         maxPortPerSlot[onu.slot] = onu.port;
     }
@@ -2628,11 +2630,11 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
             </div>
             <div className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5 text-xs">
               {olt.offlineOnu > 0 && <span className="text-orange-500 font-medium">{olt.offlineOnu} offline</span>}
-              {olt.onuStatuses.filter(o => o.status === 'los').length > 0 && (
-                <span className="text-red-500 font-medium">{olt.onuStatuses.filter(o => o.status === 'los').length} LOS</span>
+              {(liveOnus ?? olt.onuStatuses).filter(o => o.status === 'los').length > 0 && (
+                <span className="text-red-500 font-medium">{(liveOnus ?? olt.onuStatuses).filter(o => o.status === 'los').length} LOS</span>
               )}
-              {olt.onuStatuses.filter(o => o.status === 'dying_gasp').length > 0 && (
-                <span className="text-orange-600 font-medium">{olt.onuStatuses.filter(o => o.status === 'dying_gasp').length} DyingGasp</span>
+              {(liveOnus ?? olt.onuStatuses).filter(o => o.status === 'dying_gasp').length > 0 && (
+                <span className="text-orange-600 font-medium">{(liveOnus ?? olt.onuStatuses).filter(o => o.status === 'dying_gasp').length} DyingGasp</span>
               )}
               {olt.offlineOnu === 0 && <span className="text-green-500 font-medium">All online</span>}
             </div>
@@ -3241,7 +3243,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
 
         {/* Port Map Tab — Realistic ZTE C320 Chassis Diagram */}
         <TabsContent value="portmap">
-          <ZTEChassisView olt={olt} />
+          <ZTEChassisView olt={olt} onus={liveOnus ?? olt?.onuStatuses} />
         </TabsContent>
       </Tabs>
 
