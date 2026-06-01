@@ -226,19 +226,47 @@ func (h *OLTHandler) TestConnection(c fiber.Ctx) error {
 		IPAddress     string `json:"ipAddress"`
 		SSHEnabled    bool   `json:"sshEnabled"`
 		TelnetEnabled bool   `json:"telnetEnabled"`
+		SNMPEnabled   bool   `json:"snmpEnabled"`
 		SSHPort       string `json:"sshPort"`
 		TelnetPort    string `json:"telnetPort"`
+		SNMPPort      string `json:"snmpPort"`
+		SNMPCommunity string `json:"snmpCommunity"`
 		OltID         string `json:"oltId"`
+		Protocol      string `json:"protocol"` // "snmp" | "ssh" | "telnet" | "" (all)
 	}
 	c.Bind().JSON(&body)
 
-	ip := body.IPAddress
-	if ip == "" && body.OltID != "" {
+	// When oltId is provided, load real settings from DB — overrides any defaults.
+	var oltRow *models.NetworkOLT
+	if body.OltID != "" {
 		var olt models.NetworkOLT
 		if err := h.db.First(&olt, "id = ?", body.OltID).Error; err == nil {
-			ip = olt.IPAddress
+			oltRow = &olt
+			if body.IPAddress == "" {
+				body.IPAddress = olt.IPAddress
+			}
+			// Use DB values when caller didn't supply explicit port/flag overrides
+			if !body.SSHEnabled && !body.TelnetEnabled && !body.SNMPEnabled {
+				body.SSHEnabled = olt.SSHEnabled
+				body.TelnetEnabled = olt.TelnetEnabled
+				body.SNMPEnabled = olt.SNMPEnabled
+			}
+			if body.SSHPort == "" {
+				body.SSHPort = strconv.Itoa(olt.SSHPort)
+			}
+			if body.TelnetPort == "" {
+				body.TelnetPort = strconv.Itoa(olt.TelnetPort)
+			}
+			if body.SNMPPort == "" {
+				body.SNMPPort = strconv.Itoa(olt.SNMPPort)
+			}
+			if body.SNMPCommunity == "" {
+				body.SNMPCommunity = olt.SNMPCommunity
+			}
 		}
 	}
+
+	ip := body.IPAddress
 	if ip == "" {
 		return c.Status(400).JSON(fiber.Map{"error": "ipAddress required"})
 	}
@@ -251,6 +279,13 @@ func (h *OLTHandler) TestConnection(c fiber.Ctx) error {
 	if telnetPort == 0 {
 		telnetPort = 23
 	}
+	snmpPort, _ := strconv.Atoi(body.SNMPPort)
+	if snmpPort == 0 {
+		snmpPort = 161
+	}
+	if body.SNMPCommunity == "" {
+		body.SNMPCommunity = "public"
+	}
 
 	type testResult struct {
 		Method  string `json:"method"`
@@ -261,40 +296,87 @@ func (h *OLTHandler) TestConnection(c fiber.Ctx) error {
 	var tests []testResult
 	anySuccess := false
 
-	// SSH TCP check
-	{
+	proto := strings.ToLower(body.Protocol)
+
+	// SNMP test — try GET sysDescr OID (UDP, so actual SNMP request needed)
+	if body.SNMPEnabled && (proto == "snmp" || proto == "") {
+		start := time.Now()
+		cfg := snmputil.DefaultConfig(ip, body.SNMPCommunity, snmpPort)
+		cfg.Timeout = 5 * time.Second
+		cfg.Retries = 1
+		res, err := snmputil.Get(context.Background(), cfg, []string{"1.3.6.1.2.1.1.1.0"})
+		elapsed := int(time.Since(start).Milliseconds())
+		if err == nil && len(res) > 0 {
+			tests = append(tests, testResult{Method: "SNMP", Success: true, Message: fmt.Sprintf("Port %d reachable, sysDescr OK (%dms)", snmpPort, elapsed), Time: elapsed})
+			anySuccess = true
+		} else {
+			msg := fmt.Sprintf("Port %d unreachable", snmpPort)
+			if err != nil {
+				msg = fmt.Sprintf("SNMP GET failed: %s", err.Error())
+			}
+			tests = append(tests, testResult{Method: "SNMP", Success: false, Message: msg, Time: elapsed})
+		}
+	}
+
+	// SSH TCP reachability check
+	if body.SSHEnabled && (proto == "ssh" || proto == "") {
 		start := time.Now()
 		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, sshPort), 5*time.Second)
 		elapsed := int(time.Since(start).Milliseconds())
 		if err == nil {
 			conn.Close()
-			tests = append(tests, testResult{Method: "SSH", Success: true, Message: fmt.Sprintf("Port %d reachable", sshPort), Time: elapsed})
+			tests = append(tests, testResult{Method: "SSH", Success: true, Message: fmt.Sprintf("Port %d reachable (%dms)", sshPort, elapsed), Time: elapsed})
 			anySuccess = true
 		} else {
-			tests = append(tests, testResult{Method: "SSH", Success: false, Message: fmt.Sprintf("Port %d unreachable", sshPort), Time: elapsed})
+			tests = append(tests, testResult{Method: "SSH", Success: false, Message: fmt.Sprintf("Port %d unreachable: %s", sshPort, err.Error()), Time: elapsed})
 		}
 	}
 
-	// Telnet TCP check (if enabled)
-	if body.TelnetEnabled {
+	// Telnet TCP reachability check
+	if body.TelnetEnabled && (proto == "telnet" || proto == "") {
 		start := time.Now()
 		conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", ip, telnetPort), 5*time.Second)
 		elapsed := int(time.Since(start).Milliseconds())
 		if err == nil {
 			conn.Close()
-			tests = append(tests, testResult{Method: "Telnet", Success: true, Message: fmt.Sprintf("Port %d reachable", telnetPort), Time: elapsed})
+			tests = append(tests, testResult{Method: "Telnet", Success: true, Message: fmt.Sprintf("Port %d reachable (%dms)", telnetPort, elapsed), Time: elapsed})
 			anySuccess = true
 		} else {
-			tests = append(tests, testResult{Method: "Telnet", Success: false, Message: fmt.Sprintf("Port %d unreachable", telnetPort), Time: elapsed})
+			tests = append(tests, testResult{Method: "Telnet", Success: false, Message: fmt.Sprintf("Port %d unreachable: %s", telnetPort, err.Error()), Time: elapsed})
 		}
 	}
 
-	if body.OltID != "" {
+	if len(tests) == 0 {
+		// Protocol not enabled in DB — tell caller explicitly
+		label := proto
+		if label == "" {
+			label = "any"
+		}
+		return c.JSON(fiber.Map{
+			"success": false,
+			"message": fmt.Sprintf("Protocol '%s' is not enabled for this OLT. Enable it in settings first.", label),
+			"results": fiber.Map{"tests": tests},
+		})
+	}
+
+	if body.OltID != "" && oltRow != nil {
 		h.db.Model(&models.NetworkOLT{}).Where("id = ?", body.OltID).Update("isOnline", anySuccess)
 	}
 
+	// Build summary message for the alert
+	var msgParts []string
+	for _, t := range tests {
+		icon := "✓"
+		if !t.Success {
+			icon = "✗"
+		}
+		msgParts = append(msgParts, fmt.Sprintf("%s %s: %s", icon, t.Method, t.Message))
+	}
+	msg := strings.Join(msgParts, "\n")
+
 	return c.JSON(fiber.Map{
 		"success": anySuccess,
+		"message": msg,
 		"results": fiber.Map{
 			"tests": tests,
 		},
