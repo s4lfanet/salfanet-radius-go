@@ -491,6 +491,35 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.19 — 2026-06-03
+
+### Fixed
+- **ONU list menampilkan data salah (11 online padahal 53 online)** — Root cause: port 9006 di Mikrotik DST-NAT diarahkan ke SSH ZTE (bukan Telnet), sehingga Telnet selalu gagal dengan SSH banner. v2.54.15 DB fallback kemudian mengunci 44 ONU sebagai offline secara permanen (death spiral). Fix 1: buat SSH pool (`internal/olt/ssh`) dengan API identik ke Telnet pool — poller sekarang pakai SSH (port 9005) untuk fetch ONU state, bukan Telnet. Fix 2: **hapus seluruh DB fallback** di poller — ketika CLI return 0 state, percayai SNMP apa adanya, tidak lagi "preserve DB offline status" yang menjadi sumber death spiral.
+- **DB fallback death spiral dihapus** — Logika "jika CLI gagal, ambil status offline dari DB dan override SNMP online" dihapus permanen. Alasan: SNMP bisa saja memberikan partial data yang benar; mengoverride dengan data DB lama justru mempertahankan status salah selamanya.
+
+### Added
+- **SSH CLI pool** (`internal/olt/ssh/ssh.go`) — Package baru untuk koneksi SSH interaktif ke ZTE OLT. Implements same `Execute`/`ExecuteMultiple` API sebagai `telnet.Pool`. Stateless: setiap `ExecuteMultiple` buka koneksi SSH baru → tidak ada stale connection issue. Auth: password + keyboard-interactive fallback. PTY requested dengan ECHO=0.
+- **`CLIPool` interface** di `internal/olt/vendors/zte/zte.go` — Interface `Execute(string)(string,error)` + `ExecuteMultiple([]string)(string,error)` yang diimplementasi oleh both `*telnet.Pool` dan `*ssh.Pool`. `FetchTelnetONUStates` dan `FetchTelnetDistances` sekarang menerima `CLIPool` bukan `*telnet.Pool`.
+- **`GetCLIPool(oltID)`** di poller — Mengembalikan SSH pool jika tersedia, Telnet pool sebagai fallback. Handlers bisa pakai ini untuk management commands juga.
+
+### Changed
+- **Poller sekarang prefer SSH untuk CLI** — Jika `SSHEnabled=true` di OLT settings, SSH pool dibuat pada `SSHPort`. Telnet pool hanya dibuat jika SSH tidak dikonfigurasi. SSH adalah sumber kebenaran untuk ONU state di ZTE C320.
+
+### Files
+- `internal/olt/ssh/ssh.go` — **NEW** SSH CLI pool
+- `internal/olt/vendors/zte/zte.go` — `CLIPool` interface; update `FetchTelnetONUStates` + `FetchTelnetDistances` signatures
+- `internal/olt/poller/poller.go` — SSH pool support; hapus DB fallback; `GetCLIPool()`
+
+### v2.54.18 — 2026-06-02
+
+### Fixed
+- **Chassis header "Updated" timestamp menunjukkan waktu page load, bukan waktu refresh terakhir** — `lastPollAt` adalah field statis dari DB, tidak berubah setelah polling. Fix: `ZTEChassisView` terima prop `onuLastRefresh?: Date | null`; header menampilkan `onuLastRefresh.toLocaleTimeString()` jika ada (di-update tiap kali `liveOnus` refresh berhasil), fallback ke `lastPollAt` jika belum.
+- **Ghost ONU tidak dihapus dari DB** — ONU offline >2 jam yang tidak punya customer (tidak ada di tabel `customers`) tetap ada di `olt_onu_status` dan dihitung sebagai offline. Fix: setelah marking ghost, hapus juga entri offline yang sudah >2 jam dan tidak ada customer terkait. Poller sekarang log `poller: ghost ONUs deleted` dengan count.
+
+### Files
+- `src/app/admin/olt/[id]/page.tsx` — `onuLastRefresh` state + prop ke `ZTEChassisView`; update tiap 15s refresh
+- `internal/olt/poller/poller.go` — Ghost cleanup: hapus offline >2h tanpa customer dari DB
+
 ### v2.54.17 — 2026-06-02
 
 ### Fixed
@@ -514,22 +543,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/olt/poller/poller.go` — DB fallback ketika Telnet return 0 states; log warning untuk Telnet failure
-
-### v2.54.14 — 2026-06-02
-
-### Fixed
-- **Revert v2.54.13** — Fix DeregReason>=2 → force offline ternyata salah. ZTE C320 `DeregReason` menyimpan alasan TERAKHIR ONU offline (historis), bukan status saat ini. ONU yang sudah kembali online tetap punya `DeregReason=PowerOff` dari event sebelumnya, sehingga semua 55 ONU dipaksa ke offline. Revert: `lastDeregReason` hanya dipakai sebagai informasi display, status tetap dari `OperState` SNMP + Telnet override.
-
-### Files
-- `internal/olt/vendors/zte/zte.go` — Revert DeregReason status override (v2.54.13)
-
-### v2.54.13 — 2026-06-02
-
-### Fixed
-- **ONU offline ditampilkan sebagai online** — ZTE C320 SNMP `OperState` bisa tertinggal (cached) dan masih melaporkan nilai `working/active` (4/5) meski ONU sudah deregistrasi (PowerOff, LOS, dsb.). MIB ZTE mendefinisikan `DeregReason=1` = `notApplicable` (ONU sedang online), dan `DeregReason>=2` = ONU sedang offline. Fix: jika `DeregReason>=2` tetapi `OperState` di-decode sebagai `OnuOnline`, status di-override ke `OnuOffline`. Berlaku untuk kedua blok ONU (registered via regStatus dan registered via OperState).
-
-### Files
-- `internal/olt/vendors/zte/zte.go` — Override status ke offline jika DeregReason>=2 (ONU deregistered per ZTE MIB)
 
 <!-- AUTO-CHANGELOG:END -->
 
