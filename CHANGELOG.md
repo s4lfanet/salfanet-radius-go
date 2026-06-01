@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.14] — 2026-06-02
+### Fixed
+- **Revert v2.54.13** — Fix DeregReason>=2 → force offline ternyata salah. ZTE C320 `DeregReason` menyimpan alasan TERAKHIR ONU offline (historis), bukan status saat ini. ONU yang sudah kembali online tetap punya `DeregReason=PowerOff` dari event sebelumnya, sehingga semua 55 ONU dipaksa ke offline. Revert: `lastDeregReason` hanya dipakai sebagai informasi display, status tetap dari `OperState` SNMP + Telnet override.
+
+### Files
+- `internal/olt/vendors/zte/zte.go` — Revert DeregReason status override (v2.54.13)
+
+---
+
 ## [2.54.13] — 2026-06-02
 ### Fixed
 - **ONU offline ditampilkan sebagai online** — ZTE C320 SNMP `OperState` bisa tertinggal (cached) dan masih melaporkan nilai `working/active` (4/5) meski ONU sudah deregistrasi (PowerOff, LOS, dsb.). MIB ZTE mendefinisikan `DeregReason=1` = `notApplicable` (ONU sedang online), dan `DeregReason>=2` = ONU sedang offline. Fix: jika `DeregReason>=2` tetapi `OperState` di-decode sebagai `OnuOnline`, status di-override ke `OnuOffline`. Berlaku untuk kedua blok ONU (registered via regStatus dan registered via OperState).
