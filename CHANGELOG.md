@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.9] — 2026-06-01
+### Fixed
+- **ONU power-off tampil "online"** — `parseONUStateOutput` tidak menangani Phase State `power-off` dari CLI ZTE C320 (`show gpon onu state`). Saat ONU mati lampu/power-off, CLI mengembalikan `power-off` tapi karena tidak ada case-nya, Telnet override tidak terjadi dan status SNMP yang stale (`working`/`active`) tetap dipakai. Fix: tambah `power-off`, `power_off`, `poweroff`, `powerdown` → `offline`; juga tambah `losi` → `los` dan `auth-failed` → `auth_failed`.
+
+### Files
+- `internal/olt/vendors/zte/zte.go` — `parseONUStateOutput` + komentar lengkap Phase State ZTE C320
+
+---
+
 ## [2.54.8] — 2026-06-01
 ### Fixed
 - **`toLocaleString` crash** — `deleteOverlay.count` bisa undefined saat hapus expired, crash dengan `TypeError: Cannot read properties of undefined`. Fix: tambah `?? 0` guard.

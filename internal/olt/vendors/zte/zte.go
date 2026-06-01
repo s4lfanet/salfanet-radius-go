@@ -1072,18 +1072,32 @@ func parseONUStateOutput(output string) map[string]models.OltOnuStatus {
 		// Scan all remaining fields for a recognisable oper-state keyword.
 		// ZTE C320 V2.1: OnuIndex | Admin State | OMCC State | Phase State | Channel
 		// Scanning avoids brittle hardcoded column indices across firmware versions.
+		//
+		// Known ZTE C320 Phase State values:
+		//   working / active / online / up    → online
+		//   dying-gasp / dyinggasp            → dying_gasp (ONU sent dying-gasp signal)
+		//   power-off / power_off / poweroff  → offline (ONU powered off without dying-gasp)
+		//   los / lofi / losi                 → los (Loss of Signal / Frame / inner)
+		//   auth-failed / auth_failed         → auth_failed
+		//   inactive / not-present / offline  → offline
 		var status models.OltOnuStatus
 		found := false
 		for _, f := range fields[1:] {
 			f = strings.ToLower(f)
+			// Normalize dashes/underscores so "power-off" == "power_off" == "poweroff"
+			fNorm := strings.ReplaceAll(strings.ReplaceAll(f, "-", ""), "_", "")
 			switch {
 			case f == "working" || f == "active" || f == "online" || f == "up":
 				status, found = models.OnuOnline, true
-			case strings.HasPrefix(f, "dying"):
+			case strings.HasPrefix(f, "dying") || strings.HasPrefix(fNorm, "dyinggasp"):
 				status, found = models.OnuDyingGasp, true
-			case f == "los" || f == "lofi":
+			case fNorm == "poweroff" || fNorm == "powerdown":
+				status, found = models.OnuOffline, true
+			case f == "los" || f == "lofi" || f == "losi":
 				status, found = models.OnuLOS, true
-			case f == "inactive" || f == "not-present" || f == "notpresent" || f == "offline" || f == "down":
+			case fNorm == "authfailed":
+				status, found = models.OnuAuthFailed, true
+			case f == "inactive" || fNorm == "notpresent" || f == "offline" || f == "down":
 				status, found = models.OnuOffline, true
 			}
 			if found {
