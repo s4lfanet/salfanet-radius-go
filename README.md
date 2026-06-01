@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.17 — 2026-06-02
+
+### Fixed
+- **Port Map tidak update setelah polling** — `ZTEChassisView` dipanggil dengan prop `olt` (data statis dari page load), bukan dari `liveOnus` yang auto-refresh tiap 15 detik. Akibatnya color status port di Port Map tidak pernah berubah meski data ONU sudah diperbarui. Fix: tambah prop `onus` ke `ZTEChassisView`, pass `liveOnus ?? olt.onuStatuses` dari parent. Badge counter LOS/DyingGasp di header juga di-fix untuk pakai live data.
+
+### Files
+- `src/app/admin/olt/[id]/page.tsx` — ZTEChassisView terima prop `onus`; Port Map dan badge header pakai `liveOnus`
+
 ### v2.54.16 — 2026-06-02
 
 ### Fixed
@@ -522,16 +530,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/olt/vendors/zte/zte.go` — Override status ke offline jika DeregReason>=2 (ONU deregistered per ZTE MIB)
-
-### v2.54.12 — 2026-06-02
-
-### Fixed
-- **totalONU tidak termasuk ghost ONU** — `totalONU` di header OLT (contoh "0/64") sebelumnya ter-inflate karena ghost ONU dari siklus sebelumnya ikut dihitung. Sekarang hanya ONU yang ditemukan SNMP siklus ini (registered + unregistered) yang masuk ke `totalOnu` di `network_olts`. Ghost ONU tetap di-pass ke `checkAlerts` untuk generate alert, tapi tidak mempengaruhi angka summary.
-- **Ghost ONU inflate offlineOnu** — Ghost ONU yang ditandai offline sebelumnya ikut ditambahkan ke `offlineCount`, membuat angka `offlineOnu` di summary salah. Dihapus karena ghost ONU bukan live-offline event.
-- **Semua ONU jadi offline setelah restart PM2** — Saat Telnet pool membuka koneksi baru (setelah restart), ZTE C320 kadang mengembalikan output pertama yang belum bersih. `parseONUStateOutput` salah parse → semua ONU di-override ke offline. Fix: tambah sanity check — jika Telnet ingin men-set SEMUA SNMP-online ONU menjadi non-online, skip Telnet override untuk siklus itu dan pertahankan status SNMP.
-
-### Files
-- `internal/olt/poller/poller.go` — Telnet sanity check; totalONU = SNMP count only; hapus offlineCount++ untuk ghost ONU
 
 <!-- AUTO-CHANGELOG:END -->
 
