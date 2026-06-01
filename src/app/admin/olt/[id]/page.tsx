@@ -379,7 +379,7 @@ interface PONPortStat {
 }
 
 // ── ZTE Chassis View ─────────────────────────────────────────────────────────
-function ZTEChassisView({ olt, onus: onusProp }: { olt: OLTDetail; onus?: ONU[] }) {
+function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetail; onus?: ONU[]; onuLastRefresh?: Date | null }) {
   const [chassisSlots, setChassisSlots] = useState<ApiChassisSlot[]>([]);
   const [selectedUplinkPort, setSelectedUplinkPort] = useState<string | null>(null);
   const [loadingChassis, setLoadingChassis] = useState(false);
@@ -710,7 +710,7 @@ function ZTEChassisView({ olt, onus: onusProp }: { olt: OLTDetail; onus?: ONU[] 
                 <Server className="h-4 w-4 text-green-400" />
                 <span className="font-semibold text-sm text-slate-900 dark:text-white">ZTE C320 Rack Diagram</span>
               </div>
-              <div className="text-[11px] text-slate-500 mt-1">Updated: {olt.lastPollAt ? new Date(olt.lastPollAt).toLocaleTimeString('id-ID') : '—'}</div>
+              <div className="text-[11px] text-slate-500 mt-1">Updated: {onuLastRefresh ? onuLastRefresh.toLocaleTimeString('id-ID') : olt.lastPollAt ? new Date(olt.lastPollAt).toLocaleTimeString('id-ID') : '—'}</div>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
               <span className="text-xs text-slate-500 font-mono">{olt.ipAddress}</span>
@@ -3243,7 +3243,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
 
         {/* Port Map Tab — Realistic ZTE C320 Chassis Diagram */}
         <TabsContent value="portmap">
-          <ZTEChassisView olt={olt} onus={liveOnus ?? olt?.onuStatuses} />
+          <ZTEChassisView olt={olt} onus={liveOnus ?? olt?.onuStatuses} onuLastRefresh={onuLastRefresh} />
         </TabsContent>
       </Tabs>
 

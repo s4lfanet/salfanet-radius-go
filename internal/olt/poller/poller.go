@@ -407,6 +407,28 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 			// Include ghost ONUs in allStatuses so checkAlerts can still raise offline alerts.
 			allStatuses = append(allStatuses, ghostOnus...)
 		}
+		// Extended ghost cleanup: remove persistent ghost ONUs that have been offline
+		// for >2 hours and have no customer assigned. These are stale DB rows from
+		// ONUs that were physically removed from the OLT. Keeping them indefinitely
+		// inflates the ONU list with phantom entries.
+		// We ONLY delete if:
+		//   - status is already offline (handled by the ghost cleanup above OR previous polls)
+		//   - customerId IS NULL (safe to delete — not assigned to any customer)
+		//   - lastSeenAt < 2 hours ago OR lastSeenAt IS NULL (truly gone)
+		//   - updatedAt < start (not touched in this poll cycle)
+		oldThreshold := start.Add(-2 * time.Hour)
+		var deletedGhosts int64
+		p.db.WithContext(ctx).Table("olt_onu_status").
+			Where("oltId = ? AND status = ? AND customerId IS NULL AND (lastSeenAt IS NULL OR lastSeenAt < ?) AND updatedAt < ?",
+				olt.ID, string(models.OnuOffline), oldThreshold, start).
+			Count(&deletedGhosts)
+		if deletedGhosts > 0 {
+			p.db.WithContext(ctx).Table("olt_onu_status").
+				Where("oltId = ? AND status = ? AND customerId IS NULL AND (lastSeenAt IS NULL OR lastSeenAt < ?) AND updatedAt < ?",
+					olt.ID, string(models.OnuOffline), oldThreshold, start).
+				Delete(nil)
+			log.Info().Str("olt", olt.ID).Int64("deleted", deletedGhosts).Msg("poller: stale ghost ONUs deleted (offline >2h, no customer)")
+		}
 	} else {
 		log.Warn().Str("olt", olt.ID).Msg("poller: SNMP returned 0 ONUs — skipping ghost cleanup to avoid false offline marking")
 	}
