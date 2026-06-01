@@ -95,7 +95,17 @@ func (p *Pool) dial() (*xssh.Client, error) {
 		// OLTs use self-signed / untrusted host keys; strict host key checking is
 		// not practical without a PKI deployment in an ISP NMS context.
 		HostKeyCallback: xssh.InsecureIgnoreHostKey(), //nolint:gosec
-		Timeout:         p.cfg.DialTimeout,
+		// ZTE C320 and similar OLT firmware only offer legacy host key algorithms
+		// (ssh-rsa, ssh-dss). Modern Go crypto/ssh disables these by default;
+		// we must explicitly allow them or the handshake fails with
+		// "no matching host key type found".
+		HostKeyAlgorithms: []string{
+			xssh.KeyAlgoRSA,       // ssh-rsa  (ZTE C320 primary)
+			xssh.KeyAlgoDSA,       // ssh-dss  (some older ZTE firmware)
+			xssh.KeyAlgoRSASHA256, // rsa-sha2-256
+			xssh.KeyAlgoRSASHA512, // rsa-sha2-512
+		},
+		Timeout: p.cfg.DialTimeout,
 	}
 	addr := net.JoinHostPort(p.cfg.Host, fmt.Sprintf("%d", p.cfg.Port))
 	client, err := xssh.Dial("tcp", addr, cfg)
