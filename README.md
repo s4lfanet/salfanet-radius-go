@@ -491,6 +491,14 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.13 — 2026-06-02
+
+### Fixed
+- **ONU offline ditampilkan sebagai online** — ZTE C320 SNMP `OperState` bisa tertinggal (cached) dan masih melaporkan nilai `working/active` (4/5) meski ONU sudah deregistrasi (PowerOff, LOS, dsb.). MIB ZTE mendefinisikan `DeregReason=1` = `notApplicable` (ONU sedang online), dan `DeregReason>=2` = ONU sedang offline. Fix: jika `DeregReason>=2` tetapi `OperState` di-decode sebagai `OnuOnline`, status di-override ke `OnuOffline`. Berlaku untuk kedua blok ONU (registered via regStatus dan registered via OperState).
+
+### Files
+- `internal/olt/vendors/zte/zte.go` — Override status ke offline jika DeregReason>=2 (ONU deregistered per ZTE MIB)
+
 ### v2.54.12 — 2026-06-02
 
 ### Fixed
@@ -526,19 +534,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/olt/vendors/zte/zte.go` — `parseONUStateOutput` + komentar lengkap Phase State ZTE C320
-
-### v2.54.8 — 2026-06-01
-
-### Fixed
-- **`toLocaleString` crash** — `deleteOverlay.count` bisa undefined saat hapus expired, crash dengan `TypeError: Cannot read properties of undefined`. Fix: tambah `?? 0` guard.
-- **Hapus voucher (selected) gagal** — Frontend kirim `voucherIds` tapi backend `DeleteMultiple` hanya baca `ids`. Fix: backend sekarang baca keduanya.
-- **`delete-expired` count undefined** — Backend return `deleted` tapi frontend baca `data.count`. Fix: frontend baca `data.deleted ?? data.count ?? 0`; backend juga tambah alias `count`.
-- **Pagination per-page tidak berubah** — `pageParams` di backend baca `pageSize` tapi frontend kirim `limit`. Fix: baca keduanya, cap dinaikkan ke 2000.
-
-### Files
-- `internal/api/handlers/helpers.go` — `pageParams` terima `limit` alias + cap 2000
-- `internal/api/handlers/hotspot_ext.go` — `DeleteMultiple` terima `voucherIds`; `DeleteExpired` tambah alias `count`
-- `src/app/admin/hotspot/voucher/page.tsx` — guard `toLocaleString`, baca `data.deleted` dari delete-expired
 
 <!-- AUTO-CHANGELOG:END -->
 
