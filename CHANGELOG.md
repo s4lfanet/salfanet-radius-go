@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.15] — 2026-06-02
+### Fixed
+- **ONU offline kembali online setelah polling** — Saat Telnet tersedia (pool ada) tapi `FetchTelnetONUStates` mengembalikan 0 state (output tidak terbaca: timeout, format CLI tidak dikenali, dsb.), sebelumnya tidak ada log dan tidak ada fallback — SNMP OperState yang ter-cache (lag) langsung menang, semua ONU menjadi online. Fix: jika Telnet return 0 state, ambil status terakhir dari DB sebagai fallback. Setiap ONU yang SNMP-nya bilang `online` tapi DB mencatat `offline/dying_gasp/los` → status SNMP diabaikan dan status DB dipertahankan. Log warning ditambahkan untuk visibilitas.
+
+### Files
+- `internal/olt/poller/poller.go` — DB fallback ketika Telnet return 0 states; log warning untuk Telnet failure
+
+---
+
 ## [2.54.14] — 2026-06-02
 ### Fixed
 - **Revert v2.54.13** — Fix DeregReason>=2 → force offline ternyata salah. ZTE C320 `DeregReason` menyimpan alasan TERAKHIR ONU offline (historis), bukan status saat ini. ONU yang sudah kembali online tetap punya `DeregReason=PowerOff` dari event sebelumnya, sehingga semua 55 ONU dipaksa ke offline. Revert: `lastDeregReason` hanya dipakai sebagai informasi display, status tetap dari `OperState` SNMP + Telnet override.

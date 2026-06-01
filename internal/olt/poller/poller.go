@@ -188,7 +188,8 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 		// Override SNMP-derived status with authoritative Telnet CLI state.
 		// ZTE C320 SNMP OperState agent lags for dying-gasp/LOS events — the
 		// CLI "Phase State" column reflects the real state immediately.
-		if telnetStates := zte.FetchTelnetONUStates(pool, onus); len(telnetStates) > 0 {
+		telnetStates := zte.FetchTelnetONUStates(pool, onus)
+		if len(telnetStates) > 0 {
 			// Sanity check: if ALL SNMP-online ONUs would be overridden to non-online,
 			// this is almost certainly a Telnet session error (garbled first-connection
 			// output, login banner contamination, etc.) — NOT a real mass-offline event.
@@ -228,6 +229,41 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 				}
 				if overrideCount > 0 {
 					log.Info().Str("olt", olt.ID).Int("overridden", overrideCount).Msg("poller: telnet ONU states applied")
+				}
+			}
+		} else {
+			// Telnet pool is available but returned 0 states — likely output parse failure
+			// (garbled response, session timeout, or ZTE CLI format mismatch).
+			// SNMP OperState is unreliable due to caching; trusting it would flip
+			// offline ONUs back to online incorrectly.
+			// Fallback: load the last-known status from DB and preserve any offline/LOS/
+			// dying_gasp status so we don't lose ground truth from the previous cycle.
+			log.Warn().Str("olt", olt.ID).Msg("poller: telnet returned 0 ONU states — preserving DB offline status as fallback (SNMP may be lagged)")
+			var dbStatuses []models.OLTONUStatus
+			if err := p.db.WithContext(ctx).
+				Select("frame, slot, port, onuId, status").
+				Where("oltId = ?", olt.ID).
+				Find(&dbStatuses).Error; err == nil && len(dbStatuses) > 0 {
+				dbStatusMap := make(map[string]models.OltOnuStatus, len(dbStatuses))
+				for _, s := range dbStatuses {
+					key := fmt.Sprintf("%d/%d/%d:%d", s.Frame, s.Slot, s.Port, s.OnuID)
+					dbStatusMap[key] = s.Status
+				}
+				preserved := 0
+				for _, onu := range onus {
+					if onu.Status != models.OnuOnline {
+						continue
+					}
+					key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
+					if dbStatus, ok := dbStatusMap[key]; ok &&
+						dbStatus != models.OnuOnline && dbStatus != models.OnuUnregistered {
+						onu.Status = dbStatus
+						preserved++
+					}
+				}
+				if preserved > 0 {
+					log.Warn().Str("olt", olt.ID).Int("preserved", preserved).
+						Msg("poller: DB offline status preserved — Telnet failed, SNMP online ignored for these ONUs")
 				}
 			}
 		}
