@@ -18,6 +18,7 @@ import (
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 	"github.com/s4lfanet/salfanet-radius-go/internal/notify"
 	snmputil "github.com/s4lfanet/salfanet-radius-go/internal/olt/snmp"
+	sshclient "github.com/s4lfanet/salfanet-radius-go/internal/olt/ssh"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/telnet"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/vendors/zte"
 )
@@ -30,9 +31,10 @@ type Poller struct {
 	db        *gorm.DB
 	broadcast BroadcastFn
 
-	mu      sync.Mutex
-	workers map[string]context.CancelFunc // oltID → cancel
-	pools   map[string]*telnet.Pool       // oltID → telnet pool
+	mu       sync.Mutex
+	workers  map[string]context.CancelFunc // oltID → cancel
+	pools    map[string]*telnet.Pool       // oltID → telnet pool (legacy)
+	sshPools map[string]*sshclient.Pool    // oltID → SSH pool (preferred)
 }
 
 // New creates a new Poller.
@@ -42,6 +44,7 @@ func New(db *gorm.DB, broadcast BroadcastFn) *Poller {
 		broadcast: broadcast,
 		workers:   make(map[string]context.CancelFunc),
 		pools:     make(map[string]*telnet.Pool),
+		sshPools:  make(map[string]*sshclient.Pool),
 	}
 }
 
@@ -54,14 +57,25 @@ func (p *Poller) Start(olt *models.NetworkOLT) {
 	p.workers[olt.ID] = cancel
 	p.mu.Unlock()
 
-	// Build Telnet pool if Telnet is enabled
-	var pool *telnet.Pool
-	if olt.TelnetEnabled && olt.Username != nil && olt.Password != nil {
+	// Build SSH pool (preferred — more reliable than Telnet for ZTE C320).
+	// SSH CLI state is the ground truth; SNMP OperState lags significantly.
+	if olt.SSHEnabled && olt.Username != nil && olt.Password != nil {
+		cfg := sshclient.DefaultConfig(olt.IPAddress, olt.SSHPort, *olt.Username, *olt.Password)
+		sshPool := sshclient.New(cfg)
+		p.mu.Lock()
+		p.sshPools[olt.ID] = sshPool
+		p.mu.Unlock()
+		log.Info().Str("olt", olt.ID).Int("port", olt.SSHPort).Msg("poller: SSH CLI pool created")
+	}
+
+	// Build Telnet pool as fallback when SSH is not configured.
+	if !olt.SSHEnabled && olt.TelnetEnabled && olt.Username != nil && olt.Password != nil {
 		cfg := telnet.DefaultConfig(olt.IPAddress, olt.TelnetPort, *olt.Username, *olt.Password)
-		pool = telnet.NewPool(cfg)
+		pool := telnet.NewPool(cfg)
 		p.mu.Lock()
 		p.pools[olt.ID] = pool
 		p.mu.Unlock()
+		log.Info().Str("olt", olt.ID).Int("port", olt.TelnetPort).Msg("poller: Telnet CLI pool created (SSH not configured)")
 	}
 
 	interval := time.Duration(olt.PollingInterval) * time.Second
@@ -101,6 +115,10 @@ func (p *Poller) Stop(oltID string) {
 		pool.Close()
 		delete(p.pools, oltID)
 	}
+	if sshPool, ok := p.sshPools[oltID]; ok {
+		sshPool.Close()
+		delete(p.sshPools, oltID)
+	}
 }
 
 // StopAll cancels all running pollers.
@@ -137,6 +155,22 @@ func (p *Poller) GetPool(oltID string) *telnet.Pool {
 	return p.pools[oltID]
 }
 
+// GetCLIPool returns the best available CLI pool for the given OLT.
+// SSH pool is preferred when available; Telnet pool is returned as fallback.
+// Returns nil when neither is configured.
+// Callers must NOT close the returned pool — it is managed by the Poller.
+func (p *Poller) GetCLIPool(oltID string) zte.CLIPool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if sp, ok := p.sshPools[oltID]; ok {
+		return sp
+	}
+	if tp, ok := p.pools[oltID]; ok {
+		return tp
+	}
+	return nil
+}
+
 // TriggerPoll triggers an immediate poll for the given OLT (used by manual sync endpoint).
 func (p *Poller) TriggerPoll(oltID string) error {
 	var olt models.NetworkOLT
@@ -144,13 +178,8 @@ func (p *Poller) TriggerPoll(oltID string) error {
 		return fmt.Errorf("OLT not found: %w", err)
 	}
 
-	p.mu.Lock()
-	pool := p.pools[oltID]
-	p.mu.Unlock()
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
-	var _ *telnet.Pool = pool
 	p.poll(ctx, &olt)
 	return nil
 }
@@ -169,33 +198,46 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 		log.Error().Err(err).Str("olt", olt.ID).Msg("poller: ONU discovery failed")
 	}
 
-	// Enrich ONU distances via Telnet (more accurate than SNMP equalization delay).
-	// Runs "show gpon onu detail-info" per ONU and parses "ONU Distance: Xm".
+	// ── CLI enrichment (SSH preferred, Telnet fallback) ─────────────────────
+	// ZTE C320 SNMP OperState lags significantly — the CLI "show gpon onu state"
+	// command reflects the real state immediately and is the authoritative source.
+	// SSH is preferred because some Mikrotik DST-NAT configs map the "Telnet" port
+	// to the OLT's SSH service, causing Telnet login to fail on the SSH banner.
 	p.mu.Lock()
-	pool := p.pools[olt.ID]
+	sshPool := p.sshPools[olt.ID]
+	telnetPool := p.pools[olt.ID]
 	p.mu.Unlock()
-	if pool != nil && len(onus) > 0 {
-		if telnetDist := zte.FetchTelnetDistances(pool, onus); len(telnetDist) > 0 {
+
+	var cliPool zte.CLIPool
+	cliProto := ""
+	if sshPool != nil {
+		cliPool = sshPool
+		cliProto = "ssh"
+	} else if telnetPool != nil {
+		cliPool = telnetPool
+		cliProto = "telnet"
+	}
+
+	if cliPool != nil && len(onus) > 0 {
+		// Enrich ONU distances via CLI (more accurate than SNMP equalization delay).
+		if cliDist := zte.FetchTelnetDistances(cliPool, onus); len(cliDist) > 0 {
 			for _, onu := range onus {
 				key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
-				if d, ok := telnetDist[key]; ok {
+				if d, ok := cliDist[key]; ok {
 					onu.Distance = &d
 				}
 			}
-			log.Debug().Str("olt", olt.ID).Int("distances", len(telnetDist)).Msg("poller: telnet distances enriched")
+			log.Debug().Str("olt", olt.ID).Str("proto", cliProto).Int("distances", len(cliDist)).Msg("poller: CLI distances enriched")
 		}
 
-		// Override SNMP-derived status with authoritative Telnet CLI state.
-		// ZTE C320 SNMP OperState agent lags for dying-gasp/LOS events — the
-		// CLI "Phase State" column reflects the real state immediately.
-		telnetStates := zte.FetchTelnetONUStates(pool, onus)
-		if len(telnetStates) > 0 {
-			// Sanity check: if ALL SNMP-online ONUs would be overridden to non-online,
-			// this is almost certainly a Telnet session error (garbled first-connection
-			// output, login banner contamination, etc.) — NOT a real mass-offline event.
-			// In that case, skip the override entirely to prevent false all-offline marking.
+		// Override SNMP-derived status with authoritative CLI state.
+		cliStates := zte.FetchTelnetONUStates(cliPool, onus)
+		if len(cliStates) > 0 {
+			// Sanity check: if ALL registered ONUs that SNMP reports as online
+			// would be overridden to non-online, it's almost certainly a CLI parse
+			// error (garbled banner, session contamination) — skip the override.
 			snmpOnlineCount := 0
-			telnetWouldDropOnline := 0
+			cliWouldDropOnline := 0
 			for _, onu := range onus {
 				if !onu.Registered {
 					continue
@@ -203,15 +245,15 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 				if onu.Status == models.OnuOnline {
 					snmpOnlineCount++
 					key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
-					if state, ok := telnetStates[key]; ok && state != models.OnuOnline {
-						telnetWouldDropOnline++
+					if state, ok := cliStates[key]; ok && state != models.OnuOnline {
+						cliWouldDropOnline++
 					}
 				}
 			}
-			if snmpOnlineCount > 0 && telnetWouldDropOnline == snmpOnlineCount {
-				log.Warn().Str("olt", olt.ID).
+			if snmpOnlineCount > 0 && cliWouldDropOnline == snmpOnlineCount {
+				log.Warn().Str("olt", olt.ID).Str("proto", cliProto).
 					Int("snmpOnline", snmpOnlineCount).
-					Msg("poller: telnet override skipped — semua ONU online menurut SNMP akan jadi offline menurut Telnet (kemungkinan Telnet parse error pada koneksi pertama)")
+					Msg("poller: CLI override skipped — all SNMP-online ONUs would go offline (likely CLI parse error)")
 			} else {
 				overrideCount := 0
 				for _, onu := range onus {
@@ -219,53 +261,20 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 						continue
 					}
 					key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
-					if state, ok := telnetStates[key]; ok && state != onu.Status {
-						log.Debug().Str("olt", olt.ID).Str("onu", key).
-							Str("snmp", string(onu.Status)).Str("telnet", string(state)).
-							Msg("poller: telnet overrides SNMP status")
+					if state, ok := cliStates[key]; ok && state != onu.Status {
 						onu.Status = state
 						overrideCount++
 					}
 				}
 				if overrideCount > 0 {
-					log.Info().Str("olt", olt.ID).Int("overridden", overrideCount).Msg("poller: telnet ONU states applied")
+					log.Info().Str("olt", olt.ID).Str("proto", cliProto).Int("overridden", overrideCount).Msg("poller: CLI ONU states applied")
 				}
 			}
 		} else {
-			// Telnet pool is available but returned 0 states — likely output parse failure
-			// (garbled response, session timeout, or ZTE CLI format mismatch).
-			// SNMP OperState is unreliable due to caching; trusting it would flip
-			// offline ONUs back to online incorrectly.
-			// Fallback: load the last-known status from DB and preserve any offline/LOS/
-			// dying_gasp status so we don't lose ground truth from the previous cycle.
-			log.Warn().Str("olt", olt.ID).Msg("poller: telnet returned 0 ONU states — preserving DB offline status as fallback (SNMP may be lagged)")
-			var dbStatuses []models.OLTONUStatus
-			if err := p.db.WithContext(ctx).
-				Select("frame, slot, port, onuId, status").
-				Where("oltId = ?", olt.ID).
-				Find(&dbStatuses).Error; err == nil && len(dbStatuses) > 0 {
-				dbStatusMap := make(map[string]models.OltOnuStatus, len(dbStatuses))
-				for _, s := range dbStatuses {
-					key := fmt.Sprintf("%d/%d/%d:%d", s.Frame, s.Slot, s.Port, s.OnuID)
-					dbStatusMap[key] = s.Status
-				}
-				preserved := 0
-				for _, onu := range onus {
-					if onu.Status != models.OnuOnline {
-						continue
-					}
-					key := fmt.Sprintf("%d/%d/%d:%d", onu.Frame, onu.Slot, onu.Port, onu.OnuID)
-					if dbStatus, ok := dbStatusMap[key]; ok &&
-						dbStatus != models.OnuOnline && dbStatus != models.OnuUnregistered {
-						onu.Status = dbStatus
-						preserved++
-					}
-				}
-				if preserved > 0 {
-					log.Warn().Str("olt", olt.ID).Int("preserved", preserved).
-						Msg("poller: DB offline status preserved — Telnet failed, SNMP online ignored for these ONUs")
-				}
-			}
+			// CLI returned 0 states — connection failed or output unparseable.
+			// We trust SNMP as-is (DO NOT fall back to DB — that causes a death
+			// spiral where stale offline statuses accumulate indefinitely).
+			log.Warn().Str("olt", olt.ID).Str("proto", cliProto).Msg("poller: CLI returned 0 ONU states — using SNMP status as-is")
 		}
 	}
 

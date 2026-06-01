@@ -27,6 +27,14 @@ import (
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/telnet"
 )
 
+// CLIPool is satisfied by both *telnet.Pool and *ssh.Pool.
+// Callers use this interface so they can switch between Telnet and SSH
+// transparently without changing the ZTE vendor logic.
+type CLIPool interface {
+	Execute(cmd string) (string, error)
+	ExecuteMultiple(cmds []string) (string, error)
+}
+
 // ─── OID constants ────────────────────────────────────────────────────────────
 
 const (
@@ -951,11 +959,11 @@ func DiscoverAll(ctx context.Context, snmpCfg snmputil.Config) ([]*ONUInfo, erro
 
 // ─── Telnet Distance Collection ───────────────────────────────────────────────
 
-// FetchTelnetDistances retrieves ONU fiber distances via Telnet
-// "show gpon onu detail-info gpon-onu_F/S/P:N" for each registered ONU.
+// FetchTelnetDistances retrieves ONU fiber distances via CLI (SSH or Telnet).
+// Runs "show gpon onu detail-info gpon-onu_F/S/P:N" for each registered ONU.
 // Returns a map of "F/S/P:N" → distance in meters.
-// All commands are batched in a single Telnet session for efficiency.
-func FetchTelnetDistances(pool *telnet.Pool, onus []*ONUInfo) map[string]int {
+// All commands are batched in a single CLI session for efficiency.
+func FetchTelnetDistances(pool CLIPool, onus []*ONUInfo) map[string]int {
 	var cmds []string
 	for _, onu := range onus {
 		if onu.Registered {
@@ -1020,14 +1028,14 @@ func parseTelnetDistances(raw string) map[string]int {
 
 // FetchTelnetONUStates fetches the authoritative operational state for every
 // registered ONU by running "show gpon onu state gpon-olt_F/S/P" once per
-// unique PON port in a single batched Telnet session.
+// unique PON port in a single batched CLI session (SSH or Telnet).
 //
-// ZTE C320's SNMP OperState agent may lag (reporting a dying-gasp or LOS ONU
-// as still "working") while the CLI reflects the real state immediately.
+// ZTE C320's SNMP OperState agent lags significantly — the CLI always reflects
+// the real ONU state immediately (working / dying-gasp / LOS / power-off).
 // Callers should override the SNMP-derived Status field with this map.
 //
 // Returns a map of "F/S/P:ID" → OltOnuStatus.
-func FetchTelnetONUStates(pool *telnet.Pool, onus []*ONUInfo) map[string]models.OltOnuStatus {
+func FetchTelnetONUStates(pool CLIPool, onus []*ONUInfo) map[string]models.OltOnuStatus {
 	// Collect unique PON ports from registered ONUs.
 	type portKey struct{ frame, slot, port int }
 	seen := make(map[portKey]bool)
