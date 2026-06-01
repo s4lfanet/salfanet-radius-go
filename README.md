@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.10 — 2026-06-02
+
+### Fixed
+- **Semua ONU jadi offline saat SNMP gagal** — Ghost-cleanup poller menandai semua ONU sebagai offline ketika SNMP BulkWalk mengembalikan 0 ONU (misalnya OLT sementara tidak bisa diakses). Seharusnya ghost-cleanup hanya dijalankan bila SNMP berhasil mendeteksi minimal 1 ONU di siklus polling ini. Fix: tambah guard `snmpDiscoveredAny` sebelum ghost-cleanup.
+- **OLT tampil "Online" meski SNMP gagal** — `isOnline` selalu di-set `true` bahkan ketika SNMP gagal. Fix: `isOnline = snmpDiscoveredAny || uptimeSeconds > 0`.
+
+### Files
+- `internal/olt/poller/poller.go` — ghost-cleanup hanya jalan jika SNMP return > 0 ONU; `isOnline` sekarang refleksikan konektivitas nyata
+
 ### v2.54.9 — 2026-06-01
 
 ### Fixed
@@ -527,14 +536,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/api/handlers/hotspot_ext.go` — `ListAgents`: tambah lookup router map + sertakan `router` object di response
-
-### v2.54.5 — 2026-06-01
-
-### Fixed
-- **Error 500 saat tambah agent voucher** — Go struct `Agent` memiliki field `PIN string` tanpa tag `gorm:"-"`, menyebabkan GORM mencoba INSERT ke kolom `pin` yang tidak ada di tabel `agents` database. Fix: tambah `gorm:"-"` ke field `PIN`.
-
-### Files
-- `internal/db/models/extra.go` — Tambah `gorm:"-"` ke field `PIN` di struct `Agent`
 
 <!-- AUTO-CHANGELOG:END -->
 
