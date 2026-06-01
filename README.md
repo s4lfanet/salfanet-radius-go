@@ -491,6 +491,15 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.11 — 2026-06-02
+
+### Added
+- **LastDeregReason ONU dari SNMP** — Alasan terakhir ONU offline (PowerOff, LOS, Reboot, AuthFail, dll.) sekarang dibaca langsung dari SNMP OID `.3.50.12.1.1.7` (zxAnGponOnuRegTable kolom 7 — DeregReason) dan disimpan ke DB field `lastDeregReason`. Upsert menggunakan COALESCE agar nilai tidak tertimpa NULL saat OLT tidak mengembalikan data.
+
+### Files
+- `internal/olt/vendors/zte/zte.go` — tambah `oidDeregReason`, field `LastDeregReason` di `ONUInfo`, `deregReason` di `ponResult`, BulkWalk OID baru, decode & populate `LastDeregReason`, fungsi `decodeDeregReason()`
+- `internal/olt/poller/poller.go` — set `base.LastDeregReason` dari ONU info; tambah `lastDeregReason` ke COALESCE upsert assignments
+
 ### v2.54.10 — 2026-06-02
 
 ### Fixed
@@ -528,14 +537,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `internal/api/handlers/hotspot.go` — `generateVoucherCode` pakai `crypto/rand`; `GenerateVouchers` precheck existing codes + retry loop
-
-### v2.54.6 — 2026-06-01
-
-### Fixed
-- **Kolom Router tabel agen selalu "Belum ditugaskan"** — `GET /api/hotspot/agents` hanya mengirim `routerId` tapi tidak menyertakan object router. Frontend mengecek `agent.router?.name` yang selalu null. Fix: backend sekarang fetch semua router, lookup berdasarkan `routerId`, dan sertakan `{ id, name, nasname, shortname }` di setiap item response.
-
-### Files
-- `internal/api/handlers/hotspot_ext.go` — `ListAgents`: tambah lookup router map + sertakan `router` object di response
 
 <!-- AUTO-CHANGELOG:END -->
 
