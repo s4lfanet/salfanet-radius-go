@@ -518,6 +518,20 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 
 		switch s.Status {
 		case models.OnuOffline:
+			// Resolve any open dying gasp alert — if the ONU transitions back to a plain
+			// offline state, dying gasp is no longer the active condition.
+			resolvOffline := time.Now()
+			var openDyingGasp models.OLTAlert
+			if err := p.db.WithContext(ctx).Where(
+				"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
+				olt.ID, realID, models.AlertDyingGasp, false,
+			).First(&openDyingGasp).Error; err == nil {
+				p.db.WithContext(ctx).Model(&openDyingGasp).Updates(map[string]interface{}{
+					"isResolved": true,
+					"resolvedAt": &resolvOffline,
+				})
+			}
+
 			// Create a new offline alert only when there is no open one.
 			var existing models.OLTAlert
 			err := p.db.WithContext(ctx).Where(
@@ -543,6 +557,20 @@ func (p *Poller) checkAlerts(ctx context.Context, olt *models.NetworkOLT, status
 			p.db.WithContext(ctx).Create(&alert)
 
 		case models.OnuDyingGasp:
+			// Resolve any open offline alert for this ONU — dying gasp is more specific
+			// than offline, so we don't want both alerts open simultaneously.
+			resolvTime := time.Now()
+			var openOffline models.OLTAlert
+			if err := p.db.WithContext(ctx).Where(
+				"oltId = ? AND onuId = ? AND alertType = ? AND isResolved = ?",
+				olt.ID, realID, models.AlertONUOffline, false,
+			).First(&openOffline).Error; err == nil {
+				p.db.WithContext(ctx).Model(&openOffline).Updates(map[string]interface{}{
+					"isResolved": true,
+					"resolvedAt": &resolvTime,
+				})
+			}
+
 			// Create a dying gasp alert if none open.
 			var existing models.OLTAlert
 			err := p.db.WithContext(ctx).Where(
