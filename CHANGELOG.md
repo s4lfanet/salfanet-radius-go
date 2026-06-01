@@ -6,6 +6,15 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.16] — 2026-06-02
+### Fixed
+- **Test Connection di tab Settings selalu gagal** — Handler `/api/olt/test-connection` tidak membaca settings OLT dari DB (SSH port, Telnet port, SNMP port/community, protocol enabled). Frontend hanya kirim `{ oltId, protocol }` sehingga: SSH ditest ke port 22 (default), Telnet selalu diskip, SNMP tidak ditest sama sekali. Fix: ketika `oltId` disediakan, load semua settings dari DB; gunakan field `protocol` untuk test hanya protokol yang diminta; tambah SNMP test via SNMP GET sysDescr; pesan error sekarang menampilkan detail (port, error string, waktu respons).
+
+### Files
+- `internal/api/handlers/olt.go` — TestConnection rewrite: baca DB settings, handle protocol field, tambah SNMP test
+
+---
+
 ## [2.54.15] — 2026-06-02
 ### Fixed
 - **ONU offline kembali online setelah polling** — Saat Telnet tersedia (pool ada) tapi `FetchTelnetONUStates` mengembalikan 0 state (output tidak terbaca: timeout, format CLI tidak dikenali, dsb.), sebelumnya tidak ada log dan tidak ada fallback — SNMP OperState yang ter-cache (lag) langsung menang, semua ONU menjadi online. Fix: jika Telnet return 0 state, ambil status terakhir dari DB sebagai fallback. Setiap ONU yang SNMP-nya bilang `online` tapi DB mencatat `offline/dying_gasp/los` → status SNMP diabaikan dan status DB dipertahankan. Log warning ditambahkan untuk visibilitas.
