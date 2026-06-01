@@ -6,6 +6,16 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.11] — 2026-06-02
+### Added
+- **LastDeregReason ONU dari SNMP** — Alasan terakhir ONU offline (PowerOff, LOS, Reboot, AuthFail, dll.) sekarang dibaca langsung dari SNMP OID `.3.50.12.1.1.7` (zxAnGponOnuRegTable kolom 7 — DeregReason) dan disimpan ke DB field `lastDeregReason`. Upsert menggunakan COALESCE agar nilai tidak tertimpa NULL saat OLT tidak mengembalikan data.
+
+### Files
+- `internal/olt/vendors/zte/zte.go` — tambah `oidDeregReason`, field `LastDeregReason` di `ONUInfo`, `deregReason` di `ponResult`, BulkWalk OID baru, decode & populate `LastDeregReason`, fungsi `decodeDeregReason()`
+- `internal/olt/poller/poller.go` — set `base.LastDeregReason` dari ONU info; tambah `lastDeregReason` ke COALESCE upsert assignments
+
+---
+
 ## [2.54.10] — 2026-06-02
 ### Fixed
 - **Semua ONU jadi offline saat SNMP gagal** — Ghost-cleanup poller menandai semua ONU sebagai offline ketika SNMP BulkWalk mengembalikan 0 ONU (misalnya OLT sementara tidak bisa diakses). Seharusnya ghost-cleanup hanya dijalankan bila SNMP berhasil mendeteksi minimal 1 ONU di siklus polling ini. Fix: tambah guard `snmpDiscoveredAny` sebelum ghost-cleanup.

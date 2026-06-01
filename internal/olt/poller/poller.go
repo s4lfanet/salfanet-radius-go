@@ -248,6 +248,7 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 			base.RxPower = onu.RxPower
 			base.TxPower = onu.TxPower
 			base.Distance = onu.Distance
+			base.LastDeregReason = onu.LastDeregReason
 			if onu.Status == models.OnuOnline {
 				onlineCount++
 			} else {
@@ -272,12 +273,13 @@ func (p *Poller) poll(ctx context.Context, olt *models.NetworkOLT) {
 				{Name: "oltId"}, {Name: "frame"}, {Name: "slot"}, {Name: "port"}, {Name: "onuId"},
 			},
 			DoUpdates: clause.Assignments(map[string]interface{}{
-				"serialNumber": gorm.Expr("COALESCE(VALUES(serialNumber), serialNumber)"),
-				"description":  gorm.Expr("COALESCE(VALUES(description), description)"),
-				"status":       gorm.Expr("VALUES(status)"),
-				"rxPower":      gorm.Expr("COALESCE(VALUES(rxPower), rxPower)"),
-				"txPower":      gorm.Expr("COALESCE(VALUES(txPower), txPower)"),
-				"distance":     gorm.Expr("COALESCE(VALUES(distance), distance)"),
+				"serialNumber":    gorm.Expr("COALESCE(VALUES(serialNumber), serialNumber)"),
+				"description":     gorm.Expr("COALESCE(VALUES(description), description)"),
+				"status":          gorm.Expr("VALUES(status)"),
+				"rxPower":         gorm.Expr("COALESCE(VALUES(rxPower), rxPower)"),
+				"txPower":         gorm.Expr("COALESCE(VALUES(txPower), txPower)"),
+				"distance":        gorm.Expr("COALESCE(VALUES(distance), distance)"),
+				"lastDeregReason": gorm.Expr("COALESCE(VALUES(lastDeregReason), lastDeregReason)"),
 				"lastSeenAt":   gorm.Expr("VALUES(lastSeenAt)"),
 				"updatedAt":    gorm.Expr("VALUES(updatedAt)"),
 			}),

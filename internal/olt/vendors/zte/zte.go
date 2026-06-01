@@ -37,11 +37,12 @@ const (
 	oidSerial      = oidBase + ".3.28.1.1.5"
 
 	// zxAnGponOnuRegTable — indexed .col.ponIndex.onuSlot.onuId (3 index components)
-	oidRegStatus = oidBase + ".3.50.12.1.1.1"
-	oidOperState = oidBase + ".3.50.12.1.1.6"
-	oidRxPower   = oidBase + ".3.50.12.1.1.10" // raw int; dBm = raw/500.0 - 30.0
-	oidTxPower   = oidBase + ".3.50.12.1.1.11" // OLT TX power toward ONU
-	oidDistance  = oidBase + ".3.50.12.1.1.18" // ONU equalization delay; distance (m) = raw × 0.112
+	oidRegStatus   = oidBase + ".3.50.12.1.1.1"
+	oidOperState   = oidBase + ".3.50.12.1.1.6"
+	oidDeregReason = oidBase + ".3.50.12.1.1.7"  // last deregistration reason (int → PowerOff/LOS/etc.)
+	oidRxPower     = oidBase + ".3.50.12.1.1.10" // raw int; dBm = raw/500.0 - 30.0
+	oidTxPower     = oidBase + ".3.50.12.1.1.11" // OLT TX power toward ONU
+	oidDistance    = oidBase + ".3.50.12.1.1.18" // ONU equalization delay; distance (m) = raw × 0.112
 
 	// zxAnGponOnuDiscoveredInfoTable — ALL seen ONUs incl. unregistered; indexed .ponIndex.onuSlot.onuId
 	oidSeenONUTable = oidBase + ".3.27.4.1.1"
@@ -81,13 +82,14 @@ type ONUInfo struct {
 	Slot         int
 	Port         int
 	OnuID        int
-	SerialNumber string
-	Description  string
-	Status       models.OltOnuStatus
-	RxPower      *float64 // dBm (negative, e.g. -23.5)
-	TxPower      *float64 // dBm (OLT TX toward ONU)
-	Distance     *int     // meters
-	Registered   bool
+	SerialNumber    string
+	Description     string
+	Status          models.OltOnuStatus
+	RxPower         *float64 // dBm (negative, e.g. -23.5)
+	TxPower         *float64 // dBm (OLT TX toward ONU)
+	Distance        *int     // meters
+	LastDeregReason *string  // last deregistration reason from SNMP (e.g. "PowerOff", "LOS", "Reboot")
+	Registered      bool
 }
 
 // IndexKey is a compact representation of the ONU index used in lookup maps.
@@ -168,14 +170,15 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 
 	// Merge results from all PON ports
 	merged := &ponResult{
-		regStatus: make(map[IndexKey]int64),
-		operState: make(map[IndexKey]int64),
-		serials:   make(map[IndexKey]string),
-		rxPower:   make(map[IndexKey]int64),
-		txPower:   make(map[IndexKey]int64),
-		distances: make(map[IndexKey]int64),
-		descs:     make(map[IndexKey]string),
-		seenONUs:  make(map[IndexKey]bool),
+		regStatus:   make(map[IndexKey]int64),
+		operState:   make(map[IndexKey]int64),
+		deregReason: make(map[IndexKey]int64),
+		serials:     make(map[IndexKey]string),
+		rxPower:     make(map[IndexKey]int64),
+		txPower:     make(map[IndexKey]int64),
+		distances:   make(map[IndexKey]int64),
+		descs:       make(map[IndexKey]string),
+		seenONUs:    make(map[IndexKey]bool),
 	}
 
 	for range ponPorts {
@@ -188,6 +191,9 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		}
 		for k, v := range r.operState {
 			merged.operState[k] = v
+		}
+		for k, v := range r.deregReason {
+			merged.deregReason[k] = v
 		}
 		for k, v := range r.serials {
 			merged.serials[k] = v
@@ -249,6 +255,9 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 			d := int(float64(dist) * 0.112)
 			info.Distance = &d
 		}
+		if reason, ok := merged.deregReason[k]; ok {
+			info.LastDeregReason = decodeDeregReason(reason)
+		}
 		onuMap[k] = info
 	}
 
@@ -283,6 +292,9 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 		if dist, ok := merged.distances[k]; ok && dist > 0 && dist < 1000000 {
 			d := int(float64(dist) * 0.112)
 			info.Distance = &d
+		}
+		if reason, ok := merged.deregReason[k]; ok {
+			info.LastDeregReason = decodeDeregReason(reason)
 		}
 		onuMap[k] = info
 	}
@@ -327,15 +339,16 @@ func DiscoverONUsSNMP(ctx context.Context, snmpCfg snmputil.Config, ponPorts [][
 //
 // For all tables, onuId is always the LAST OID component, so lastOIDComponent() is correct.
 type ponResult struct {
-	regStatus map[IndexKey]int64
-	operState map[IndexKey]int64
-	serials   map[IndexKey]string
-	rxPower   map[IndexKey]int64
-	txPower   map[IndexKey]int64
-	distances map[IndexKey]int64
-	descs     map[IndexKey]string
-	seenONUs  map[IndexKey]bool // all ONU IDs visible on this PON (registered + unregistered)
-	err       error
+	regStatus   map[IndexKey]int64
+	operState   map[IndexKey]int64
+	deregReason map[IndexKey]int64
+	serials     map[IndexKey]string
+	rxPower     map[IndexKey]int64
+	txPower     map[IndexKey]int64
+	distances   map[IndexKey]int64
+	descs       map[IndexKey]string
+	seenONUs    map[IndexKey]bool // all ONU IDs visible on this PON (registered + unregistered)
+	err         error
 }
 
 func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResult {
@@ -347,6 +360,7 @@ func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResu
 	oids := []oidWalk{
 		{fmt.Sprintf("%s.%d", oidRegStatus, ponIdx), "regStatus"},
 		{fmt.Sprintf("%s.%d", oidOperState, ponIdx), "operState"},
+		{fmt.Sprintf("%s.%d", oidDeregReason, ponIdx), "deregReason"},
 		{fmt.Sprintf("%s.%d", oidSerial, ponIdx), "serial"},
 		{fmt.Sprintf("%s.%d", oidRxPower, ponIdx), "rxPower"},
 		{fmt.Sprintf("%s.%d", oidTxPower, ponIdx), "txPower"},
@@ -374,14 +388,15 @@ func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResu
 	}
 
 	pr := ponResult{
-		regStatus: make(map[IndexKey]int64),
-		operState: make(map[IndexKey]int64),
-		serials:   make(map[IndexKey]string),
-		rxPower:   make(map[IndexKey]int64),
-		txPower:   make(map[IndexKey]int64),
-		distances: make(map[IndexKey]int64),
-		descs:     make(map[IndexKey]string),
-		seenONUs:  make(map[IndexKey]bool),
+		regStatus:   make(map[IndexKey]int64),
+		operState:   make(map[IndexKey]int64),
+		deregReason: make(map[IndexKey]int64),
+		serials:     make(map[IndexKey]string),
+		rxPower:     make(map[IndexKey]int64),
+		txPower:     make(map[IndexKey]int64),
+		distances:   make(map[IndexKey]int64),
+		descs:       make(map[IndexKey]string),
+		seenONUs:    make(map[IndexKey]bool),
 	}
 
 	for range oids {
@@ -418,7 +433,7 @@ func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResu
 			k := IndexKey{PonIndex: ponIdx, OnuID: onuID}
 
 			switch out.key {
-			case "regStatus", "operState", "rxPower", "txPower", "distance":
+			case "regStatus", "operState", "deregReason", "rxPower", "txPower", "distance":
 				v, ok := snmputil.ToInt(r.Value)
 				if !ok {
 					break
@@ -428,6 +443,8 @@ func walkPONPort(ctx context.Context, cfg snmputil.Config, ponIdx int64) ponResu
 					pr.regStatus[k] = v
 				case "operState":
 					pr.operState[k] = v
+				case "deregReason":
+					pr.deregReason[k] = v
 				case "rxPower":
 					pr.rxPower[k] = v
 				case "txPower":
@@ -1110,4 +1127,40 @@ func parseONUStateOutput(output string) map[string]models.OltOnuStatus {
 		}
 	}
 	return result
+}
+
+// decodeDeregReason converts the raw ZTE zxAnGponOnuRegDeregReason integer
+// (OID .3.50.12.1.1.7) into a human-readable string.
+// Returns nil for 0 (no data) and 1 (Unknown) to avoid surfacing noise.
+func decodeDeregReason(v int64) *string {
+	var s string
+	switch v {
+	case 2:
+		s = "LOS"
+	case 3:
+		s = "LOSi"
+	case 4:
+		s = "LOFi"
+	case 5:
+		s = "SFi"
+	case 6:
+		s = "LOAi"
+	case 7:
+		s = "LOAMi"
+	case 8:
+		s = "AuthFail"
+	case 9:
+		s = "PowerOff"
+	case 10:
+		s = "DeactiveSucc"
+	case 11:
+		s = "DeactiveFail"
+	case 12:
+		s = "Reboot"
+	case 13:
+		s = "Shutdown"
+	default:
+		return nil // 0 = no data, 1 = Unknown → omit
+	}
+	return &s
 }
