@@ -48,13 +48,14 @@ export const useAppStore = create<AppState>()(
       initializeTimezone: async () => {
         // Initialize timezone from server on app load
         try {
-          const response = await fetch('/api/company');
+          const response = await fetch('/api/public/company');
           if (response.ok) {
             const data = await response.json();
-            if (data?.timezone) {
-              setCurrentTimezone(data.timezone);
+            const tz = data?.timezone || data?.company?.timezone;
+            if (tz) {
+              setCurrentTimezone(tz);
               set((state) => ({
-                company: { ...state.company, timezone: data.timezone },
+                company: { ...state.company, timezone: tz },
               }));
             }
           }

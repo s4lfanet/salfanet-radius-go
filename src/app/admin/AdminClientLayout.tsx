@@ -796,23 +796,29 @@ function AdminLayoutContent({
 
   // Load company data
   useEffect(() => {
-    fetch('/api/company')
+    // Use public endpoint when not authenticated (login page),
+    // authenticated endpoint when logged in (has more fields)
+    const endpoint = status === 'authenticated' ? '/api/company' : '/api/public/company';
+    fetch(endpoint)
       .then((res) => res.json())
       .then((data) => {
-        if (data.name) {
+        // Public endpoint returns { success, company: { name, logo, phone } }
+        // Authenticated returns flat { name, email, phone, address, logo, ... }
+        const c = data.company || data;
+        if (c.name) {
           setCompany({
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            address: data.address,
-            baseUrl: data.baseUrl || window.location.origin,
-            adminPhone: data.phone,
-            logo: data.logo || '',
+            name: c.name,
+            email: c.email || '',
+            phone: c.phone || '',
+            address: c.address || '',
+            baseUrl: c.baseUrl || window.location.origin,
+            adminPhone: c.phone || '',
+            logo: c.logo || '',
           });
         }
       })
       .catch(console.error);
-  }, [setCompany]);
+  }, [setCompany, status]);
 
   // Load pending registrations
   useEffect(() => {
