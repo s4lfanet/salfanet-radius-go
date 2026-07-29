@@ -48,20 +48,53 @@ func (s *Scheduler) Start() {
 	s.cron.AddFunc("0 */5 * * * *", s.jobSessionMonitor)
 
 	// Auto isolate expired users — daily 00:05 WIB
-	s.cron.AddFunc("0 5 0 * * *", s.jobAutoIsolate)
+	s.cron.AddFunc("0 5 0 * * *", s.jobPPPoEAutoIsolir)
 
 	// FreeRADIUS health check + NAS sync — every 5 minutes
 	s.cron.AddFunc("30 */5 * * * *", s.jobFreeRADIUSHealth)
 
 	// ── Hotspot / Agents ──────────────────────────────────────────────────────
-	// Voucher expiry sync — every 5 minutes
-	s.cron.AddFunc("0 */5 * * * *", s.jobSyncVoucherExpiry)
+	// Hotspot voucher sync — every minute (WAITING→ACTIVE, ACTIVE→EXPIRED, cleanup)
+	s.cron.AddFunc("0 * * * * *", s.jobHotspotSync)
 
 	// Agent sales recording — every hour
 	s.cron.AddFunc("0 0 * * * *", s.jobAgentSalesRecording)
 
+	// ── Invoice status ────────────────────────────────────────────────────────
+	// Invoice status update (PENDING → OVERDUE) — every hour
+	s.cron.AddFunc("0 30 * * * *", s.jobInvoiceStatusUpdate)
+
+	// ── Suspend check ─────────────────────────────────────────────────────────
+	// Activate/restore suspends — every hour
+	s.cron.AddFunc("0 15 * * * *", s.jobSuspendCheck)
+
+	// ── Cleanup jobs ──────────────────────────────────────────────────────────
+	// Activity log cleanup — daily 2 AM WIB
+	s.cron.AddFunc("0 0 2 * * *", s.jobActivityLogCleanup)
+
+	// Webhook log cleanup — daily 3 AM WIB
+	s.cron.AddFunc("0 0 3 * * *", s.jobWebhookLogCleanup)
+
+	// ── Auto renewal ──────────────────────────────────────────────────────────
+	// Auto-renewal for prepaid users — daily 8 AM WIB
+	s.cron.AddFunc("0 0 8 * * *", s.jobAutoRenewal)
+
+	// ── Telegram ───────────────────────────────────────────────────────────────
+	// Telegram health check — every hour
+	s.cron.AddFunc("0 45 * * * *", s.jobTelegramHealth)
+
+	// Telegram backup — dynamic schedule from DB settings (default: daily 2 AM)
+	s.registerTelegramBackupCron()
+
+	// ── Notifications ──────────────────────────────────────────────────────────
+	// Notification check — every 6 hours
+	s.cron.AddFunc("0 0 */6 * * *", s.jobNotificationCheck)
+
+	// Voucher transaction reconciliation — daily 4 AM
+	s.cron.AddFunc("0 0 4 * * *", s.jobReconcileVoucherTransactions)
+
 	s.cron.Start()
-	log.Info().Msg("cron: scheduler started (9 jobs registered)")
+	log.Info().Msg("cron: scheduler started (17 jobs registered)")
 }
 
 func (s *Scheduler) Stop() {
@@ -78,7 +111,9 @@ func (s *Scheduler) TriggerJob(job string) error {
 	case "invoice_catchup":
 		go s.jobInvoiceCatchup()
 	case "isolate_expired":
-		go s.jobAutoIsolate()
+		go s.jobPPPoEAutoIsolir()
+	case "pppoe_auto_isolir":
+		go s.jobPPPoEAutoIsolir()
 	case "pppoe_session_sync":
 		go s.jobPPPoESessionSync()
 	case "session_monitor":
@@ -86,9 +121,29 @@ func (s *Scheduler) TriggerJob(job string) error {
 	case "freeradius_health":
 		go s.jobFreeRADIUSHealth()
 	case "voucher_sync":
-		go s.jobSyncVoucherExpiry()
+		go s.jobHotspotSync()
+	case "hotspot_sync":
+		go s.jobHotspotSync()
 	case "agent_sales_recording":
 		go s.jobAgentSalesRecording()
+	case "invoice_status_update":
+		go s.jobInvoiceStatusUpdate()
+	case "suspend_check":
+		go s.jobSuspendCheck()
+	case "activity_log_cleanup":
+		go s.jobActivityLogCleanup()
+	case "webhook_log_cleanup":
+		go s.jobWebhookLogCleanup()
+	case "auto_renewal":
+		go s.jobAutoRenewal()
+	case "telegram_backup":
+		go s.jobTelegramBackup()
+	case "telegram_health":
+		go s.jobTelegramHealth()
+	case "notification_check":
+		go s.jobNotificationCheck()
+	case "voucher_reconcile":
+		go s.jobReconcileVoucherTransactions()
 	default:
 		return fmt.Errorf("unknown job: %s", job)
 	}

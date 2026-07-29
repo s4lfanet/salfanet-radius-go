@@ -2158,7 +2158,7 @@ func generateONUBuildScript(onuIface, oltIface string, onuId int, onuType, seria
 	// Step 1: OLT registration
 	sb.WriteString("! === Step 1: Registrasi ONU di OLT ===\n")
 	sb.WriteString("conf t\n")
-	sb.WriteString("interface " + oltIface + "\n")
+	fmt.Fprintf(&sb, "interface %s\n", oltIface)
 	if onuType != "" && serialNumber != "" {
 		sb.WriteString(fmt.Sprintf("  onu %d type %s sn %s\n", onuId, onuType, serialNumber))
 	} else {
@@ -2169,27 +2169,27 @@ func generateONUBuildScript(onuIface, oltIface string, onuId int, onuType, seria
 	// Step 2: ONU interface config
 	sb.WriteString("! === Step 2: Konfigurasi Interface ONU ===\n")
 	sb.WriteString("conf t\n")
-	sb.WriteString("interface " + onuIface + "\n")
+	fmt.Fprintf(&sb, "interface %s\n", onuIface)
 	if onuName != "" {
-		sb.WriteString("  name " + onuName + "\n")
+		fmt.Fprintf(&sb, "  name %s\n", onuName)
 	}
 	if description != "" {
-		sb.WriteString("  description " + description + "\n")
+		fmt.Fprintf(&sb, "  description %s\n", description)
 	}
 	for _, l := range tcontLines {
-		sb.WriteString("  " + l + "\n")
+		fmt.Fprintf(&sb, "  %s\n", l)
 	}
 	for _, l := range gemportLines {
-		sb.WriteString("  " + l + "\n")
+		fmt.Fprintf(&sb, "  %s\n", l)
 	}
 	for _, l := range servicePortLines {
-		sb.WriteString("  " + l + "\n")
+		fmt.Fprintf(&sb, "  %s\n", l)
 	}
 	sb.WriteString("exit\n!\n")
 
 	// Step 3: pon-onu-mng (OMCI management)
 	sb.WriteString("! === Step 3: OMCI Management (pon-onu-mng) ===\n")
-	sb.WriteString("pon-onu-mng " + onuIface + "\n")
+	fmt.Fprintf(&sb, "pon-onu-mng %s\n", onuIface)
 
 	// Generate service-to-gemport mappings from service-port lines
 	// "service-port N vport M user-vlan X vlan Y" → "service N gemport N vlan X"

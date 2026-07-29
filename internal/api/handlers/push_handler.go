@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/push"
 )
 
 type PushHandler struct{ db *gorm.DB }
@@ -27,28 +28,10 @@ func (h *PushHandler) ListBroadcasts(c fiber.Ctx) error {
 // GET /api/push/send — stats (action=stats) or recent broadcasts (limit=N)
 func (h *PushHandler) GetStats(c fiber.Ctx) error {
 	if c.Query("action") == "stats" {
-		// Subscriber counts by role
-		var totalSubs int64
-		h.db.Model(&models.PushSubscription{}).Count(&totalSubs)
-
-		type areaRow struct {
-			ID   string `json:"id"`
-			Name string `json:"name"`
-		}
-		var areas []areaRow
-		h.db.Raw("SELECT id, name FROM areas ORDER BY name").Scan(&areas)
-
-		// Broadcasts sent this month
-		var monthCount int64
-		h.db.Model(&models.Notification{}).Where("type = ? AND createdAt >= DATE_FORMAT(NOW(),'%Y-%m-01')", "BROADCAST").Count(&monthCount)
-
+		stats := push.GetDashboardStats(h.db)
 		return c.JSON(fiber.Map{
 			"success": true,
-			"stats": fiber.Map{
-				"totalSubscribers":    totalSubs,
-				"broadcastsThisMonth": monthCount,
-				"areas":               areas,
-			},
+			"stats":   stats,
 		})
 	}
 	// Default: return recent broadcasts (same as ListBroadcasts)
@@ -64,10 +47,12 @@ func (h *PushHandler) GetStats(c fiber.Ctx) error {
 // POST /api/push/send — broadcast push
 func (h *PushHandler) Send(c fiber.Ctx) error {
 	var body struct {
-		Title   string   `json:"title"`
-		Body    string   `json:"body"`
-		URL     string   `json:"url"`
-		UserIDs []string `json:"userIds"` // empty = all
+		Title         string   `json:"title"`
+		Body          string   `json:"body"`
+		URL           string   `json:"url"`
+		UserIDs       []string `json:"userIds"`
+		RecipientRole string   `json:"recipientRole"`
+		TargetType    string   `json:"targetType"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
@@ -76,28 +61,30 @@ func (h *PushHandler) Send(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "title and body required"})
 	}
 
-	query := h.db.Model(&models.PushSubscription{})
-	if len(body.UserIDs) > 0 {
-		query = query.Where("userId IN ?", body.UserIDs)
+	targetType := body.TargetType
+	if targetType == "" {
+		targetType = "all"
 	}
-	var subs []models.PushSubscription
-	query.Find(&subs)
+	if len(body.UserIDs) > 0 && targetType == "all" {
+		targetType = "selected"
+	}
 
-	// Push delivery would be done via web-push library
-	// For now we record the broadcast notification
-	notif := models.Notification{
-		ID:      generateID(),
-		Type:    "BROADCAST",
-		Title:   body.Title,
-		Message: body.Body,
-		IsRead:  false,
+	input := &push.BroadcastInput{
+		Title:         body.Title,
+		Body:          body.Body,
+		RecipientRole: body.RecipientRole,
+		TargetType:    targetType,
+		TargetIDs:     body.UserIDs,
+		Data:          map[string]any{"link": body.URL},
 	}
-	h.db.Create(&notif)
+	broadcast, result := push.SendBroadcast(h.db, input)
 
 	return c.JSON(fiber.Map{
-		"success": true,
-		"sent":    len(subs),
-		"message": "push notification queued",
+		"success":   true,
+		"sent":      result.Sent,
+		"failed":    result.Failed,
+		"total":     result.Total,
+		"broadcast": broadcast,
 	})
 }
 

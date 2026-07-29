@@ -370,12 +370,16 @@ func (Notification) TableName() string { return "notifications" }
 // ─── Push Subscription ────────────────────────────────────────────────────────
 
 type PushSubscription struct {
-	ID        string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	UserID    string    `gorm:"index" json:"userId"`
-	Endpoint  string    `gorm:"type:text;uniqueIndex:idx_push_endpoint" json:"endpoint"`
-	P256dh    string    `gorm:"type:text" json:"p256dh"`
-	Auth      string    `json:"auth"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID             string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	UserID         string     `gorm:"index" json:"userId"`
+	Endpoint       string     `gorm:"type:text;uniqueIndex:idx_push_endpoint" json:"endpoint"`
+	P256dh         string     `gorm:"type:text" json:"p256dh"`
+	Auth           string     `json:"auth"`
+	UserAgent      *string    `gorm:"type:text;column:userAgent" json:"userAgent"`
+	ExpirationTime *time.Time `gorm:"column:expirationTime" json:"expirationTime"`
+	IsActive       bool       `gorm:"default:true;column:isActive" json:"isActive"`
+	LastUsedAt     *time.Time `gorm:"column:lastUsedAt" json:"lastUsedAt"`
+	CreatedAt      time.Time  `json:"createdAt"`
 }
 
 func (PushSubscription) TableName() string { return "push_subscriptions" }
@@ -861,12 +865,16 @@ func (PushBroadcast) TableName() string { return "push_broadcasts" }
 // ─── AgentPushSubscription ────────────────────────────────────────────────────
 
 type AgentPushSubscription struct {
-	ID        string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	AgentID   string    `gorm:"index" json:"agentId"`
-	Endpoint  string    `gorm:"type:text" json:"endpoint"`
-	P256dh    string    `gorm:"type:text" json:"p256dh"`
-	Auth      string    `json:"auth"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID             string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	AgentID        string     `gorm:"index" json:"agentId"`
+	Endpoint       string     `gorm:"type:text" json:"endpoint"`
+	P256dh         string     `gorm:"type:text" json:"p256dh"`
+	Auth           string     `json:"auth"`
+	UserAgent      *string    `gorm:"type:text;column:userAgent" json:"userAgent"`
+	ExpirationTime *time.Time `gorm:"column:expirationTime" json:"expirationTime"`
+	IsActive       bool       `gorm:"default:true;column:isActive" json:"isActive"`
+	LastUsedAt     *time.Time `gorm:"column:lastUsedAt" json:"lastUsedAt"`
+	CreatedAt      time.Time  `json:"createdAt"`
 }
 
 func (AgentPushSubscription) TableName() string { return "agent_push_subscriptions" }
@@ -874,12 +882,48 @@ func (AgentPushSubscription) TableName() string { return "agent_push_subscriptio
 // ─── TechnicianPushSubscription ───────────────────────────────────────────────
 
 type TechnicianPushSubscription struct {
-	ID           string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	TechnicianID string    `gorm:"index" json:"technicianId"`
-	Endpoint     string    `gorm:"type:text" json:"endpoint"`
-	P256dh       string    `gorm:"type:text" json:"p256dh"`
-	Auth         string    `json:"auth"`
-	CreatedAt    time.Time `json:"createdAt"`
+	ID             string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	TechnicianID   string     `gorm:"index" json:"technicianId"`
+	Endpoint       string     `gorm:"type:text" json:"endpoint"`
+	P256dh         string     `gorm:"type:text" json:"p256dh"`
+	Auth           string     `json:"auth"`
+	UserAgent      *string    `gorm:"type:text;column:userAgent" json:"userAgent"`
+	ExpirationTime *time.Time `gorm:"column:expirationTime" json:"expirationTime"`
+	IsActive       bool       `gorm:"default:true;column:isActive" json:"isActive"`
+	LastUsedAt     *time.Time `gorm:"column:lastUsedAt" json:"lastUsedAt"`
+	CreatedAt      time.Time  `json:"createdAt"`
 }
 
 func (TechnicianPushSubscription) TableName() string { return "technician_push_subscriptions" }
+
+// ─── AgentNotification ────────────────────────────────────────────────────────
+
+type AgentNotification struct {
+	ID        string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	AgentID   string    `gorm:"index" json:"agentId"`
+	Type      string    `json:"type"`
+	Title     string    `json:"title"`
+	Message   string    `gorm:"type:text" json:"message"`
+	Link      *string   `json:"link"`
+	IsRead    bool      `gorm:"default:false;index" json:"isRead"`
+	CreatedAt time.Time `gorm:"index" json:"createdAt"`
+}
+
+func (AgentNotification) TableName() string { return "agent_notifications" }
+
+// ─── AdminPushSubscription ────────────────────────────────────────────────────
+
+type AdminPushSubscription struct {
+	ID             string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	AdminID        string     `gorm:"index" json:"adminId"`
+	Endpoint       string     `gorm:"type:text" json:"endpoint"`
+	P256dh         string     `gorm:"type:text" json:"p256dh"`
+	Auth           string     `json:"auth"`
+	UserAgent      *string    `gorm:"type:text;column:userAgent" json:"userAgent"`
+	ExpirationTime *time.Time `gorm:"column:expirationTime" json:"expirationTime"`
+	IsActive       bool       `gorm:"default:true;column:isActive" json:"isActive"`
+	LastUsedAt     *time.Time `gorm:"column:lastUsedAt" json:"lastUsedAt"`
+	CreatedAt      time.Time  `json:"createdAt"`
+}
+
+func (AdminPushSubscription) TableName() string { return "admin_push_subscriptions" }

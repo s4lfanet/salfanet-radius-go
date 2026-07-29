@@ -19,6 +19,7 @@ require (
 )
 
 require (
+	github.com/SherClockHolmes/webpush-go v1.4.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/go-sql-driver/mysql v1.7.0 // indirect

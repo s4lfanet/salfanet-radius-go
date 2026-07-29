@@ -35,6 +35,9 @@ type Config struct {
 	TripayPrivateKey   string
 	TripayMerchantCode string
 
+	// Uploads
+	UploadDir string
+
 	// Web Push
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
@@ -64,6 +67,7 @@ func Load() (*Config, error) {
 		TripayAPIKey:       getEnv("TRIPAY_API_KEY", ""),
 		TripayPrivateKey:   getEnv("TRIPAY_PRIVATE_KEY", ""),
 		TripayMerchantCode: getEnv("TRIPAY_MERCHANT_CODE", ""),
+		UploadDir:          getEnv("UPLOAD_DIR", "/var/data/salfanet/uploads"),
 		VAPIDPublicKey:     getEnv("VAPID_PUBLIC_KEY", ""),
 		VAPIDPrivateKey:    getEnv("VAPID_PRIVATE_KEY", ""),
 		VAPIDEmail:         getEnv("VAPID_EMAIL", ""),

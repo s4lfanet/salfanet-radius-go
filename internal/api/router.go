@@ -161,6 +161,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// Static uploads
 	app.Get("/api/uploads/logos/:filename", uploadH.ServeLogoFile)
+	app.Get("/api/uploads/*", uploadH.ServeUploadFile)
 
 	// Auth (public)
 	auth := app.Group("/api/auth")

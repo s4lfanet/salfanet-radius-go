@@ -5,11 +5,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
+
+	"github.com/s4lfanet/salfanet-radius-go/internal/config"
 )
 
 type UploadHandler struct{ db *gorm.DB }
@@ -18,7 +21,15 @@ func NewUploadHandler(db *gorm.DB) *UploadHandler {
 	return &UploadHandler{db: db}
 }
 
-const uploadDir = "/var/www/salfanet-radius/uploads"
+var contentTypes = map[string]string{
+	".jpg":  "image/jpeg",
+	".jpeg": "image/jpeg",
+	".png":  "image/png",
+	".webp": "image/webp",
+	".svg":  "image/svg+xml",
+}
+
+var validFilenameRe = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
 
 // POST /api/upload/logo — upload company logo
 func (h *UploadHandler) UploadLogo(c fiber.Ctx) error {
@@ -34,7 +45,7 @@ func (h *UploadHandler) UploadLogo(c fiber.Ctx) error {
 	}
 
 	filename := fmt.Sprintf("logo-%d%s", time.Now().UnixMilli(), ext)
-	dest := filepath.Join(uploadDir, "logos", filename)
+	dest := filepath.Join(uploadDir(), "logos", filename)
 
 	src, err := file.Open()
 	if err != nil {
@@ -59,6 +70,10 @@ func (h *UploadHandler) UploadLogo(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "url": url, "filename": filename})
 }
 
+func uploadDir() string {
+	return config.C.UploadDir
+}
+
 // POST /api/upload/payment-proof — upload payment proof image
 func (h *UploadHandler) UploadPaymentProof(c fiber.Ctx) error {
 	file, err := c.FormFile("file")
@@ -73,7 +88,7 @@ func (h *UploadHandler) UploadPaymentProof(c fiber.Ctx) error {
 	}
 
 	filename := fmt.Sprintf("payment-proof-%d%s", time.Now().UnixMilli(), ext)
-	dest := filepath.Join(uploadDir, "payment-proofs", filename)
+	dest := filepath.Join(uploadDir(), "payment-proofs", filename)
 
 	src, err2 := file.Open()
 	if err2 != nil {
@@ -112,7 +127,7 @@ func (h *UploadHandler) UploadCustomerPhoto(c fiber.Ctx) error {
 	}
 
 	filename := fmt.Sprintf("customer-%d%s", time.Now().UnixMilli(), ext)
-	dest := filepath.Join(uploadDir, "customers", filename)
+	dest := filepath.Join(uploadDir(), "customers", filename)
 
 	src, err2 := file.Open()
 	if err2 != nil {
@@ -144,7 +159,51 @@ func (h *UploadHandler) ServeLogoFile(c fiber.Ctx) error {
 	if strings.Contains(filename, "..") || strings.ContainsAny(filename, "/\\") {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid filename"})
 	}
-	dest := filepath.Join(uploadDir, "logos", filename)
+	dest := filepath.Join(uploadDir(), "logos", filename)
+	return c.SendFile(dest)
+}
+
+// GET /api/uploads/* — serve any uploaded file (catch-all, matches Next.js route.ts)
+// Serves from UPLOAD_DIR, falls back to public/uploads/ for legacy files.
+func (h *UploadHandler) ServeUploadFile(c fiber.Ctx) error {
+	pathParam := c.Params("*")
+	if pathParam == "" {
+		return c.Status(404).SendString("File not found")
+	}
+
+	// Security: reject path traversal
+	segments := strings.Split(pathParam, "/")
+	for _, seg := range segments {
+		if seg == ".." || strings.ContainsAny(seg, "\\\x00") {
+			return c.Status(400).SendString("Invalid path")
+		}
+	}
+
+	// Only allow known image extensions
+	filename := segments[len(segments)-1]
+	ext := strings.ToLower(filepath.Ext(filename))
+	ct, ok := contentTypes[ext]
+	if !ok {
+		return c.Status(400).SendString("Unsupported file type")
+	}
+
+	// Restrict filename characters
+	if !validFilenameRe.MatchString(filename) {
+		return c.Status(400).SendString("Invalid filename")
+	}
+
+	// Try persistent upload dir first
+	dest := filepath.Join(uploadDir(), pathParam)
+	if _, err := os.Stat(dest); err != nil {
+		// Fallback: legacy public/uploads/
+		dest = filepath.Join("/var/www/salfanet-radius/public", "uploads", pathParam)
+		if _, err := os.Stat(dest); err != nil {
+			return c.Status(404).SendString("File not found")
+		}
+	}
+
+	c.Set("Content-Type", ct)
+	c.Set("Cache-Control", "public, max-age=31536000, immutable")
 	return c.SendFile(dest)
 }
 
@@ -153,7 +212,7 @@ func PwaIcon(c fiber.Ctx) error {
 	size := c.Query("size", "192")
 
 	// 1. Try to serve the latest uploaded company logo from uploads/logos/
-	logosDir := uploadDir + "/logos"
+	logosDir := uploadDir() + "/logos"
 	if entries, err := os.ReadDir(logosDir); err == nil {
 		// Find the most recently uploaded logo file
 		var latest string

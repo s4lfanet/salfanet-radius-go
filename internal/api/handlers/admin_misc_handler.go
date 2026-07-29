@@ -6,6 +6,7 @@ package handlers
 // OLT model profiles & test, admin recurring-job endpoints.
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -294,14 +295,14 @@ func (h *AdminMiscHandler) RestoreFreeradiusBackup(c fiber.Ctx) error {
 		}
 		raw, err := os.ReadFile(src)
 		if err != nil {
-			logBuf.WriteString("SKIP " + rel + ": " + err.Error() + "\n")
+			fmt.Fprintf(&logBuf, "SKIP %s: %s\n", rel, err.Error())
 			return nil
 		}
 		if err := os.WriteFile(dst, raw, 0640); err != nil {
-			logBuf.WriteString("ERROR " + rel + ": " + err.Error() + "\n")
+			fmt.Fprintf(&logBuf, "ERROR %s: %s\n", rel, err.Error())
 			return nil
 		}
-		logBuf.WriteString("OK " + rel + "\n")
+		fmt.Fprintf(&logBuf, "OK %s\n", rel)
 		restored++
 		return nil
 	})
@@ -311,7 +312,7 @@ func (h *AdminMiscHandler) RestoreFreeradiusBackup(c fiber.Ctx) error {
 
 	// Restart freeradius (restart required for clients.d to reload)
 	if out, err := exec.Command("systemctl", "restart", "freeradius").CombinedOutput(); err != nil {
-		logBuf.WriteString("freeradius restart failed: " + strings.TrimSpace(string(out)) + "\n")
+		fmt.Fprintf(&logBuf, "freeradius restart failed: %s\n", strings.TrimSpace(string(out)))
 		return c.Status(500).JSON(fiber.Map{
 			"success":  false,
 			"error":    "restore OK but freeradius restart failed",

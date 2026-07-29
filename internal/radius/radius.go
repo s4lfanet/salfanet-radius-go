@@ -67,6 +67,46 @@ func (s *Service) DeleteUser(username string) error {
 	return s.db.Where("username = ?", username).Delete(&models.Radusergroup{}).Error
 }
 
+// RestoreUser restores an isolated user in RADIUS:
+// 1. Remove reject markers (Auth-Type, NAS-IP-Address from radcheck)
+// 2. Remove isolation Reply-Message from radreply
+// 3. Restore radusergroup to the user's profile group
+// 4. Restore static IP if provided
+func (s *Service) RestoreUser(username, groupName string, ipAddress *string) error {
+	// 1. Remove reject markers
+	if err := s.db.Where("username = ? AND attribute IN ?", username, []string{"Auth-Type", "NAS-IP-Address"}).
+		Delete(&models.Radcheck{}).Error; err != nil {
+		return fmt.Errorf("remove reject markers: %w", err)
+	}
+
+	// 2. Remove isolation reply messages
+	if err := s.db.Where("username = ? AND attribute = ?", username, "Reply-Message").
+		Delete(&models.Radreply{}).Error; err != nil {
+		return fmt.Errorf("remove reply-message: %w", err)
+	}
+
+	// 3. Restore radusergroup
+	s.db.Where("username = ?", username).Delete(&models.Radusergroup{})
+	if groupName != "" {
+		if err := s.SetGroup(username, groupName); err != nil {
+			return fmt.Errorf("restore group: %w", err)
+		}
+	}
+
+	// 4. Restore static IP
+	s.db.Where("username = ? AND attribute = ?", username, "Framed-IP-Address").Delete(&models.Radreply{})
+	if ipAddress != nil && *ipAddress != "" {
+		if err := s.db.Exec(`
+			INSERT INTO radreply (username, attribute, op, value)
+			VALUES (?, 'Framed-IP-Address', '=', ?)
+		`, username, *ipAddress).Error; err != nil {
+			return fmt.Errorf("restore ip: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // UpsertUser sets up all radius entries for a new/updated PPPoE user.
 func (s *Service) UpsertUser(username, password, rateLimit, groupname string) error {
 	if err := s.SetPassword(username, password); err != nil {
