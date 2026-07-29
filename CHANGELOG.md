@@ -6,6 +6,17 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.22] — 2026-07-30
+### Fixed
+- **Production cleanup** — Removed tracked binaries (`salfanet-api-linux`, `salfanet-api-win.exe`, `server.exe`), user data exports (`*.xlsx`, `*.csv`), and debug scripts (`dbquery.py`, `dbschema.py`, `debug_rx.py`, `json_keys.txt`, `used_keys.txt`, `step1.ps1`, `step2.ps1`, `audit_i18n.ps1`, `deploy-v2.52.84.sh`) from git. Updated `.gitignore` to prevent re-adding.
+- **package.json** — Set `private: true` (this is not an npm package).
+- **docker-compose.yml** — Removed deprecated `version: '3.8'` key (Docker Compose v2+).
+
+### Added
+- **`.env.production.example`** — Added missing Go backend env vars (`JWT_SECRET`, `PORT`, `CORS_ORIGINS`, `APP_BASE_URL`, `APP_TIMEZONE`, `WA_SERVICE_URL`, `UPLOAD_DIR`, `GO_API_URL`, Tripay/Duitku/Xendit keys, VAPID keys for Go backend).
+
+---
+
 ## [2.54.21] — 2026-07-30
 ### Fixed
 - **Security: Admin RBAC** (`internal/api/middleware/auth.go`) — Added `AdminPathGuard` middleware on the `api` group to enforce `RequireAdmin` on all `/admin/`, `/cron/`, `/backup/` paths. Updated `RequireAdmin` to accept both `ADMIN` and `SUPER_ADMIN` roles. Added generic `RequireRole` middleware.

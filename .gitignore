@@ -121,6 +121,24 @@ test3-result.txt
 # Go compiled binaries — jangan di-push ke GitHub
 bin/
 *.zip
+salfanet-api-linux
+salfanet-api-win.exe
+server.exe
+
+# User data exports — jangan di-commit
+*.xlsx
+*.csv
+
+# Debug/utility scripts at root — not production code
+dbquery.py
+dbschema.py
+debug_rx.py
+json_keys.txt
+used_keys.txt
+step1.ps1
+step2.ps1
+audit_i18n.ps1
+deploy-v2.52.84.sh
 
 # Temp/utility scripts yang tidak perlu di-repo
 audit_routing.sh
