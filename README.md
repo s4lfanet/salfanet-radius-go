@@ -166,6 +166,81 @@ bash vps-install/vps-installer.sh
 
 ---
 
+### Metode 3 — Docker (One-Command)
+
+Untuk server yang sudah punya Docker Engine + Compose v2. Semua service berjalan dalam container terisolasi.
+
+```bash
+git clone https://github.com/s4lfanet/salfanet-radius-go.git
+cd salfanet-radius-go
+
+# Jalankan installer (auto-generate secrets, build images, start all services)
+bash docker-install.sh
+```
+
+Atau manual:
+
+```bash
+# 1. Copy dan edit konfigurasi
+cp .env.docker.example .env.docker
+nano .env.docker  # Ganti semua CHANGE_THIS_* dengan nilai real
+
+# 2. Build dan jalankan semua service
+docker compose --env-file .env.docker -f docker-compose.full.yml up -d
+
+# 3. Inisialisasi database (schema + seed)
+docker compose --env-file .env.docker -f docker-compose.full.yml exec -T frontend \
+    npx prisma db push --accept-data-loss
+docker compose --env-file .env.docker -f docker-compose.full.yml exec -T frontend \
+    npx tsx prisma/seeds/seed-all.ts
+```
+
+#### Docker Services
+
+| Service | Container | Port | Keterangan |
+|---------|-----------|------|------------|
+| MySQL 8 | `db` | 3306 (internal) | Database utama |
+| Go API | `api` | 8080 (internal) | Backend API (Fiber) |
+| Next.js | `frontend` | 3000 (internal) | Frontend (standalone) |
+| FreeRADIUS | `freeradius` | 1812/1813/3799 UDP | RADIUS auth + accounting |
+| Nginx | `nginx` | 80 | Reverse proxy |
+| WA Service | `wa-service` | 4000 (internal) | Baileys WhatsApp |
+
+#### Docker Management Commands
+
+```bash
+# Status
+docker compose --env-file .env.docker -f docker-compose.full.yml ps
+
+# Logs
+docker compose --env-file .env.docker -f docker-compose.full.yml logs -f
+
+# Restart
+docker compose --env-file .env.docker -f docker-compose.full.yml restart
+
+# Stop
+docker compose --env-file .env.docker -f docker-compose.full.yml down
+
+# Update (git pull + rebuild)
+git pull origin master
+docker compose --env-file .env.docker -f docker-compose.full.yml up -d --build
+```
+
+#### Docker dengan Domain + SSL
+
+```bash
+# Install Certbot di host
+apt-get install -y certbot
+
+# Generate SSL certificate
+certbot certonly --standalone -d yourdomain.com
+
+# Edit docker/nginx/salfanet.conf — tambahkan block server 443 dengan SSL
+# Edit docker-compose.full.yml — uncomment port 443 di nginx service
+```
+
+---
+
 ### Environment yang Didukung
 
 | Environment | Flag | Akses |
