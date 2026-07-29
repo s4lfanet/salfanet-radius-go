@@ -491,6 +491,19 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.21 — 2026-07-30
+
+### Fixed
+- **Security: Admin RBAC** (`internal/api/middleware/auth.go`) — Added `AdminPathGuard` middleware on the `api` group to enforce `RequireAdmin` on all `/admin/`, `/cron/`, `/backup/` paths. Updated `RequireAdmin` to accept both `ADMIN` and `SUPER_ADMIN` roles. Added generic `RequireRole` middleware.
+- **Security: Rate limiting** (`internal/api/middleware/auth.go`) — Added `LoginRateLimit` middleware (10 attempts per 15 min per IP) on `/api/auth` and `/api/technician/auth` groups to prevent brute-force attacks.
+- **Security: Password masking** (`internal/api/handlers/network_ext.go`) — `GetRouter` now returns `hasPassword`/`hasSecret` booleans instead of raw values. `UpdateRouter` skips empty password/secret to preserve existing values.
+- **Duplicate route** (`internal/api/router.go`) — Removed duplicate `/api/cron/status` route registration.
+- **Hardcoded API URL** (`src/app/*/layout.tsx`) — Replaced hardcoded `127.0.0.1:8080` with `GO_API_URL` env var in admin, customer, agent, and technician layouts.
+- **Menu placement** (`src/app/admin/AdminClientLayout.tsx`) — Moved "Permintaan Top Up" from PPPoE to Hotspot category (it's for hotspot agents, not PPPoE).
+
+### Added
+- **Env var** (`.env.example`) — Added `GO_API_URL` for Next.js → Go backend communication.
+
 ### v2.54.20 — 2026-07-30
 
 ### Added
@@ -568,14 +581,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Files
 - `src/app/admin/olt/[id]/page.tsx` — ZTEChassisView terima prop `onus`; Port Map dan badge header pakai `liveOnus`
-
-### v2.54.16 — 2026-06-02
-
-### Fixed
-- **Test Connection di tab Settings selalu gagal** — Handler `/api/olt/test-connection` tidak membaca settings OLT dari DB (SSH port, Telnet port, SNMP port/community, protocol enabled). Frontend hanya kirim `{ oltId, protocol }` sehingga: SSH ditest ke port 22 (default), Telnet selalu diskip, SNMP tidak ditest sama sekali. Fix: ketika `oltId` disediakan, load semua settings dari DB; gunakan field `protocol` untuk test hanya protokol yang diminta; tambah SNMP test via SNMP GET sysDescr; pesan error sekarang menampilkan detail (port, error string, waktu respons).
-
-### Files
-- `internal/api/handlers/olt.go` — TestConnection rewrite: baca DB settings, handle protocol field, tambah SNMP test
 
 <!-- AUTO-CHANGELOG:END -->
 
