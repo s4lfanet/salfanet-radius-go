@@ -135,6 +135,9 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 WantedBy=multi-user.target
 SYSTEMD
 
+    # Create directories referenced in ReadWritePaths to prevent systemd NAMESPACE error
+    mkdir -p /etc/salfanet /etc/wireguard ${_APP_DIR}/backups
+
     systemctl daemon-reload
     systemctl enable "${GO_SERVICE_NAME}"
     print_success "Systemd service created: ${GO_SERVICE_NAME}.service"
