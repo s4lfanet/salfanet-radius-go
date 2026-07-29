@@ -1,0 +1,21 @@
+FROM freeradius/freeradius-server:3.2-alpine
+
+# Copy custom config files
+COPY docker/freeradius/clients.conf /etc/raddb/clients.conf
+COPY docker/freeradius/sql.conf /etc/raddb/mods-available/sql
+COPY docker/freeradius/rest.conf /etc/raddb/mods-available/rest
+
+# Enable modules
+RUN ln -sf /etc/raddb/mods-available/sql /etc/raddb/mods-enabled/sql && \
+    ln -sf /etc/raddb/mods-available/rest /etc/raddb/mods-enabled/rest
+
+# Copy project freeradius configs if available
+COPY freeradius-config/mods-available/mschap /etc/raddb/mods-available/mschap
+COPY freeradius-config/policy.d/filter /etc/raddb/policy.d/filter
+
+# Fix permissions
+RUN chown -R radius:radius /etc/raddb
+
+EXPOSE 1812/udp 1813/udp 3799/udp
+
+CMD ["radiusd", "-X"]

@@ -32,6 +32,8 @@ lerna-debug.log*
 # Local env files
 .env
 .env*.local
+.env.docker
+.env.production
 
 # Runtime user-uploaded files — jangan di-commit, JANGAN dihapus saat update
 public/uploads/

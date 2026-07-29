@@ -249,8 +249,8 @@ PORT=8080
 APP_TIMEZONE=Asia/Jakarta
 
 # === Database ===
-# Format: user:password@tcp(host:port)/dbname?parseTime=true&loc=Asia%2FJakarta
-DATABASE_URL=salfanet:CHANGE_ME@tcp(127.0.0.1:3306)/salfanet_radius?parseTime=true&loc=Asia%2FJakarta
+# Format: mysql://user:password@tcp(host:port)/dbname?parseTime=true&loc=Asia%2FJakarta
+DATABASE_URL=mysql://salfanet:CHANGE_ME@tcp(127.0.0.1:3306)/salfanet_radius?parseTime=true&loc=Asia%2FJakarta
 
 # === JWT ===
 JWT_SECRET=CHANGE_ME_TO_RANDOM_64_CHAR_STRING
@@ -265,6 +265,7 @@ WA_SERVICE_URL=http://localhost:3001
 # NODE_ENV=production
 # NEXTAUTH_SECRET=CHANGE_ME
 # NEXTAUTH_URL=https://yourdomain.com
+# GO_API_URL=http://127.0.0.1:8080
 ENV
         print_warning "IMPORTANT: Edit $_APP_DIR/.env with real values before starting!"
     fi

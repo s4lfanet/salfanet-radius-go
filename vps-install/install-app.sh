@@ -113,6 +113,12 @@ create_env_file() {
         APP_BASE_URL="http://${VPS_IP}"
     fi
 
+    # Build CORS origins string
+    local CORS_ORIGINS_STR="http://${VPS_IP}"
+    if [ -n "${VPS_DOMAIN:-}" ]; then
+        CORS_ORIGINS_STR="${CORS_ORIGINS_STR},https://${VPS_DOMAIN}"
+    fi
+
     cat > ${APP_DIR}/.env <<EOF
 # === Go API Backend ============================================================
 APP_ENV=production
@@ -123,7 +129,7 @@ APP_TIMEZONE=${SYSTEM_TIMEZONE:-Asia/Jakarta}
 JWT_SECRET=${NEXTAUTH_SECRET}
 
 # CORS origins — add your domain here (comma-separated)
-CORS_ORIGINS=http://${VPS_IP}$([ -n "${VPS_DOMAIN:-}" ] && echo ",https://${VPS_DOMAIN}" || true)
+CORS_ORIGINS=${CORS_ORIGINS_STR}
 
 # WhatsApp sidecar (internal)
 WA_SERVICE_URL=http://localhost:3001

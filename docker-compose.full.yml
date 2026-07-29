@@ -1,0 +1,180 @@
+# ============================================================================
+# SALFANET RADIUS — Full Docker Compose Stack
+# ============================================================================
+# Services: MySQL 8, Go API, Next.js Frontend, FreeRADIUS, Nginx, WA Service
+#
+# Usage:
+#   cp .env.docker.example .env.docker
+#   # Edit .env.docker with your values
+#   docker compose --env-file .env.docker up -d
+#
+# Or use the installer:
+#   bash docker-install.sh
+# ============================================================================
+
+services:
+  # ─── MySQL 8.0 Database ────────────────────────────────────────────────────
+  db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-salfanet_radius}
+      MYSQL_USER: ${DB_USER:-salfanet_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Jakarta
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+    networks:
+      - salfanet
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─── Go API Backend ────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.go
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_ENV: production
+      PORT: 8080
+      APP_TIMEZONE: Asia/Jakarta
+      DATABASE_URL: mysql://${DB_USER:-salfanet_user}:${DB_PASSWORD}@tcp(db:3306)/${DB_NAME:-salfanet_radius}?parseTime=true&loc=Asia%2FJakarta
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
+      WA_SERVICE_URL: http://wa-service:4000
+      RADIUS_SERVER_IP: ${RADIUS_SERVER_IP:-127.0.0.1}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost}
+      GENIEACS_URL: ${GENIEACS_URL:-}
+      GENIEACS_USERNAME: ${GENIEACS_USERNAME:-}
+      GENIEACS_PASSWORD: ${GENIEACS_PASSWORD:-}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_EMAIL: ${VAPID_EMAIL:-admin@localhost}
+      LOG_LEVEL: ${LOG_LEVEL:-error}
+      ENABLE_QUERY_LOGGING: "false"
+    ports:
+      - "127.0.0.1:8080:8080"
+    networks:
+      - salfanet
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─── Next.js Frontend ──────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.nextjs
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      TZ: Asia/Jakarta
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      DATABASE_URL: mysql://${DB_USER:-salfanet_user}:${DB_PASSWORD}@db:3306/${DB_NAME:-salfanet_radius}?connection_limit=10&pool_timeout=20
+      GO_API_URL: http://api:8080
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${APP_BASE_URL:-http://localhost}
+      NEXT_PUBLIC_APP_NAME: "SALFANET RADIUS ISP"
+      NEXT_PUBLIC_APP_URL: ${APP_BASE_URL:-http://localhost}
+      NEXT_PUBLIC_TIMEZONE: Asia/Jakarta
+      RADIUS_SERVER_IP: ${RADIUS_SERVER_IP:-127.0.0.1}
+      AGENT_JWT_SECRET: ${AGENT_JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
+      VAPID_CONTACT_EMAIL: ${VAPID_EMAIL:-admin@localhost}
+    ports:
+      - "127.0.0.1:3000:3000"
+    networks:
+      - salfanet
+
+  # ─── FreeRADIUS ────────────────────────────────────────────────────────────
+  freeradius:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.freeradius
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    environment:
+      DB_USER: ${DB_USER:-salfanet_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-salfanet_radius}
+      SHARED_SECRET: ${RADIUS_SHARED_SECRET:-testing123}
+    ports:
+      - "1812:1812/udp"
+      - "1813:1813/udp"
+      - "3799:3799/udp"
+    networks:
+      - salfanet
+
+  # ─── Nginx Reverse Proxy ───────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - api
+    volumes:
+      - ./docker/nginx/salfanet.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "80:80"
+      # Uncomment when SSL is configured
+      # - "443:443"
+    networks:
+      - salfanet
+
+  # ─── WhatsApp Service (Baileys) ────────────────────────────────────────────
+  wa-service:
+    image: node:20-alpine
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - ./wa-service.js:/app/wa-service.js:ro
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+      - wa_auth:/var/data/salfanet/baileys_auth
+    command: sh -c "npm install --omit=dev && node wa-service.js"
+    environment:
+      NODE_ENV: production
+      TZ: Asia/Jakarta
+      WA_SERVICE_PORT: 4000
+      WA_AUTH_DIR: /var/data/salfanet/baileys_auth
+      API_URL: http://api:8080
+    networks:
+      - salfanet
+
+# ─── Networks & Volumes ──────────────────────────────────────────────────────
+networks:
+  salfanet:
+    driver: bridge
+
+volumes:
+  db_data:
+  wa_auth:

@@ -6,6 +6,24 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.23] — 2026-07-30
+### Added
+- **Docker installer** — Full Docker Compose stack (`docker-compose.full.yml`) with 6 services: MySQL 8, Go API, Next.js Frontend, FreeRADIUS, Nginx, WhatsApp Service.
+  - `docker/Dockerfile.go` — Multi-stage Go backend build (alpine, stripped binary).
+  - `docker/Dockerfile.nextjs` — Multi-stage Next.js build with standalone output.
+  - `docker/Dockerfile.freeradius` — Custom FreeRADIUS with SQL + REST modules.
+  - `docker/nginx/salfanet.conf` — Nginx reverse proxy config for Docker.
+  - `docker/freeradius/` — FreeRADIUS config templates (clients, sql, rest).
+  - `docker-install.sh` — One-command Docker installer with auto-generated secrets.
+  - `.env.docker.example` — Template for Docker environment configuration.
+
+### Fixed
+- **VPS installer: DB passwords** (`vps-install/common.sh`) — Replaced hardcoded default passwords with random generated ones.
+- **VPS installer: CORS_ORIGINS** (`vps-install/install-app.sh`) — Fixed malformed `.env` output from shell conditional inside heredoc.
+- **VPS installer: DATABASE_URL** (`vps-install/install-go.sh`) — Fixed standalone `.env` template to use proper `mysql://` URL format.
+
+---
+
 ## [2.54.22] — 2026-07-30
 ### Fixed
 - **Production cleanup** — Removed tracked binaries (`salfanet-api-linux`, `salfanet-api-win.exe`, `server.exe`), user data exports (`*.xlsx`, `*.csv`), and debug scripts (`dbquery.py`, `dbschema.py`, `debug_rx.py`, `json_keys.txt`, `used_keys.txt`, `step1.ps1`, `step2.ps1`, `audit_i18n.ps1`, `deploy-v2.52.84.sh`) from git. Updated `.gitignore` to prevent re-adding.
