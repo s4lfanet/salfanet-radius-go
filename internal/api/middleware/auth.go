@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -119,11 +120,77 @@ func AuthMiddleware(c fiber.Ctx) error {
 	return c.Next()
 }
 
-// RequireAdmin rejects requests from non-ADMIN users.
+// RequireAdmin rejects requests from non-admin users.
+// Accepts both ADMIN and SUPER_ADMIN roles.
 func RequireAdmin(c fiber.Ctx) error {
 	role, _ := c.Locals("role").(string)
-	if role != "ADMIN" {
+	if role != "ADMIN" && role != "SUPER_ADMIN" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "admin access required"})
+	}
+	return c.Next()
+}
+
+// RequireRole returns a middleware that checks the user has one of the allowed roles.
+func RequireRole(roles ...string) fiber.Handler {
+	allowed := make(map[string]struct{}, len(roles))
+	for _, r := range roles {
+		allowed[r] = struct{}{}
+	}
+	return func(c fiber.Ctx) error {
+		role, _ := c.Locals("role").(string)
+		if _, ok := allowed[role]; !ok {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "insufficient permissions"})
+		}
+		return c.Next()
+	}
+}
+
+// loginRateLimit is a simple in-memory rate limiter for auth endpoints.
+// Allows maxAttempts per IP per window.
+var (
+	rateLimitMu     sync.Mutex
+	rateLimitMap    = make(map[string]*rateLimitEntry)
+	rateLimitWindow = 15 * time.Minute
+	rateLimitMax    = 10
+)
+
+type rateLimitEntry struct {
+	count    int
+	expireAt time.Time
+}
+
+// LoginRateLimit middleware limits login attempts per IP.
+func LoginRateLimit(c fiber.Ctx) error {
+	ip := c.IP()
+	if ip == "" {
+		ip = "unknown"
+	}
+	rateLimitMu.Lock()
+	defer rateLimitMu.Unlock()
+
+	now := time.Now()
+	entry, exists := rateLimitMap[ip]
+	if !exists || now.After(entry.expireAt) {
+		rateLimitMap[ip] = &rateLimitEntry{count: 1, expireAt: now.Add(rateLimitWindow)}
+		return c.Next()
+	}
+	entry.count++
+	if entry.count > rateLimitMax {
+		return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{"error": "too many login attempts, try again later"})
+	}
+	return c.Next()
+}
+
+// AdminPathGuard checks if the request path starts with /admin/, /cron/, or
+// /backup/ and enforces RequireAdmin on those routes. This catches both the
+// admin group and standalone api.Get/Post/etc routes registered with those
+// prefixes.
+func AdminPathGuard(c fiber.Ctx) error {
+	path := c.Path()
+	if strings.HasPrefix(path, "/admin/") ||
+		strings.HasPrefix(path, "/cron/") ||
+		strings.HasPrefix(path, "/backup/") {
+		return RequireAdmin(c)
 	}
 	return c.Next()
 }

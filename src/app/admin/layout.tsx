@@ -3,7 +3,7 @@ import AdminClientLayout from './AdminClientLayout';
 
 async function getCompanyName(): Promise<string> {
   try {
-    const res = await fetch('http://127.0.0.1:8080/api/public/company', {
+    const res = await fetch(`${process.env.GO_API_URL || 'http://127.0.0.1:8080'}/api/public/company`, {
       next: { revalidate: 3600 },
     });
     if (res.ok) {

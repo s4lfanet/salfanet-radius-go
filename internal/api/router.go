@@ -147,6 +147,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// Technician auth (public — uses its own JWT, not admin JWT)
 	techAuth := app.Group("/api/technician/auth")
+	techAuth.Use(middleware.LoginRateLimit)
 	techAuth.Post("/request-otp", techPortalH.RequestOTP)
 	techAuth.Post("/verify-otp", techPortalH.VerifyOTP)
 	techAuth.Post("/login", techPortalH.Login)
@@ -165,6 +166,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// Auth (public)
 	auth := app.Group("/api/auth")
+	auth.Use(middleware.LoginRateLimit)
 	auth.Post("/login", authH.Login)
 	auth.Post("/logout", authH.Logout)
 	auth.Post("/refresh", authH.Refresh)
@@ -180,12 +182,12 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	webhooks.Post("/tripay", billingH.WebhookTripay)
 
 	// ─── Protected routes (JWT or NextAuth session required) ─────────────────
-	api := app.Group("/api", middleware.CombinedAuthMiddleware)
+	api := app.Group("/api", middleware.CombinedAuthMiddleware, middleware.AdminPathGuard)
 
 	// Session
 	api.Get("/auth/session", authH.Session)
 
-	// Admin dashboard
+	// Admin dashboard (admin-only — enforced by AdminPathGuard on api group)
 	admin := api.Group("/admin")
 	admin.Get("/stats", adminH.Stats)
 	admin.Get("/revenue-chart", adminH.RevenueChart)
@@ -1032,7 +1034,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// ─── Batch 9: Cron info routes ───────────────────────────────────────────
 	api.Get("/cron", cronH.Info)
-	api.Get("/cron/status", cronH.Status)
 	api.Get("/cron/status", cronH.Status)
 
 	// ─── Batch 9: Invoice extras ─────────────────────────────────────────────

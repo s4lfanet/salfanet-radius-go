@@ -25,7 +25,8 @@ func (h *NetworkHandler) GetRouter(c fiber.Ctx) error {
 	if err := h.db.First(&router, "id = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "router not found"})
 	}
-	// Return explicit map so password & secret (json:"-" in model) are included for edit form
+	// Return explicit map — password & secret are masked for security
+	// (frontend sends empty string to keep existing value on update)
 	return c.JSON(fiber.Map{
 		"success": true,
 		"router": fiber.Map{
@@ -36,10 +37,12 @@ func (h *NetworkHandler) GetRouter(c fiber.Ctx) error {
 			"type":        router.Type,
 			"ipAddress":   router.IPAddress,
 			"username":    router.Username,
-			"password":    router.Password,
+			"password":    "",
+			"hasPassword": router.Password != "",
 			"port":        router.Port,
 			"apiPort":     router.APIPort,
-			"secret":      router.Secret,
+			"secret":      "",
+			"hasSecret":   router.Secret != "",
 			"ports":       router.Ports,
 			"server":      router.Server,
 			"community":   router.Community,
@@ -63,6 +66,13 @@ func (h *NetworkHandler) UpdateRouter(c fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
 	delete(body, "id")
+	// Don't overwrite password/secret with empty string (frontend sends "" when unchanged)
+	if v, ok := body["password"].(string); ok && v == "" {
+		delete(body, "password")
+	}
+	if v, ok := body["secret"].(string); ok && v == "" {
+		delete(body, "secret")
+	}
 	body["updatedAt"] = time.Now()
 	h.db.Model(&router).Updates(body)
 	if err := radius.SyncNASClients(h.db); err != nil {
