@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.21] — 2026-07-30
+### Fixed
+- **Security: Admin RBAC** (`internal/api/middleware/auth.go`) — Added `AdminPathGuard` middleware on the `api` group to enforce `RequireAdmin` on all `/admin/`, `/cron/`, `/backup/` paths. Updated `RequireAdmin` to accept both `ADMIN` and `SUPER_ADMIN` roles. Added generic `RequireRole` middleware.
+- **Security: Rate limiting** (`internal/api/middleware/auth.go`) — Added `LoginRateLimit` middleware (10 attempts per 15 min per IP) on `/api/auth` and `/api/technician/auth` groups to prevent brute-force attacks.
+- **Security: Password masking** (`internal/api/handlers/network_ext.go`) — `GetRouter` now returns `hasPassword`/`hasSecret` booleans instead of raw values. `UpdateRouter` skips empty password/secret to preserve existing values.
+- **Duplicate route** (`internal/api/router.go`) — Removed duplicate `/api/cron/status` route registration.
+- **Hardcoded API URL** (`src/app/*/layout.tsx`) — Replaced hardcoded `127.0.0.1:8080` with `GO_API_URL` env var in admin, customer, agent, and technician layouts.
+- **Menu placement** (`src/app/admin/AdminClientLayout.tsx`) — Moved "Permintaan Top Up" from PPPoE to Hotspot category (it's for hotspot agents, not PPPoE).
+
+### Added
+- **Env var** (`.env.example`) — Added `GO_API_URL` for Next.js → Go backend communication.
+
+---
+
 ## [2.54.20] — 2026-07-30
 ### Added
 - **Cron: hotspot-sync** (`internal/cron/hotspot_sync.go`) — Full hotspot voucher lifecycle: WAITING→ACTIVE on first login detection, ACTIVE→EXPIRED on validity/usage duration expiry, Phase 3 cleanup of stale EXPIRED vouchers from RADIUS tables (radcheck, radreply, radusergroup, radgroupreply). Agent notifications on activation and expiry. MikroTik API disconnect with CoA fallback.
