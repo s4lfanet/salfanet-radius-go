@@ -491,6 +491,16 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.22 — 2026-07-30
+
+### Fixed
+- **Production cleanup** — Removed tracked binaries (`salfanet-api-linux`, `salfanet-api-win.exe`, `server.exe`), user data exports (`*.xlsx`, `*.csv`), and debug scripts (`dbquery.py`, `dbschema.py`, `debug_rx.py`, `json_keys.txt`, `used_keys.txt`, `step1.ps1`, `step2.ps1`, `audit_i18n.ps1`, `deploy-v2.52.84.sh`) from git. Updated `.gitignore` to prevent re-adding.
+- **package.json** — Set `private: true` (this is not an npm package).
+- **docker-compose.yml** — Removed deprecated `version: '3.8'` key (Docker Compose v2+).
+
+### Added
+- **`.env.production.example`** — Added missing Go backend env vars (`JWT_SECRET`, `PORT`, `CORS_ORIGINS`, `APP_BASE_URL`, `APP_TIMEZONE`, `WA_SERVICE_URL`, `UPLOAD_DIR`, `GO_API_URL`, Tripay/Duitku/Xendit keys, VAPID keys for Go backend).
+
 ### v2.54.21 — 2026-07-30
 
 ### Fixed
@@ -573,14 +583,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Files
 - `src/app/admin/olt/[id]/page.tsx` — `onuLastRefresh` state + prop ke `ZTEChassisView`; update tiap 15s refresh
 - `internal/olt/poller/poller.go` — Ghost cleanup: hapus offline >2h tanpa customer dari DB
-
-### v2.54.17 — 2026-06-02
-
-### Fixed
-- **Port Map tidak update setelah polling** — `ZTEChassisView` dipanggil dengan prop `olt` (data statis dari page load), bukan dari `liveOnus` yang auto-refresh tiap 15 detik. Akibatnya color status port di Port Map tidak pernah berubah meski data ONU sudah diperbarui. Fix: tambah prop `onus` ke `ZTEChassisView`, pass `liveOnus ?? olt.onuStatuses` dari parent. Badge counter LOS/DyingGasp di header juga di-fix untuk pakai live data.
-
-### Files
-- `src/app/admin/olt/[id]/page.tsx` — ZTEChassisView terima prop `onus`; Port Map dan badge header pakai `liveOnus`
 
 <!-- AUTO-CHANGELOG:END -->
 
