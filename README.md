@@ -491,6 +491,23 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.23 — 2026-07-30
+
+### Added
+- **Docker installer** — Full Docker Compose stack (`docker-compose.full.yml`) with 6 services: MySQL 8, Go API, Next.js Frontend, FreeRADIUS, Nginx, WhatsApp Service.
+  - `docker/Dockerfile.go` — Multi-stage Go backend build (alpine, stripped binary).
+  - `docker/Dockerfile.nextjs` — Multi-stage Next.js build with standalone output.
+  - `docker/Dockerfile.freeradius` — Custom FreeRADIUS with SQL + REST modules.
+  - `docker/nginx/salfanet.conf` — Nginx reverse proxy config for Docker.
+  - `docker/freeradius/` — FreeRADIUS config templates (clients, sql, rest).
+  - `docker-install.sh` — One-command Docker installer with auto-generated secrets.
+  - `.env.docker.example` — Template for Docker environment configuration.
+
+### Fixed
+- **VPS installer: DB passwords** (`vps-install/common.sh`) — Replaced hardcoded default passwords with random generated ones.
+- **VPS installer: CORS_ORIGINS** (`vps-install/install-app.sh`) — Fixed malformed `.env` output from shell conditional inside heredoc.
+- **VPS installer: DATABASE_URL** (`vps-install/install-go.sh`) — Fixed standalone `.env` template to use proper `mysql://` URL format.
+
 ### v2.54.22 — 2026-07-30
 
 ### Fixed
@@ -573,16 +590,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/olt/ssh/ssh.go` — **NEW** SSH CLI pool
 - `internal/olt/vendors/zte/zte.go` — `CLIPool` interface; update `FetchTelnetONUStates` + `FetchTelnetDistances` signatures
 - `internal/olt/poller/poller.go` — SSH pool support; hapus DB fallback; `GetCLIPool()`
-
-### v2.54.18 — 2026-06-02
-
-### Fixed
-- **Chassis header "Updated" timestamp menunjukkan waktu page load, bukan waktu refresh terakhir** — `lastPollAt` adalah field statis dari DB, tidak berubah setelah polling. Fix: `ZTEChassisView` terima prop `onuLastRefresh?: Date | null`; header menampilkan `onuLastRefresh.toLocaleTimeString()` jika ada (di-update tiap kali `liveOnus` refresh berhasil), fallback ke `lastPollAt` jika belum.
-- **Ghost ONU tidak dihapus dari DB** — ONU offline >2 jam yang tidak punya customer (tidak ada di tabel `customers`) tetap ada di `olt_onu_status` dan dihitung sebagai offline. Fix: setelah marking ghost, hapus juga entri offline yang sudah >2 jam dan tidak ada customer terkait. Poller sekarang log `poller: ghost ONUs deleted` dengan count.
-
-### Files
-- `src/app/admin/olt/[id]/page.tsx` — `onuLastRefresh` state + prop ke `ZTEChassisView`; update tiap 15s refresh
-- `internal/olt/poller/poller.go` — Ghost cleanup: hapus offline >2h tanpa customer dari DB
 
 <!-- AUTO-CHANGELOG:END -->
 
