@@ -907,7 +907,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	app.Post("/api/radius/coa", miscH.RadiusCOA)
 	api.Post("/pppoe/upload-photo", miscH.PppoeUploadPhoto)
 	api.Get("/public/homepage", miscH.PublicHomepage)
-	api.Get("/company/info", miscH.CompanyInfo)
+	app.Get("/api/company/info", miscH.CompanyInfo) // public — needed by customer portal
 	api.Get("/admin/nas", miscH.ListNAS)
 	api.Post("/email/broadcast-invoice", miscH.EmailBroadcastInvoice)
 	api.Post("/notifications/generate", miscH.GenerateNotifications)
