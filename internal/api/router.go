@@ -142,6 +142,9 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	app.Get("/api/public/payment-gateways", pubH.GetPaymentGateways)
 	app.Post("/api/public/upload-registration", pubH.UploadRegistration)
 
+	// Company info (public — needed by customer portal for bank accounts)
+	app.Get("/api/company/info", miscH.CompanyInfo)
+
 	// Admin pre-login (public — must be before the api group to avoid auth middleware)
 	app.Post("/api/admin/auth/pre-login", adminMiscH.PreLogin)
 
@@ -907,7 +910,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	app.Post("/api/radius/coa", miscH.RadiusCOA)
 	api.Post("/pppoe/upload-photo", miscH.PppoeUploadPhoto)
 	api.Get("/public/homepage", miscH.PublicHomepage)
-	app.Get("/api/company/info", miscH.CompanyInfo) // public — needed by customer portal
 	api.Get("/admin/nas", miscH.ListNAS)
 	api.Post("/email/broadcast-invoice", miscH.EmailBroadcastInvoice)
 	api.Post("/notifications/generate", miscH.GenerateNotifications)
