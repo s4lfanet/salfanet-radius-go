@@ -6,6 +6,48 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.20] — 2026-07-30
+### Added
+- **Cron: hotspot-sync** (`internal/cron/hotspot_sync.go`) — Full hotspot voucher lifecycle: WAITING→ACTIVE on first login detection, ACTIVE→EXPIRED on validity/usage duration expiry, Phase 3 cleanup of stale EXPIRED vouchers from RADIUS tables (radcheck, radreply, radusergroup, radgroupreply). Agent notifications on activation and expiry. MikroTik API disconnect with CoA fallback.
+- **Cron: notification_check** (`internal/cron/notification_check.go`) — Every 6h: creates in-app notifications for overdue invoices, users expiring today, and pending registrations. Deduplication by type/link/time-window.
+- **Cron: voucher_reconcile** (`internal/cron/voucher_reconcile.go`) — Daily 4 AM: creates financial transactions for used vouchers without orders (manually sold), plus agent commission expenses for vouchers with reseller fee.
+- **Cron: auto-renewal** (`internal/cron/auto_renewal.go`) — Daily 8 AM WIB: auto-renew prepaid users with sufficient balance.
+- **Cron: pppoe-sync** (`internal/cron/pppoe_sync.go`) — Enhanced auto-isolir for expired PPPoE users with grace period support.
+- **Cron: telegram-cron** (`internal/cron/telegram_cron.go`) — Telegram backup (dynamic schedule from DB settings) + health check (hourly).
+- **Cron: invoice-status-updater + cleanup + suspend-check** (`internal/cron/invoice_status.go`, `cleanup_jobs.go`, `suspend_check.go`) — Invoice overdue updates, activity log cleanup, webhook log cleanup, suspended user checking.
+- **Service: isolation** (`internal/isolation/isolation.go`) — Isolation settings with 5-min cache, IP pool CIDR checking, CIDR range calculation for MikroTik pool config.
+- **Service: push-notification** (`internal/push/push.go`) — Full Web Push service using `SherClockHolmes/webpush-go` with VAPID auth. Per-role sends (customer/agent/technician/admin), broadcast with target filtering (all/active/expired/area/selected), expired subscription auto-deactivation, dashboard stats.
+- **Model: AgentNotification** — For voucher activation/expiry agent notifications.
+- **Model: AdminPushSubscription** — Admin push subscription support.
+- **Extended push subscription models** — Added `isActive`, `userAgent`, `expirationTime`, `lastUsedAt` fields to `PushSubscription`, `AgentPushSubscription`, `TechnicianPushSubscription`.
+
+### Changed
+- **Scheduler** (`internal/cron/scheduler.go`) — 17 jobs registered. Replaced basic `jobSyncVoucherExpiry` with enhanced `jobHotspotSync`. All jobs have manual trigger support via `TriggerJob`.
+- **Push handler** (`internal/api/handlers/push_handler.go`) — Now uses `push.SendBroadcast` for actual Web Push delivery instead of just recording a notification. Stats endpoint uses `push.GetDashboardStats`.
+
+### Fixed
+- **Inefficient string concatenation** in `admin_misc_handler.go` and `misc_handler.go` — Replaced `WriteString` with `+` concatenation to `fmt.Fprintf` with format verbs.
+
+### Files
+- `internal/cron/hotspot_sync.go` — **NEW** hotspot voucher lifecycle cron
+- `internal/cron/notification_check.go` — **NEW** notification check cron
+- `internal/cron/voucher_reconcile.go` — **NEW** voucher transaction reconciliation cron
+- `internal/cron/auto_renewal.go` — **NEW** auto-renewal cron
+- `internal/cron/pppoe_sync.go` — **NEW** PPPoE sync + auto-isolir cron
+- `internal/cron/telegram_cron.go` — **NEW** Telegram backup + health cron
+- `internal/cron/invoice_status.go` — **NEW** invoice status updater cron
+- `internal/cron/cleanup_jobs.go` — **NEW** activity log + webhook log cleanup cron
+- `internal/cron/suspend_check.go` — **NEW** suspend check cron
+- `internal/isolation/isolation.go` — **NEW** isolation service
+- `internal/push/push.go` — **NEW** Web Push notification service
+- `internal/cron/scheduler.go` — Updated with all new cron registrations
+- `internal/db/models/extra.go` — New models + extended push subscription fields
+- `internal/api/handlers/push_handler.go` — Updated to use push service
+- `internal/api/handlers/admin_misc_handler.go` — Lint fixes
+- `internal/api/handlers/misc_handler.go` — Lint fixes
+
+---
+
 ## [2.54.19] — 2026-06-03
 ### Fixed
 - **ONU list menampilkan data salah (11 online padahal 53 online)** — Root cause: port 9006 di Mikrotik DST-NAT diarahkan ke SSH ZTE (bukan Telnet), sehingga Telnet selalu gagal dengan SSH banner. v2.54.15 DB fallback kemudian mengunci 44 ONU sebagai offline secara permanen (death spiral). Fix 1: buat SSH pool (`internal/olt/ssh`) dengan API identik ke Telnet pool — poller sekarang pakai SSH (port 9005) untuk fetch ONU state, bukan Telnet. Fix 2: **hapus seluruh DB fallback** di poller — ketika CLI return 0 state, percayai SNMP apa adanya, tidak lagi "preserve DB offline status" yang menjadi sumber death spiral.
