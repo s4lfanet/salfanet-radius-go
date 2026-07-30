@@ -14,7 +14,7 @@ COPY freeradius-config/mods-available/mschap /etc/raddb/mods-available/mschap
 COPY freeradius-config/policy.d/filter /etc/raddb/policy.d/filter
 
 # Fix permissions
-RUN chown -R radius:radius /etc/raddb
+RUN chown -R freerad:freerad /etc/raddb
 
 EXPOSE 1812/udp 1813/udp 3799/udp
 
