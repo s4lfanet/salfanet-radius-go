@@ -493,9 +493,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### v2.54.23 — 2026-07-30
 
-### Removed
-- **Docker deployment** — Removed all Docker-related files (`Dockerfile`, `docker-compose.*.yml`, `docker/`, `docker-install.sh`) due to LXC compatibility issues. Use VPS installer method instead.
-
 ### Fixed
 - **VPS installer: DB passwords** (`vps-install/common.sh`) — Replaced hardcoded default passwords with random generated ones.
 - **VPS installer: CORS_ORIGINS** (`vps-install/install-app.sh`) — Fixed malformed `.env` output from shell conditional inside heredoc.
