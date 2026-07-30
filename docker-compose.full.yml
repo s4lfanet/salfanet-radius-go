@@ -25,8 +25,6 @@ services:
       TZ: Asia/Jakarta
     volumes:
       - db_data:/var/lib/mysql
-    ports:
-      - "127.0.0.1:3306:3306"
     networks:
       - salfanet
     healthcheck:
@@ -49,8 +47,10 @@ services:
       APP_ENV: production
       PORT: 8080
       APP_TIMEZONE: Asia/Jakarta
-      DATABASE_URL: mysql://${DB_USER:-salfanet_user}:${DB_PASSWORD}@tcp(db:3306)/${DB_NAME:-salfanet_radius}?parseTime=true&loc=Asia%2FJakarta
+      DATABASE_URL: mysql://${DB_USER:-salfanet_user}:${DB_PASSWORD}@db:3306/${DB_NAME:-salfanet_radius}?parseTime=true&loc=Asia%2FJakarta
       JWT_SECRET: ${JWT_SECRET}
+      AGENT_JWT_SECRET: ${AGENT_JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
       WA_SERVICE_URL: http://wa-service:4000
       RADIUS_SERVER_IP: ${RADIUS_SERVER_IP:-127.0.0.1}
@@ -63,8 +63,6 @@ services:
       VAPID_EMAIL: ${VAPID_EMAIL:-admin@localhost}
       LOG_LEVEL: ${LOG_LEVEL:-error}
       ENABLE_QUERY_LOGGING: "false"
-    ports:
-      - "127.0.0.1:8080:8080"
     networks:
       - salfanet
     healthcheck:
@@ -103,8 +101,6 @@ services:
       VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
       VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY:-}
       VAPID_CONTACT_EMAIL: ${VAPID_EMAIL:-admin@localhost}
-    ports:
-      - "127.0.0.1:3000:3000"
     networks:
       - salfanet
 
