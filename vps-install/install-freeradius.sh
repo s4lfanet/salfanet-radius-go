@@ -472,14 +472,18 @@ configure_pppoe_support() {
 
 configure_firewall() {
     if [ "${SKIP_UFW:-false}" = "true" ]; then
-        print_info "UFW firewall dilewati (${DEPLOY_ENV_LABEL:-LXC/Container})"
-        print_info "Buka port berikut di Proxmox Datacenter Firewall:"
+        print_info "UFW firewall activation dilewati (${DEPLOY_ENV_LABEL:-LXC/Container})"
+        print_info "Membuka port RADIUS via UFW jika tersedia..."
+        if command -v ufw &>/dev/null; then
+            ufw allow 1812/udp comment 'RADIUS Authentication' 2>/dev/null || true
+            ufw allow 1813/udp comment 'RADIUS Accounting' 2>/dev/null || true
+            ufw allow 3799/udp comment 'RADIUS CoA' 2>/dev/null || true
+            print_success "RADIUS ports opened via UFW"
+        fi
+        print_info "Jika UFW tidak aktif, pastikan port berikut dibuka di Proxmox Datacenter Firewall:"
         print_info "  1812/udp - RADIUS Authentication"
         print_info "  1813/udp - RADIUS Accounting"
         print_info "  3799/udp - RADIUS CoA (Change of Authorization)"
-        print_info "  500/udp  - IPSec IKE (L2TP/IPSec VPN)"
-        print_info "  4500/udp - IPSec NAT-T (L2TP/IPSec VPN)"
-        print_info "  1701/udp - L2TP Tunnel (L2TP/IPSec VPN)"
         return 0
     fi
 

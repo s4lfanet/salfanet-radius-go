@@ -431,11 +431,6 @@ detect_ssh_ports() {
 export -f detect_ssh_ports
 
 ensure_ufw_enabled() {
-    if [ "${SKIP_UFW:-false}" = "true" ]; then
-        print_info "Skipping UFW enable (${DEPLOY_ENV_LABEL:-LXC/Container})"
-        return 0
-    fi
-
     if ! command -v ufw &>/dev/null; then
         print_warning "UFW tidak ditemukan, lewati aktivasi firewall"
         return 0
@@ -454,6 +449,18 @@ ensure_ufw_enabled() {
     # Ensure public web ports stay open for app access
     ufw allow 80/tcp comment 'HTTP' 2>/dev/null || true
     ufw allow 443/tcp comment 'HTTPS' 2>/dev/null || true
+
+    # RADIUS ports
+    ufw allow 1812/udp comment 'RADIUS Auth' 2>/dev/null || true
+    ufw allow 1813/udp comment 'RADIUS Accounting' 2>/dev/null || true
+    ufw allow 3799/udp comment 'RADIUS CoA' 2>/dev/null || true
+
+    if [ "${SKIP_UFW:-false}" = "true" ]; then
+        print_info "Skipping UFW enable (${DEPLOY_ENV_LABEL:-LXC/Container}) — ports opened but firewall not activated"
+        print_info "If UFW is already active, ports are now open."
+        print_info "If UFW is inactive, activate it manually: ufw --force enable"
+        return 0
+    fi
 
     # Reasonable defaults for public servers
     ufw default deny incoming >/dev/null 2>&1 || true
