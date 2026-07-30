@@ -116,9 +116,7 @@ salfanet-radius-go/
 ├── .env.example
 ├── go.mod
 ├── go.sum
-├── Makefile
-├── Dockerfile
-└── docker-compose.yml
+└── Makefile
 ```
 
 ---
@@ -739,35 +737,6 @@ migrate-down:
 
 lint:
 	golangci-lint run
-```
-
----
-
-## Docker Compose
-
-```yaml
-version: '3.8'
-services:
-  api:
-    build: .
-    ports:
-      - "8080:8080"
-    env_file: .env
-    depends_on:
-      - db
-    restart: unless-stopped
-
-  wa-service:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - ./wa-service:/app
-    command: node wa-service.js
-    ports:
-      - "3001:3001"
-    restart: unless-stopped
-
-  # db: pakai MySQL existing di VPS, tidak di Docker
 ```
 
 ---
