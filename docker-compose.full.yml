@@ -81,9 +81,14 @@ services:
     working_dir: /app
     volumes:
       - ./prisma:/app/prisma:ro
+      - ./docker/seed-admin.js:/app/seed-admin.js:ro
     environment:
       DATABASE_URL: mysql://${DB_USER:-salfanet_user}:${DB_PASSWORD}@db:3306/${DB_NAME:-salfanet_radius}?connection_limit=10&pool_timeout=20
-    command: sh -c "apk add --no-cache openssl && npx --yes prisma@5 db push --accept-data-loss --schema=/app/prisma/schema.prisma"
+      DB_HOST: db
+      DB_USER: ${DB_USER:-salfanet_user}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-salfanet_radius}
+    command: sh -c "apk add --no-cache openssl && npx --yes prisma@5 db push --accept-data-loss --schema=/app/prisma/schema.prisma && npm install --silent bcryptjs mysql2 && node seed-admin.js"
     restart: "no"
     networks:
       - salfanet
