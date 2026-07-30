@@ -13,8 +13,8 @@ RUN ln -sf /etc/raddb/mods-available/sql /etc/raddb/mods-enabled/sql && \
 COPY freeradius-config/mods-available/mschap /etc/raddb/mods-available/mschap
 COPY freeradius-config/policy.d/filter /etc/raddb/policy.d/filter
 
-# Fix permissions
-RUN chown -R freerad:freerad /etc/raddb
+# Fix permissions (alpine image runs as root)
+RUN chmod -R 644 /etc/raddb/clients.conf /etc/raddb/mods-available/sql /etc/raddb/mods-available/rest /etc/raddb/mods-available/mschap /etc/raddb/policy.d/filter
 
 EXPOSE 1812/udp 1813/udp 3799/udp
 
