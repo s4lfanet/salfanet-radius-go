@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
@@ -502,11 +502,11 @@ export default function NetworkMapPage() {
             message = 'Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser:\n\n1. Klik ikon gembok di address bar\n2. Izinkan akses lokasi\n3. Refresh halaman';
             break;
           case error.POSITION_UNAVAILABLE:
-            message = 'GPS tidak tersedia. Pastikan:\n\n• Perangkat memiliki GPS\n• GPS diaktifkan\n• Koneksi internet stabil';
+            message = 'GPS tidak tersedia. Pastikan:\n\n� Perangkat memiliki GPS\n� GPS diaktifkan\n� Koneksi internet stabil';
             break;
           case error.TIMEOUT:
             title = 'Timeout';
-            message = 'Deteksi lokasi membutuhkan waktu lebih lama. Pastikan:\n\n• GPS perangkat aktif\n• Berada di area terbuka\n• Izin lokasi sudah diberikan\n\nCoba lagi dalam beberapa saat.';
+            message = 'Deteksi lokasi membutuhkan waktu lebih lama. Pastikan:\n\n� GPS perangkat aktif\n� Berada di area terbuka\n� Izin lokasi sudah diberikan\n\nCoba lagi dalam beberapa saat.';
             break;
         }
         addToast({ type: error.code === error.TIMEOUT ? 'warning' : 'error', title: title, description: message });
@@ -802,9 +802,9 @@ export default function NetworkMapPage() {
   if (!mapReady) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div><div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div><div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div><div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div></div>
+        
         <div className="text-center relative z-10">
-          <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-[#00f7ff] dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-brand-400 dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] mx-auto mb-4" />
           <p className="text-muted-foreground">{t('common.loadingMap')}</p>
         </div>
       </div>
@@ -813,13 +813,13 @@ export default function NetworkMapPage() {
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div><div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div><div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div><div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div></div>
+      
       <div className="relative z-10 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-3">
-              <MapPin className="w-6 h-6 text-[#00f7ff] drop-shadow-[0_0_15px_rgba(0,247,255,0.8)]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-3">
+              <MapPin className="w-6 h-6 text-brand-400 drop-shadow-[0_0_15px_rgba(70, 95, 255,0.8)]" />
               Network Map
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -949,10 +949,10 @@ export default function NetworkMapPage() {
             className="text-sm border rounded-lg px-3 py-1.5 bg-card border-border"
           >
             <option value="">{t('common.allStatus')}</option>
-            <option value="online">🟢 Online</option>
-            <option value="offline">🔵 Offline</option>
-            <option value="isolir">🟠 Isolir</option>
-            <option value="expired">🔴 Nunggak</option>
+            <option value="online">?? Online</option>
+            <option value="offline">?? Offline</option>
+            <option value="isolir">?? Isolir</option>
+            <option value="expired">?? Nunggak</option>
           </select>
 
           <div className="h-6 border-l border-border" />
@@ -967,10 +967,10 @@ export default function NetworkMapPage() {
             onChange={(e) => setSelectedMapLayer(e.target.value as 'street' | 'satellite' | 'topo' | 'dark')}
             className="px-3 py-1.5 border rounded-lg text-sm bg-card border-border"
           >
-            <option value="street">🗺️ Street</option>
-            <option value="satellite">🛰️ Satellite</option>
-            <option value="topo">🏔️ Topographic</option>
-            <option value="dark">🌙 Dark Mode</option>
+            <option value="street">??? Street</option>
+            <option value="satellite">??? Satellite</option>
+            <option value="topo">??? Topographic</option>
+            <option value="dark">?? Dark Mode</option>
           </select>
 
           <div className="h-6 border-l border-border" />
@@ -1192,7 +1192,7 @@ export default function NetworkMapPage() {
                                       <div>
                                         <p className="text-sm font-medium text-gray-800">{conn.oltName}</p>
                                         <p className="text-xs text-muted-foreground">
-                                          {conn.uplinkPort || 'Auto'} • Priority: {conn.priority}
+                                          {conn.uplinkPort || 'Auto'} � Priority: {conn.priority}
                                         </p>
                                       </div>
                                     </div>
@@ -1261,7 +1261,7 @@ export default function NetworkMapPage() {
                         {connectedOdcs.length > 0 && (
                           <div className="border-t border-gray-100 pt-3 mt-3">
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                              📦 Terhubung ke {connectedOdcs.length} ODC:
+                              ?? Terhubung ke {connectedOdcs.length} ODC:
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                               {connectedOdcs.map(odc => (
@@ -1278,7 +1278,7 @@ export default function NetworkMapPage() {
                         {connectedRouters.length > 0 && (
                           <div className="border-t border-gray-100 pt-3 mt-3">
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                              📡 Uplink dari {connectedRouters.length} Router:
+                              ?? Uplink dari {connectedRouters.length} Router:
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                               {connectedRouters.map(r => (
@@ -1344,7 +1344,7 @@ export default function NetworkMapPage() {
                         {connectedOdps.length > 0 && (
                           <div className="border-t border-gray-100 pt-3">
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-                              🏠 Terhubung ke {connectedOdps.length} ODP:
+                              ?? Terhubung ke {connectedOdps.length} ODP:
                             </p>
                             <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                               {connectedOdps.map(odp => (
@@ -1425,7 +1425,7 @@ export default function NetworkMapPage() {
                               </span>
                               {parentOdc.olt && (
                                 <>
-                                  <span className="text-gray-300">←</span>
+                                  <span className="text-gray-300">?</span>
                                   <span className="inline-flex items-center gap-1 px-2 py-1 bg-destructive/10 text-destructive rounded text-xs font-medium border border-destructive/30">
                                     <Server className="w-3 h-3" />
                                     {parentOdc.olt.name}
@@ -1440,7 +1440,7 @@ export default function NetworkMapPage() {
                         {connectedCustomers.length > 0 && (
                           <div className="border-t border-gray-100 pt-3">
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                              👤 Pelanggan Terhubung:
+                              ?? Pelanggan Terhubung:
                             </p>
                             <p className="text-lg font-bold text-primary">{connectedCustomers.length} pelanggan</p>
                           </div>
@@ -1683,15 +1683,15 @@ export default function NetworkMapPage() {
             {/* Cable Types */}
             <div className="flex items-center gap-2">
               <div className="w-8 h-0.5 bg-orange-400 rounded"></div>
-              <span className="text-sm text-muted-foreground">OLT→ODC</span>
+              <span className="text-sm text-muted-foreground">OLT?ODC</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-8 h-0.5 bg-success/100 rounded"></div>
-              <span className="text-sm text-muted-foreground">ODC→ODP</span>
+              <span className="text-sm text-muted-foreground">ODC?ODP</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-8 h-0.5 border-t-2 border-dashed border-blue-400"></div>
-              <span className="text-sm text-muted-foreground">ODP→Pelanggan</span>
+              <span className="text-sm text-muted-foreground">ODP?Pelanggan</span>
             </div>
           </div>
         </div>

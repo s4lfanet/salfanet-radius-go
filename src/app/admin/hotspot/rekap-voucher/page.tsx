@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { BarChart3, Download, RefreshCw, Filter, ChevronLeft, ChevronRight, X, Copy, CheckCheck } from 'lucide-react';
@@ -125,7 +125,7 @@ export default function RekapVoucherPage() {
       const end = new Date(periodValue + 'T00:00:00');
       end.setDate(start.getDate() + 6);
       const fmt = (d: Date) => `${d.getDate()} ${MONTH_NAMES_ID[d.getMonth()].slice(0,3)}`;
-      return `${fmt(start)} – ${fmt(end)} ${end.getFullYear()}`;
+      return `${fmt(start)} � ${fmt(end)} ${end.getFullYear()}`;
     }
     if (periodMode === 'monthly' && periodValue) {
       const [y, m] = periodValue.split('-').map(Number);
@@ -246,18 +246,13 @@ export default function RekapVoucherPage() {
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-[#00f7ff]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-brand-400" />
             {t('hotspot.rekapVoucherTitle')}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -274,7 +269,7 @@ export default function RekapVoucherPage() {
           </button>
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-accent hover:bg-accent/90 text-black font-bold rounded-lg shadow-[0_0_15px_rgba(0,247,255,0.3)] hover:shadow-[0_0_20px_rgba(0,247,255,0.5)] transition-all border border-accent/50"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-accent hover:bg-accent/90 text-black font-bold rounded-lg shadow-[0_0_15px_rgba(70, 95, 255,0.3)] hover:shadow-[0_0_20px_rgba(70, 95, 255,0.5)] transition-all border border-accent/50"
           >
             <Download className="w-3.5 h-3.5" />
             {t('common.export')}
@@ -346,7 +341,7 @@ export default function RekapVoucherPage() {
                   onClick={() => switchPeriodMode(mode)}
                   className={`px-2.5 py-1 text-[11px] rounded-md transition-colors font-medium ${
                     periodMode === mode
-                      ? 'bg-primary text-white shadow-[0_0_8px_rgba(188,19,254,0.4)]'
+                      ? 'bg-primary text-white shadow-[0_0_8px_rgba(122, 90, 248,0.4)]'
                       : 'bg-muted text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -380,9 +375,9 @@ export default function RekapVoucherPage() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-card p-4 rounded-lg border-2 border-primary/30 shadow-[0_0_15px_rgba(188,19,254,0.1)]">
+        <div className="bg-card p-4 rounded-lg border-2 border-primary/30 shadow-[0_0_15px_rgba(122, 90, 248,0.1)]">
           <div className="text-xs text-primary font-bold uppercase mb-1">{t('hotspot.totalQty')}</div>
-          <div className="text-lg sm:text-2xl font-bold text-primary drop-shadow-[0_0_5px_rgba(188,19,254,0.5)]">{totalQty.toLocaleString()}</div>
+          <div className="text-lg sm:text-2xl font-bold text-primary drop-shadow-[0_0_5px_rgba(122, 90, 248,0.5)]">{totalQty.toLocaleString()}</div>
         </div>
         <div className="bg-card p-4 rounded-lg border-2 border-success/30 shadow-[0_0_15px_rgba(0,255,136,0.1)]">
           <div className="text-xs text-success font-bold uppercase mb-1">{t('hotspot.stock')}</div>
@@ -392,9 +387,9 @@ export default function RekapVoucherPage() {
           <div className="text-xs text-warning font-bold uppercase mb-1">{t('hotspot.sold')}</div>
           <div className="text-lg sm:text-2xl font-bold text-warning drop-shadow-[0_0_5px_rgba(255,170,0,0.5)]">{totalSold.toLocaleString()}</div>
         </div>
-        <div className="bg-card p-4 rounded-lg border-2 border-[#00f7ff]/30 shadow-[0_0_15px_rgba(0,247,255,0.1)] col-span-2 md:col-span-1">
-          <div className="text-xs text-[#00f7ff] font-bold uppercase mb-1">Total Pendapatan</div>
-          <div className="text-base sm:text-xl font-bold text-[#00f7ff] drop-shadow-[0_0_5px_rgba(0,247,255,0.5)]">{formatRupiah(totalRevenue)}</div>
+        <div className="bg-card p-4 rounded-lg border-2 border-brand-500/30 shadow-[0_0_15px_rgba(70, 95, 255,0.1)] col-span-2 md:col-span-1">
+          <div className="text-xs text-brand-400 font-bold uppercase mb-1">Total Pendapatan</div>
+          <div className="text-base sm:text-xl font-bold text-brand-400 drop-shadow-[0_0_5px_rgba(70, 95, 255,0.5)]">{formatRupiah(totalRevenue)}</div>
         </div>
       </div>
 
@@ -406,7 +401,7 @@ export default function RekapVoucherPage() {
         </div>
         <div className="bg-card p-4 rounded-lg border border-border">
           <div className="text-[10px] text-muted-foreground uppercase mb-1">Pendapatan Agent</div>
-          <div className="text-xl font-bold text-[#bc13fe]">{formatRupiah(totalAgentProfit)}</div>
+          <div className="text-xl font-bold text-brand-600">{formatRupiah(totalAgentProfit)}</div>
         </div>
         <div className="bg-card p-4 rounded-lg border border-success/30">
           <div className="text-[10px] text-muted-foreground uppercase mb-1">Total Pendapatan</div>
@@ -442,7 +437,7 @@ export default function RekapVoucherPage() {
                   <tr key={id} className="hover:bg-muted">
                     <td className="px-3 py-2 text-xs font-medium text-foreground">{a.name}</td>
                     <td className="px-3 py-2 text-xs text-right text-muted-foreground">{a.sold}</td>
-                    <td className="px-3 py-2 text-xs text-right font-semibold text-[#bc13fe]">{formatRupiah(a.profit)}</td>
+                    <td className="px-3 py-2 text-xs text-right font-semibold text-brand-600">{formatRupiah(a.profit)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -451,7 +446,7 @@ export default function RekapVoucherPage() {
                   <tr>
                     <td className="px-3 py-2 text-xs font-bold text-foreground">Total</td>
                     <td className="px-3 py-2 text-xs text-right font-bold text-muted-foreground">{agentSold}</td>
-                    <td className="px-3 py-2 text-xs text-right font-bold text-[#bc13fe]">{formatRupiah(totalAgentProfit)}</td>
+                    <td className="px-3 py-2 text-xs text-right font-bold text-brand-600">{formatRupiah(totalAgentProfit)}</td>
                   </tr>
                 </tfoot>
               )}
@@ -468,7 +463,7 @@ export default function RekapVoucherPage() {
           <div className="text-center py-8 text-muted-foreground text-xs">{t('hotspot.noRekapData')}</div>
         ) : (
           filteredRekap.map((item, index) => (
-            <div key={item.batchCode} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3">
+            <div key={item.batchCode} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <div className="font-mono text-xs text-foreground">{item.batchCode}</div>
@@ -514,18 +509,18 @@ export default function RekapVoucherPage() {
                 <div className="text-center">
                   <div className="text-[10px] text-muted-foreground">{t('hotspot.sold')}</div>
                   <button onClick={() => openVoucherModal(item.batchCode, 'SOLD')} className="font-medium text-orange-600 hover:underline cursor-pointer">{item.sold}</button>
-                  <div className="text-[9px] text-muted-foreground mt-0.5">{item.active}↑ {item.expired}↓</div>
+                  <div className="text-[9px] text-muted-foreground mt-0.5">{item.active}? {item.expired}?</div>
                 </div>
                 <div className="text-center">
                   <div className="text-[10px] text-muted-foreground">Nominal</div>
-                  <div className="font-medium text-[#00f7ff] text-[10px]">{formatRupiah(item.totalRevenue)}</div>
+                  <div className="font-medium text-brand-400 text-[10px]">{formatRupiah(item.totalRevenue)}</div>
                 </div>
               </div>
             </div>
           ))
         )}
         {filteredRekap.length > 0 && (
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/40 p-3">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/40 p-3">
             <div className="grid grid-cols-2 gap-2 text-xs mb-2">
               <div className="text-center">
                 <div className="text-[10px] text-muted-foreground font-bold">{t('common.total')} {t('hotspot.qty')}</div>
@@ -541,7 +536,7 @@ export default function RekapVoucherPage() {
               </div>
               <div className="text-center">
                 <div className="text-[10px] text-muted-foreground font-bold">Total Pendapatan</div>
-                <div className="font-bold text-[#00f7ff] text-[11px]">{formatRupiah(totalRevenue)}</div>
+                <div className="font-bold text-brand-400 text-[11px]">{formatRupiah(totalRevenue)}</div>
               </div>
             </div>
           </div>
@@ -627,10 +622,10 @@ export default function RekapVoucherPage() {
                     <td className="px-3 py-2 text-[10px] text-right font-medium text-muted-foreground">
                       {item.sellingPrice > 0 ? formatRupiah(item.sellingPrice) : '-'}
                     </td>
-                    <td className="px-3 py-2 text-[10px] text-right font-medium text-[#00f7ff]">
+                    <td className="px-3 py-2 text-[10px] text-right font-medium text-brand-400">
                       {item.totalRevenue > 0 ? formatRupiah(item.totalRevenue) : '-'}
                     </td>
-                    <td className="px-3 py-2 text-[10px] text-right font-medium text-[#bc13fe]">
+                    <td className="px-3 py-2 text-[10px] text-right font-medium text-brand-600">
                       {item.agentProfit > 0 ? formatRupiah(item.agentProfit) : <span className="text-muted-foreground">-</span>}
                     </td>
                   </tr>
@@ -659,10 +654,10 @@ export default function RekapVoucherPage() {
                     {totalExpired.toLocaleString()}
                   </td>
                   <td className="px-3 py-2 text-xs text-right text-muted-foreground">-</td>
-                  <td className="px-3 py-2 text-xs text-right text-[#00f7ff]">
+                  <td className="px-3 py-2 text-xs text-right text-brand-400">
                     {formatRupiah(totalRevenue)}
                   </td>
-                  <td className="px-3 py-2 text-xs text-right text-[#bc13fe]">
+                  <td className="px-3 py-2 text-xs text-right text-brand-600">
                     {formatRupiah(totalAgentProfit)}
                   </td>
                 </tr>
@@ -675,13 +670,13 @@ export default function RekapVoucherPage() {
       {/* Info Footer */}
       <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg">
         <div className="flex items-start gap-2">
-          <div className="mt-0.5">ℹ️</div>
+          <div className="mt-0.5">??</div>
           <div>
             <div className="font-medium mb-1">{t('hotspot.notes')}:</div>
             <ul className="list-disc list-inside space-y-0.5">
               <li><strong>{t('hotspot.qty')}:</strong> {t('hotspot.qtyDesc')}</li>
               <li><strong>{t('hotspot.stock')}:</strong> {t('hotspot.stockDesc')}</li>
-              <li><strong>{t('hotspot.sold')}:</strong> {t('hotspot.soldDesc')} — <span className="text-foreground">klik angka untuk lihat kode voucher</span></li>
+              <li><strong>{t('hotspot.sold')}:</strong> {t('hotspot.soldDesc')} � <span className="text-foreground">klik angka untuk lihat kode voucher</span></li>
             </ul>
           </div>
         </div>
@@ -693,7 +688,7 @@ export default function RekapVoucherPage() {
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => setVoucherModal(prev => ({ ...prev, open: false }))}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full sm:max-w-lg bg-card border border-[#bc13fe]/30 rounded-t-2xl sm:rounded-xl shadow-[0_0_40px_rgba(188,19,254,0.3)] flex flex-col max-h-[85vh]"
+            className="relative w-full sm:max-w-lg bg-card border border-brand-600/30 rounded-t-2xl sm:rounded-xl shadow-[0_0_40px_rgba(122, 90, 248,0.3)] flex flex-col max-h-[85vh]"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -747,7 +742,7 @@ export default function RekapVoucherPage() {
                         </button>
                         {v.profile && (
                           <div className="text-[10px] text-muted-foreground mt-0.5">
-                            {v.profile.name}{v.profile.validityValue ? ` · ${v.profile.validityValue} ${v.profile.validityUnit}` : ''}
+                            {v.profile.name}{v.profile.validityValue ? ` � ${v.profile.validityValue} ${v.profile.validityUnit}` : ''}
                           </div>
                         )}
                         {(v.firstLoginAt || v.expiresAt) && (

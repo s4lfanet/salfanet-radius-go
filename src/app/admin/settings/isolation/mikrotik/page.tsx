@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -145,13 +145,13 @@ add name=isolir \\
     use-mpls=no use-compression=no use-encryption=no \\
     comment="Profile untuk user yang diisolir"`;
 
-  // Script 2b: RADIUS Attributes — address-list agar IP langsung masuk ke isolir list
+  // Script 2b: RADIUS Attributes � address-list agar IP langsung masuk ke isolir list
   // Ini penting! Tanpa ini, user yang belum reconnect bisa masih akses internet penuh.
   const addressListScript = `/ip firewall address-list
 # Catatan: address-list 'isolir' akan diisi otomatis oleh RADIUS via Mikrotik-Address-List
 # attribute saat user login ulang dengan profile isolir.
 # Untuk user yang SEDANG ONLINE saat diisolir, sistem menambahkan IP secara langsung via API.
-# Script ini hanya untuk verifikasi — tidak perlu dijalankan manual.
+# Script ini hanya untuk verifikasi � tidak perlu dijalankan manual.
 
 # Cek isi address-list isolir saat ini:
 /ip firewall address-list print where list=isolir
@@ -180,7 +180,7 @@ add name=isolir \\
 # RADIUS akan otomatis memasukkan IP user ke address-list 'isolir' via Mikrotik-Address-List attribute.
 # Sistem juga menambahkan IP via API saat isolasi aktif, tanpa menunggu reconnect.
 
-# [1] Allow ESTABLISHED & RELATED — return traffic dari payment gateway
+# [1] Allow ESTABLISHED & RELATED � return traffic dari payment gateway
 add chain=forward \\
     src-address-list=isolir \\
     connection-state=established,related \\
@@ -392,20 +392,20 @@ ${firewallNatScript}
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div><div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div><div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div><div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div></div>
-        <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-[#00f7ff] dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] relative z-10" />
+        
+        <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-brand-400 dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] relative z-10" />
       </div>
     );
   }
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div><div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div><div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div><div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div></div>
+      
       <div className="relative z-10 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] mb-1.5">
-            <Server className="w-6 h-6 text-brand-500 dark:text-[#00f7ff] dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] inline mr-2" />
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] mb-1.5">
+            <Server className="w-6 h-6 text-brand-500 dark:text-brand-400 dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] inline mr-2" />
             {t('isolation.mikrotikTitle')}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground">
@@ -426,16 +426,16 @@ ${firewallNatScript}
           </div>
         </div>
 
-        {/* ⚠️ IMPORTANT WARNING BOX — only shown when server IP is not explicitly configured */}
+        {/* ?? IMPORTANT WARNING BOX � only shown when server IP is not explicitly configured */}
         {!settings.isolationServerIp && (
-        <div className="bg-gradient-to-r from-[#ff4466]/10 to-[#ff44cc]/10 border-2 border-[#ff4466]/50 rounded-lg p-4 mb-4">
+        <div className="bg-gradient-to-r from-[#ff4466]/10 to-accent-foreground/10 border-2 border-[#ff4466]/50 rounded-lg p-4 mb-4">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-6 h-6 text-[#ff6b8a] flex-shrink-0 mt-0.5 drop-shadow-[0_0_10px_rgba(255,68,102,0.6)]" />
             <div className="flex-1">
               <h3 className="font-bold text-foreground mb-2 flex items-center gap-2">
-                ⚠️ Server IP belum dikonfigurasi!
+                ?? Server IP belum dikonfigurasi!
               </h3>
-              <div className="space-y-2 text-sm text-[#e0d0ff]/90">
+              <div className="space-y-2 text-sm text-muted-foreground/90">
                 <p>
                   <strong>MikroTik firewall TIDAK support hostname</strong>, hanya IP address!
                 </p>
@@ -446,8 +446,8 @@ ${firewallNatScript}
                   <strong className="text-[#ff6b8a]">Atur "IP Server (untuk MikroTik NAT)" di halaman Pengaturan Isolasi agar script benar!</strong>
                 </p>
                 <ul className="list-disc list-inside space-y-1 ml-4">
-                  <li>✅ Contoh benar: <code className="bg-black/30 px-2 py-0.5 rounded text-[#00ff88]">103.50.100.150</code></li>
-                  <li>❌ Contoh salah: <code className="bg-black/30 px-2 py-0.5 rounded text-[#ff4466]">billing.domain.com</code></li>
+                  <li>? Contoh benar: <code className="bg-black/30 px-2 py-0.5 rounded text-[success]">103.50.100.150</code></li>
+                  <li>? Contoh salah: <code className="bg-black/30 px-2 py-0.5 rounded text-[#ff4466]">billing.domain.com</code></li>
                 </ul>
                 <p className="mt-3">
                   <strong>Cara cek IP server:</strong>
@@ -477,7 +477,7 @@ ${firewallNatScript}
               <div>
                 <span className="text-muted-foreground dark:text-muted-foreground">Server IP (NAT):</span>
                 <p className={`font-mono font-semibold ${settings.isolationServerIp ? 'text-green-500' : 'text-amber-500'}`}>
-                  {settings.isolationServerIp || 'Belum diset — atur di pengaturan isolasi'}
+                  {settings.isolationServerIp || 'Belum diset � atur di pengaturan isolasi'}
                 </p>
               </div>
               <div>
@@ -623,7 +623,7 @@ ${firewallNatScript}
 
         {/* Tips */}
         <div className="mt-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-          <h3 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">💡 {t('isolation.tipsTitle')}</h3>
+          <h3 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">?? {t('isolation.tipsTitle')}</h3>
           <ul className="text-sm text-amber-700 dark:text-amber-400 space-y-1 list-disc list-inside">
             <li>{t('isolation.tipBackup')}</li>
             <li>{t('isolation.tipTestFirst')}</li>

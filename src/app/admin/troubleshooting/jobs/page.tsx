@@ -123,7 +123,7 @@ export default function TroubleshootingJobsPage() {
           { label: 'In Progress', count: stats.inProgress, icon: Clock, color: 'text-blue-500', bg: 'bg-blue-500/10' },
           { label: 'Resolved', count: stats.resolved, icon: CheckCircle2, color: 'text-green-500', bg: 'bg-green-500/10' },
         ].map(s => (
-          <div key={s.label} className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
+          <div key={s.label} className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center gap-3">
             <div className={`p-2 ${s.bg} rounded-xl`}>
               <s.icon className={`w-5 h-5 ${s.color}`} />
             </div>
@@ -168,7 +168,7 @@ export default function TroubleshootingJobsPage() {
           <p>Belum ada troubleshooting job</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -65,7 +65,7 @@ const SCHEDULE_PRESETS = [
   { label: 'Daily at 7 AM', value: '0 7 * * *' },
   { label: 'Daily at 8 AM', value: '0 8 * * *' },
   { label: 'Daily at noon', value: '0 12 * * *' },
-  { label: 'Custom…', value: 'custom' },
+  { label: 'Custom�', value: 'custom' },
 ];
 
 function ScheduleEditor({ config, onSave, onClose }: {
@@ -282,9 +282,9 @@ export default function CronSettingsPage() {
   const getHealthBadge = (health: string, enabled: boolean) => {
     if (!enabled) return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground rounded">{t('settings.disabled')}</span>;
     switch (health) {
-      case 'healthy': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-success/10 text-success rounded">🟢 Active</span>;
-      case 'degraded': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-warning/20 text-warning rounded">🟡 Degraded</span>;
-      case 'error': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive rounded">🔴 Error</span>;
+      case 'healthy': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-success/10 text-success rounded">?? Active</span>;
+      case 'degraded': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-warning/20 text-warning rounded">?? Degraded</span>;
+      case 'error': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive rounded">?? Error</span>;
       default: return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground rounded">-</span>;
     }
   };
@@ -314,11 +314,8 @@ export default function CronSettingsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl" />
-          <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl" />
-        </div>
-        <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-[#00f7ff] relative z-10" />
+        
+        <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-brand-400 relative z-10" />
       </div>
     );
   }
@@ -327,19 +324,14 @@ export default function CronSettingsPage() {
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl" />
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
-      </div>
+      
 
       <div className="relative z-10 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] flex items-center gap-3">
-              <Clock className="w-7 h-7 text-brand-500 dark:text-[#00f7ff]" />
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground flex items-center gap-3">
+              <Clock className="w-7 h-7 text-brand-500 dark:text-brand-400" />
               {t('settings.cronTitle')}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('settings.cronSubtitle')}</p>
@@ -368,7 +360,7 @@ export default function CronSettingsPage() {
           ))}
         </div>
 
-        {/* ── TAB: STATUS & TRIGGER ── */}
+        {/* -- TAB: STATUS & TRIGGER -- */}
         {activeTab === 'jobs' && (
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {jobs.map((job) => (
@@ -420,7 +412,7 @@ export default function CronSettingsPage() {
           </div>
         )}
 
-        {/* ── TAB: JADWAL CRON ── */}
+        {/* -- TAB: JADWAL CRON -- */}
         {activeTab === 'schedules' && (
           <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
             <div className="px-6 py-4 border-b border-border">
@@ -434,8 +426,8 @@ export default function CronSettingsPage() {
             </div>
 
             <div className="p-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2 px-6 py-2.5">
-              <span className="font-semibold">⚠ Catatan:</span>
-              Perubahan jadwal disimpan ke database. Cron runner membaca jadwal saat startup — jalankan
+              <span className="font-semibold">? Catatan:</span>
+              Perubahan jadwal disimpan ke database. Cron runner membaca jadwal saat startup � jalankan
               <code className="mx-1 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded font-mono">pm2 restart salfanet-cron</code>
               di VPS untuk menerapkan jadwal baru.
             </div>
@@ -474,8 +466,8 @@ export default function CronSettingsPage() {
                       </td>
                       <td className="px-6 py-3">
                         {s.enabled
-                          ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-success/10 text-success rounded">🟢 Enabled</span>
-                          : <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">⏸ Disabled</span>
+                          ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-success/10 text-success rounded">?? Enabled</span>
+                          : <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">? Disabled</span>
                         }
                       </td>
                       <td className="px-6 py-3">
@@ -514,8 +506,8 @@ export default function CronSettingsPage() {
                       <div className="text-xs text-muted-foreground">{s.jobType}</div>
                     </div>
                     {s.enabled
-                      ? <span className="text-xs bg-success/10 text-success px-2 py-0.5 rounded">🟢 On</span>
-                      : <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">⏸ Off</span>
+                      ? <span className="text-xs bg-success/10 text-success px-2 py-0.5 rounded">?? On</span>
+                      : <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">? Off</span>
                     }
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">
@@ -552,7 +544,7 @@ export default function CronSettingsPage() {
           </div>
         )}
 
-        {/* ── TAB: RIWAYAT EKSEKUSI ── */}
+        {/* -- TAB: RIWAYAT EKSEKUSI -- */}
         {activeTab === 'history' && (
           <div className="bg-card rounded-lg border border-border shadow-sm">
             <div className="px-6 py-4 border-b border-border">

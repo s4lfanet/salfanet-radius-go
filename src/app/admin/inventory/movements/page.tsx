@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { showSuccess, showError } from '@/lib/sweetalert';
@@ -145,28 +145,20 @@ export default function StockMovementsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
-        <div className="w-12 h-12 border-4 border-brand-500 dark:border-[#00f7ff] border-t-transparent rounded-full animate-spin dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] relative z-10"></div>
+        
+        <div className="w-12 h-12 border-4 border-brand-500 dark:border-brand-500 border-t-transparent rounded-full animate-spin dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] relative z-10"></div>
       </div>
     );
   }
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
         <div className="p-6">
           <div className="mb-6">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-              <RefreshCcw className="h-6 w-6 text-[#00f7ff]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+              <RefreshCcw className="h-6 w-6 text-brand-400" />
               Stock Movements
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -265,7 +257,7 @@ export default function StockMovementsPage() {
               <div className="text-center py-12 text-muted-foreground">No movements found</div>
             ) : (
               filteredMovements.map((movement) => (
-                <div key={movement.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3">
+                <div key={movement.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{movement.item.name}</p>
@@ -286,7 +278,7 @@ export default function StockMovementsPage() {
                         {movement.movementType === 'IN' && '+'}{movement.movementType === 'OUT' && '-'}{movement.quantity} {movement.item.unit}
                       </span>
                     </div>
-                    <div><span className="text-muted-foreground">Stock:</span> <span className="text-foreground">{movement.previousStock} → {movement.newStock}</span></div>
+                    <div><span className="text-muted-foreground">Stock:</span> <span className="text-foreground">{movement.previousStock} ? {movement.newStock}</span></div>
                     <div><span className="text-muted-foreground">Ref:</span> <span className="text-foreground">{movement.referenceNo || '-'}</span></div>
                     <div><span className="text-muted-foreground">User:</span> <span className="text-foreground">{movement.userName || '-'}</span></div>
                   </div>
@@ -415,16 +407,16 @@ export default function StockMovementsPage() {
                 <div>
                   <ModalLabel required>{t('inventory.itemLabel')}</ModalLabel>
                   <ModalSelect value={formData.itemId} onChange={(e) => setFormData({ ...formData, itemId: e.target.value })} required>
-                    <option value="" className="dark:bg-[#0a0520]">Select Item</option>
-                    {items.map((item) => (<option key={item.id} value={item.id} className="dark:bg-[#0a0520]">{item.name} ({item.sku})</option>))}
+                    <option value="" className="dark:bg-input">Select Item</option>
+                    {items.map((item) => (<option key={item.id} value={item.id} className="dark:bg-input">{item.name} ({item.sku})</option>))}
                   </ModalSelect>
                 </div>
                 <div>
                   <ModalLabel required>{t('inventory.movementType')}</ModalLabel>
                   <ModalSelect value={formData.movementType} onChange={(e) => setFormData({ ...formData, movementType: e.target.value })} required>
-                    <option value="IN" className="dark:bg-[#0a0520]">Stock In (Purchase/Return)</option>
-                    <option value="OUT" className="dark:bg-[#0a0520]">Stock Out (Sale/Usage)</option>
-                    <option value="ADJUSTMENT" className="dark:bg-[#0a0520]">Adjustment (Correction)</option>
+                    <option value="IN" className="dark:bg-input">Stock In (Purchase/Return)</option>
+                    <option value="OUT" className="dark:bg-input">Stock Out (Sale/Usage)</option>
+                    <option value="ADJUSTMENT" className="dark:bg-input">Adjustment (Correction)</option>
                   </ModalSelect>
                 </div>
                 <div>

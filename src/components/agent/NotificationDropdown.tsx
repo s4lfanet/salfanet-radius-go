@@ -184,50 +184,50 @@ export default function AgentNotificationDropdown({ agentId, enableToasts = true
     const iconClass = 'w-5 h-5';
     switch (type) {
       case 'voucher_generated':
-        return <Bell className={`${iconClass} text-[#00f7ff] drop-shadow-[0_0_8px_rgba(0,247,255,0.6)]`} />;
+        return <Bell className={`${iconClass} text-brand-400 drop-shadow-[0_0_8px_rgba(70, 95, 255,0.6)]`} />;
       case 'deposit_success':
-        return <Check className={`${iconClass} text-[#00ff88] drop-shadow-[0_0_8px_rgba(0,255,136,0.6)]`} />;
+        return <Check className={`${iconClass} text-[success] drop-shadow-[0_0_8px_rgba(18, 183, 106,0.6)]`} />;
       case 'deposit_request_submitted':
-        return <Bell className={`${iconClass} text-[#00f7ff] drop-shadow-[0_0_8px_rgba(0,247,255,0.6)]`} />;
+        return <Bell className={`${iconClass} text-brand-400 drop-shadow-[0_0_8px_rgba(70, 95, 255,0.6)]`} />;
       case 'deposit_rejected':
         return <X className={`${iconClass} text-[#ff6b8a] drop-shadow-[0_0_8px_rgba(255,107,138,0.6)]`} />;
       case 'low_balance':
         return <AlertTriangle className={`${iconClass} text-[#ff6b8a] drop-shadow-[0_0_8px_rgba(255,107,138,0.6)]`} />;
       case 'voucher_sold':
-        return <CheckCheck className={`${iconClass} text-[#00ff88] drop-shadow-[0_0_8px_rgba(0,255,136,0.6)]`} />;
+        return <CheckCheck className={`${iconClass} text-[success] drop-shadow-[0_0_8px_rgba(18, 183, 106,0.6)]`} />;
       case 'voucher_deleted':
         return <Trash2 className={`${iconClass} text-[#ff6b8a] drop-shadow-[0_0_8px_rgba(255,107,138,0.6)]`} />;
       case 'balance_added':
-        return <TrendingUp className={`${iconClass} text-[#00ff88] drop-shadow-[0_0_8px_rgba(0,255,136,0.6)]`} />;
+        return <TrendingUp className={`${iconClass} text-[success] drop-shadow-[0_0_8px_rgba(18, 183, 106,0.6)]`} />;
       case 'balance_deducted':
         return <TrendingDown className={`${iconClass} text-[#ff6b8a] drop-shadow-[0_0_8px_rgba(255,107,138,0.6)]`} />;
       default:
-        return <Bell className={`${iconClass} text-[#bc13fe] drop-shadow-[0_0_8px_rgba(188,19,254,0.6)]`} />;
+        return <Bell className={`${iconClass} text-brand-600 drop-shadow-[0_0_8px_rgba(122, 90, 248,0.6)]`} />;
     }
   };
 
   const getNotificationBg = (type: string) => {
     switch (type) {
       case 'voucher_generated':
-        return 'bg-[#00f7ff]/30 border-[#00f7ff]/70';
+        return 'bg-brand-500/30 border-brand-500/70';
       case 'deposit_success':
-        return 'bg-[#00ff88]/30 border-[#00ff88]/70';
+        return 'bg-[success]/30 border-[success]/70';
       case 'deposit_request_submitted':
-        return 'bg-[#00f7ff]/30 border-[#00f7ff]/70';
+        return 'bg-brand-500/30 border-brand-500/70';
       case 'deposit_rejected':
         return 'bg-[#ff4466]/30 border-[#ff4466]/70';
       case 'low_balance':
         return 'bg-[#ff4466]/30 border-[#ff4466]/70';
       case 'voucher_sold':
-        return 'bg-[#00ff88]/30 border-[#00ff88]/70';
+        return 'bg-[success]/30 border-[success]/70';
       case 'voucher_deleted':
         return 'bg-[#ff4466]/30 border-[#ff4466]/70';
       case 'balance_added':
-        return 'bg-[#00ff88]/30 border-[#00ff88]/70';
+        return 'bg-[success]/30 border-[success]/70';
       case 'balance_deducted':
         return 'bg-[#ff4466]/30 border-[#ff4466]/70';
       default:
-        return 'bg-[#bc13fe]/30 border-[#bc13fe]/70';
+        return 'bg-brand-600/30 border-brand-600/70';
     }
   };
 
@@ -235,24 +235,24 @@ export default function AgentNotificationDropdown({ agentId, enableToasts = true
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl hover:bg-primary/10 dark:hover:bg-[#bc13fe]/10 transition"
+        className="relative p-2 rounded-xl hover:bg-primary/10 dark:hover:bg-brand-600/10 transition"
       >
-        <Bell className="h-5 w-5 text-foreground dark:text-[#e0d0ff]" />
+        <Bell className="h-5 w-5 text-foreground dark:text-muted-foreground" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#ff4466] to-[#ff44cc] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_10px_rgba(255,68,102,0.5)]">
+          <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#ff4466] to-accent-foreground text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-[0_0_10px_rgba(255,68,102,0.5)]">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-white dark:bg-[#0a0520] border-2 border-purple-200 dark:border-[#00f7ff]/50 rounded-2xl shadow-[0_0_50px_rgba(0,247,255,0.2)] z-[9999] overflow-hidden backdrop-blur-xl">
-          <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-cyan-50 dark:from-[#bc13fe]/20 dark:to-[#00f7ff]/20 border-b border-purple-200 dark:border-[#00f7ff]/30 flex items-center justify-between">
+        <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-white dark:bg-input border-2 border-purple-200 dark:border-brand-500/50 rounded-xl shadow-[0_0_50px_rgba(70, 95, 255,0.2)] z-[9999] overflow-hidden backdrop-blur-xl">
+          <div className="px-4 py-3 bg-gradient-to-r from-purple-50 to-cyan-50 dark:from-brand-600/20 dark:to-brand-400/20 border-b border-purple-200 dark:border-brand-500/30 flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-900 dark:text-white">Notifikasi</h3>
             {notifications.length > 0 && (
               <button
                 onClick={markAllAsRead}
-                className="text-xs text-[#00ff88] hover:text-[#00f7ff] transition font-bold"
+                className="text-xs text-[success] hover:text-brand-400 transition font-bold"
               >
                 Tandai semua dibaca
               </button>
@@ -262,21 +262,21 @@ export default function AgentNotificationDropdown({ agentId, enableToasts = true
           <div className="max-h-[400px] overflow-y-auto">
             {notifications.length === 0 ? (
               <div className="p-8 text-center">
-                <Bell className="h-12 w-12 text-purple-300 dark:text-[#00f7ff]/40 mx-auto mb-3" />
+                <Bell className="h-12 w-12 text-purple-300 dark:text-brand-400/40 mx-auto mb-3" />
                 <p className="text-sm font-medium text-slate-900 dark:text-white">Belum ada notifikasi</p>
-                <p className="text-xs text-slate-500 dark:text-[#e0d0ff]/60 mt-1">Notifikasi akan muncul di sini</p>
+                <p className="text-xs text-slate-500 dark:text-muted-foreground/60 mt-1">Notifikasi akan muncul di sini</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-200 dark:divide-[#bc13fe]/20">
+              <div className="divide-y divide-slate-200 dark:divide-[brand-600]/20">
                 {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-4 hover:bg-purple-50 dark:hover:bg-[#bc13fe]/10 transition ${
-                      !notification.isRead ? 'bg-gradient-to-r from-purple-50 to-cyan-50 dark:from-[#bc13fe]/15 dark:to-[#00f7ff]/15 border-l-4 border-purple-400 dark:border-[#00f7ff]' : 'bg-white dark:bg-[#0a0520]'
+                    className={`p-4 hover:bg-purple-50 dark:hover:bg-brand-600/10 transition ${
+                      !notification.isRead ? 'bg-gradient-to-r from-purple-50 to-cyan-50 dark:from-brand-600/15 dark:to-brand-400/15 border-l-4 border-purple-400 dark:border-brand-500' : 'bg-white dark:bg-input'
                     }`}
                   >
                     <div className="flex gap-3">
-                      <div className={`p-2.5 rounded-xl border-2 ${getNotificationBg(notification.type)} shadow-[0_0_15px_rgba(0,247,255,0.2)]`}>
+                      <div className={`p-2.5 rounded-xl border-2 ${getNotificationBg(notification.type)} shadow-[0_0_15px_rgba(70, 95, 255,0.2)]`}>
                         {getNotificationIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -291,17 +291,17 @@ export default function AgentNotificationDropdown({ agentId, enableToasts = true
                             <Trash2 className="h-3.5 w-3.5 text-[#ff6b8a]" />
                           </button>
                         </div>
-                        <p className="text-xs text-slate-800 dark:text-[#e0d0ff]/90 mb-2 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-slate-800 dark:text-muted-foreground/90 mb-2 line-clamp-2 leading-relaxed">
                           {notification.message}
                         </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-600 dark:text-[#00f7ff]/80 font-medium">
+                          <span className="text-xs text-slate-600 dark:text-brand-400/80 font-medium">
                             {formatWIB(new Date(notification.createdAt), 'dd MMM HH:mm')}
                           </span>
                           {!notification.isRead && (
                             <button
                               onClick={() => markAsRead([notification.id])}
-                              className="text-xs text-[#00ff88] hover:text-[#00f7ff] transition font-bold px-2 py-1 rounded-lg bg-[#00ff88]/10 hover:bg-[#00ff88]/20 border border-[#00ff88]/30"
+                              className="text-xs text-[success] hover:text-brand-400 transition font-bold px-2 py-1 rounded-lg bg-[success]/10 hover:bg-[success]/20 border border-[success]/30"
                             >
                               Tandai dibaca
                             </button>

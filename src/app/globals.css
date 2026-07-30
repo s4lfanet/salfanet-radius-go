@@ -203,15 +203,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   
-  /* Modern Blue/Indigo Accent Palette */
-  --blue-primary: #3b82f6;
-  --indigo-accent: #6366f1;
-  --violet-soft: #8b5cf6;
-  --sky-light: #0ea5e9;
-  --emerald-ok: #10b981;
-  --amber-warn: #f59e0b;
-  --red-err: #ef4444;
-  --slate-mid: #94a3b8;
 }
 
 /* Disable transitions/animations during theme toggle */
@@ -455,60 +446,7 @@
    Scoped by data-role to avoid affecting admin/customer.
    ===================================================== */
 
-/* Light mode: replace legacy neon/dark surfaces with theme surfaces */
-:root:not(.dark) [data-role="agent"] [class*="bg-[#0a0520"],
-:root:not(.dark) [data-role="agent"] [class*="bg-[#1a0f35"],
-:root:not(.dark) [data-role="agent"] [class*="bg-[#0b1120"],
-:root:not(.dark) [data-role="agent"] [class*="bg-[#0d0a1e"],
-:root:not(.dark) [data-role="agent"] [class*="bg-[#0a0e1a"],
-:root:not(.dark) [data-role="technician"] [class*="bg-[#0a0520"],
-:root:not(.dark) [data-role="technician"] [class*="bg-[#1a0f35"],
-:root:not(.dark) [data-role="technician"] [class*="bg-[#0b1120"],
-:root:not(.dark) [data-role="technician"] [class*="bg-[#0d0a1e"],
-:root:not(.dark) [data-role="technician"] [class*="bg-[#0a0e1a"] {
-  background-color: var(--card) !important;
-}
-
-:root:not(.dark) [data-role="agent"] [class*="text-[#00f7ff"],
-:root:not(.dark) [data-role="agent"] [class*="text-cyan-"],
-:root:not(.dark) [data-role="technician"] [class*="text-[#00f7ff"],
-:root:not(.dark) [data-role="technician"] [class*="text-cyan-"] {
-  color: var(--primary) !important;
-}
-
-:root:not(.dark) [data-role="agent"] [class*="text-[#bc13fe"],
-:root:not(.dark) [data-role="agent"] [class*="text-purple-"],
-:root:not(.dark) [data-role="technician"] [class*="text-[#bc13fe"],
-:root:not(.dark) [data-role="technician"] [class*="text-purple-"] {
-  color: var(--accent) !important;
-}
-
-:root:not(.dark) [data-role="agent"] [class*="text-[#e0d0ff"],
-:root:not(.dark) [data-role="technician"] [class*="text-[#e0d0ff"] {
-  color: var(--muted-foreground) !important;
-}
-
-:root:not(.dark) [data-role="agent"] [class*="border-[#bc13fe"],
-:root:not(.dark) [data-role="agent"] [class*="border-[#00f7ff"],
-:root:not(.dark) [data-role="agent"] [class*="border-cyan-"],
-:root:not(.dark) [data-role="agent"] [class*="border-purple-"],
-:root:not(.dark) [data-role="technician"] [class*="border-[#bc13fe"],
-:root:not(.dark) [data-role="technician"] [class*="border-[#00f7ff"],
-:root:not(.dark) [data-role="technician"] [class*="border-cyan-"],
-:root:not(.dark) [data-role="technician"] [class*="border-purple-"] {
-  border-color: var(--border) !important;
-}
-
-:root:not(.dark) [data-role="agent"] [class*="from-[#bc13fe"],
-:root:not(.dark) [data-role="technician"] [class*="from-[#bc13fe"] {
-  --tw-gradient-from: var(--primary) var(--tw-gradient-from-position) !important;
-}
-
-:root:not(.dark) [data-role="agent"] [class*="to-[#00f7ff"],
-:root:not(.dark) [data-role="technician"] [class*="to-[#00f7ff"] {
-  --tw-gradient-to: var(--accent) var(--tw-gradient-to-position) !important;
-}
-
+/* Light mode: agent/technician input readability */
 :root:not(.dark) [data-role="agent"] input,
 :root:not(.dark) [data-role="agent"] textarea,
 :root:not(.dark) [data-role="agent"] select,
@@ -554,97 +492,13 @@ html.theme-transitioning *::after {
 }
 
 /* =======================================================
-   LIGHT MODE — Comprehensive Override for Cyberpunk Colors
-   Targets all hardcoded dark hex classes across admin pages
+   LIGHT MODE — Overrides for legacy classes still in use
    ======================================================= */
 
-/* --- 1. PAGE BACKGROUNDS: ALL dark hex → white --- */
-:root:not(.dark) .bg-\[\#1a0f35\],
-:root:not(.dark) .bg-\[\#1e1b2e\],
-:root:not(.dark) .bg-\[\#0f0a1e\],
-:root:not(.dark) .bg-\[\#1a1525\],
-:root:not(.dark) .bg-\[\#1e1e1e\],
-:root:not(.dark) .bg-\[\#0B141A\],
-:root:not(.dark) .bg-\[\#0d0a1a\],
-:root:not(.dark) [class*="bg-[#0f0a1e]"],
-:root:not(.dark) [class*="bg-[#1a1525]"],
-:root:not(.dark) [class*="bg-[#1e1e1e]"],
-:root:not(.dark) [class*="bg-[#0B141A]"],
-:root:not(.dark) [class*="bg-[#0d0a1a]"] {
-  background-color: var(--background) !important;
-}
-
-/* bg-[#0a0520] — used for inputs/buttons/table cells → light gray input bg */
-:root:not(.dark) .bg-\[\#0a0520\] {
-  background-color: var(--input) !important;
-}
-
-/* --- 1b. SLATE BACKGROUNDS → white/light --- */
-:root:not(.dark) .bg-slate-900,
-:root:not(.dark) .bg-slate-800,
-:root:not(.dark) [class*="bg-slate-900"],
-:root:not(.dark) [class*="bg-slate-800"] {
-  background-color: var(--background) !important;
-}
-:root:not(.dark) [class*="bg-slate-800\/"],
-:root:not(.dark) [class*="bg-slate-900\/"] {
-  background-color: var(--input) !important;
-}
-
-/* --- 1c. SLATE/DARK GRADIENTS → white/light on light mode --- */
-:root:not(.dark) [class*="from-slate-900"],
-:root:not(.dark) [class*="from-slate-800"] {
-  --tw-gradient-from: #ffffff !important;
-}
-:root:not(.dark) [class*="via-slate-900"],
-:root:not(.dark) [class*="via-slate-800"] {
-  --tw-gradient-via: #f8fafc !important;
-}
-:root:not(.dark) [class*="to-slate-900"],
-:root:not(.dark) [class*="to-slate-800"] {
-  --tw-gradient-to: #f1f5f9 !important;
-}
-:root:not(.dark) [class*="from-[#1a0f35]"],
-:root:not(.dark) [class*="from-[#0a0520]"] {
-  --tw-gradient-from: #ffffff !important;
-}
-:root:not(.dark) [class*="via-[#1a0f35]"] {
-  --tw-gradient-via: #f8fafc !important;
-}
-:root:not(.dark) [class*="to-[#1a0f35]"],
-:root:not(.dark) [class*="to-[#0a0520]"] {
-  --tw-gradient-to: #f1f5f9 !important;
-}
-
-/* --- 1d. WHATSAPP GREEN BUBBLE (keep visible but lighter) --- */
+/* --- WHATSAPP GREEN BUBBLE (keep visible but lighter) --- */
 :root:not(.dark) .bg-\[\#005C4B\],
 :root:not(.dark) [class*="bg-[#005C4B]"] {
   background-color: #059669 !important;
-}
-
-/* --- 2. INPUT/FORM BACKGROUNDS --- */
-:root:not(.dark) .bg-\[\#1a1135\],
-:root:not(.dark) [class*="bg-[#1a1135]"] {
-  background-color: var(--input) !important;
-  border-color: var(--border) !important;
-}
-:root:not(.dark) [class*="bg-[#0a0520]/"] {
-  background-color: var(--input) !important;
-}
-/* Any element with bg-[#1a0f35] used as input/card bg → input bg */
-:root:not(.dark) [class*="bg-[#1a0f35]"] {
-  background-color: var(--input) !important;
-  border-color: var(--border) !important;
-}
-/* bg-[#1e1b2e] modal/card backgrounds → card bg */
-:root:not(.dark) [class*="bg-[#1e1b2e]"] {
-  background-color: var(--card) !important;
-  border-color: var(--border) !important;
-}
-/* bg-[#0f0a1e] code/pre block backgrounds → muted bg */
-:root:not(.dark) [class*="bg-[#0f0a1e]"] {
-  background-color: var(--muted) !important;
-  border-color: var(--border) !important;
 }
 
 /* --- 3. CARD BACKGROUNDS: solid white on light --- */
@@ -659,7 +513,7 @@ html.theme-transitioning *::after {
   background-color: rgba(15, 23, 42, 0.9) !important;
   color: #ffffff !important;
   caret-color: #ffffff !important;
-  border-color: rgba(0, 247, 255, 0.4) !important;
+  border-color: rgba(70, 95, 255, 0.4) !important;
 }
 
 /* --- 4. TEXT-WHITE → dark foreground, but keep white on colored bg --- */
@@ -703,45 +557,6 @@ html.theme-transitioning *::after {
   color: var(--muted-foreground) !important;
 }
 
-/* --- 5. LIGHT PURPLE TEXT (#e0d0ff) → readable on white --- */
-:root:not(.dark) [class*="text-[#e0d0ff]"] {
-  color: var(--muted-foreground) !important;
-}
-
-/* --- 6. PRIMARY TEXT (#00f7ff neon cyan) → blue primary --- */
-:root:not(.dark) [class*="text-[#00f7ff]"] {
-  color: var(--primary) !important;
-}
-
-/* --- 7. OTHER NEON TEXT → readable alternatives --- */
-:root:not(.dark) [class*="text-[#00ff88]"] {
-  color: #059669 !important;
-}
-:root:not(.dark) [class*="text-[#bc13fe]"] {
-  color: #4f46e5 !important;
-}
-:root:not(.dark) [class*="text-[#ff6b8a]"],
-:root:not(.dark) [class*="text-[#ff4466]"],
-:root:not(.dark) [class*="text-[#ff3366]"] {
-  color: #dc2626 !important;
-}
-:root:not(.dark) [class*="text-[#ff44cc]"] {
-  color: #7c3aed !important;
-}
-:root:not(.dark) [class*="text-[#ff8c00]"] {
-  color: #d97706 !important;
-}
-:root:not(.dark) .text-\[\#1a0f35\] {
-  color: var(--foreground) !important;
-}
-
-/* --- 8. GRADIENT TEXT: via-white → visible on white bg --- */
-:root:not(.dark) .bg-clip-text[class*="via-white"] {
-  background-image: linear-gradient(to right, #0891b2, #6366f1, #7c3aed) !important;
-}
-:root:not(.dark) [class*="via-white"].bg-clip-text {
-  background-image: linear-gradient(to right, #0891b2, #6366f1, #7c3aed) !important;
-}
 
 /* --- 9. INVISIBLE WHITE BORDERS → visible --- */
 :root:not(.dark) [class*="border-white\\/"],
@@ -750,27 +565,6 @@ html.theme-transitioning *::after {
 }
 :root:not(.dark) .border-white {
   border-color: var(--border) !important;
-}
-
-/* --- 10. NEON HEX BORDERS → softer for light --- */
-:root:not(.dark) [class*="border-[#bc13fe]"] {
-  border-color: rgba(124, 58, 237, 0.25) !important;
-}
-:root:not(.dark) [class*="border-[#00f7ff]"] {
-  border-color: var(--border) !important;
-}
-:root:not(.dark) [class*="border-[#ff4466]"],
-:root:not(.dark) [class*="border-[#ff3366]"] {
-  border-color: rgba(220, 38, 38, 0.15) !important;
-}
-:root:not(.dark) [class*="border-[#00ff88]"] {
-  border-color: rgba(5, 150, 105, 0.15) !important;
-}
-:root:not(.dark) [class*="border-[#ff44cc]"] {
-  border-color: rgba(219, 39, 119, 0.15) !important;
-}
-:root:not(.dark) [class*="border-[#ff8c00]"] {
-  border-color: rgba(217, 119, 6, 0.15) !important;
 }
 
 /* Cyan Tailwind borders → solid gray */
@@ -805,67 +599,9 @@ html.theme-transitioning *::after {
   pointer-events: none !important;
 }
 
-/* --- 12b. CYBERPUNK BACKGROUND EFFECTS CONTAINER → hide entirely in light --- */
-:root:not(.dark) .cyberpunk-bg {
-  opacity: 0 !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-}
-
 /* --- 13. SCAN LINES & GRID PATTERNS → fade out --- */
 :root:not(.dark) [class*="bg-[repeating-linear-gradient"] {
   opacity: 0 !important;
-}
-:root:not(.dark) [class*="bg-[linear-gradient(rgba(0,255,255"] {
-  opacity: 0 !important;
-}
-:root:not(.dark) [class*="bg-[linear-gradient(rgba(188,19,254"] {
-  opacity: 0 !important;
-}
-
-/* --- 14. NEON RING FOCUS → primary ring --- */
-:root:not(.dark) [class*="ring-[#00f7ff]"],
-:root:not(.dark) [class*="ring-[#bc13fe]"] {
-  --tw-ring-color: var(--ring) !important;
-}
-
-/* --- 15. NEON BACKGROUND ACCENTS → soft tinted backgrounds on light --- */
-:root:not(.dark) [class*="bg-[#bc13fe]"] {
-  background-color: rgba(124, 58, 237, 0.12) !important;
-}
-:root:not(.dark) [class*="bg-[#00f7ff]"] {
-  background-color: rgba(8, 145, 178, 0.12) !important;
-}
-:root:not(.dark) [class*="bg-[#ff44cc]"] {
-  background-color: rgba(219, 39, 119, 0.12) !important;
-}
-:root:not(.dark) [class*="bg-[#00ff88]"] {
-  background-color: rgba(5, 150, 105, 0.12) !important;
-}
-:root:not(.dark) [class*="bg-[#ff4466]"] {
-  background-color: rgba(220, 38, 38, 0.12) !important;
-}
-:root:not(.dark) [class*="bg-[#ff8c00]"] {
-  background-color: rgba(217, 119, 6, 0.12) !important;
-}
-/* Opacity variants stay more transparent */
-:root:not(.dark) [class*="bg-[#bc13fe]\\/"] {
-  background-color: rgba(124, 58, 237, 0.08) !important;
-}
-:root:not(.dark) [class*="bg-[#00f7ff]\\/"] {
-  background-color: rgba(8, 145, 178, 0.08) !important;
-}
-:root:not(.dark) [class*="bg-[#ff44cc]\\/"] {
-  background-color: rgba(219, 39, 119, 0.08) !important;
-}
-:root:not(.dark) [class*="bg-[#ff4466]\\/"] {
-  background-color: rgba(220, 38, 38, 0.08) !important;
-}
-:root:not(.dark) [class*="bg-[#00ff88]\\/"] {
-  background-color: rgba(5, 150, 105, 0.08) !important;
-}
-:root:not(.dark) [class*="bg-[#ff8c00]\\/"] {
-  background-color: rgba(217, 119, 6, 0.08) !important;
 }
 
 /* --- 16. SIDEBAR NEON TOP LINE → slate for dark sidebar --- */
@@ -905,12 +641,6 @@ html.theme-transitioning *::after {
 }
 :root:not(.dark) .text-cyan-400\/80 {
   color: #60a5fa !important;
-}
-
-/* --- 20. SIDEBAR GRADIENT BACKGROUNDS → transparent on white --- */
-:root:not(.dark) [class*="from-cyan-500/5"][class*="to-pink-500/5"] {
-  background-image: none !important;
-  background-color: transparent !important;
 }
 
 /* --- 21. BACKDROP BLUR + BG — content = light, sidebar handled via bg-sidebar var --- */
@@ -955,24 +685,12 @@ html.theme-transitioning *::after {
   border-color: var(--border) !important;
 }
 
-/* --- 25. FOCUS/HOVER NEON BORDERS → themed primary --- */
-:root:not(.dark) [class*="focus\\:border-\\[\\#00f7ff\\]"]:focus,
-:root:not(.dark) [class*="focus\\:border-\\[\\#bc13fe\\]"]:focus {
-  border-color: var(--primary) !important;
-}
-:root:not(.dark) [class*="hover\\:border-\\[\\#00f7ff\\]"]:hover,
-:root:not(.dark) [class*="hover\\:border-\\[\\#bc13fe\\]"]:hover {
-  border-color: var(--primary) !important;
-}
+/* --- 25. HOVER WHITE BORDER → themed border --- */
 :root:not(.dark) [class*="hover\\:border-white"]:hover {
   border-color: var(--border) !important;
 }
 
 /* --- 26. PLACEHOLDER COLORS → readable gray --- */
-:root:not(.dark) [class*="placeholder-\\[\\#e0d0ff\\]"]::placeholder,
-:root:not(.dark) [class*="placeholder\\:text-\\[\\#e0d0ff\\]"]::placeholder {
-  color: #9ca3af !important;
-}
 :root:not(.dark) ::placeholder {
   color: #9ca3af !important;
 }
@@ -980,48 +698,12 @@ html.theme-transitioning *::after {
   color: #9ca3af !important;
 }
 
-/* --- 27. DIVIDE NEON COLORS → visible gray --- */
-:root:not(.dark) [class*="divide-\\[\\#bc13fe\\]"] > * + * {
-  border-color: var(--border) !important;
-}
+/* --- 27. DIVIDE WHITE → visible gray --- */
 :root:not(.dark) [class*="divide-white"] > * + * {
   border-color: var(--border) !important;
 }
 :root:not(.dark) [class*="divide-cyan"] > * + * {
   border-color: var(--border) !important;
-}
-
-/* --- 28. HOVER BG NEON HIGH OPACITY → themed --- */
-:root:not(.dark) [class*="hover\\:bg-\\[\\#00f7ff\\]"]:hover {
-  background-color: var(--primary) !important;
-  color: #ffffff !important;
-}
-:root:not(.dark) [class*="hover\\:bg-\\[\\#bc13fe\\]"]:hover {
-  background-color: #7c3aed !important;
-  color: #ffffff !important;
-}
-
-/* --- 29. GROUP-HOVER NEON STATES → themed --- */
-:root:not(.dark) .group:hover [class*="group-hover\\:text-\\[\\#00f7ff\\]"],
-:root:not(.dark) .group:hover [class*="group-hover\\:text-cyan"] {
-  color: var(--primary) !important;
-}
-:root:not(.dark) .group:hover [class*="group-hover\\:border-\\[\\#00f7ff\\]"] {
-  border-color: var(--primary) !important;
-}
-
-/* --- 30. BG HEX WITH OPACITY SLASH → white --- */
-:root:not(.dark) [class*="bg-\\[\\#1a0f35\\]\\/"],
-:root:not(.dark) [class*="bg-\\[\\#0a0520\\]\\/"] {
-  background-color: var(--input) !important;
-}
-
-/* --- 31. CYAN/PINK GRADIENT SUBTLE BG → transparent on light --- */
-:root:not(.dark) [class*="from-cyan-500\\/"],
-:root:not(.dark) [class*="to-pink-500\\/"],
-:root:not(.dark) [class*="from-pink-500\\/"] {
-  --tw-gradient-from: transparent !important;
-  --tw-gradient-to: transparent !important;
 }
 
 /* --- 32. NEON ACCENT BG WITH OPACITY (hover states etc) --- */
@@ -1076,13 +758,6 @@ html.theme-transitioning *::after {
   background-color: rgba(0, 0, 0, 0.45) !important;
 }
 
-/* --- 38. FOCUS RING SHADOW → clean primary --- */
-:root:not(.dark) [class*="focus\\:ring-\\[\\#00f7ff\\]"]:focus {
-  --tw-ring-color: var(--ring) !important;
-}
-:root:not(.dark) [class*="focus\\:shadow-\\[0_0_"]:focus {
-  box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.2) !important;
-}
 
 /* --- 39. GRADIENT TOP/BOTTOM LINES → subtle gray instead of neon --- */
 :root:not(.dark) .h-px.bg-gradient-to-r {
@@ -1092,49 +767,9 @@ html.theme-transitioning *::after {
   background-image: linear-gradient(to right, transparent, #d1d5db, transparent) !important;
 }
 
-/* --- 40. GRADIENT STAT CARD backgrounds → cleaner light tints --- */
-:root:not(.dark) [class*="from-[#ff4466]"][class*="to-[#ff44cc]"] {
-  background-image: linear-gradient(to bottom right, rgba(220,38,38,0.06), rgba(219,39,119,0.06)) !important;
-}
-:root:not(.dark) [class*="from-[#00ff88]"][class*="to-[#00f7ff]"] {
-  background-image: linear-gradient(to bottom right, rgba(5,150,105,0.06), rgba(8,145,178,0.06)) !important;
-}
-:root:not(.dark) [class*="from-[#ff44cc]"][class*="to-[#bc13fe]"] {
-  background-image: linear-gradient(to bottom right, rgba(219,39,119,0.06), rgba(124,58,237,0.06)) !important;
-}
-:root:not(.dark) [class*="from-[#00f7ff]"][class*="to-[#bc13fe]"] {
-  background-image: linear-gradient(to bottom right, rgba(8,145,178,0.06), rgba(124,58,237,0.06)) !important;
-}
-
 /* --- 41. STAT CARD BORDERS → slightly more visible --- */
-:root:not(.dark) [class*="border-[#ff4466]/"] {
-  border-color: rgba(220, 38, 38, 0.2) !important;
-}
-:root:not(.dark) [class*="border-[#00ff88]/"] {
-  border-color: rgba(5, 150, 105, 0.2) !important;
-}
-:root:not(.dark) [class*="border-[#ff44cc]/"] {
-  border-color: rgba(219, 39, 119, 0.2) !important;
-}
-:root:not(.dark) [class*="border-[#00f7ff]/"] {
-  border-color: rgba(8, 145, 178, 0.2) !important;
-}
 :root:not(.dark) [class*="border-gray-500/"] {
   border-color: rgba(107, 114, 128, 0.2) !important;
-}
-
-/* --- 42. TABLE HEADER / MUTED ROW bg → clean light gray --- */
-:root:not(.dark) [class*="bg-[#0a0520]"][class*="/50"],
-:root:not(.dark) tr[class*="bg-[#0a0520]"] {
-  background-color: #f3f4f6 !important;
-}
-
-/* --- 43. ACTIVE FILTER / TAB BUTTONS → themed --- */
-:root:not(.dark) [class*="bg-[#bc13fe]/20"] {
-  background-color: rgba(124, 58, 237, 0.1) !important;
-}
-:root:not(.dark) [class*="text-[#bc13fe]"] {
-  color: #7c3aed !important;
 }
 
 /* --- 44. SLATE TEXT → foreground for light mode --- */
@@ -1282,11 +917,6 @@ html.theme-transitioning *::after {
   background-color: #d1d5db !important;
 }
 
-/* --- 58d. border-[#334155] → visible border --- */
-:root:not(.dark) [class*="border-[#334155]"] {
-  border-color: var(--border) !important;
-}
-
 /* --- 58e. bg-slate-800 option elements → light --- */
 :root:not(.dark) option[class*="bg-slate"] {
   background-color: var(--background) !important;
@@ -1339,41 +969,8 @@ html.theme-transitioning *::after {
 
 /* =====================================================
    DARK MODE — Remap legacy cyberpunk neon → Modern Blue
-   Prevents jarring neon purple/cyan in dark mode.
+   Sidebar cyan- classes still used in cyberpunk components.
    ===================================================== */
-
-/* Neon text colors → blue/indigo tones */
-.dark [class*="text-[#00f7ff]"] { color: #60a5fa !important; }
-.dark [class*="text-[#bc13fe]"] { color: #a5b4fc !important; }
-.dark [class*="text-[#ff44cc]"] { color: #a78bfa !important; }
-.dark [class*="text-[#e0d0ff]"] { color: #94a3b8 !important; }
-.dark [class*="text-[#00ff88]"] { color: #34d399 !important; }
-.dark [class*="text-[#ff4466]"],
-.dark [class*="text-[#ff3366]"] { color: #f87171 !important; }
-
-/* Neon border colors → slate borders */
-.dark [class*="border-[#bc13fe]"] { border-color: #334155 !important; }
-.dark [class*="border-[#00f7ff]"] { border-color: #334155 !important; }
-.dark [class*="border-[#ff44cc]"] { border-color: #334155 !important; }
-
-/* Neon background colors → slate/blue tints */
-.dark [class*="bg-[#1a0f35]"] { background-color: #0f172a !important; }
-.dark [class*="bg-[#1e1b2e]"] { background-color: #1e293b !important; }
-.dark [class*="bg-[#0f0a1e]"] { background-color: #0f172a !important; }
-.dark [class*="bg-[#0a0520]"] { background-color: #1e293b !important; }
-.dark [class*="bg-[#281441]"] { background-color: #1e293b !important; }
-.dark [class*="bg-[#1f1040]"] { background-color: #1e293b !important; }
-
-/* Neon BG opacity variants → blue/indigo tints */
-.dark [class*="bg-[#bc13fe]\/"] { background-color: rgba(99, 102, 241, 0.12) !important; }
-.dark [class*="bg-[#00f7ff]\/"] { background-color: rgba(59, 130, 246, 0.12) !important; }
-.dark [class*="bg-[#ff44cc]\/"] { background-color: rgba(99, 102, 241, 0.10) !important; }
-.dark [class*="bg-[#ff4466]\/"] { background-color: rgba(239, 68, 68, 0.10) !important; }
-.dark [class*="bg-[#00ff88]\/"] { background-color: rgba(16, 185, 129, 0.10) !important; }
-
-/* Neon ring/focus → blue */
-.dark [class*="ring-[#00f7ff]"],
-.dark [class*="ring-[#bc13fe]"] { --tw-ring-color: #3b82f6 !important; }
 
 /* Neon glow shadows → subtle blue shadows */
 .dark [class*="shadow-[0_0_"] { box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important; }
@@ -1388,16 +985,7 @@ html.theme-transitioning *::after {
 }
 
 /* Hide neon grid scan patterns */
-.dark [class*="bg-[linear-gradient(rgba(188,19,254"],
-.dark [class*="bg-[linear-gradient(rgba(0,255,255"],
 .dark [class*="bg-[repeating-linear-gradient"] { opacity: 0 !important; }
-
-/* Gradient backgrounds: from neon purple/dark → slate */
-.dark [class*="from-[#1a0f35]"],
-.dark [class*="from-[#0a0520]"] { --tw-gradient-from: #0f172a !important; }
-.dark [class*="via-[#1a0f35]"] { --tw-gradient-via: #1e293b !important; }
-.dark [class*="to-[#1a0f35]"],
-.dark [class*="to-[#0a0520]"] { --tw-gradient-to: #1e293b !important; }
 
 /* Sidebar neon top line → subtle */
 .dark .via-cyan-400 { --tw-gradient-via: #334155 !important; }
@@ -1411,12 +999,6 @@ html.theme-transitioning *::after {
 
 /* Sidebar active bg */
 .dark .bg-cyan-500\/10 { background-color: rgba(59, 130, 246, 0.12) !important; }
-
-/* Gradient text: from-[#00f7ff] via-white to-[#ff44cc] → blue-indigo */
-.dark .bg-clip-text[class*="from-[#00f7ff]"],
-.dark .bg-clip-text[class*="from-[#bc13fe]"] {
-  background-image: linear-gradient(to right, #60a5fa, #a5b4fc) !important;
-}
 
 /* --- 60. BG with low opacity → slightly visible on white --- */
 :root:not(.dark) [class*="bg-green-500/10"],
@@ -1531,11 +1113,6 @@ html.theme-transitioning *::after {
   color: #64748b !important;
 }
 
-/* Neon overwrites: restore dark-mode tone for cyberpunk classes inside sidebar */
-:root:not(.dark) [data-sidebar="sidebar"] [class*="text-[#00f7ff]"] { color: #60a5fa !important; }
-:root:not(.dark) [data-sidebar="sidebar"] [class*="text-[#e0d0ff]"] { color: #94a3b8 !important; }
-:root:not(.dark) [data-sidebar="sidebar"] [class*="bg-[#0a0520]"] { background-color: #1e293b !important; }
-:root:not(.dark) [data-sidebar="sidebar"] [class*="bg-[#1a0f35]"] { background-color: #1e293b !important; }
 
 /* --- 61. SMOOTH MODAL ENTRANCE ANIMATION (consistent for ALL modals) --- */
 @keyframes modalBackdropIn {
@@ -1566,31 +1143,11 @@ div[style*="z-index: 9999"].fixed.inset-0 {
 .fixed.inset-0 > div[class*="rounded-"],
 .fixed.inset-0 > div[class*="bg-gradient-to"],
 .fixed.inset-0 > div[class*="bg-card"],
-.fixed.inset-0 > div[class*="bg-\\[#1e1b2e\\]"],
-.fixed.inset-0 > div[class*="bg-\\[#0f172a\\]"],
 .fixed.inset-0 > div[class*="bg-slate"],
 .fixed.inset-0 > div[class*="max-w-"] {
   animation: modalContentIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* --- 62. FORM INPUTS IN MODALS → proper light styling --- */
-:root:not(.dark) input[class*="bg-slate-900"],
-:root:not(.dark) select[class*="bg-slate-900"],
-:root:not(.dark) textarea[class*="bg-slate-900"],
-:root:not(.dark) input[class*="bg-slate-800"],
-:root:not(.dark) select[class*="bg-slate-800"],
-:root:not(.dark) textarea[class*="bg-slate-800"] {
-  background-color: var(--input) !important;
-  color: var(--foreground) !important;
-  border-color: var(--border) !important;
-}
-:root:not(.dark) input[class*="bg-\\[\\#0a0520\\]"],
-:root:not(.dark) select[class*="bg-\\[\\#0a0520\\]"],
-:root:not(.dark) textarea[class*="bg-\\[\\#0a0520\\]"] {
-  background-color: var(--input) !important;
-  color: var(--foreground) !important;
-  border-color: var(--border) !important;
-}
 
 /* --- 63. CHECKBOX INPUTS → proper light styling --- */
 :root:not(.dark) input[type="checkbox"][class*="bg-slate"],
@@ -1616,12 +1173,6 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   color: var(--foreground) !important;
 }
 
-/* --- 67. MODAL SECTION BACKGROUNDS → slightly more visible in light --- */
-:root:not(.dark) [class*="bg-\\[\\#bc13fe\\]\\/10"],
-:root:not(.dark) [class*="bg-\\[\\#00f7ff\\]\\/10"] {
-  background-color: rgba(124, 58, 237, 0.06) !important;
-}
-
 /* --- 68. BORDER-SLATE in modals → proper visible border --- */
 :root:not(.dark) [class*="border-slate-600"] {
   border-color: var(--border) !important;
@@ -1633,15 +1184,14 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   }
   body {
     @apply bg-background text-foreground antialiased;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.5;
     /* Prevent pull-to-refresh in Android WebView & Chrome mobile */
     overscroll-behavior-y: none;
   }
   
-  /* Smaller base font */
   html {
-    font-size: 14px;
+    font-size: 16px;
     scroll-behavior: smooth;
     /* Prevent pull-to-refresh at root level */
     overscroll-behavior: none;
@@ -1649,7 +1199,7 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   
   @media (max-width: 640px) {
     html {
-      font-size: 13px;
+      font-size: 15px;
     }
   }
   
@@ -1698,11 +1248,11 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   }
   
   /* Typography */
-  h1 { @apply text-lg sm:text-xl font-bold tracking-wide; }
-  h2 { @apply text-base sm:text-lg font-bold tracking-wide; }
-  h3 { @apply text-sm sm:text-base font-semibold; }
-  h4 { @apply text-xs sm:text-sm font-semibold; }
-  p { @apply text-xs; }
+  h1 { @apply text-xl sm:text-2xl font-bold tracking-wide; }
+  h2 { @apply text-lg sm:text-xl font-bold tracking-wide; }
+  h3 { @apply text-base sm:text-lg font-semibold; }
+  h4 { @apply text-sm sm:text-base font-semibold; }
+  p { @apply text-sm; }
 }
 
 /* ===========================================
@@ -1798,83 +1348,49 @@ div[style*="z-index: 9999"].fixed.inset-0 {
      NEON GLOW EFFECTS
      =========================================== */
   
-  /* Primary Neon Glow - Cyan */
+  /* Brand Glow Effects (mapped to theme tokens) */
   .neon-glow {
-    box-shadow: 
-      0 0 5px rgba(0, 255, 255, 0.5),
-      0 0 10px rgba(0, 255, 255, 0.3),
-      0 0 20px rgba(0, 255, 255, 0.2),
-      0 0 40px rgba(0, 255, 255, 0.1);
+    box-shadow: var(--shadow-theme-md);
   }
   
   .neon-glow-intense {
-    box-shadow: 
-      0 0 10px rgba(0, 255, 255, 0.8),
-      0 0 20px rgba(0, 255, 255, 0.6),
-      0 0 40px rgba(0, 255, 255, 0.4),
-      0 0 80px rgba(0, 255, 255, 0.2);
+    box-shadow: var(--shadow-theme-lg);
   }
   
-  /* Blue Glow */
   .neon-glow-magenta {
-    box-shadow: 
-      0 0 5px rgba(59, 130, 246, 0.5),
-      0 0 10px rgba(59, 130, 246, 0.3),
-      0 0 20px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 8px rgba(70, 95, 255, 0.3);
   }
   
-  /* Blue-Violet Glow */
   .neon-glow-purple {
-    box-shadow: 
-      0 0 5px rgba(59, 130, 246, 0.5),
-      0 0 10px rgba(59, 130, 246, 0.3),
-      0 0 20px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 8px rgba(122, 90, 248, 0.3);
   }
   
-  /* Green Glow */
   .neon-glow-green {
-    box-shadow: 
-      0 0 5px rgba(0, 255, 136, 0.5),
-      0 0 10px rgba(0, 255, 136, 0.3),
-      0 0 20px rgba(0, 255, 136, 0.2);
+    box-shadow: 0 0 8px rgba(18, 183, 106, 0.3);
   }
   
-  /* Red/Destructive Glow */
   .neon-glow-red {
-    box-shadow: 
-      0 0 5px rgba(255, 51, 102, 0.5),
-      0 0 10px rgba(255, 51, 102, 0.3),
-      0 0 20px rgba(255, 51, 102, 0.2);
+    box-shadow: 0 0 8px rgba(240, 68, 56, 0.3);
   }
   
-  /* Neon Border Effects */
+  /* Border accent effects */
   .neon-border {
-    border-color: rgba(0, 255, 255, 0.5);
-    box-shadow: 
-      0 0 5px rgba(0, 255, 255, 0.3),
-      inset 0 0 5px rgba(0, 255, 255, 0.1);
+    border-color: var(--color-brand-400);
+    box-shadow: 0 0 4px rgba(70, 95, 255, 0.2);
   }
   
   .neon-border-magenta {
-    border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 
-      0 0 5px rgba(59, 130, 246, 0.3),
-      inset 0 0 5px rgba(59, 130, 246, 0.1);
+    border-color: var(--color-brand-400);
+    box-shadow: 0 0 4px rgba(70, 95, 255, 0.2);
   }
   
-  /* Neon Text Effects */
+  /* Text accent effects (clean, no neon glow) */
   .neon-text {
-    text-shadow: 
-      0 0 5px rgba(0, 255, 255, 0.8),
-      0 0 10px rgba(0, 255, 255, 0.6),
-      0 0 20px rgba(0, 255, 255, 0.4);
+    color: var(--color-brand-500);
   }
   
   .neon-text-magenta {
-    text-shadow: 
-      0 0 5px rgba(59, 130, 246, 0.8),
-      0 0 10px rgba(59, 130, 246, 0.6),
-      0 0 20px rgba(59, 130, 246, 0.4);
+    color: var(--color-brand-600);
   }
 
   /* ===========================================
@@ -1882,30 +1398,19 @@ div[style*="z-index: 9999"].fixed.inset-0 {
      =========================================== */
   
   .cyber-gradient {
-    background: linear-gradient(135deg, 
-      #0a0e1a 0%, 
-      #0f172a 50%, 
-      #0a0e1a 100%);
+    background: var(--background);
   }
   
   .cyber-gradient-primary {
-    background: linear-gradient(135deg,
-      #06b6d4 0%,
-      #3b82f6 100%);
+    background: linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-brand-700) 100%);
   }
   
   .cyber-gradient-subtle {
-    background: linear-gradient(135deg,
-      rgba(6, 182, 212, 0.1) 0%,
-      rgba(59, 130, 246, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(70, 95, 255, 0.08) 0%, rgba(122, 90, 248, 0.08) 100%);
   }
   
   .cyber-gradient-radial {
-    background: radial-gradient(
-      ellipse at center,
-      rgba(6, 182, 212, 0.1) 0%,
-      transparent 70%
-    );
+    background: radial-gradient(ellipse at center, rgba(70, 95, 255, 0.06) 0%, transparent 70%);
   }
 
   /* ===========================================
@@ -1913,24 +1418,18 @@ div[style*="z-index: 9999"].fixed.inset-0 {
      =========================================== */
   
   .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10;
-    box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.4),
-      inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    @apply bg-card/80 backdrop-blur-xl border border-border;
+    box-shadow: var(--shadow-theme-lg);
   }
   
   .glass-card {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10;
-    box-shadow: 
-      0 0 20px rgba(6, 182, 212, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    @apply bg-card/80 backdrop-blur-xl border border-border;
+    box-shadow: var(--shadow-theme-md);
   }
   
   .glass-neon {
-    @apply bg-black/60 backdrop-blur-xl border-2 border-cyan-500/30;
-    box-shadow: 
-      0 0 30px rgba(6, 182, 212, 0.15),
-      inset 0 0 20px rgba(6, 182, 212, 0.02);
+    @apply bg-card/90 backdrop-blur-xl border-2 border-brand-500/30;
+    box-shadow: var(--shadow-theme-lg);
   }
 
   /* ===========================================
@@ -1949,8 +1448,8 @@ div[style*="z-index: 9999"].fixed.inset-0 {
       0deg,
       transparent,
       transparent 2px,
-      rgba(6, 182, 212, 0.03) 2px,
-      rgba(6, 182, 212, 0.03) 4px
+      rgba(70, 95, 255, 0.02) 2px,
+      rgba(70, 95, 255, 0.02) 4px
     );
     pointer-events: none;
     z-index: 1;
@@ -1974,14 +1473,14 @@ div[style*="z-index: 9999"].fixed.inset-0 {
      =========================================== */
   
   .gradient-text {
-    background: linear-gradient(90deg, #06b6d4, #3b82f6);
+    background: linear-gradient(90deg, var(--color-brand-500), var(--color-brand-700));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
   
   .gradient-text-primary {
-    background: linear-gradient(90deg, #06b6d4, #3b82f6);
+    background: linear-gradient(90deg, var(--color-brand-500), var(--color-brand-700));
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -1993,15 +1492,15 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   
   .btn-cyber {
     @apply relative overflow-hidden font-bold uppercase tracking-wider;
-    @apply bg-gradient-to-r from-cyan-500 to-cyan-400 text-black;
-    @apply border-2 border-cyan-400;
-    @apply shadow-[0_0_20px_rgba(0,255,255,0.3)];
-    @apply transition-all duration-300;
+    @apply bg-primary text-primary-foreground;
+    @apply border-2 border-primary;
+    @apply rounded-lg;
+    @apply transition-all duration-200;
   }
   
   .btn-cyber:hover {
-    @apply shadow-[0_0_30px_rgba(0,255,255,0.5)];
-    @apply border-cyan-300;
+    @apply bg-brand-600 border-brand-600;
+    box-shadow: var(--shadow-theme-md);
   }
   
   .btn-cyber::before {
@@ -2016,27 +1515,25 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   }
   
   .btn-cyber-outline {
-    @apply bg-transparent text-cyan-400;
-    @apply border-2 border-cyan-500/50;
-    @apply shadow-[0_0_10px_rgba(0,255,255,0.1)];
-    @apply hover:bg-cyan-400/10 hover:border-cyan-400;
-    @apply hover:shadow-[0_0_20px_rgba(0,255,255,0.3)];
-    @apply transition-all duration-300;
+    @apply bg-transparent text-primary;
+    @apply border-2 border-primary/50;
+    @apply hover:bg-primary/10 hover:border-primary;
+    @apply rounded-lg;
+    @apply transition-all duration-200;
   }
   
   .btn-primary {
-    @apply bg-gradient-to-r from-cyan-500 to-cyan-400 text-black font-bold;
+    @apply bg-primary text-primary-foreground font-bold;
     @apply rounded-lg transition-all duration-200;
-    @apply shadow-[0_0_15px_rgba(0,255,255,0.3)];
-    @apply hover:shadow-[0_0_25px_rgba(0,255,255,0.5)];
+    @apply hover:bg-brand-600;
     @apply active:scale-[0.98];
     @apply disabled:opacity-50 disabled:cursor-not-allowed;
   }
   
   .btn-secondary {
-    @apply bg-white/5 text-foreground font-medium;
-    @apply border border-white/10;
-    @apply hover:bg-white/10 hover:border-cyan-400/30;
+    @apply bg-secondary text-foreground font-medium;
+    @apply border border-border;
+    @apply hover:bg-accent hover:border-primary/30;
     @apply rounded-lg transition-all duration-200;
   }
   
@@ -2053,28 +1550,23 @@ div[style*="z-index: 9999"].fixed.inset-0 {
      =========================================== */
   
   .badge-success {
-    @apply bg-green-500/20 text-green-400 border border-green-500/50;
-    box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+    @apply bg-success/10 text-success border border-success/30;
   }
   
   .badge-warning {
-    @apply bg-orange-500/20 text-orange-400 border border-orange-500/50;
-    box-shadow: 0 0 10px rgba(255, 170, 0, 0.2);
+    @apply bg-warning/10 text-warning border border-warning/30;
   }
   
   .badge-error {
-    @apply bg-red-500/20 text-red-400 border border-red-500/50;
-    box-shadow: 0 0 10px rgba(255, 51, 102, 0.2);
+    @apply bg-destructive/10 text-destructive border border-destructive/30;
   }
   
   .badge-info {
-    @apply bg-cyan-500/20 text-cyan-400 border border-cyan-500/50;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+    @apply bg-primary/10 text-primary border border-primary/30;
   }
   
   .badge-primary {
-    @apply bg-cyan-500/20 text-cyan-400 border border-cyan-500/50;
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+    @apply bg-primary/10 text-primary border border-primary/30;
   }
   
   .badge-compact {
@@ -2087,8 +1579,8 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   
   .table-container {
     @apply w-full overflow-x-auto;
-    @apply border-2 border-cyan-500/20 rounded-xl;
-    @apply shadow-[0_0_20px_rgba(0,255,255,0.1)];
+    @apply border border-border rounded-xl;
+    box-shadow: var(--shadow-theme-sm);
   }
   
   .table-compact th,
@@ -2103,23 +1595,23 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   .compact-card {
     @apply rounded-xl p-4;
     @apply bg-card/90 backdrop-blur-sm;
-    @apply border-2 border-cyan-500/20;
-    @apply shadow-[0_0_15px_rgba(0,255,255,0.1)];
-    @apply hover:border-cyan-500/40 hover:shadow-[0_0_25px_rgba(0,255,255,0.15)];
-    @apply transition-all duration-300;
+    @apply border border-border;
+    box-shadow: var(--shadow-card);
+    @apply hover:border-primary/40;
+    @apply transition-all duration-200;
   }
   
   .card-elevated {
-    @apply bg-card border-2 border-cyan-500/20;
-    @apply shadow-[0_0_20px_rgba(0,255,255,0.1)];
-    @apply hover:shadow-[0_0_30px_rgba(0,255,255,0.15)];
-    @apply transition-all duration-300;
+    @apply bg-card border border-border;
+    box-shadow: var(--shadow-theme-sm);
+    @apply hover:shadow-theme-md;
+    @apply transition-all duration-200;
   }
   
   .card-hover {
-    @apply transition-all duration-300;
-    @apply hover:shadow-[0_0_25px_rgba(0,255,255,0.15)];
-    @apply hover:border-cyan-500/40;
+    @apply transition-all duration-200;
+    @apply hover:shadow-theme-md;
+    @apply hover:border-primary/40;
   }
 
   /* ===========================================
@@ -2156,40 +1648,31 @@ div[style*="z-index: 9999"].fixed.inset-0 {
     to { opacity: 1; transform: translateX(0); }
   }
   
-  /* Neon Pulse Animation */
+  /* Brand Pulse Animation */
   .animate-neon-pulse {
     animation: neonPulse 2s ease-in-out infinite;
   }
   
   @keyframes neonPulse {
     0%, 100% {
-      box-shadow: 
-        0 0 5px rgba(0, 255, 255, 0.5),
-        0 0 10px rgba(0, 255, 255, 0.3),
-        0 0 20px rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 4px rgba(70, 95, 255, 0.3);
     }
     50% {
-      box-shadow: 
-        0 0 10px rgba(0, 255, 255, 0.8),
-        0 0 20px rgba(0, 255, 255, 0.5),
-        0 0 40px rgba(0, 255, 255, 0.3);
+      box-shadow: 0 0 8px rgba(70, 95, 255, 0.5);
     }
   }
   
-  /* Neon Flicker Animation */
+  /* Flicker Animation */
   .animate-neon-flicker {
     animation: neonFlicker 0.15s ease-in-out infinite alternate;
   }
   
   @keyframes neonFlicker {
     0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
-      text-shadow: 
-        0 0 5px rgba(0, 255, 255, 0.8),
-        0 0 10px rgba(0, 255, 255, 0.6),
-        0 0 20px rgba(0, 255, 255, 0.4);
+      opacity: 1;
     }
     20%, 24%, 55% {
-      text-shadow: none;
+      opacity: 0.7;
     }
   }
   
@@ -2302,7 +1785,7 @@ div[style*="z-index: 9999"].fixed.inset-0 {
   }
   
   .divider {
-    @apply border-t border-cyan-500/20;
+    @apply border-t border-border;
   }
   
   /* Leaflet popup - precise styling */
@@ -2387,90 +1870,90 @@ div[style*="z-index: 9999"].fixed.inset-0 {
 }
 
 .swal-cyberpunk-title {
-  color: #ffffff !important;
+  color: var(--foreground) !important;
   font-weight: 700 !important;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.5) !important;
   font-size: 1.5rem !important;
 }
 
 .swal-cyberpunk .swal2-html-container {
-  color: #e0d0ff !important;
+  color: var(--muted-foreground) !important;
   font-size: 0.95rem !important;
 }
 
 .swal-cyberpunk-confirm {
-  background: linear-gradient(135deg, #00f7ff 0%, #00c4cc 100%) !important;
-  border: 2px solid #00f7ff !important;
-  box-shadow: 0 0 20px rgba(0, 247, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2) !important;
-  color: #0a0520 !important;
+  background: var(--primary) !important;
+  border: 2px solid var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(70, 95, 255, 0.3) !important;
+  color: var(--primary-foreground) !important;
   font-weight: 600 !important;
   padding: 0.6rem 1.5rem !important;
   border-radius: 0.5rem !important;
-  transition: all 0.3s ease !important;
+  transition: all 0.2s ease !important;
 }
 
 .swal-cyberpunk-confirm:hover {
-  background: linear-gradient(135deg, #00c4cc 0%, #009aa7 100%) !important;
-  box-shadow: 0 0 30px rgba(0, 247, 255, 0.8), inset 0 0 15px rgba(255, 255, 255, 0.3) !important;
-  transform: translateY(-2px) !important;
+  background: var(--color-brand-600) !important;
+  border-color: var(--color-brand-600) !important;
+  box-shadow: 0 6px 16px rgba(70, 95, 255, 0.4) !important;
+  transform: translateY(-1px) !important;
 }
 
 .swal-cyberpunk-error {
-  background: linear-gradient(135deg, #ff4466 0%, #cc1a3a 100%) !important;
-  border: 2px solid #ff4466 !important;
-  box-shadow: 0 0 20px rgba(255, 68, 102, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
+  background: var(--destructive) !important;
+  border: 2px solid var(--destructive) !important;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3) !important;
+  color: var(--destructive-foreground) !important;
   font-weight: 600 !important;
   padding: 0.6rem 1.5rem !important;
   border-radius: 0.5rem !important;
 }
 
 .swal-cyberpunk-error:hover {
-  background: linear-gradient(135deg, #cc1a3a 0%, #990020 100%) !important;
-  box-shadow: 0 0 30px rgba(255, 68, 102, 0.8) !important;
-  transform: translateY(-2px) !important;
+  background: #b91c1c !important;
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4) !important;
+  transform: translateY(-1px) !important;
 }
 
 .swal-cyberpunk-warning {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) !important;
-  border: 2px solid #fbbf24 !important;
-  box-shadow: 0 0 20px rgba(251, 191, 36, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.2) !important;
-  color: #0a0520 !important;
+  background: var(--warning) !important;
+  border: 2px solid var(--warning) !important;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3) !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
   padding: 0.6rem 1.5rem !important;
   border-radius: 0.5rem !important;
 }
 
 .swal-cyberpunk-warning:hover {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
-  box-shadow: 0 0 30px rgba(251, 191, 36, 0.8) !important;
-  transform: translateY(-2px) !important;
+  background: #b45309 !important;
+  box-shadow: 0 6px 16px rgba(217, 119, 6, 0.4) !important;
+  transform: translateY(-1px) !important;
 }
 
 .swal-cyberpunk-info {
-  background: linear-gradient(135deg, #00f7ff 0%, #00c4cc 100%) !important;
-  border: 2px solid #00f7ff !important;
-  box-shadow: 0 0 20px rgba(0, 247, 255, 0.5) !important;
-  color: #0a0520 !important;
+  background: var(--color-brand-500) !important;
+  border: 2px solid var(--color-brand-500) !important;
+  box-shadow: 0 4px 12px rgba(70, 95, 255, 0.3) !important;
+  color: #ffffff !important;
   font-weight: 600 !important;
   padding: 0.6rem 1.5rem !important;
   border-radius: 0.5rem !important;
 }
 
 .swal-cyberpunk-cancel {
-  background: linear-gradient(135deg, #374151 0%, #1f2937 100%) !important;
-  border: 2px solid #4b5563 !important;
-  box-shadow: 0 0 10px rgba(75, 85, 99, 0.3) !important;
-  color: #e0d0ff !important;
+  background: var(--secondary) !important;
+  border: 2px solid var(--border) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  color: var(--foreground) !important;
   font-weight: 600 !important;
   padding: 0.6rem 1.5rem !important;
   border-radius: 0.5rem !important;
 }
 
 .swal-cyberpunk-cancel:hover {
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
-  box-shadow: 0 0 15px rgba(75, 85, 99, 0.5) !important;
-  transform: translateY(-2px) !important;
+  background: var(--accent) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transform: translateY(-1px) !important;
 }
 
 /* Cyberpunk Toast */
@@ -2486,39 +1969,34 @@ div[style*="z-index: 9999"].fixed.inset-0 {
 
 .swal-cyberpunk-toast .swal2-title {
   font-size: 0.9rem !important;
-  color: #e0d0ff !important;
+  color: var(--foreground) !important;
   font-weight: 600 !important;
 }
 
-/* Icon glow effects */
+/* Icon effects */
 .swal-cyberpunk .swal2-icon.swal2-success {
-  border-color: #00ff88 !important;
-  color: #00ff88 !important;
-  filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.6)) !important;
+  border-color: var(--success) !important;
+  color: var(--success) !important;
 }
 
 .swal-cyberpunk .swal2-icon.swal2-error {
-  border-color: #ff4466 !important;
-  color: #ff4466 !important;
-  filter: drop-shadow(0 0 15px rgba(255, 68, 102, 0.6)) !important;
+  border-color: var(--destructive) !important;
+  color: var(--destructive) !important;
 }
 
 .swal-cyberpunk .swal2-icon.swal2-warning {
-  border-color: #fbbf24 !important;
-  color: #fbbf24 !important;
-  filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.6)) !important;
+  border-color: var(--warning) !important;
+  color: var(--warning) !important;
 }
 
 .swal-cyberpunk .swal2-icon.swal2-info {
-  border-color: #00f7ff !important;
-  color: #00f7ff !important;
-  filter: drop-shadow(0 0 15px rgba(0, 247, 255, 0.6)) !important;
+  border-color: var(--color-brand-500) !important;
+  color: var(--color-brand-500) !important;
 }
 
 .swal-cyberpunk .swal2-icon.swal2-question {
-  border-color: #bc13fe !important;
-  color: #bc13fe !important;
-  filter: drop-shadow(0 0 15px rgba(188, 19, 254, 0.6)) !important;
+  border-color: var(--color-brand-400) !important;
+  color: var(--color-brand-400) !important;
 }  @media (max-width: 640px) {
     .leaflet-popup-content {
       max-width: 300px !important;

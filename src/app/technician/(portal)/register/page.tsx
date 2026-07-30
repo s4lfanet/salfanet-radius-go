@@ -169,19 +169,19 @@ export default function TechnicianRegisterPage() {
     return (
       <div className="p-4 lg:p-6">
         <div className="max-w-lg mx-auto mt-4">
-          <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-green-200 dark:border-green-500/30 p-8 text-center">
+          <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-green-200 dark:border-green-500/30 p-8 text-center">
             <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-500/20 flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
             <h2 className="text-lg font-bold text-slate-900 dark:text-white mb-1">Pelanggan Berhasil Dibuat</h2>
-            <p className="text-sm text-slate-500 dark:text-[#e0d0ff]/60 mb-2">
+            <p className="text-sm text-slate-500 dark:text-muted-foreground/60 mb-2">
               <span className="font-semibold text-slate-700 dark:text-white">{success.name}</span> telah berhasil didaftarkan ke sistem
             </p>
             <div className="flex flex-col gap-1 mb-4">
-              <p className="text-xs font-mono text-[#bc13fe] bg-[#bc13fe]/10 px-3 py-1.5 rounded-lg inline-block">
+              <p className="text-xs font-mono text-brand-600 bg-brand-600/10 px-3 py-1.5 rounded-lg inline-block">
                 ID: {success.customerId}
               </p>
-              <p className="text-xs font-mono text-[#00f7ff] bg-[#00f7ff]/10 px-3 py-1.5 rounded-lg inline-block">
+              <p className="text-xs font-mono text-brand-400 bg-brand-500/10 px-3 py-1.5 rounded-lg inline-block">
                 Username: {success.username}
               </p>
             </div>
@@ -190,7 +190,7 @@ export default function TechnicianRegisterPage() {
             </p>
             <button
               onClick={handleReset}
-              className="w-full py-3 px-4 bg-gradient-to-r from-[#bc13fe] to-[#00f7ff] text-white font-bold text-sm rounded-xl hover:opacity-90 transition-all"
+              className="w-full py-3 px-4 bg-gradient-to-r from-brand-600 to-brand-400 text-white font-bold text-sm rounded-xl hover:opacity-90 transition-all"
             >
               Daftar Pelanggan Baru
             </button>
@@ -200,8 +200,8 @@ export default function TechnicianRegisterPage() {
     );
   }
 
-  const inputClass = 'w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#bc13fe]/60 focus:ring-1 focus:ring-[#bc13fe]/30';
-  const selectClass = 'w-full pl-9 pr-9 py-2.5 text-sm bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#00f7ff]/60 focus:ring-1 focus:ring-[#00f7ff]/30 appearance-none';
+  const inputClass = 'w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-600/60 focus:ring-1 focus:ring-[brand-600]/30';
+  const selectClass = 'w-full pl-9 pr-9 py-2.5 text-sm bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-brand-500/60 focus:ring-1 focus:ring-[brand-400]/30 appearance-none';
   const labelClass = 'block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5';
 
   return (
@@ -210,10 +210,10 @@ export default function TechnicianRegisterPage() {
         {/* Header */}
         <div className="mb-4">
           <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <UserPlus className="w-5 h-5 text-[#bc13fe]" />
+            <UserPlus className="w-5 h-5 text-brand-600" />
             {t('techPortal.register')}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-[#e0d0ff]/60 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-muted-foreground/60 mt-0.5">
             Tambah pelanggan baru langsung ke sistem PPPoE
           </p>
         </div>
@@ -225,7 +225,7 @@ export default function TechnicianRegisterPage() {
             onClick={() => setActiveTab('basic')}
             className={`flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all ${
               activeTab === 'basic'
-                ? 'bg-white dark:bg-[#bc13fe]/20 text-slate-900 dark:text-white shadow-sm dark:shadow-[0_0_10px_rgba(188,19,254,0.3)] border border-slate-200 dark:border-[#bc13fe]/40'
+                ? 'bg-white dark:bg-brand-600/20 text-slate-900 dark:text-white shadow-sm dark:shadow-[0_0_10px_rgba(122, 90, 248,0.3)] border border-slate-200 dark:border-brand-600/40'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'
             }`}
           >
@@ -239,7 +239,7 @@ export default function TechnicianRegisterPage() {
             onClick={() => setActiveTab('network')}
             className={`flex-1 py-2 px-3 text-sm font-semibold rounded-lg transition-all ${
               activeTab === 'network'
-                ? 'bg-white dark:bg-[#00f7ff]/20 text-slate-900 dark:text-white shadow-sm dark:shadow-[0_0_10px_rgba(0,247,255,0.3)] border border-slate-200 dark:border-[#00f7ff]/40'
+                ? 'bg-white dark:bg-brand-500/20 text-slate-900 dark:text-white shadow-sm dark:shadow-[0_0_10px_rgba(70, 95, 255,0.3)] border border-slate-200 dark:border-brand-500/40'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white'
             }`}
           >
@@ -263,9 +263,9 @@ export default function TechnicianRegisterPage() {
           {activeTab === 'basic' && (
             <div className="space-y-4">
               {/* Section: Account */}
-              <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5">
-                <h2 className="text-sm font-bold text-slate-700 dark:text-[#e0d0ff] mb-4 flex items-center gap-2">
-                  <Key className="w-4 h-4 text-[#bc13fe]" />
+              <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/50 p-5">
+                <h2 className="text-sm font-bold text-slate-700 dark:text-muted-foreground mb-4 flex items-center gap-2">
+                  <Key className="w-4 h-4 text-brand-600" />
                   Akun PPPoE
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -287,9 +287,9 @@ export default function TechnicianRegisterPage() {
               </div>
 
               {/* Section: Personal Info */}
-              <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5">
-                <h2 className="text-sm font-bold text-slate-700 dark:text-[#e0d0ff] mb-4 flex items-center gap-2">
-                  <User className="w-4 h-4 text-[#bc13fe]" />
+              <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/50 p-5">
+                <h2 className="text-sm font-bold text-slate-700 dark:text-muted-foreground mb-4 flex items-center gap-2">
+                  <User className="w-4 h-4 text-brand-600" />
                   Informasi Pelanggan
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -350,13 +350,13 @@ export default function TechnicianRegisterPage() {
                           { enableHighAccuracy: true, timeout: 10000 }
                         );
                       }}
-                      className="w-full flex items-center justify-center gap-2 py-2 px-4 text-xs font-semibold bg-[#bc13fe]/10 hover:bg-[#bc13fe]/20 text-[#bc13fe] border border-[#bc13fe]/30 rounded-xl transition-all disabled:opacity-60"
+                      className="w-full flex items-center justify-center gap-2 py-2 px-4 text-xs font-semibold bg-brand-600/10 hover:bg-brand-600/20 text-brand-600 border border-brand-600/30 rounded-xl transition-all disabled:opacity-60"
                     >
-                      {gpsLoading ? <><span className="w-3.5 h-3.5 border-2 border-[#bc13fe]/40 border-t-[#bc13fe] rounded-full animate-spin" /></> : <MapPin className="w-3.5 h-3.5" />}
+                      {gpsLoading ? <><span className="w-3.5 h-3.5 border-2 border-brand-600/40 border-t-[brand-600] rounded-full animate-spin" /></> : <MapPin className="w-3.5 h-3.5" />}
                       {gpsLoading ? 'Mendapatkan lokasi...' : '📍 Ambil Lokasi GPS Saya'}
                     </button>
                     {form.latitude && form.longitude && (
-                      <a href={`https://maps.google.com/?q=${form.latitude},${form.longitude}`} target="_blank" rel="noopener noreferrer" className="mt-1.5 flex items-center gap-1 text-xs text-[#00f7ff] hover:underline">
+                      <a href={`https://maps.google.com/?q=${form.latitude},${form.longitude}`} target="_blank" rel="noopener noreferrer" className="mt-1.5 flex items-center gap-1 text-xs text-brand-400 hover:underline">
                         <MapPin className="w-3 h-3" /> Lihat di Google Maps
                       </a>
                     )}
@@ -397,9 +397,9 @@ export default function TechnicianRegisterPage() {
           {activeTab === 'network' && (
             <div className="space-y-4">
               {/* Section: Package & Network */}
-              <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5">
-                <h2 className="text-sm font-bold text-slate-700 dark:text-[#e0d0ff] mb-4 flex items-center gap-2">
-                  <Wifi className="w-4 h-4 text-[#00f7ff]" />
+              <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/50 p-5">
+                <h2 className="text-sm font-bold text-slate-700 dark:text-muted-foreground mb-4 flex items-center gap-2">
+                  <Wifi className="w-4 h-4 text-brand-400" />
                   Paket & Jaringan
                 </h2>
                 {loadingData ? (
@@ -427,9 +427,9 @@ export default function TechnicianRegisterPage() {
                         const selected = profiles.find((p) => p.id === form.profileId);
                         if (!selected) return null;
                         return (
-                          <div className="mt-2 px-4 py-3 bg-[#00f7ff]/5 dark:bg-[#00f7ff]/10 border border-[#00f7ff]/20 rounded-xl">
+                          <div className="mt-2 px-4 py-3 bg-brand-500/5 dark:bg-brand-500/10 border border-brand-500/20 rounded-xl">
                             <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-bold text-[#00f7ff]">{selected.name}</span>
+                              <span className="text-sm font-bold text-brand-400">{selected.name}</span>
                               <span className="text-sm font-bold text-slate-700 dark:text-white">{formatIDR(selected.price)}/bln</span>
                             </div>
                           </div>
@@ -463,9 +463,9 @@ export default function TechnicianRegisterPage() {
               </div>
 
               {/* Section: Billing */}
-              <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5">
-                <h2 className="text-sm font-bold text-slate-700 dark:text-[#e0d0ff] mb-4 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-[#bc13fe]" />
+              <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/50 p-5">
+                <h2 className="text-sm font-bold text-slate-700 dark:text-muted-foreground mb-4 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-brand-600" />
                   Pengaturan Billing
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -480,7 +480,7 @@ export default function TechnicianRegisterPage() {
                             value={type}
                             checked={form.subscriptionType === type}
                             onChange={(e) => setValue('subscriptionType', e.target.value)}
-                            className="w-4 h-4 text-[#bc13fe] focus:ring-[#bc13fe]/50 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900"
+                            className="w-4 h-4 text-brand-600 focus:ring-[brand-600]/50 border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900"
                           />
                           <span className="text-sm text-slate-700 dark:text-white">{type === 'POSTPAID' ? 'Pascabayar' : 'Prabayar'}</span>
                         </label>
@@ -500,9 +500,9 @@ export default function TechnicianRegisterPage() {
               </div>
 
               {/* Section: KTP Document */}
-              <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5">
-                <h2 className="text-sm font-bold text-slate-700 dark:text-[#e0d0ff] mb-4 flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-[#bc13fe]" />
+              <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/50 p-5">
+                <h2 className="text-sm font-bold text-slate-700 dark:text-muted-foreground mb-4 flex items-center gap-2">
+                  <CreditCard className="w-4 h-4 text-brand-600" />
                   Dokumen Identitas (KTP) <span className="text-slate-400 text-[10px] font-normal">(opsional)</span>
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -590,9 +590,9 @@ export default function TechnicianRegisterPage() {
               </div>
 
               {/* Section: Advanced (Optional) */}
-              <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-5">
-                <h2 className="text-sm font-bold text-slate-700 dark:text-[#e0d0ff] mb-4 flex items-center gap-2">
-                  <Hash className="w-4 h-4 text-[#00f7ff]" />
+              <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/50 p-5">
+                <h2 className="text-sm font-bold text-slate-700 dark:text-muted-foreground mb-4 flex items-center gap-2">
+                  <Hash className="w-4 h-4 text-brand-400" />
                   Pengaturan Lanjutan <span className="text-slate-400 text-[10px] font-normal">(opsional)</span>
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -624,7 +624,7 @@ export default function TechnicianRegisterPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 px-4 bg-gradient-to-r from-[#bc13fe] to-[#00f7ff] text-white font-bold text-sm rounded-xl hover:opacity-90 disabled:opacity-70 transition-all flex items-center justify-center gap-2"
+                className="w-full py-3.5 px-4 bg-gradient-to-r from-brand-600 to-brand-400 text-white font-bold text-sm rounded-xl hover:opacity-90 disabled:opacity-70 transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
                   <>

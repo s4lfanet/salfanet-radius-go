@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
@@ -236,28 +236,20 @@ export default function InventoryItemsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
-        <div className="w-12 h-12 border-4 border-brand-500 dark:border-[#00f7ff] border-t-transparent rounded-full animate-spin dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] relative z-10"></div>
+        
+        <div className="w-12 h-12 border-4 border-brand-500 dark:border-brand-500 border-t-transparent rounded-full animate-spin dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] relative z-10"></div>
       </div>
     );
   }
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-              <Package className="h-6 w-6 text-brand-500 dark:text-[#00f7ff]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+              <Package className="h-6 w-6 text-brand-500 dark:text-brand-400" />
               {t('inventory.items')}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -267,7 +259,7 @@ export default function InventoryItemsPage() {
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-border dark:border-[#bc13fe]/30 p-2.5 sm:p-4 dark:shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-primary/30 dark:hover:border-[#bc13fe]/50 transition-all">
+            <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-border dark:border-brand-600/30 p-2.5 sm:p-4 dark:shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-primary/30 dark:hover:border-brand-600/50 transition-all">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('inventory.totalItems')}</p>
@@ -279,7 +271,7 @@ export default function InventoryItemsPage() {
               </div>
             </div>
 
-            <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-border dark:border-[#bc13fe]/30 p-2.5 sm:p-4 dark:shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-orange-300 dark:hover:border-[#bc13fe]/50 transition-all">
+            <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-border dark:border-brand-600/30 p-2.5 sm:p-4 dark:shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-orange-300 dark:hover:border-brand-600/50 transition-all">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('inventory.lowStock')}</p>
@@ -289,7 +281,7 @@ export default function InventoryItemsPage() {
               </div>
             </div>
 
-            <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-border dark:border-[#bc13fe]/30 p-2.5 sm:p-4 dark:shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-destructive/30 dark:hover:border-[#bc13fe]/50 transition-all">
+            <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-border dark:border-brand-600/30 p-2.5 sm:p-4 dark:shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-destructive/30 dark:hover:border-brand-600/50 transition-all">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('inventory.outOfStock')}</p>
@@ -299,7 +291,7 @@ export default function InventoryItemsPage() {
               </div>
             </div>
 
-            <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-border dark:border-[#bc13fe]/30 p-2.5 sm:p-4 dark:shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-success/30 dark:hover:border-[#bc13fe]/50 transition-all">
+            <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-border dark:border-brand-600/30 p-2.5 sm:p-4 dark:shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-success/30 dark:hover:border-brand-600/50 transition-all">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t('inventory.totalValue')}</p>
@@ -394,7 +386,7 @@ export default function InventoryItemsPage() {
               <div className="text-center py-12 text-muted-foreground">{t('inventory.noItems')}</div>
             ) : (
               filteredItems.map((item) => (
-                <div key={item.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3">
+                <div key={item.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
@@ -417,7 +409,7 @@ export default function InventoryItemsPage() {
                       <span className={`font-medium ${item.stockStatus === 'out_of_stock' ? 'text-destructive' : item.stockStatus === 'low_stock' ? 'text-orange-600' : 'text-success'}`}>{item.currentStock}</span>
                       <span className="text-muted-foreground text-[10px]"> (min: {item.minimumStock})</span>
                     </div>
-                    {item.location && <div><span className="text-muted-foreground">📍</span> <span className="text-foreground">{item.location}</span></div>}
+                    {item.location && <div><span className="text-muted-foreground">??</span> <span className="text-foreground">{item.location}</span></div>}
                     <div><span className="text-muted-foreground">Buy:</span> <span className="text-foreground">Rp {item.purchasePrice.toLocaleString('id-ID')}</span></div>
                     <div><span className="text-muted-foreground">Sell:</span> <span className="text-foreground">Rp {item.sellingPrice.toLocaleString('id-ID')}</span></div>
                   </div>
@@ -484,7 +476,7 @@ export default function InventoryItemsPage() {
                         </div>
                         {item.location && (
                           <div className="text-[10px] text-muted-foreground">
-                            📍 {item.location}
+                            ?? {item.location}
                           </div>
                         )}
                       </td>
@@ -581,15 +573,15 @@ export default function InventoryItemsPage() {
                   <div>
                     <ModalLabel>{t('inventory.category')}</ModalLabel>
                     <ModalSelect value={formData.categoryId} onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}>
-                      <option value="" className="dark:bg-[#0a0520]">{t('inventory.selectCategory')}</option>
-                      {categories.map((cat) => (<option key={cat.id} value={cat.id} className="dark:bg-[#0a0520]">{cat.name}</option>))}
+                      <option value="" className="dark:bg-input">{t('inventory.selectCategory')}</option>
+                      {categories.map((cat) => (<option key={cat.id} value={cat.id} className="dark:bg-input">{cat.name}</option>))}
                     </ModalSelect>
                   </div>
                   <div>
                     <ModalLabel>{t('inventory.supplier')}</ModalLabel>
                     <ModalSelect value={formData.supplierId} onChange={(e) => setFormData({ ...formData, supplierId: e.target.value })}>
-                      <option value="" className="dark:bg-[#0a0520]">{t('inventory.selectSupplier')}</option>
-                      {suppliers.map((sup) => (<option key={sup.id} value={sup.id} className="dark:bg-[#0a0520]">{sup.name}</option>))}
+                      <option value="" className="dark:bg-input">{t('inventory.selectSupplier')}</option>
+                      {suppliers.map((sup) => (<option key={sup.id} value={sup.id} className="dark:bg-input">{sup.name}</option>))}
                     </ModalSelect>
                   </div>
                   <div>
@@ -627,7 +619,7 @@ export default function InventoryItemsPage() {
                   </div>
                   <div className="md:col-span-2 flex items-center gap-3">
                     <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer">
-                      <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="rounded border-[#bc13fe]/50 bg-background dark:bg-[#0a0520] accent-brand-500 dark:accent-[#00f7ff] w-4 h-4" />
+                      <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="rounded border-brand-600/50 bg-background dark:bg-input accent-brand-500 dark:accent-[brand-400] w-4 h-4" />
                       <span>{t('common.active')}</span>
                     </label>
                   </div>

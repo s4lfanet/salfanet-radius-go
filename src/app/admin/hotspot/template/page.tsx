@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
@@ -52,8 +52,8 @@ const DEFAULT_TEMPLATE = `{include file="rad-template-header.tpl"}
 {$vs['validity']} - {$_c['currency_code']}. {number_format($vs['total'], 0, ',', '.')}
 </div>
 <div style="padding: 5px 10px; font-size: 9px; color: #666; background: #f9f9f9; border-top: 1px solid #eee;">
-<div>📊 Kuota: {$vs['quota']}</div>
-<div>⏱️ Durasi: {$vs['duration']}</div>
+<div>?? Kuota: {$vs['quota']}</div>
+<div>?? Durasi: {$vs['duration']}</div>
 </div>
 </div>
 {else}
@@ -75,8 +75,8 @@ const DEFAULT_TEMPLATE = `{include file="rad-template-header.tpl"}
 {$vs['validity']} - {$_c['currency_code']}. {number_format($vs['total'], 0, ',', '.')}
 </div>
 <div style="padding: 5px 10px; font-size: 9px; color: #666; background: #f9f9f9; border-top: 1px solid #eee;">
-<div>📊 Kuota: {$vs['quota']}</div>
-<div>⏱️ Durasi: {$vs['duration']}</div>
+<div>?? Kuota: {$vs['quota']}</div>
+<div>?? Durasi: {$vs['duration']}</div>
 </div>
 </div>
 {/if}
@@ -224,18 +224,13 @@ export default function VoucherTemplatesPage() {
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-              <FileCode className="w-5 h-5 text-[#00f7ff]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+              <FileCode className="w-5 h-5 text-brand-400" />
               {t('hotspot.templateTitle')}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('hotspot.templateSubtitle')}</p>
@@ -266,7 +261,7 @@ export default function VoucherTemplatesPage() {
             <div className="text-center py-8 text-muted-foreground text-xs">{t('hotspot.noTemplates')}</div>
           ) : (
             templates.map((template) => (
-              <div key={template.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3">
+              <div key={template.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3">
                 <div className="flex items-start justify-between mb-2">
                   <div className="font-medium text-sm text-foreground">{template.name}</div>
                   <div className="flex items-center gap-1">
@@ -381,17 +376,17 @@ export default function VoucherTemplatesPage() {
               </div>
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formData.isDefault} onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })} className="rounded border-[#bc13fe]/50 bg-background dark:bg-[#0a0520] accent-brand-500 dark:accent-[#00f7ff] w-3.5 h-3.5" />
+                  <input type="checkbox" checked={formData.isDefault} onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })} className="rounded border-brand-600/50 bg-background dark:bg-input accent-brand-500 dark:accent-[brand-400] w-3.5 h-3.5" />
                   <span className="text-xs text-foreground">{t('hotspot.setDefault')}</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="rounded border-[#bc13fe]/50 bg-background dark:bg-[#0a0520] accent-brand-500 dark:accent-[#00f7ff] w-3.5 h-3.5" />
+                  <input type="checkbox" checked={formData.isActive} onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })} className="rounded border-brand-600/50 bg-background dark:bg-input accent-brand-500 dark:accent-[brand-400] w-3.5 h-3.5" />
                   <span className="text-xs text-foreground">{t('common.active')}</span>
                 </label>
               </div>
             </ModalBody>
             <ModalFooter className="justify-between">
-              <button type="button" onClick={() => setShowPreview(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#00f7ff] border border-[#00f7ff]/50 rounded-lg hover:bg-[#00f7ff]/10 transition-all">
+              <button type="button" onClick={() => setShowPreview(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-brand-400 border border-brand-500/50 rounded-lg hover:bg-brand-500/10 transition-all">
                 <Eye className="w-3.5 h-3.5" /> {t('hotspot.previewTemplate')}
               </button>
               <div className="flex gap-2">

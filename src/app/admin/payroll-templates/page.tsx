@@ -144,7 +144,7 @@ export default function PayrollTemplatesPage() {
           {filtered.map(t => {
             const net = t.baseWage + t.allowance - t.deduction;
             return (
-              <div key={t.id} className={`bg-white dark:bg-gray-800/50 rounded-2xl border p-5 ${t.isDefault ? 'border-brand-400 dark:border-brand-500' : 'border-gray-200 dark:border-gray-700'}`}>
+              <div key={t.id} className={`bg-white dark:bg-gray-800/50 rounded-xl border p-5 ${t.isDefault ? 'border-brand-400 dark:border-brand-500' : 'border-gray-200 dark:border-gray-700'}`}>
                 <div className="flex items-start justify-between mb-3">
                   <div>
                     <div className="flex items-center gap-2">

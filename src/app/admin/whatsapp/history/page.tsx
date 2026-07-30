@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -107,21 +107,21 @@ export default function WhatsAppHistoryPage() {
     try { responseData = JSON.parse(viewingItem.response); } catch { responseData = viewingItem.response; }
     return createPortal(
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setViewingItem(null)}>
-        <div className="bg-card dark:bg-[#1e1b2e] border border-border dark:border-[#bc13fe]/30 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between p-5 border-b border-[#bc13fe]/20">
-            <h2 className="text-lg font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc]">{t('whatsapp.messageDetail')}</h2>
+        <div className="bg-card dark:bg-[secondary] border border-border dark:border-brand-600/30 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between p-5 border-b border-brand-600/20">
+            <h2 className="text-lg font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground">{t('whatsapp.messageDetail')}</h2>
             <button onClick={() => setViewingItem(null)} className="text-muted-foreground hover:text-foreground transition-colors text-xl leading-none">&times;</button>
           </div>
           <div className="p-5 overflow-y-auto flex-1 space-y-3 text-sm">
             <div className="flex gap-2"><span className="font-semibold text-gray-400 min-w-[80px]">{t('whatsapp.numberLabel')}:</span><span className="text-gray-200">{viewingItem.phone}</span></div>
-            <div className="flex gap-2"><span className="font-semibold text-gray-400 min-w-[80px]">{t('whatsapp.statusLabel')}:</span><span className={viewingItem.status === 'sent' ? 'text-green-400' : 'text-red-400'}>{viewingItem.status === 'sent' ? `✅ ${t('whatsapp.sentStatus')}` : `❌ ${t('whatsapp.failedStatus')}`}</span></div>
+            <div className="flex gap-2"><span className="font-semibold text-gray-400 min-w-[80px]">{t('whatsapp.statusLabel')}:</span><span className={viewingItem.status === 'sent' ? 'text-green-400' : 'text-red-400'}>{viewingItem.status === 'sent' ? `? ${t('whatsapp.sentStatus')}` : `? ${t('whatsapp.failedStatus')}`}</span></div>
             {viewingItem.providerName && <div className="flex gap-2"><span className="font-semibold text-gray-400 min-w-[80px]">{t('whatsapp.providerLabel')}:</span><span className="text-gray-200">{viewingItem.providerName} <span className="text-purple-400">({viewingItem.providerType?.toUpperCase()})</span></span></div>}
             <div className="flex gap-2"><span className="font-semibold text-gray-400 min-w-[80px]">{t('whatsapp.timeLabel')}:</span><span className="text-gray-200">{formatWIB(viewingItem.sentAt, 'dd/MM/yyyy HH:mm:ss')}</span></div>
             <div className="mt-4"><div className="font-semibold text-gray-400 mb-2">{t('whatsapp.messageLabel')}:</div><div className="whitespace-pre-wrap bg-gray-800 border border-gray-700 p-3 rounded text-xs max-h-32 overflow-auto text-gray-200">{viewingItem.message}</div></div>
             <div className="mt-4"><div className="font-semibold text-gray-400 mb-2">{t('whatsapp.responseLabel')}:</div><pre className="text-xs bg-gray-800 border border-gray-700 p-3 rounded max-h-40 overflow-auto text-gray-300 font-mono">{JSON.stringify(responseData, null, 2)}</pre></div>
           </div>
-          <div className="p-4 border-t border-[#bc13fe]/20 flex justify-end">
-            <button onClick={() => setViewingItem(null)} className="px-6 py-2 text-sm font-bold text-white bg-brand-500 dark:text-[#1a0f35] dark:bg-[#00f7ff] rounded-lg dark:shadow-[0_0_20px_rgba(0,247,255,0.4)] hover:opacity-90 transition-all">{t('common.close')}</button>
+          <div className="p-4 border-t border-brand-600/20 flex justify-end">
+            <button onClick={() => setViewingItem(null)} className="px-6 py-2 text-sm font-bold text-white bg-brand-500 dark:text-[secondary] dark:bg-brand-500 rounded-lg dark:shadow-[0_0_20px_rgba(70, 95, 255,0.4)] hover:opacity-90 transition-all">{t('common.close')}</button>
           </div>
         </div>
       </div>,
@@ -133,18 +133,13 @@ export default function WhatsAppHistoryPage() {
     <>
     <WaDetailModal />
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
         <div className="max-w-7xl mx-auto space-y-3">
           {/* Header */}
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-              <svg className="w-6 h-6 text-[#00f7ff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+              <svg className="w-6 h-6 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               {t('whatsapp.historyTitle')}
@@ -221,7 +216,7 @@ export default function WhatsAppHistoryPage() {
                         : 'bg-muted text-foreground hover:bg-muted'
                       }`}
                   >
-                    {status === 'all' ? t('common.all') : status === 'sent' ? `✓ ${t('whatsapp.sent')}` : `✗ ${t('whatsapp.failed')}`}
+                    {status === 'all' ? t('common.all') : status === 'sent' ? `? ${t('whatsapp.sent')}` : `? ${t('whatsapp.failed')}`}
                   </button>
                 ))}
               </div>
@@ -264,7 +259,7 @@ export default function WhatsAppHistoryPage() {
                 {/* Mobile Card View */}
                 <div className="block md:hidden space-y-3 p-3">
                   {history.map((item) => (
-                    <div key={item.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3">
+                    <div key={item.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-mono text-foreground">{item.phone}</span>
                         {item.status === 'sent' ? (

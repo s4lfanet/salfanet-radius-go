@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
 import { formatWIB } from '@/lib/timezone';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -597,7 +597,7 @@ export default function AgentDashboardPage() {
   return (
     <div className="p-4 lg:p-6 space-y-5">
       {/* Balance Card - Desktop: smaller, Mobile: full */}
-      <div className="bg-gradient-to-r from-violet-600 to-cyan-600 rounded-2xl shadow-lg p-4 lg:p-5 text-white">
+      <div className="bg-gradient-to-r from-violet-600 to-cyan-600 rounded-xl shadow-lg p-4 lg:p-5 text-white">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-xs lg:text-sm opacity-90 uppercase tracking-wider">{t('agent.portal.yourBalance')}</p>
@@ -685,7 +685,7 @@ export default function AgentDashboardPage() {
       </div>
 
       {/* Quick Generate */}
-      <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 lg:p-5 shadow-sm">
+      <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 p-4 lg:p-5 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <div className="p-2 bg-violet-100 dark:bg-violet-500/20 rounded-lg border border-violet-200 dark:border-violet-500/30 flex items-center justify-center">
               <Zap className="h-5 w-5 text-violet-600 dark:text-violet-400" />
@@ -738,7 +738,7 @@ export default function AgentDashboardPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">{t('agent.portal.codeLength')} (4–10)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">{t('agent.portal.codeLength')} (4�10)</label>
               <input
                 type="number"
                 min="4"
@@ -806,7 +806,7 @@ export default function AgentDashboardPage() {
       {/* Generated Vouchers Modal */}
       {showVouchersModal && generatedVouchers.length > 0 && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col">
             <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Zap className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
@@ -868,7 +868,7 @@ export default function AgentDashboardPage() {
       {/* Deposit Modal */}
       {showDepositModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start sm:items-center justify-center p-3 sm:p-4 z-50 overflow-y-auto overscroll-contain">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl w-full max-w-sm sm:max-w-lg max-h-[92vh] flex flex-col">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl w-full max-w-sm sm:max-w-lg max-h-[92vh] flex flex-col">
             <div className="px-4 sm:px-5 py-4 border-b border-slate-200 dark:border-slate-700 shrink-0">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <Wallet className="h-5 w-5 text-violet-600 dark:text-violet-400" />

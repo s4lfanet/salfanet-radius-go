@@ -111,15 +111,13 @@ export default function InvoiceTemplatesPage() {
     <div className="space-y-6 p-6">
       {/* Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#bc13fe]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f7ff]/5 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#bc13fe]/20 border border-[#bc13fe]/30">
-            <FileText className="w-6 h-6 text-[#bc13fe]" />
+          <div className="p-2.5 rounded-xl bg-brand-600/20 border border-brand-600/30">
+            <FileText className="w-6 h-6 text-brand-600" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Template Invoice</h1>
@@ -128,7 +126,7 @@ export default function InvoiceTemplatesPage() {
         </div>
         <button
           onClick={openCreate}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#bc13fe]/20 hover:bg-[#bc13fe]/30 border border-[#bc13fe]/40 text-[#bc13fe] text-sm font-medium transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-600/20 hover:bg-brand-600/30 border border-brand-600/40 text-brand-600 text-sm font-medium transition-all"
         >
           <Plus className="w-4 h-4" />
           Tambah Template
@@ -136,7 +134,7 @@ export default function InvoiceTemplatesPage() {
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
+      <div className="rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-muted-foreground">Memuat...</div>
         ) : templates.length === 0 ? (
@@ -173,7 +171,7 @@ export default function InvoiceTemplatesPage() {
                     ) : (
                       <button
                         onClick={() => handleSetDefault(t.id)}
-                        className="text-xs text-muted-foreground hover:text-[#bc13fe] transition-colors"
+                        className="text-xs text-muted-foreground hover:text-brand-600 transition-colors"
                         title="Jadikan default"
                       >
                         <Star className="w-4 h-4 mx-auto" />
@@ -191,7 +189,7 @@ export default function InvoiceTemplatesPage() {
                       </button>
                       <button
                         onClick={() => openEdit(t)}
-                        className="p-1.5 rounded-lg hover:bg-[#bc13fe]/20 text-muted-foreground hover:text-[#bc13fe] transition-all"
+                        className="p-1.5 rounded-lg hover:bg-brand-600/20 text-muted-foreground hover:text-brand-600 transition-all"
                         title="Edit"
                       >
                         <Pencil className="w-4 h-4" />
@@ -241,7 +239,7 @@ export default function InvoiceTemplatesPage() {
               onChange={(e) => setForm({ ...form, htmlBody: e.target.value })}
               rows={12}
               placeholder="<html>...</html>"
-              className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#bc13fe]/50 resize-y"
+              className="w-full px-3 py-2 rounded-xl border border-border bg-background text-sm font-mono text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[brand-600]/50 resize-y"
             />
           </div>
         </ModalBody>

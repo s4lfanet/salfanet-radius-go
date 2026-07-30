@@ -245,8 +245,8 @@ function CyberConfirmModal({ options, onClose }: CyberConfirmModalProps) {
       icon: ShieldAlert,
       iconColor: 'text-cyan-400',
       border: 'border-cyan-500/40',
-      glow: 'shadow-[0_0_40px_rgba(0,247,255,0.15)]',
-      confirmBg: 'bg-cyan-600 hover:bg-cyan-700 shadow-[0_0_15px_rgba(0,247,255,0.4)]',
+      glow: 'shadow-[0_0_40px_rgba(70, 95, 255,0.15)]',
+      confirmBg: 'bg-cyan-600 hover:bg-cyan-700 shadow-[0_0_15px_rgba(70, 95, 255,0.4)]',
       titleColor: 'text-cyan-400',
     },
   };
@@ -273,8 +273,8 @@ function CyberConfirmModal({ options, onClose }: CyberConfirmModalProps) {
       {/* Modal */}
       <div
         className={cn(
-          'relative z-10 w-full max-w-sm rounded-2xl border-2 p-6',
-          'bg-card dark:bg-[#0a0520]/95 backdrop-blur-xl',
+          'relative z-10 w-full max-w-sm rounded-xl border-2 p-6',
+          'bg-card dark:bg-input/95 backdrop-blur-xl',
           border, glow,
           'animate-in fade-in zoom-in-95 duration-200'
         )}
@@ -288,13 +288,13 @@ function CyberConfirmModal({ options, onClose }: CyberConfirmModalProps) {
         </div>
 
         {/* Message */}
-        <p className="text-sm text-muted-foreground dark:text-[#e0d0ff]/80 mb-6 leading-relaxed">{message}</p>
+        <p className="text-sm text-muted-foreground dark:text-muted-foreground/80 mb-6 leading-relaxed">{message}</p>
 
         {/* Actions */}
         <div className="flex gap-3 justify-end">
           <button
             onClick={() => onClose(false)}
-            className="px-4 py-2 text-sm font-semibold rounded-xl border border-border dark:border-white/20 text-muted-foreground dark:text-[#e0d0ff]/80 hover:border-foreground/40 dark:hover:border-white/40 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/5 transition-all"
+            className="px-4 py-2 text-sm font-semibold rounded-xl border border-border dark:border-white/20 text-muted-foreground dark:text-muted-foreground/80 hover:border-foreground/40 dark:hover:border-white/40 hover:text-foreground dark:hover:text-white hover:bg-muted dark:hover:bg-white/5 transition-all"
           >
             {cancelText}
           </button>

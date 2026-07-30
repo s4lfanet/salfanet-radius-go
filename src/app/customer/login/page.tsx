@@ -186,7 +186,7 @@ export default function CustomerLoginPage() {
                 <Image unoptimized src={companyLogo} alt={companyName} width={220} height={110} className="max-h-full max-w-full w-auto h-auto object-contain" />
               </div>
             ) : (
-              <div className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-2xl shadow-lg shadow-primary/25">
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-xl shadow-lg shadow-primary/25">
                 <Shield className="w-7 h-7 text-white" />
               </div>
             )}
@@ -366,9 +366,6 @@ export default function CustomerLoginPage() {
 
       {/* ── Right Panel: Brand Info ── */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-slate-100 via-white to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900 items-center justify-center px-12 py-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-cyan-100/60 dark:bg-cyan-900/20 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-56 h-56 bg-blue-100/50 dark:bg-blue-900/20 rounded-full blur-3xl pointer-events-none" />
-
         <div className="max-w-lg w-full relative z-10">
           <div className="mb-2">
             <span className="text-xs font-semibold uppercase tracking-widest text-primary">Portal Pelanggan</span>
@@ -382,21 +379,21 @@ export default function CustomerLoginPage() {
           </p>
 
           <div className="grid grid-cols-3 gap-4 mb-8">
-            <div className="bg-card rounded-2xl p-4 shadow-sm border border-border text-center">
+            <div className="bg-card rounded-xl p-4 shadow-sm border border-border text-center">
               <div className="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/40 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <svg className="w-5 h-5 text-cyan-600 dark:text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
               </div>
               <p className="text-sm font-bold text-foreground mb-1">Tagihan Online</p>
               <p className="text-xs text-muted-foreground leading-snug">Lihat &amp; unduh invoice kapan saja</p>
             </div>
-            <div className="bg-card rounded-2xl p-4 shadow-sm border border-border text-center">
+            <div className="bg-card rounded-xl p-4 shadow-sm border border-border text-center">
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
               </div>
               <p className="text-sm font-bold text-foreground mb-1">Bayar Mudah</p>
               <p className="text-xs text-muted-foreground leading-snug">QRIS, bank &amp; retail</p>
             </div>
-            <div className="bg-card rounded-2xl p-4 shadow-sm border border-border text-center">
+            <div className="bg-card rounded-xl p-4 shadow-sm border border-border text-center">
               <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-xl flex items-center justify-center mx-auto mb-3">
                 <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
               </div>

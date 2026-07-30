@@ -1,4 +1,4 @@
-Ôªø'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -191,20 +191,20 @@ export default function GenieACSTasksPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div><div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div><div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div><div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div></div>
-        <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-[#00f7ff] dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] relative z-10" />
+        
+        <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-brand-400 dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] relative z-10" />
       </div>
     );
   }
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none"><div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div><div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div><div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div><div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div></div>
+      
       <div className="relative z-10 max-w-6xl mx-auto space-y-3">
       {/* Header */}
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-          <ListTodo className="w-6 h-6 text-brand-500 dark:text-[#00f7ff] dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)]" />
+        <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+          <ListTodo className="w-6 h-6 text-brand-500 dark:text-brand-400 dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)]" />
           {t('genieacs.tasksTitle')}
         </h1>
         <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('genieacs.tasksSubtitle')}</p>
@@ -317,7 +317,7 @@ export default function GenieACSTasksPage() {
           </div>
           {pendingCount > 0 && autoRefresh && (
             <p className="text-[10px] text-primary mt-2">
-              ‚è±Ô∏è {t('genieacs.autoRefreshInfo')}
+              ?? {t('genieacs.autoRefreshInfo')}
             </p>
           )}
         </div>
@@ -331,7 +331,7 @@ export default function GenieACSTasksPage() {
             </div>
           ) : (
             filteredTasks.map((task) => (
-              <div key={task._id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3">
+              <div key={task._id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-foreground truncate">{getTaskNameLabel(task.name)}</p>
@@ -469,11 +469,11 @@ export default function GenieACSTasksPage() {
             <div className="text-xs text-warning">
               <p className="font-medium mb-1">{t('genieacs.tasksPending').replace('{count}', String(pendingCount))}</p>
               <ul className="space-y-0.5 text-[11px]">
-                <li>‚Ä¢ {t('genieacs.taskWillExecute')}</li>
-                <li>‚Ä¢ {t('genieacs.informInterval')}</li>
-                <li>‚Ä¢ {t('genieacs.alternative1')}</li>
-                <li>‚Ä¢ {t('genieacs.alternative2')}</li>
-                <li className="text-muted-foreground">‚Ä¢ {t('genieacs.connectionRequestNote')}</li>
+                <li>ï {t('genieacs.taskWillExecute')}</li>
+                <li>ï {t('genieacs.informInterval')}</li>
+                <li>ï {t('genieacs.alternative1')}</li>
+                <li>ï {t('genieacs.alternative2')}</li>
+                <li className="text-muted-foreground">ï {t('genieacs.connectionRequestNote')}</li>
               </ul>
             </div>
           </div>
@@ -487,10 +487,10 @@ export default function GenieACSTasksPage() {
           <div className="text-xs text-primary">
             <p className="font-medium mb-1">{t('genieacs.aboutTasks')}</p>
             <ul className="space-y-0.5 text-[11px]">
-              <li>‚Ä¢ {t('genieacs.taskDescription')}</li>
-              <li>‚Ä¢ {t('genieacs.pendingTaskExec')}</li>
-              <li>‚Ä¢ {t('genieacs.useForceSyncTip')}</li>
-              <li>‚Ä¢ {t('genieacs.faultTaskRetry')}</li>
+              <li>ï {t('genieacs.taskDescription')}</li>
+              <li>ï {t('genieacs.pendingTaskExec')}</li>
+              <li>ï {t('genieacs.useForceSyncTip')}</li>
+              <li>ï {t('genieacs.faultTaskRetry')}</li>
             </ul>
           </div>
         </div>

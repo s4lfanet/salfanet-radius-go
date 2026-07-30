@@ -242,37 +242,37 @@ export default function UserDetailModal({
   };
 
   // Theme-aware class constants
-  const inputCls = "w-full px-3 py-2 border border-border dark:border-[#bc13fe]/40 bg-background dark:bg-[#0a0520]/50 text-foreground dark:text-[#e0d0ff] rounded-lg focus:border-primary dark:focus:border-[#00f7ff] focus:ring-1 focus:ring-primary dark:focus:ring-[#00f7ff] focus:outline-none transition-all placeholder:text-muted-foreground dark:placeholder:text-[#e0d0ff]/30";
+  const inputCls = "w-full px-3 py-2 border border-border dark:border-brand-600/40 bg-background dark:bg-input/50 text-foreground dark:text-muted-foreground rounded-lg focus:border-primary dark:focus:border-brand-500 focus:ring-1 focus:ring-primary dark:focus:ring-[brand-400] focus:outline-none transition-all placeholder:text-muted-foreground dark:placeholder:text-muted-foreground/30";
   const selectCls = inputCls;
   const textareaCls = inputCls;
-  const labelCls = "block text-sm font-medium mb-1 text-foreground dark:text-[#e0d0ff]";
-  const labelCls2 = "block text-sm font-medium mb-2 text-foreground dark:text-[#e0d0ff]";
+  const labelCls = "block text-sm font-medium mb-1 text-foreground dark:text-muted-foreground";
+  const labelCls2 = "block text-sm font-medium mb-2 text-foreground dark:text-muted-foreground";
 
   if (!isOpen || !user) return null;
 
   return createPortal(
     <div className="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm modal-overlay p-4 animate-in fade-in-0 duration-200" style={{ zIndex: 9999 }}>
-      <div className="bg-card dark:bg-gradient-to-br dark:from-[#0a0520] dark:to-[#1a0f35] rounded-xl shadow-xl dark:shadow-[0_0_40px_rgba(188,19,254,0.3)] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-border dark:border-[#bc13fe]/50 animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4 duration-300">
+      <div className="bg-card dark:bg-gradient-to-br dark:from-[input] dark:to-[secondary] rounded-xl shadow-xl dark:shadow-[0_0_40px_rgba(122, 90, 248,0.3)] w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col border border-border dark:border-brand-600/50 animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4 duration-300">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border dark:border-[#bc13fe]/30 bg-slate-100 dark:bg-[#1a0f35]">
+        <div className="flex items-center justify-between p-6 border-b border-border dark:border-brand-600/30 bg-slate-100 dark:bg-secondary">
           <div>
             <h2 className="text-2xl font-bold modal-title-override">
               User Details
             </h2>
-            <p className="text-sm text-gray-600 dark:text-[#e0d0ff]/70 mt-1">
+            <p className="text-sm text-gray-600 dark:text-muted-foreground/70 mt-1">
               {user.username}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground dark:text-[#e0d0ff] dark:hover:text-[#00f7ff] dark:hover:bg-[#bc13fe]/20"
+            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:text-brand-400 dark:hover:bg-brand-600/20"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="border-b border-border dark:border-[#bc13fe]/30">
+        <div className="border-b border-border dark:border-brand-600/30">
           <div className="flex px-6">
             {[
               { id: 'info', label: t('userModal.userInfo') },
@@ -285,8 +285,8 @@ export default function UserDetailModal({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 text-sm font-medium border-b-2 transition-all ${activeTab === tab.id
-                  ? 'border-primary text-primary dark:border-[#00f7ff] dark:text-[#00f7ff] bg-primary/10 dark:bg-[#00f7ff]/10 dark:shadow-[0_2px_10px_rgba(0,247,255,0.3)]'
-                  : 'border-transparent text-muted-foreground dark:text-[#e0d0ff]/60 hover:text-foreground dark:hover:text-[#e0d0ff] hover:bg-muted dark:hover:bg-[#bc13fe]/10'
+                  ? 'border-primary text-primary dark:border-brand-500 dark:text-brand-400 bg-primary/10 dark:bg-brand-500/10 dark:shadow-[0_2px_10px_rgba(70, 95, 255,0.3)]'
+                  : 'border-transparent text-muted-foreground dark:text-muted-foreground/60 hover:text-foreground dark:hover:text-muted-foreground hover:bg-muted dark:hover:bg-brand-600/10'
                   }`}
               >
                 {tab.label}
@@ -428,7 +428,7 @@ export default function UserDetailModal({
                 {/* GPS Location */}
                 <div className="col-span-2">
                   <div className="flex items-center justify-between mb-2">
-                    <label className="block text-sm font-medium text-foreground dark:text-[#e0d0ff]">{t('userModal.gpsLocation')}</label>
+                    <label className="block text-sm font-medium text-foreground dark:text-muted-foreground">{t('userModal.gpsLocation')}</label>
                     <div className="flex gap-2">
                       {onLatLngChange && (
                         <button
@@ -437,7 +437,7 @@ export default function UserDetailModal({
                             // Notify parent to open map picker with current values
                             onLatLngChange(formData.latitude, formData.longitude);
                           }}
-                          className="inline-flex items-center px-3 py-1 text-xs bg-primary/10 text-primary dark:bg-[#00f7ff]/20 dark:text-[#00f7ff] border border-primary/50 dark:border-[#00f7ff]/50 rounded hover:bg-primary/20 dark:hover:bg-[#00f7ff]/30 transition"
+                          className="inline-flex items-center px-3 py-1 text-xs bg-primary/10 text-primary dark:bg-brand-500/20 dark:text-brand-400 border border-primary/50 dark:border-brand-500/50 rounded hover:bg-primary/20 dark:hover:bg-brand-500/30 transition"
                         >
                           <Map className="h-3 w-3 mr-1" />
                           Pilih di Peta
@@ -485,7 +485,7 @@ export default function UserDetailModal({
                             await showError('Geolocation tidak didukung oleh browser ini.');
                           }
                         }}
-                        className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-600 dark:bg-[#00ff88]/20 dark:text-[#00ff88] border border-green-300 dark:border-[#00ff88]/50 rounded hover:bg-green-200 dark:hover:bg-[#00ff88]/30 transition"
+                        className="inline-flex items-center px-3 py-1 text-xs bg-green-100 text-green-600 dark:bg-[success]/20 dark:text-[success] border border-green-300 dark:border-[success]/50 rounded hover:bg-green-200 dark:hover:bg-[success]/30 transition"
                       >
                         <MapPin className="h-3 w-3 mr-1" />
                         GPS Auto
@@ -510,7 +510,7 @@ export default function UserDetailModal({
                       className={`${inputCls} text-sm`}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground dark:text-[#e0d0ff]/50 mt-1">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 mt-1">
                     {t('userModal.gpsNote')}
                   </p>
                 </div>
@@ -519,32 +519,32 @@ export default function UserDetailModal({
                 <div className="col-span-2">
                   <label className={labelCls2}>{t('userModal.subscriptionType')}</label>
                   <div className="grid grid-cols-2 gap-3">
-                    <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${formData.subscriptionType === 'POSTPAID' ? 'border-primary dark:border-[#00f7ff] bg-primary/10 dark:bg-[#00f7ff]/10 shadow-md dark:shadow-[0_0_10px_rgba(0,247,255,0.3)]' : 'border-border dark:border-[#bc13fe]/30 hover:border-primary/50 dark:hover:border-[#00f7ff]/50'}`}>
+                    <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${formData.subscriptionType === 'POSTPAID' ? 'border-primary dark:border-brand-500 bg-primary/10 dark:bg-brand-500/10 shadow-md dark:shadow-[0_0_10px_rgba(70, 95, 255,0.3)]' : 'border-border dark:border-brand-600/30 hover:border-primary/50 dark:hover:border-brand-500/50'}`}>
                       <input
                         type="radio"
                         name="subscriptionType"
                         value="POSTPAID"
                         checked={formData.subscriptionType === 'POSTPAID'}
                         onChange={(e) => setFormData({ ...formData, subscriptionType: e.target.value as 'POSTPAID' })}
-                        className="w-4 h-4 accent-primary dark:accent-[#00f7ff] border-border dark:border-[#bc13fe]/50 focus:ring-primary dark:focus:ring-[#00f7ff]"
+                        className="w-4 h-4 accent-primary dark:accent-[brand-400] border-border dark:border-brand-600/50 focus:ring-primary dark:focus:ring-[brand-400]"
                       />
                       <div className="ml-3 flex-1">
-                        <div className="text-sm font-medium text-foreground dark:text-[#e0d0ff]">📅 {t('userModal.postpaid')}</div>
-                        <div className="text-xs text-muted-foreground dark:text-[#e0d0ff]/50">Tagihan bulanan, tanggal tetap</div>
+                        <div className="text-sm font-medium text-foreground dark:text-muted-foreground">📅 {t('userModal.postpaid')}</div>
+                        <div className="text-xs text-muted-foreground dark:text-muted-foreground/50">Tagihan bulanan, tanggal tetap</div>
                       </div>
                     </label>
-                    <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${formData.subscriptionType === 'PREPAID' ? 'border-primary dark:border-[#bc13fe] bg-primary/10 dark:bg-[#bc13fe]/10 shadow-md dark:shadow-[0_0_10px_rgba(188,19,254,0.3)]' : 'border-border dark:border-[#bc13fe]/30 hover:border-primary/50 dark:hover:border-[#bc13fe]/50'}`}>
+                    <label className={`flex items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${formData.subscriptionType === 'PREPAID' ? 'border-primary dark:border-brand-600 bg-primary/10 dark:bg-brand-600/10 shadow-md dark:shadow-[0_0_10px_rgba(122, 90, 248,0.3)]' : 'border-border dark:border-brand-600/30 hover:border-primary/50 dark:hover:border-brand-600/50'}`}>
                       <input
                         type="radio"
                         name="subscriptionType"
                         value="PREPAID"
                         checked={formData.subscriptionType === 'PREPAID'}
                         onChange={(e) => setFormData({ ...formData, subscriptionType: e.target.value as 'PREPAID' })}
-                        className="w-4 h-4 accent-primary dark:accent-[#bc13fe] border-border dark:border-[#bc13fe]/50 focus:ring-primary dark:focus:ring-[#bc13fe]"
+                        className="w-4 h-4 accent-primary dark:accent-[brand-600] border-border dark:border-brand-600/50 focus:ring-primary dark:focus:ring-[brand-600]"
                       />
                       <div className="ml-3 flex-1">
-                        <div className="text-sm font-medium text-foreground dark:text-[#e0d0ff]">⏰ {t('userModal.prepaid')}</div>
-                        <div className="text-xs text-muted-foreground dark:text-[#e0d0ff]/50">Bayar dimuka, validitas terbatas</div>
+                        <div className="text-sm font-medium text-foreground dark:text-muted-foreground">⏰ {t('userModal.prepaid')}</div>
+                        <div className="text-xs text-muted-foreground dark:text-muted-foreground/50">Bayar dimuka, validitas terbatas</div>
                       </div>
                     </label>
                   </div>
@@ -573,12 +573,12 @@ export default function UserDetailModal({
                       className={selectCls}
                     >
                       {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                        <option key={day} value={day} className="bg-background dark:bg-[#0a0520]">
+                        <option key={day} value={day} className="bg-background dark:bg-input">
                           Tanggal {day}
                         </option>
                       ))}
                     </select>
-                    <p className="text-xs text-muted-foreground dark:text-[#e0d0ff]/50 mt-1">
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 mt-1">
                       Tanggal jatuh tempo bulanan. Ubah tanggal → otomatis update expired ke bulan depan.
                     </p>
                   </div>
@@ -595,7 +595,7 @@ export default function UserDetailModal({
                     onChange={(e) => setFormData({ ...formData, expiredAt: e.target.value })}
                     className={inputCls}
                   />
-                  <p className="text-xs text-muted-foreground dark:text-[#e0d0ff]/50 mt-1">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 mt-1">
                     {formData.subscriptionType === 'POSTPAID' 
                       ? '📌 Untuk testing: expiredAt = tanggal tagihan bulan depan (auto calculated)' 
                       : 'Tanggal kadaluarsa paket. Kosongkan untuk auto dari profile.'}
@@ -635,7 +635,7 @@ export default function UserDetailModal({
                     <option value="isolate">ISOLIR INTERNET (Suspend) — isolir otomatis saat expired</option>
                     <option value="keep">TETAP TERHUBUNG (No Action) — tidak isolir meski expired</option>
                   </select>
-                  <p className="text-xs text-muted-foreground dark:text-[#e0d0ff]/50 mt-1">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 mt-1">
                     Pilih tindakan otomatis saat tanggal tagihan / expired terlewati.
                   </p>
                 </div>
@@ -649,15 +649,15 @@ export default function UserDetailModal({
                     onChange={(e) => setFormData({ ...formData, registeredAt: e.target.value })}
                     className={inputCls}
                   />
-                  <p className="text-xs text-muted-foreground dark:text-[#e0d0ff]/50 mt-1">
+                  <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 mt-1">
                     Tanggal pelanggan terdaftar. Ubah jika perlu koreksi data historis.
                   </p>
                 </div>
               </div>
 
               {/* Dokumen KTP */}
-              <div className="border border-border dark:border-[#bc13fe]/30 rounded-lg p-4 space-y-3">
-                <p className="text-sm font-semibold text-foreground dark:text-[#e0d0ff]">🪪 Dokumen Identitas (KTP)</p>
+              <div className="border border-border dark:border-brand-600/30 rounded-lg p-4 space-y-3">
+                <p className="text-sm font-semibold text-foreground dark:text-muted-foreground">🪪 Dokumen Identitas (KTP)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls}>No. NIK KTP</label>
@@ -692,8 +692,8 @@ export default function UserDetailModal({
                   </div>
                 </div>
               </div>
-              <div className="border border-border dark:border-[#00f7ff]/20 rounded-lg p-4 space-y-3">
-                <p className="text-sm font-semibold text-foreground dark:text-[#e0d0ff]">📷 Foto Instalasi</p>
+              <div className="border border-border dark:border-brand-500/20 rounded-lg p-4 space-y-3">
+                <p className="text-sm font-semibold text-foreground dark:text-muted-foreground">📷 Foto Instalasi</p>
                 <div>
                   <input type="file" accept="image/*" onChange={handleUploadInstallation} disabled={uploadingInstallation} className="sr-only" id="installationUploadEdit" />
                   {installCameraOpen ? (
@@ -703,22 +703,22 @@ export default function UserDetailModal({
                     />
                   ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    <label htmlFor={uploadingInstallation ? undefined : 'installationUploadEdit'} className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs border border-border dark:border-[#00f7ff]/30 rounded hover:bg-muted dark:hover:bg-[#00f7ff]/10 text-muted-foreground dark:text-[#e0d0ff]/70 ${uploadingInstallation ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}>
+                    <label htmlFor={uploadingInstallation ? undefined : 'installationUploadEdit'} className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs border border-border dark:border-brand-500/30 rounded hover:bg-muted dark:hover:bg-brand-500/10 text-muted-foreground dark:text-muted-foreground/70 ${uploadingInstallation ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}>
                       <ImageIcon className="w-3 h-3" /> {uploadingInstallation ? '⏳ Mengupload...' : 'Galeri'}
                     </label>
-                    <button type="button" onClick={() => setInstallCameraOpen(true)} disabled={uploadingInstallation} className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs border border-primary/30 dark:border-[#00f7ff]/40 rounded hover:bg-primary/5 dark:hover:bg-[#00f7ff]/10 text-primary/70 dark:text-[#00f7ff]/70 ${uploadingInstallation ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    <button type="button" onClick={() => setInstallCameraOpen(true)} disabled={uploadingInstallation} className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs border border-primary/30 dark:border-brand-500/40 rounded hover:bg-primary/5 dark:hover:bg-brand-500/10 text-primary/70 dark:text-brand-400/70 ${uploadingInstallation ? 'opacity-50 cursor-not-allowed' : ''}`}>
                       <Camera className="w-3 h-3" /> Kamera
                     </button>
                   </div>
                   )}
-                  <p className="text-[9px] text-muted-foreground dark:text-[#e0d0ff]/40 mt-1">Bisa upload beberapa foto. Maks. 5MB per foto. Kamera otomatis mengambil GPS.</p>
+                  <p className="text-[9px] text-muted-foreground dark:text-muted-foreground/40 mt-1">Bisa upload beberapa foto. Maks. 5MB per foto. Kamera otomatis mengambil GPS.</p>
                 </div>
                 {formData.installationPhotos.length > 0 && (
                   <div className="grid grid-cols-4 gap-2">
                     {formData.installationPhotos.map((photo, index) => (
                       <div key={index} className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photo} alt={`Instalasi ${index + 1}`} className="w-full h-16 object-cover rounded border border-border dark:border-[#00f7ff]/20" />
+                        <img src={photo} alt={`Instalasi ${index + 1}`} className="w-full h-16 object-cover rounded border border-border dark:border-brand-500/20" />
                         <button type="button" onClick={() => setFormData(prev => ({ ...prev, installationPhotos: prev.installationPhotos.filter((_, i) => i !== index) }))} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] hover:bg-red-600">×</button>
                       </div>
                     ))}
@@ -726,17 +726,17 @@ export default function UserDetailModal({
                 )}
               </div>
 
-              <div className="flex justify-end gap-2 pt-4 border-t border-border dark:border-[#bc13fe]/30">
+              <div className="flex justify-end gap-2 pt-4 border-t border-border dark:border-brand-600/30">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border rounded-lg transition-all dark:text-[#e0d0ff] dark:bg-[#bc13fe]/20 dark:hover:bg-[#bc13fe]/30 dark:border-[#bc13fe]/50"
+                  className="px-4 py-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border rounded-lg transition-all dark:text-muted-foreground dark:bg-brand-600/20 dark:hover:bg-brand-600/30 dark:border-brand-600/50"
                 >
                   {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-md transition-all dark:bg-gradient-to-r dark:from-[#00f7ff] dark:to-[#bc13fe] dark:text-white dark:hover:from-[#00f7ff]/80 dark:hover:to-[#bc13fe]/80 dark:shadow-[0_0_15px_rgba(0,247,255,0.4)]"
+                  className="px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg shadow-md transition-all dark:bg-gradient-to-r dark:from-brand-400 dark:to-brand-600 dark:text-white dark:hover:from-brand-400/80 dark:hover:to-brand-600/80 dark:shadow-[0_0_15px_rgba(70, 95, 255,0.4)]"
                 >
                   {t('common.saveChanges')}
                 </button>
@@ -747,10 +747,10 @@ export default function UserDetailModal({
           {activeTab === 'sessions' && (
             <div>
               {loading ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary dark:text-[#00f7ff]" />
+                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary dark:text-brand-400" />
                 </div>
               ) : sessions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground dark:text-[#e0d0ff]/50">
+                <div className="text-center py-8 text-muted-foreground dark:text-muted-foreground/50">
                   <Clock className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>{t('userModal.noSessions')}</p>
                 </div>
@@ -759,7 +759,7 @@ export default function UserDetailModal({
                   {sessions.map((session) => (
                     <div
                       key={session.id}
-                      className="p-4 border border-border dark:border-[#bc13fe]/30 rounded-lg bg-muted/30 dark:bg-[#0a0520]/30"
+                      className="p-4 border border-border dark:border-brand-600/30 rounded-lg bg-muted/30 dark:bg-input/30"
                     >
                       <div className="flex items-start justify-between mb-2">
                         <div>
@@ -813,10 +813,10 @@ export default function UserDetailModal({
           {activeTab === 'auth' && (
             <div>
               {loading ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary dark:text-[#00f7ff]" />
+                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary dark:text-brand-400" />
                 </div>
               ) : authLogs.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground dark:text-[#e0d0ff]/50">
+                <div className="text-center py-8 text-muted-foreground dark:text-muted-foreground/50">
                   <XCircle className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>{t('userModal.noAuthLogs')}</p>
                 </div>
@@ -858,10 +858,10 @@ export default function UserDetailModal({
           {activeTab === 'invoices' && (
             <div>
               {loading ? (
-                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary dark:text-[#00f7ff]" />
+                <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-primary dark:text-brand-400" />
                 </div>
               ) : invoices.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground dark:text-[#e0d0ff]/50">
+                <div className="text-center py-8 text-muted-foreground dark:text-muted-foreground/50">
                   <p>{t('userModal.noInvoices')}</p>
                 </div>
               ) : (
@@ -869,7 +869,7 @@ export default function UserDetailModal({
                   {invoices.map((invoice) => (
                     <div
                       key={invoice.id}
-                      className="p-4 border border-border dark:border-[#bc13fe]/30 rounded-lg bg-muted/30 dark:bg-[#0a0520]/30"
+                      className="p-4 border border-border dark:border-brand-600/30 rounded-lg bg-muted/30 dark:bg-input/30"
                     >
                       <div className="flex items-start justify-between">
                         <div>
@@ -913,12 +913,12 @@ export default function UserDetailModal({
           {activeTab === 'photos' && (
             <div className="space-y-6">
               {/* KTP Section */}
-              <div className="border border-border dark:border-[#bc13fe]/30 rounded-xl p-4 space-y-3">
+              <div className="border border-border dark:border-brand-600/30 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="text-base">🪪</span>
-                  <p className="text-sm font-semibold text-foreground dark:text-[#e0d0ff]">Foto KTP</p>
+                  <p className="text-sm font-semibold text-foreground dark:text-muted-foreground">Foto KTP</p>
                   {formData.idCardNumber && (
-                    <span className="ml-auto text-xs text-muted-foreground dark:text-[#e0d0ff]/50 font-mono bg-muted dark:bg-[#0a0520]/60 px-2 py-0.5 rounded">
+                    <span className="ml-auto text-xs text-muted-foreground dark:text-muted-foreground/50 font-mono bg-muted dark:bg-input/60 px-2 py-0.5 rounded">
                       NIK: {formData.idCardNumber}
                     </span>
                   )}
@@ -929,7 +929,7 @@ export default function UserDetailModal({
                     <img
                       src={formData.idCardPhoto}
                       alt="Foto KTP"
-                      className="w-full max-h-64 object-contain rounded-lg border border-border dark:border-[#bc13fe]/30 bg-black/5 dark:bg-black/30"
+                      className="w-full max-h-64 object-contain rounded-lg border border-border dark:border-brand-600/30 bg-black/5 dark:bg-black/30"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-lg">
@@ -939,7 +939,7 @@ export default function UserDetailModal({
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 h-32 rounded-lg border-2 border-dashed border-border dark:border-[#bc13fe]/30 text-muted-foreground dark:text-[#e0d0ff]/40">
+                  <div className="flex flex-col items-center justify-center gap-2 h-32 rounded-lg border-2 border-dashed border-border dark:border-brand-600/30 text-muted-foreground dark:text-muted-foreground/40">
                     <ImageIcon className="w-8 h-8 opacity-30" />
                     <p className="text-xs">Belum ada foto KTP</p>
                   </div>
@@ -947,12 +947,12 @@ export default function UserDetailModal({
               </div>
 
               {/* Installation Photos Section */}
-              <div className="border border-border dark:border-[#00f7ff]/20 rounded-xl p-4 space-y-3">
+              <div className="border border-border dark:border-brand-500/20 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="text-base">📷</span>
-                  <p className="text-sm font-semibold text-foreground dark:text-[#e0d0ff]">Foto Instalasi</p>
+                  <p className="text-sm font-semibold text-foreground dark:text-muted-foreground">Foto Instalasi</p>
                   {formData.installationPhotos.length > 0 && (
-                    <span className="ml-auto text-xs bg-primary/10 dark:bg-[#00f7ff]/10 text-primary dark:text-[#00f7ff] px-2 py-0.5 rounded-full">
+                    <span className="ml-auto text-xs bg-primary/10 dark:bg-brand-500/10 text-primary dark:text-brand-400 px-2 py-0.5 rounded-full">
                       {formData.installationPhotos.length} foto
                     </span>
                   )}
@@ -969,7 +969,7 @@ export default function UserDetailModal({
                         <img
                           src={photo}
                           alt={`Instalasi ${index + 1}`}
-                          className="w-full aspect-[4/3] object-cover rounded-lg border border-border dark:border-[#00f7ff]/20"
+                          className="w-full aspect-[4/3] object-cover rounded-lg border border-border dark:border-brand-500/20"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 rounded-lg">
@@ -984,14 +984,14 @@ export default function UserDetailModal({
                     ))}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-2 h-32 rounded-lg border-2 border-dashed border-border dark:border-[#00f7ff]/20 text-muted-foreground dark:text-[#e0d0ff]/40">
+                  <div className="flex flex-col items-center justify-center gap-2 h-32 rounded-lg border-2 border-dashed border-border dark:border-brand-500/20 text-muted-foreground dark:text-muted-foreground/40">
                     <Camera className="w-8 h-8 opacity-30" />
                     <p className="text-xs">Belum ada foto instalasi</p>
                   </div>
                 )}
               </div>
 
-              <p className="text-[10px] text-muted-foreground dark:text-[#e0d0ff]/30 text-center">
+              <p className="text-[10px] text-muted-foreground dark:text-muted-foreground/30 text-center">
                 Untuk menambah / menghapus foto, buka tab Info Pengguna
               </p>
             </div>

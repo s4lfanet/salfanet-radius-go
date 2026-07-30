@@ -142,14 +142,14 @@ export default function TechnicianCustomersPage() {
           <h1 className="text-lg font-bold text-slate-900 dark:text-white">
             {t('techPortal.customers')}
           </h1>
-          <p className="text-xs text-slate-500 dark:text-[#e0d0ff]/50 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-muted-foreground/50 mt-0.5">
             {total.toLocaleString('id-ID')} {t('techPortal.customersSubtitle')}
           </p>
         </div>
         <button
           onClick={loadCustomers}
           disabled={loading}
-          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-[#1a0f35]/80 hover:bg-slate-50 dark:hover:bg-[#bc13fe]/10 text-slate-600 dark:text-[#e0d0ff] border border-slate-200 dark:border-[#bc13fe]/30 rounded-xl transition-all shadow-sm"
+          className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-white dark:bg-secondary/80 hover:bg-slate-50 dark:hover:bg-brand-600/10 text-slate-600 dark:text-muted-foreground border border-slate-200 dark:border-brand-600/30 rounded-xl transition-all shadow-sm"
         >
           <RefreshCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           <span className="hidden sm:inline">{t('techPortal.refresh')}</span>
@@ -164,7 +164,7 @@ export default function TechnicianCustomersPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('techPortal.searchCustomer')}
-            className="w-full pl-9 pr-8 py-2.5 text-sm bg-white dark:bg-[#1a0f35]/80 border border-slate-200 dark:border-[#bc13fe]/20 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-[#bc13fe]/50 focus:ring-1 focus:ring-[#bc13fe]/20 transition"
+            className="w-full pl-9 pr-8 py-2.5 text-sm bg-white dark:bg-secondary/80 border border-slate-200 dark:border-brand-600/20 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-600/50 focus:ring-1 focus:ring-[brand-600]/20 transition"
           />
           {search && (
             <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-full transition">
@@ -175,7 +175,7 @@ export default function TechnicianCustomersPage() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-3 py-2.5 text-sm bg-white dark:bg-[#1a0f35]/80 border border-slate-200 dark:border-[#bc13fe]/20 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-[#bc13fe]/50 transition sm:w-40"
+          className="px-3 py-2.5 text-sm bg-white dark:bg-secondary/80 border border-slate-200 dark:border-brand-600/20 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:border-brand-600/50 transition sm:w-40"
         >
           <option value="">{t('techPortal.allStatus')}</option>
           {STATUS_FILTERS.map((s) => (
@@ -187,7 +187,7 @@ export default function TechnicianCustomersPage() {
       {/* Active filter pill */}
       {filterStatus && (
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500 dark:text-[#e0d0ff]/50">Filter:</span>
+          <span className="text-xs text-slate-500 dark:text-muted-foreground/50">Filter:</span>
           <button
             onClick={() => setFilterStatus('')}
             className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full ${STATUS_CONFIG[filterStatus]?.badge ?? ''}`}
@@ -202,17 +202,17 @@ export default function TechnicianCustomersPage() {
       {/* Table */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-[#bc13fe]" />
-          <p className="text-xs text-slate-400 dark:text-[#e0d0ff]/40">{t('techPortal.loading')}</p>
+          <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+          <p className="text-xs text-slate-400 dark:text-muted-foreground/40">{t('techPortal.loading')}</p>
         </div>
       ) : customers.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-[#1a0f35]/60 flex items-center justify-center">
-            <Users className="w-7 h-7 text-slate-300 dark:text-[#bc13fe]/30" />
+          <div className="w-14 h-14 rounded-xl bg-slate-100 dark:bg-secondary/60 flex items-center justify-center">
+            <Users className="w-7 h-7 text-slate-300 dark:text-brand-600/30" />
           </div>
-          <p className="text-sm text-slate-500 dark:text-[#e0d0ff]/40">{t('techPortal.noData')}</p>
+          <p className="text-sm text-slate-500 dark:text-muted-foreground/40">{t('techPortal.noData')}</p>
           {search && (
-            <button onClick={() => setSearch('')} className="text-xs text-[#bc13fe] hover:underline">
+            <button onClick={() => setSearch('')} className="text-xs text-brand-600 hover:underline">
               Clear search
             </button>
           )}
@@ -220,20 +220,20 @@ export default function TechnicianCustomersPage() {
       ) : (
         <>
           {/* Mobile Card View */}
-          <div className="block md:hidden divide-y divide-slate-100 dark:divide-[#bc13fe]/8">
+          <div className="block md:hidden divide-y divide-slate-100 dark:divide-[brand-600]/8">
             {customers.map((c) => {
               const cfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.active;
               const nearExpiry = isNearExpiry(c.expiredAt);
               return (
-                <div key={c.id} className="p-3 space-y-2 hover:bg-slate-50 dark:hover:bg-[#bc13fe]/5 transition-colors">
+                <div key={c.id} className="p-3 space-y-2 hover:bg-slate-50 dark:hover:bg-brand-600/5 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={`w-1.5 h-8 rounded-full flex-shrink-0 ${cfg.dot}`} />
                       <div className="min-w-0">
                         <p className="font-semibold text-slate-900 dark:text-white text-[13px] truncate">{c.name}</p>
-                        <p className="text-[11px] font-mono text-[#00bcd4] dark:text-[#00f7ff] truncate">
+                        <p className="text-[11px] font-mono text-[#00bcd4] dark:text-brand-400 truncate">
                           {c.username}
-                          {c.customerId && <span className="ml-1.5 text-[#bc13fe]/60">#{c.customerId}</span>}
+                          {c.customerId && <span className="ml-1.5 text-brand-600/60">#{c.customerId}</span>}
                         </p>
                       </div>
                     </div>
@@ -243,30 +243,30 @@ export default function TechnicianCustomersPage() {
                     </span>
                   </div>
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] ml-3.5">
-                    <div className="flex items-center gap-1 text-slate-500 dark:text-[#e0d0ff]/50">
+                    <div className="flex items-center gap-1 text-slate-500 dark:text-muted-foreground/50">
                       <Phone className="w-2.5 h-2.5 flex-shrink-0" />
                       <span>{c.phone}</span>
                     </div>
                     {c.profile ? (
                       <div className="text-right">
-                        <span className="font-medium text-slate-700 dark:text-[#e0d0ff]/80">{c.profile.name}</span>
-                        <span className="text-slate-400 dark:text-[#e0d0ff]/40 ml-1">{formatIDR(c.profile.price)}</span>
+                        <span className="font-medium text-slate-700 dark:text-muted-foreground/80">{c.profile.name}</span>
+                        <span className="text-slate-400 dark:text-muted-foreground/40 ml-1">{formatIDR(c.profile.price)}</span>
                       </div>
                     ) : <div />}
                     {c.area && (
-                      <div className="flex items-center gap-1 text-slate-400 dark:text-[#e0d0ff]/40">
+                      <div className="flex items-center gap-1 text-slate-400 dark:text-muted-foreground/40">
                         <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
                         <span className="truncate">{c.area.name}</span>
                       </div>
                     )}
                     {c.router && (
-                      <div className="flex items-center gap-1 text-slate-400 dark:text-[#e0d0ff]/35">
+                      <div className="flex items-center gap-1 text-slate-400 dark:text-muted-foreground/35">
                         <Wifi className="w-2.5 h-2.5 flex-shrink-0" />
                         <span className="truncate">{c.router.name}</span>
                       </div>
                     )}
                     {c.expiredAt && (
-                      <div className={`col-span-2 flex items-center gap-1 ${nearExpiry ? 'text-red-500 dark:text-red-400 font-semibold' : 'text-slate-500 dark:text-[#e0d0ff]/50'}`}>
+                      <div className={`col-span-2 flex items-center gap-1 ${nearExpiry ? 'text-red-500 dark:text-red-400 font-semibold' : 'text-slate-500 dark:text-muted-foreground/50'}`}>
                         <CalendarDays className="w-3 h-3 flex-shrink-0" />
                         <span>Expired: {formatDate(c.expiredAt)}</span>
                       </div>
@@ -278,39 +278,39 @@ export default function TechnicianCustomersPage() {
           </div>
 
           {/* Desktop Table */}
-          <div className="bg-white dark:bg-[#1a0f35]/60 rounded-2xl border border-slate-200 dark:border-[#bc13fe]/15 overflow-hidden hidden md:block">
+          <div className="bg-white dark:bg-secondary/60 rounded-xl border border-slate-200 dark:border-brand-600/15 overflow-hidden hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 dark:border-[#bc13fe]/10 bg-slate-50 dark:bg-[#0a0520]/40">
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#e0d0ff]/50 whitespace-nowrap">
+                  <tr className="border-b border-slate-100 dark:border-brand-600/10 bg-slate-50 dark:bg-input/40">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-muted-foreground/50 whitespace-nowrap">
                       {t('techPortal.name')} / Username
                     </th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#e0d0ff]/50 whitespace-nowrap">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-muted-foreground/50 whitespace-nowrap">
                       {t('techPortal.phone')}
                     </th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#e0d0ff]/50 whitespace-nowrap">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-muted-foreground/50 whitespace-nowrap">
                       Paket
                     </th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#e0d0ff]/50 whitespace-nowrap">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-muted-foreground/50 whitespace-nowrap">
                       Area / Router
                     </th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#e0d0ff]/50 whitespace-nowrap">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-muted-foreground/50 whitespace-nowrap">
                       Expired
                     </th>
-                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#e0d0ff]/50 whitespace-nowrap">
+                    <th className="text-left px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-muted-foreground/50 whitespace-nowrap">
                       Status
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-[#bc13fe]/8">
+                <tbody className="divide-y divide-slate-100 dark:divide-[brand-600]/8">
                   {customers.map((c) => {
                     const cfg = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.active;
                     const nearExpiry = isNearExpiry(c.expiredAt);
                     return (
                       <tr
                         key={c.id}
-                        className="hover:bg-slate-50 dark:hover:bg-[#bc13fe]/5 transition-colors"
+                        className="hover:bg-slate-50 dark:hover:bg-brand-600/5 transition-colors"
                       >
                         {/* Name + Username */}
                         <td className="px-4 py-3">
@@ -320,10 +320,10 @@ export default function TechnicianCustomersPage() {
                               <p className="font-semibold text-slate-900 dark:text-white text-[13px] truncate max-w-[160px]">
                                 {c.name}
                               </p>
-                              <p className="text-[11px] font-mono text-[#00bcd4] dark:text-[#00f7ff] truncate">
+                              <p className="text-[11px] font-mono text-[#00bcd4] dark:text-brand-400 truncate">
                                 {c.username}
                                 {c.customerId && (
-                                  <span className="ml-1.5 text-[#bc13fe]/60 dark:text-[#bc13fe]/50">
+                                  <span className="ml-1.5 text-brand-600/60 dark:text-brand-600/50">
                                     #{c.customerId}
                                   </span>
                                 )}
@@ -334,7 +334,7 @@ export default function TechnicianCustomersPage() {
 
                         {/* Phone */}
                         <td className="px-4 py-3">
-                          <span className="text-[12px] text-slate-600 dark:text-[#e0d0ff]/70 whitespace-nowrap">
+                          <span className="text-[12px] text-slate-600 dark:text-muted-foreground/70 whitespace-nowrap">
                             {c.phone}
                           </span>
                         </td>
@@ -343,10 +343,10 @@ export default function TechnicianCustomersPage() {
                         <td className="px-4 py-3">
                           {c.profile ? (
                             <div>
-                              <p className="text-[12px] font-medium text-slate-700 dark:text-[#e0d0ff]/80 whitespace-nowrap">
+                              <p className="text-[12px] font-medium text-slate-700 dark:text-muted-foreground/80 whitespace-nowrap">
                                 {c.profile.name}
                               </p>
-                              <p className="text-[11px] text-slate-400 dark:text-[#e0d0ff]/40">
+                              <p className="text-[11px] text-slate-400 dark:text-muted-foreground/40">
                                 {formatIDR(c.profile.price)}
                               </p>
                             </div>
@@ -359,13 +359,13 @@ export default function TechnicianCustomersPage() {
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-0.5">
                             {c.area && (
-                              <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-[#e0d0ff]/50">
+                              <div className="flex items-center gap-1 text-[11px] text-slate-500 dark:text-muted-foreground/50">
                                 <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
                                 <span className="truncate max-w-[100px]">{c.area.name}</span>
                               </div>
                             )}
                             {c.router && (
-                              <div className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-[#e0d0ff]/35">
+                              <div className="flex items-center gap-1 text-[11px] text-slate-400 dark:text-muted-foreground/35">
                                 <Wifi className="w-2.5 h-2.5 flex-shrink-0" />
                                 <span className="truncate max-w-[100px]">{c.router.name}</span>
                               </div>
@@ -379,7 +379,7 @@ export default function TechnicianCustomersPage() {
                         {/* Expiry */}
                         <td className="px-4 py-3 whitespace-nowrap">
                           {c.expiredAt ? (
-                            <div className={`flex items-center gap-1 text-[12px] ${nearExpiry ? 'text-red-500 dark:text-red-400 font-semibold' : 'text-slate-500 dark:text-[#e0d0ff]/50'}`}>
+                            <div className={`flex items-center gap-1 text-[12px] ${nearExpiry ? 'text-red-500 dark:text-red-400 font-semibold' : 'text-slate-500 dark:text-muted-foreground/50'}`}>
                               <CalendarDays className="w-3 h-3 flex-shrink-0" />
                               {formatDate(c.expiredAt)}
                             </div>
@@ -406,24 +406,24 @@ export default function TechnicianCustomersPage() {
           {/* Pagination */}
           {pages > 1 && (
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs text-slate-400 dark:text-[#e0d0ff]/40">
+              <span className="text-xs text-slate-400 dark:text-muted-foreground/40">
                 {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, total)} dari {total.toLocaleString('id-ID')}
               </span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="p-2 rounded-xl bg-white dark:bg-[#1a0f35]/60 border border-slate-200 dark:border-[#bc13fe]/20 text-slate-600 dark:text-[#e0d0ff] disabled:opacity-30 hover:border-[#bc13fe]/40 transition-all"
+                  className="p-2 rounded-xl bg-white dark:bg-secondary/60 border border-slate-200 dark:border-brand-600/20 text-slate-600 dark:text-muted-foreground disabled:opacity-30 hover:border-brand-600/40 transition-all"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-[#e0d0ff]/50">
+                <span className="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-muted-foreground/50">
                   {page} / {pages}
                 </span>
                 <button
                   onClick={() => setPage((p) => Math.min(pages, p + 1))}
                   disabled={page >= pages}
-                  className="p-2 rounded-xl bg-white dark:bg-[#1a0f35]/60 border border-slate-200 dark:border-[#bc13fe]/20 text-slate-600 dark:text-[#e0d0ff] disabled:opacity-30 hover:border-[#bc13fe]/40 transition-all"
+                  className="p-2 rounded-xl bg-white dark:bg-secondary/60 border border-slate-200 dark:border-brand-600/20 text-slate-600 dark:text-muted-foreground disabled:opacity-30 hover:border-brand-600/40 transition-all"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>

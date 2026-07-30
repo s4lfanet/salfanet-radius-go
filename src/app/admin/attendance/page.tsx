@@ -162,7 +162,7 @@ export default function AttendancePage() {
           { label: 'Tidak Hadir', count: stats.absent, color: 'text-red-500', bg: 'bg-red-500/10' },
           { label: 'Terlambat', count: stats.late, color: 'text-orange-500', bg: 'bg-orange-500/10' },
         ].map(s => (
-          <div key={s.label} className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+          <div key={s.label} className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
             <p className={`text-2xl font-bold ${s.color}`}>{s.count}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{s.label}</p>
           </div>
@@ -197,7 +197,7 @@ export default function AttendancePage() {
           <p>Belum ada data absensi</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">

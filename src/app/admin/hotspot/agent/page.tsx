@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
@@ -340,29 +340,21 @@ export default function AgentPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
-        <RefreshCw className="w-12 h-12 animate-spin text-brand-500 dark:text-[#00f7ff] dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] relative z-10" />
+        
+        <RefreshCw className="w-12 h-12 animate-spin text-brand-500 dark:text-brand-400 dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] relative z-10" />
       </div>
     );
   }
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-              <Users className="w-5 h-5 text-brand-500 dark:text-[#00f7ff]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+              <Users className="w-5 h-5 text-brand-500 dark:text-brand-400" />
               {t('agent.title')}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('agent.subtitle')}</p>
@@ -442,7 +434,7 @@ export default function AgentPage() {
             <div className="text-center py-8 text-muted-foreground text-xs">{t('agent.noAgentsFound')}</div>
           ) : (
             agents.map((agent) => (
-              <div key={agent.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3">
+              <div key={agent.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <input
@@ -672,16 +664,16 @@ export default function AgentPage() {
               <div>
                 <ModalLabel>{t('agent.router')}/NAS</ModalLabel>
                 <ModalSelect value={formData.routerId} onChange={(e) => setFormData({ ...formData, routerId: e.target.value })}>
-                  <option value="" className="dark:bg-[#0a0520]">{t('agent.noRouter')}</option>
-                  {routers.map((router) => (<option key={router.id} value={router.id} className="dark:bg-[#0a0520]">{router.name} ({router.nasname})</option>))}
+                  <option value="" className="dark:bg-input">{t('agent.noRouter')}</option>
+                  {routers.map((router) => (<option key={router.id} value={router.id} className="dark:bg-input">{router.name} ({router.nasname})</option>))}
                 </ModalSelect>
               </div>
               {editingAgent && (
                 <div>
                   <ModalLabel>{t('common.status')}</ModalLabel>
                   <ModalSelect value={formData.isActive ? 'active' : 'inactive'} onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}>
-                    <option value="active" className="dark:bg-[#0a0520]">{t('common.active')}</option>
-                    <option value="inactive" className="dark:bg-[#0a0520]">{t('common.inactive')}</option>
+                    <option value="active" className="dark:bg-input">{t('common.active')}</option>
+                    <option value="inactive" className="dark:bg-input">{t('common.inactive')}</option>
                   </ModalSelect>
                 </div>
               )}
@@ -715,15 +707,15 @@ export default function AgentPage() {
             <ModalDescription>{selectedAgentForBalance?.name}</ModalDescription>
           </ModalHeader>
           <ModalBody className="space-y-4">
-            <div className="bg-[#bc13fe]/10 rounded-lg p-3 border border-[#bc13fe]/30">
+            <div className="bg-brand-600/10 rounded-lg p-3 border border-brand-600/30">
               <p className="text-[10px] text-muted-foreground">{t('agent.currentBalance')}</p>
-              <p className="text-lg font-bold text-[#00f7ff] drop-shadow-[0_0_10px_rgba(0,247,255,0.5)]">{selectedAgentForBalance && formatCurrency(selectedAgentForBalance.balance)}</p>
+              <p className="text-lg font-bold text-brand-400 drop-shadow-[0_0_10px_rgba(70, 95, 255,0.5)]">{selectedAgentForBalance && formatCurrency(selectedAgentForBalance.balance)}</p>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setBalanceType('add')} className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${balanceType === 'add' ? 'border-[#00ff88] bg-[#00ff88]/10 text-[#00ff88] shadow-[0_0_15px_rgba(0,255,136,0.3)]' : 'border-[#bc13fe]/30 hover:border-[#00ff88]/50'}`}>
+              <button type="button" onClick={() => setBalanceType('add')} className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${balanceType === 'add' ? 'border-[success] bg-[success]/10 text-[success] shadow-[0_0_15px_rgba(18, 183, 106,0.3)]' : 'border-brand-600/30 hover:border-[success]/50'}`}>
                 <DollarSign className="w-3.5 h-3.5 mx-auto mb-0.5" /> {t('agent.addBalance')}
               </button>
-              <button type="button" onClick={() => setBalanceType('subtract')} className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${balanceType === 'subtract' ? 'border-[#ff4466] bg-[#ff4466]/10 text-[#ff6b8a] shadow-[0_0_15px_rgba(255,68,102,0.3)]' : 'border-[#bc13fe]/30 hover:border-[#ff4466]/50'}`}>
+              <button type="button" onClick={() => setBalanceType('subtract')} className={`px-3 py-2 rounded-lg border-2 text-xs font-medium transition-all ${balanceType === 'subtract' ? 'border-[#ff4466] bg-[#ff4466]/10 text-[#ff6b8a] shadow-[0_0_15px_rgba(255,68,102,0.3)]' : 'border-brand-600/30 hover:border-[#ff4466]/50'}`}>
                 <DollarSign className="w-3.5 h-3.5 mx-auto mb-0.5" /> {t('agent.subtractBalance')}
               </button>
             </div>
@@ -736,10 +728,10 @@ export default function AgentPage() {
               <ModalTextarea value={balanceNote} onChange={(e) => setBalanceNote(e.target.value)} placeholder={t('common.optional')} rows={2} />
             </div>
             {balanceAmount && selectedAgentForBalance && !isNaN(parseInt(balanceAmount)) && (
-              <div className="bg-muted/50 dark:bg-[#0a0520] rounded-lg p-2 text-xs border border-[#bc13fe]/30">
+              <div className="bg-muted/50 dark:bg-input rounded-lg p-2 text-xs border border-brand-600/30">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t('agent.newBalance')}:</span>
-                  <span className="font-bold text-[#00f7ff]">{formatCurrency(balanceType === 'add' ? selectedAgentForBalance.balance + parseInt(balanceAmount) : selectedAgentForBalance.balance - parseInt(balanceAmount))}</span>
+                  <span className="font-bold text-brand-400">{formatCurrency(balanceType === 'add' ? selectedAgentForBalance.balance + parseInt(balanceAmount) : selectedAgentForBalance.balance - parseInt(balanceAmount))}</span>
                 </div>
               </div>
             )}
@@ -759,21 +751,21 @@ export default function AgentPage() {
           <ModalBody className="max-h-[60vh] overflow-y-auto">
             {loadingHistory ? (
               <div className="flex items-center justify-center h-24">
-                <RefreshCw className="w-4 h-4 animate-spin text-[#00f7ff]" />
+                <RefreshCw className="w-4 h-4 animate-spin text-brand-400" />
               </div>
             ) : selectedMonthDetail ? (
               <div className="space-y-3">
-                <button onClick={() => setSelectedMonthDetail(null)} className="text-xs text-[#00f7ff] hover:underline">
-                  ← {t('common.back')}
+                <button onClick={() => setSelectedMonthDetail(null)} className="text-xs text-brand-400 hover:underline">
+                  ? {t('common.back')}
                 </button>
-                <div className="bg-[#00f7ff]/10 rounded-lg p-3 border border-[#00f7ff]/30">
+                <div className="bg-brand-500/10 rounded-lg p-3 border border-brand-500/30">
                   <p className="text-xs font-semibold text-foreground">
                     {formatWIB(new Date(selectedMonthDetail.year, selectedMonthDetail.month), 'MMMM yyyy')}
                   </p>
                   <div className="grid grid-cols-2 gap-3 mt-2">
                     <div>
                       <p className="text-[10px] text-muted-foreground">{t('agent.totalSales')}</p>
-                      <p className="text-sm font-bold text-[#00ff88]">{formatCurrency(selectedMonthDetail.total)}</p>
+                      <p className="text-sm font-bold text-[success]">{formatCurrency(selectedMonthDetail.total)}</p>
                     </div>
                     <div>
                       <p className="text-[10px] text-muted-foreground">{t('agent.vouchers')}</p>
@@ -783,14 +775,14 @@ export default function AgentPage() {
                 </div>
                 <div className="space-y-2">
                   {selectedMonthDetail.sales.map((sale) => (
-                    <div key={sale.id} className="border border-[#bc13fe]/30 rounded-lg p-2 hover:bg-[#bc13fe]/10 transition-colors">
+                    <div key={sale.id} className="border border-brand-600/30 rounded-lg p-2 hover:bg-brand-600/10 transition-colors">
                       <div className="flex justify-between items-start">
                         <div>
                           <p className="font-medium text-xs text-foreground">{sale.voucherCode}</p>
                           <p className="text-[10px] text-muted-foreground">{sale.profileName}</p>
-                          <p className="text-[9px] text-[#e0d0ff]/40 mt-0.5">{formatDate(sale.createdAt)}</p>
+                          <p className="text-[9px] text-muted-foreground/40 mt-0.5">{formatDate(sale.createdAt)}</p>
                         </div>
-                        <p className="font-semibold text-xs text-[#00ff88]">{formatCurrency(sale.amount)}</p>
+                        <p className="font-semibold text-xs text-[success]">{formatCurrency(sale.amount)}</p>
                       </div>
                     </div>
                   ))}
@@ -805,7 +797,7 @@ export default function AgentPage() {
                     <button
                       key={`${month.year}-${month.month}`}
                       onClick={() => handleViewMonthDetail(month.year, month.month - 1)}
-                      className="w-full border border-[#bc13fe]/30 rounded-lg p-3 hover:bg-[#bc13fe]/10 text-left transition-colors"
+                      className="w-full border border-brand-600/30 rounded-lg p-3 hover:bg-brand-600/10 text-left transition-colors"
                     >
                       <div className="flex justify-between items-center">
                         <div>
@@ -813,8 +805,8 @@ export default function AgentPage() {
                           <p className="text-[10px] text-muted-foreground">{month.count} vouchers</p>
                         </div>
                         <div className="text-right">
-                          <p className="font-semibold text-xs text-[#00ff88]">{formatCurrency(month.total)}</p>
-                          <Eye className="w-3 h-3 text-[#e0d0ff]/40 ml-auto mt-0.5" />
+                          <p className="font-semibold text-xs text-[success]">{formatCurrency(month.total)}</p>
+                          <Eye className="w-3 h-3 text-muted-foreground/40 ml-auto mt-0.5" />
                         </div>
                       </div>
                     </button>
@@ -851,11 +843,11 @@ export default function AgentPage() {
           </ModalHeader>
           <ModalBody>
             <div className="grid grid-cols-2 gap-2">
-              <button type="button" onClick={() => setBulkStatusValue(true)} className={`px-3 py-3 rounded-lg border-2 text-xs font-medium transition-all ${bulkStatusValue ? 'border-[#00ff88] bg-[#00ff88]/10 text-[#00ff88] shadow-[0_0_15px_rgba(0,255,136,0.3)]' : 'border-[#bc13fe]/30 hover:border-[#00ff88]/50 text-foreground'}`}>
-                ✓ {t('common.active')}
+              <button type="button" onClick={() => setBulkStatusValue(true)} className={`px-3 py-3 rounded-lg border-2 text-xs font-medium transition-all ${bulkStatusValue ? 'border-[success] bg-[success]/10 text-[success] shadow-[0_0_15px_rgba(18, 183, 106,0.3)]' : 'border-brand-600/30 hover:border-[success]/50 text-foreground'}`}>
+                ? {t('common.active')}
               </button>
-              <button type="button" onClick={() => setBulkStatusValue(false)} className={`px-3 py-3 rounded-lg border-2 text-xs font-medium transition-all ${!bulkStatusValue ? 'border-[#ff4466] bg-[#ff4466]/10 text-[#ff6b8a] shadow-[0_0_15px_rgba(255,68,102,0.3)]' : 'border-[#bc13fe]/30 hover:border-[#ff4466]/50 text-foreground'}`}>
-                ✗ {t('common.inactive')}
+              <button type="button" onClick={() => setBulkStatusValue(false)} className={`px-3 py-3 rounded-lg border-2 text-xs font-medium transition-all ${!bulkStatusValue ? 'border-[#ff4466] bg-[#ff4466]/10 text-[#ff6b8a] shadow-[0_0_15px_rgba(255,68,102,0.3)]' : 'border-brand-600/30 hover:border-[#ff4466]/50 text-foreground'}`}>
+                ? {t('common.inactive')}
               </button>
             </div>
           </ModalBody>

@@ -193,38 +193,38 @@ export default function MapPicker({
 
   return createPortal(
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" style={{ zIndex: 10001 }}>
-      <div className="bg-gradient-to-br from-slate-900 to-[#1a0f35] rounded-xl sm:rounded-2xl shadow-[0_0_50px_rgba(188,19,254,0.3)] border-2 border-[#bc13fe]/30 w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-gradient-to-br from-slate-900 to-[secondary] rounded-xl sm:rounded-xl shadow-[0_0_50px_rgba(122, 90, 248,0.3)] border-2 border-brand-600/30 w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-[#bc13fe]/20 bg-gradient-to-r from-[#bc13fe]/10 to-[#00f7ff]/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-brand-600/20 bg-gradient-to-r from-brand-600/10 to-brand-400/10 flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="p-1.5 sm:p-2 bg-[#00f7ff]/20 rounded-lg border border-[#00f7ff]/30">
-              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-[#00f7ff]" />
+            <div className="p-1.5 sm:p-2 bg-brand-500/20 rounded-lg border border-brand-500/30">
+              <MapPin className="h-4 w-4 sm:h-5 sm:w-5 text-brand-400" />
             </div>
             <div>
-              <h3 className="text-base sm:text-lg font-bold text-white drop-shadow-[0_0_10px_rgba(0,247,255,0.5)]">Pilih Lokasi di Peta</h3>
-              <p className="text-[10px] sm:text-xs text-[#e0d0ff]/70 hidden sm:block">Klik pada peta untuk menentukan lokasi</p>
+              <h3 className="text-base sm:text-lg font-bold text-white drop-shadow-[0_0_10px_rgba(70, 95, 255,0.5)]">Pilih Lokasi di Peta</h3>
+              <p className="text-[10px] sm:text-xs text-muted-foreground/70 hidden sm:block">Klik pada peta untuk menentukan lokasi</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 sm:p-2 hover:bg-[#bc13fe]/20 rounded-lg transition-all group flex-shrink-0"
+            className="p-1.5 sm:p-2 hover:bg-brand-600/20 rounded-lg transition-all group flex-shrink-0"
           >
-            <X className="h-4 w-4 sm:h-5 sm:w-5 text-[#e0d0ff] group-hover:text-[#ff44cc]" />
+            <X className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground group-hover:text-accent-foreground" />
           </button>
         </div>
 
         {/* Map Container */}
         <div className="p-3 sm:p-6 flex-1 overflow-auto">
-          <div className="relative h-[350px] sm:h-[400px] md:h-[500px] rounded-lg sm:rounded-xl overflow-hidden border-2 border-[#bc13fe]/30 shadow-[0_0_20px_rgba(188,19,254,0.2)]">
+          <div className="relative h-[350px] sm:h-[400px] md:h-[500px] rounded-lg sm:rounded-xl overflow-hidden border-2 border-brand-600/30 shadow-[0_0_20px_rgba(122, 90, 248,0.2)]">
             {/* Controls Overlay */}
             <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-[1000] flex flex-col gap-2 sm:gap-3">
               {/* Basemap Toggle */}
-              <div className="bg-slate-900/90 backdrop-blur-xl rounded-lg sm:rounded-xl shadow-[0_0_20px_rgba(0,247,255,0.2)] overflow-hidden border border-[#bc13fe]/30">
+              <div className="bg-slate-900/90 backdrop-blur-xl rounded-lg sm:rounded-xl shadow-[0_0_20px_rgba(70, 95, 255,0.2)] overflow-hidden border border-brand-600/30">
                 <button
                   onClick={() => setBasemap('street')}
                   className={`px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-[10px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 sm:gap-2 w-full ${basemap === 'street'
-                      ? 'bg-gradient-to-r from-[#00f7ff] to-[#00d4e6] text-black shadow-[0_0_15px_rgba(0,247,255,0.5)]'
-                      : 'text-[#e0d0ff] hover:bg-[#bc13fe]/20'
+                      ? 'bg-gradient-to-r from-brand-400 to-[#00d4e6] text-black shadow-[0_0_15px_rgba(70, 95, 255,0.5)]'
+                      : 'text-muted-foreground hover:bg-brand-600/20'
                     }`}
                 >
                   <Layers className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -233,9 +233,9 @@ export default function MapPicker({
                 </button>
                 <button
                   onClick={() => setBasemap('satellite')}
-                  className={`px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-[10px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 sm:gap-2 w-full border-t border-[#bc13fe]/20 ${basemap === 'satellite'
-                      ? 'bg-gradient-to-r from-[#00f7ff] to-[#00d4e6] text-black shadow-[0_0_15px_rgba(0,247,255,0.5)]'
-                      : 'text-[#e0d0ff] hover:bg-[#bc13fe]/20'
+                  className={`px-2.5 sm:px-4 py-1.5 sm:py-2.5 text-[10px] sm:text-xs font-semibold transition-all flex items-center gap-1.5 sm:gap-2 w-full border-t border-brand-600/20 ${basemap === 'satellite'
+                      ? 'bg-gradient-to-r from-brand-400 to-[#00d4e6] text-black shadow-[0_0_15px_rgba(70, 95, 255,0.5)]'
+                      : 'text-muted-foreground hover:bg-brand-600/20'
                     }`}
                 >
                   <Layers className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -247,10 +247,10 @@ export default function MapPicker({
               {/* GPS Button */}
               <button
                 onClick={handleGetCurrentLocation}
-                className="bg-slate-900/90 backdrop-blur-xl rounded-lg sm:rounded-xl shadow-[0_0_20px_rgba(0,247,255,0.2)] border border-[#bc13fe]/30 p-2 sm:p-3 hover:bg-[#bc13fe]/20 hover:shadow-[0_0_25px_rgba(0,247,255,0.4)] transition-all group"
+                className="bg-slate-900/90 backdrop-blur-xl rounded-lg sm:rounded-xl shadow-[0_0_20px_rgba(70, 95, 255,0.2)] border border-brand-600/30 p-2 sm:p-3 hover:bg-brand-600/20 hover:shadow-[0_0_25px_rgba(70, 95, 255,0.4)] transition-all group"
                 title="Gunakan lokasi saya"
               >
-                <Navigation className="h-4 w-4 sm:h-5 sm:w-5 text-[#00f7ff] group-hover:text-[#ff44cc]" />
+                <Navigation className="h-4 w-4 sm:h-5 sm:w-5 text-brand-400 group-hover:text-accent-foreground" />
               </button>
             </div>
 
@@ -263,12 +263,12 @@ export default function MapPicker({
 
             {/* Loading overlay */}
             {!mapLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-[#1a0f35] flex items-center justify-center">
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 to-[secondary] flex items-center justify-center">
                 <div className="text-center">
                   <div className="relative mx-auto mb-4">
-                    <div className="animate-spin h-10 w-10 sm:h-12 sm:w-12 border-4 border-[#bc13fe]/30 border-t-[#00f7ff] rounded-full shadow-[0_0_20px_rgba(0,247,255,0.5)]"></div>
+                    <div className="animate-spin h-10 w-10 sm:h-12 sm:w-12 border-4 border-brand-600/30 border-t-[brand-400] rounded-full shadow-[0_0_20px_rgba(70, 95, 255,0.5)]"></div>
                   </div>
-                  <p className="text-xs sm:text-sm text-[#e0d0ff]">Memuat peta...</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Memuat peta...</p>
                 </div>
               </div>
             )}
@@ -277,18 +277,18 @@ export default function MapPicker({
           {/* Coordinates Display */}
           <div className="mt-3 sm:mt-4 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
             {position ? (
-              <div className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-[#bc13fe]/20 to-[#00f7ff]/20 border border-[#00f7ff]/30 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg flex-1 min-w-0">
-                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-[#00f7ff] flex-shrink-0" />
+              <div className="flex items-center gap-1.5 sm:gap-2 bg-gradient-to-r from-brand-600/20 to-brand-400/20 border border-brand-500/30 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg flex-1 min-w-0">
+                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-brand-400 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <span className="text-[10px] sm:text-xs text-[#e0d0ff]/70">Koordinat: </span>
-                  <span className="font-mono font-semibold text-[10px] sm:text-xs text-[#00f7ff] drop-shadow-[0_0_10px_rgba(0,247,255,0.5)] break-all">
+                  <span className="text-[10px] sm:text-xs text-muted-foreground/70">Koordinat: </span>
+                  <span className="font-mono font-semibold text-[10px] sm:text-xs text-brand-400 drop-shadow-[0_0_10px_rgba(70, 95, 255,0.5)] break-all">
                     {position[0].toFixed(6)}, {position[1].toFixed(6)}
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="text-xs sm:text-sm text-[#e0d0ff]/60 flex items-center gap-1.5 sm:gap-2">
-                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-[#bc13fe]" />
+              <div className="text-xs sm:text-sm text-muted-foreground/60 flex items-center gap-1.5 sm:gap-2">
+                <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-brand-600" />
                 <span className="text-[10px] sm:text-sm">Klik pada peta untuk memilih lokasi</span>
               </div>
             )}
@@ -296,17 +296,17 @@ export default function MapPicker({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 sm:gap-3 px-3 sm:px-6 py-3 sm:py-4 border-t border-[#bc13fe]/20 bg-gradient-to-r from-[#bc13fe]/5 to-[#00f7ff]/5 flex-shrink-0">
+        <div className="flex justify-end gap-2 sm:gap-3 px-3 sm:px-6 py-3 sm:py-4 border-t border-brand-600/20 bg-gradient-to-r from-brand-600/5 to-brand-400/5 flex-shrink-0">
           <button
             onClick={onClose}
-            className="px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold border-2 border-[#bc13fe]/40 text-[#e0d0ff] rounded-lg sm:rounded-xl hover:bg-[#bc13fe]/10 hover:border-[#bc13fe]/60 transition-all"
+            className="px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-semibold border-2 border-brand-600/40 text-muted-foreground rounded-lg sm:rounded-xl hover:bg-brand-600/10 hover:border-brand-600/60 transition-all"
           >
             Batal
           </button>
           <button
             onClick={handleConfirm}
             disabled={!position}
-            className="px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold bg-gradient-to-r from-[#00f7ff] to-[#00d4e6] text-black rounded-lg sm:rounded-xl hover:shadow-[0_0_30px_rgba(0,247,255,0.5)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none transition-all"
+            className="px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-sm font-bold bg-gradient-to-r from-brand-400 to-[#00d4e6] text-black rounded-lg sm:rounded-xl hover:shadow-[0_0_30px_rgba(70, 95, 255,0.5)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none transition-all"
           >
             Pilih Lokasi Ini
           </button>

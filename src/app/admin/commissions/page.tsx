@@ -155,11 +155,11 @@ export default function CommissionsPage() {
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Pending</p>
           <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{fmt(totalPending)}</p>
         </div>
-        <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 p-4">
+        <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
           <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Total Disetujui</p>
           <p className="text-xl font-bold text-blue-600 dark:text-blue-400">{fmt(totalApproved)}</p>
         </div>
@@ -191,7 +191,7 @@ export default function CommissionsPage() {
           <p>Belum ada data komisi</p>
         </div>
       ) : (
-        <div className="bg-white dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">

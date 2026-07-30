@@ -1,4 +1,4 @@
-ï»¿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -294,7 +294,7 @@ export default function CustomerDashboard() {
       });
       const data = await res.json();
       if (data.success) {
-        toast('success', 'Bukti Transfer Terkirim', 'Admin akan mengkonfirmasi dalam 1Ã—24 jam');
+        toast('success', 'Bukti Transfer Terkirim', 'Admin akan mengkonfirmasi dalam 1×24 jam');
         setManualPayModal(null);
         setManualForm({ bankName: '', accountName: '', notes: '', file: null });
         setSelectedAdminBank(null);
@@ -315,16 +315,16 @@ export default function CustomerDashboard() {
     try {
       // Load WiFi data for device info and connected devices
       const wifiRes = await fetch('/api/customer/wifi', { headers: { 'Authorization': `Bearer ${token}` } });
-      if (!wifiRes.ok) return; // server error (e.g. 502 during restart) â€” skip silently
+      if (!wifiRes.ok) return; // server error (e.g. 502 during restart) — skip silently
       const wifiData = await wifiRes.json();
       if (wifiData.success && wifiData.device) {
         setOntDevice(wifiData.device);
         setConnectedDevices(wifiData.device.connectedHosts || []);
       } else if (wifiData.reason === 'not_configured') {
-        // GenieACS not set up â€” silently skip, no device info available
+        // GenieACS not set up — silently skip, no device info available
       }
     } catch (error) { 
-      // Silently ignore â€” WiFi info is non-critical for dashboard
+      // Silently ignore — WiFi info is non-critical for dashboard
     }
     finally { setLoadingOnt(false); }
   };
@@ -393,7 +393,7 @@ export default function CustomerDashboard() {
   return (
     <div className="p-3 lg:p-6 w-full space-y-4">
       {/* -- Hero Status Card ------------------------------------------- */}
-      <div className={`rounded-2xl p-5 relative overflow-hidden ${
+      <div className={`rounded-xl p-5 relative overflow-hidden ${
         isExpired
           ? 'bg-card dark:bg-gradient-to-br dark:from-red-900/60 dark:to-slate-900 border-2 border-red-500/40'
           : user.status === 'active'
@@ -493,7 +493,7 @@ export default function CustomerDashboard() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-foreground font-mono">{invoice.invoiceNumber}</p>
-                <p className="text-[10px] text-muted-foreground">{formatCurrency(invoice.amount)} Â· JT {formatWIB(invoice.dueDate, 'd MMM')}</p>
+                <p className="text-[10px] text-muted-foreground">{formatCurrency(invoice.amount)} · JT {formatWIB(invoice.dueDate, 'd MMM')}</p>
               </div>
               <div className="flex flex-col gap-1 flex-shrink-0">
                 {invoice.manualPaymentStatus === 'pending' ? (
@@ -690,12 +690,12 @@ export default function CustomerDashboard() {
       {/* Manual Payment Proof Modal */}
       {manualPayModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center z-50 pb-20 sm:pb-0 px-4 pt-4">
-          <div className="bg-card border border-primary/30 rounded-2xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-[0_0_40px_rgba(188,19,254,0.2)]">
+          <div className="bg-card border border-primary/30 rounded-xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-[0_0_40px_rgba(188,19,254,0.2)]">
             <div className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-bold text-foreground">Kirim Bukti Transfer</h3>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{manualPayModal.invoiceNumber} â€” {formatCurrency(manualPayModal.amount)}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">{manualPayModal.invoiceNumber} — {formatCurrency(manualPayModal.amount)}</p>
                 </div>
                 <button onClick={() => setManualPayModal(null)} className="p-1.5 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/50">
                   <X className="w-4 h-4 text-muted-foreground" />

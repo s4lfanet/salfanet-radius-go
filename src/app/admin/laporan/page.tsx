@@ -192,14 +192,14 @@ export default function LaporanPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
-            <BarChart3 className="w-7 h-7 text-[#00f7ff] drop-shadow-[0_0_10px_rgba(0,247,255,0.7)]" />
+            <BarChart3 className="w-7 h-7 text-brand-400 drop-shadow-[0_0_10px_rgba(70, 95, 255,0.7)]" />
             {t('laporan.title')}
           </h1>
           <p className="text-sm text-slate-400 mt-1">{t('laporan.subtitle')}</p>
         </div>
         <Link
           href="/admin/laporan/analitik"
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-[#00f7ff]/40 text-[#00f7ff] text-sm font-semibold hover:bg-[#00f7ff]/10 transition-all"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-brand-500/40 text-brand-400 text-sm font-semibold hover:bg-brand-500/10 transition-all"
         >
           <Activity className="w-4 h-4" />
           {t('laporan.advancedAnalytics')}
@@ -207,16 +207,16 @@ export default function LaporanPage() {
       </div>
 
       {/* ── Filter Card ── */}
-      <div className="bg-card/80 dark:bg-slate-800/60 backdrop-blur border border-[#bc13fe]/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(188,19,254,0.1)]">
+      <div className="bg-card/80 dark:bg-slate-800/60 backdrop-blur border border-brand-600/30 rounded-xl p-6 shadow-[0_0_30px_rgba(122, 90, 248,0.1)]">
         <div className="flex items-center gap-2 mb-5">
-          <Filter className="w-4 h-4 text-[#bc13fe]" />
+          <Filter className="w-4 h-4 text-brand-600" />
           <span className="text-sm font-semibold text-foreground dark:text-slate-300 uppercase tracking-wider">{t('laporan.filterTitle')}</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Report Type */}
           <div>
-            <label className="block text-xs font-bold text-[#00f7ff] mb-2 uppercase tracking-wider">{t('laporan.reportType')}</label>
+            <label className="block text-xs font-bold text-brand-400 mb-2 uppercase tracking-wider">{t('laporan.reportType')}</label>
             <div className="flex gap-2 flex-wrap">
               {(['invoice', 'payment', 'customer'] as ReportType[]).map((t) => (
                 <button
@@ -224,8 +224,8 @@ export default function LaporanPage() {
                   onClick={() => { setReportType(t); setStatus('all'); setLoaded(false); }}
                   className={`px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
                     reportType === t
-                      ? 'bg-[#bc13fe] border-[#bc13fe] text-white shadow-[0_0_15px_rgba(188,19,254,0.5)]'
-                      : 'bg-muted/80 dark:bg-slate-900/80 border-border dark:border-slate-600 text-muted-foreground dark:text-slate-400 hover:border-[#bc13fe]/50'
+                      ? 'bg-brand-600 border-brand-600 text-white shadow-[0_0_15px_rgba(122, 90, 248,0.5)]'
+                      : 'bg-muted/80 dark:bg-slate-900/80 border-border dark:border-slate-600 text-muted-foreground dark:text-slate-400 hover:border-brand-600/50'
                   }`}
                 >
                   {t === 'invoice' && <FileText className="w-3.5 h-3.5 inline mr-1" />}
@@ -239,7 +239,7 @@ export default function LaporanPage() {
 
           {/* Date From */}
           <div>
-            <label className="block text-xs font-bold text-[#00f7ff] mb-2 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-brand-400 mb-2 uppercase tracking-wider">
               <Calendar className="w-3.5 h-3.5 inline mr-1" />{t('laporan.dateFrom')}
             </label>
             <input
@@ -252,7 +252,7 @@ export default function LaporanPage() {
 
           {/* Date To */}
           <div>
-            <label className="block text-xs font-bold text-[#00f7ff] mb-2 uppercase tracking-wider">
+            <label className="block text-xs font-bold text-brand-400 mb-2 uppercase tracking-wider">
               <Calendar className="w-3.5 h-3.5 inline mr-1" />{t('laporan.dateTo')}
             </label>
             <input
@@ -266,7 +266,7 @@ export default function LaporanPage() {
           {/* Status filter (invoice & customer only) */}
           {reportType !== 'payment' && (
             <div>
-              <label className="block text-xs font-bold text-[#00f7ff] mb-2 uppercase tracking-wider">Status</label>
+              <label className="block text-xs font-bold text-brand-400 mb-2 uppercase tracking-wider">Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
@@ -285,7 +285,7 @@ export default function LaporanPage() {
           <button
             onClick={fetchData}
             disabled={loading}
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#bc13fe] to-[#9b10d4] text-white text-sm font-bold rounded-xl hover:shadow-[0_0_20px_rgba(188,19,254,0.5)] disabled:opacity-50 transition-all"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-600 to-[#9b10d4] text-white text-sm font-bold rounded-xl hover:shadow-[0_0_20px_rgba(122, 90, 248,0.5)] disabled:opacity-50 transition-all"
           >
             {loading
               ? <><Loader2 className="w-4 h-4 animate-spin" />{t('laporan.loading')}</>
@@ -358,7 +358,7 @@ export default function LaporanPage() {
 
       {/* ── Data Preview Table ── */}
       {loaded && rows.length > 0 && (
-        <div className="bg-card/80 dark:bg-slate-800/60 backdrop-blur border border-border/50 dark:border-slate-700/50 rounded-2xl overflow-hidden">
+        <div className="bg-card/80 dark:bg-slate-800/60 backdrop-blur border border-border/50 dark:border-slate-700/50 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-border/50 dark:border-slate-700/50 flex items-center justify-between">
             <span className="text-sm font-semibold text-foreground dark:text-slate-300">
               {t('laporan.previewData', { count: String(Math.min(rows.length, 100)), total: String(rows.length) })}
@@ -370,7 +370,7 @@ export default function LaporanPage() {
               <thead>
                 <tr className="bg-muted/50 dark:bg-slate-900/60">
                   {previewColumns.map((col) => (
-                    <th key={col} className="px-4 py-3 text-left text-xs font-bold text-[#00f7ff] uppercase tracking-wider whitespace-nowrap border-b border-slate-700/50">
+                    <th key={col} className="px-4 py-3 text-left text-xs font-bold text-brand-400 uppercase tracking-wider whitespace-nowrap border-b border-slate-700/50">
                       {col}
                     </th>
                   ))}
@@ -421,10 +421,10 @@ export default function LaporanPage() {
 // ── Summary Card Component ───────────────────────────────────────────────────
 function SummaryCard({ label, value, icon, color }: { label: string; value: any; icon: React.ReactNode; color: string }) {
   const colorMap: Record<string, string> = {
-    cyan:   'text-[#00f7ff] border-[#00f7ff]/30 shadow-[0_0_15px_rgba(0,247,255,0.1)]',
+    cyan:   'text-brand-400 border-brand-500/30 shadow-[0_0_15px_rgba(70, 95, 255,0.1)]',
     green:  'text-emerald-400 border-emerald-500/30',
     yellow: 'text-amber-400 border-amber-500/30',
-    purple: 'text-[#bc13fe] border-[#bc13fe]/30',
+    purple: 'text-brand-600 border-brand-600/30',
     red:    'text-rose-400 border-rose-500/30',
   };
   return (

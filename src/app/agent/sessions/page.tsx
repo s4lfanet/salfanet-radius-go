@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { nowWIB } from '@/lib/timezone';
@@ -250,7 +250,7 @@ export default function AgentSessionsPage() {
       </div>
 
       {/* Sessions List */}
-      <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
           <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <Wifi className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
@@ -275,7 +275,7 @@ export default function AgentSessionsPage() {
                     <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0 mt-1" />
                     <div className="min-w-0">
                       <p className="font-mono font-bold text-sm text-slate-900 dark:text-white truncate">{session.username}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{session.profileName || '-'} · {session.routerName || '-'}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{session.profileName || '-'} � {session.routerName || '-'}</p>
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-slate-600 dark:text-white whitespace-nowrap">
@@ -294,11 +294,11 @@ export default function AgentSessionsPage() {
                     <span className="font-mono text-slate-500 dark:text-slate-400 truncate ml-1">{session.callingStationId || '-'}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400 dark:text-slate-500">↑ UL:</span>
+                    <span className="text-slate-400 dark:text-slate-500">? UL:</span>
                     <span className="text-emerald-600 dark:text-emerald-400 font-medium">{formatBytes(session.acctInputOctets || 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400 dark:text-slate-500">↓ DL:</span>
+                    <span className="text-slate-400 dark:text-slate-500">? DL:</span>
                     <span className="text-pink-600 dark:text-pink-400 font-medium">{formatBytes(session.acctOutputOctets || 0)}</span>
                   </div>
                   <div className="col-span-2 flex justify-between">

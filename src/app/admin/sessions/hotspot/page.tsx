@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import { Power, RefreshCw, WifiOff, Search, RotateCcw } from 'lucide-react';
@@ -158,7 +158,7 @@ export default function HotspotSessionsPage() {
     fetchSessions(1);
     const interval = setInterval(() => {
       fetchSessions(pagination.page);
-    }, 10000); // 10 detik — live bytes dari MikroTik API
+    }, 10000); // 10 detik � live bytes dari MikroTik API
     return () => clearInterval(interval);
   }, [fetchSessions, pagination.page]);
 
@@ -215,18 +215,13 @@ export default function HotspotSessionsPage() {
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-              <WifiOff className="w-5 h-5 text-[#ff44cc]" />
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+              <WifiOff className="w-5 h-5 text-accent-foreground" />
               {t('sessions.hotspotSessions')}
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('sessions.monitorHotspot')}</p>
@@ -253,16 +248,16 @@ export default function HotspotSessionsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
-            <p className="text-xs text-[#00f7ff] uppercase tracking-wide">{t('sessions.activeSessions')}</p>
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
+            <p className="text-xs text-brand-400 uppercase tracking-wide">{t('sessions.activeSessions')}</p>
             <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{stats?.hotspot || 0}</p>
           </div>
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
-            <p className="text-xs text-[#00f7ff] uppercase tracking-wide">↑ {t('sessions.totalUpload')}</p>
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
+            <p className="text-xs text-brand-400 uppercase tracking-wide">? {t('sessions.totalUpload')}</p>
             <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{stats?.totalUploadFormatted || '0 B'}</p>
           </div>
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
-            <p className="text-xs text-[#00f7ff] uppercase tracking-wide">↓ {t('sessions.totalDownload')}</p>
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
+            <p className="text-xs text-brand-400 uppercase tracking-wide">? {t('sessions.totalDownload')}</p>
             <p className="text-lg sm:text-2xl font-bold text-foreground mt-1">{stats?.totalDownloadFormatted || '0 B'}</p>
           </div>
         </div>
@@ -370,9 +365,9 @@ export default function HotspotSessionsPage() {
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">{t('sessions.uploadDownload')}:</span>
                       <span>
-                        <span className="text-success">↑{session.uploadFormatted}</span>
+                        <span className="text-success">?{session.uploadFormatted}</span>
                         {' / '}
-                        <span className="text-accent">↓{session.downloadFormatted}</span>
+                        <span className="text-accent">?{session.downloadFormatted}</span>
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -412,8 +407,8 @@ export default function HotspotSessionsPage() {
                   <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">{t('sessions.startTime')}</th>
                   <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">{t('sessions.lastUpdate')}</th>
                   <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">{t('sessions.duration')}</th>
-                  <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">↑ {t('sessions.upload')}</th>
-                  <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">↓ {t('sessions.download')}</th>
+                  <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">? {t('sessions.upload')}</th>
+                  <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">? {t('sessions.download')}</th>
                   <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">{t('sessions.router')}</th>
                   <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">{t('sessions.ipAddress')}</th>
                   <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">{t('sessions.macAddress')}</th>

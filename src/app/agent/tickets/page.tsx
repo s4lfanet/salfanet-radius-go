@@ -279,7 +279,7 @@ export default function AgentTicketsPage() {
 
       {/* Create Ticket Form */}
       {showForm && (
-        <div className="rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 shadow-sm p-5 space-y-4">
+        <div className="rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 shadow-sm p-5 space-y-4">
           <h2 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2">
             <TicketPlus className="w-4 h-4 text-violet-600 dark:text-violet-400" />
             Buat Tiket Baru
@@ -426,7 +426,7 @@ export default function AgentTicketsPage() {
         </div>
       ) : tickets.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-          <div className="p-5 rounded-2xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20">
+          <div className="p-5 rounded-xl bg-violet-50 dark:bg-violet-500/10 border border-violet-200 dark:border-violet-500/20">
             <MessageSquare className="w-10 h-10 text-violet-400 dark:text-violet-500" />
           </div>
           <p className="text-sm font-bold text-slate-600 dark:text-slate-300">Belum ada tiket</p>
@@ -437,7 +437,7 @@ export default function AgentTicketsPage() {
           {tickets.map(ticket => (
             <div
               key={ticket.id}
-              className="rounded-2xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all"
+              className="rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden transition-all"
             >
               {/* Ticket Header */}
               <button

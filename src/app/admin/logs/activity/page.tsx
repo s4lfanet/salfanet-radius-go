@@ -133,15 +133,13 @@ export default function ActivityLogsPage() {
     <div className="space-y-6 p-6">
       {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#bc13fe]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f7ff]/5 rounded-full blur-3xl" />
       </div>
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-[#bc13fe]/20 border border-[#bc13fe]/30">
-            <Activity className="w-6 h-6 text-[#bc13fe]" />
+          <div className="p-2.5 rounded-xl bg-brand-600/20 border border-brand-600/30">
+            <Activity className="w-6 h-6 text-brand-600" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Log Aktivitas</h1>
@@ -163,7 +161,7 @@ export default function ActivityLogsPage() {
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Search */}
-        <div className="flex flex-1 items-center gap-2 px-3 py-2 bg-muted border border-border rounded-xl focus-within:border-[#00f7ff]/50 transition-colors">
+        <div className="flex flex-1 items-center gap-2 px-3 py-2 bg-muted border border-border rounded-xl focus-within:border-brand-500/50 transition-colors">
           <Search className="w-4 h-4 text-muted-foreground shrink-0" />
           <input
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none"
@@ -183,7 +181,7 @@ export default function ActivityLogsPage() {
         </div>
         <button
           onClick={handleSearch}
-          className="px-4 py-2 bg-[#00f7ff] text-[#1a0f35] font-bold text-sm rounded-xl hover:shadow-[0_0_15px_rgba(0,247,255,0.3)] transition-all"
+          className="px-4 py-2 bg-brand-500 text-[secondary] font-bold text-sm rounded-xl hover:shadow-[0_0_15px_rgba(70, 95, 255,0.3)] transition-all"
         >
           Cari
         </button>
@@ -197,7 +195,7 @@ export default function ActivityLogsPage() {
             className="bg-transparent text-sm text-foreground outline-none cursor-pointer"
           >
             {MODULE_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value} className="bg-[#1e1b2e]">
+              <option key={opt.value} value={opt.value} className="bg-[secondary]">
                 {opt.label}
               </option>
             ))}
@@ -210,7 +208,7 @@ export default function ActivityLogsPage() {
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-[#00f7ff] border-t-transparent rounded-full animate-spin" />
+              <div className="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
               <p className="text-sm text-muted-foreground">Memuat log aktivitas...</p>
             </div>
           </div>
@@ -258,7 +256,7 @@ export default function ActivityLogsPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="font-mono text-xs text-[#00f7ff]">{log.action}</span>
+                        <span className="font-mono text-xs text-brand-400">{log.action}</span>
                       </td>
                       <td className="px-4 py-3 max-w-xs">
                         <p className="text-sm text-foreground truncate" title={log.description}>
@@ -300,7 +298,7 @@ export default function ActivityLogsPage() {
                       {MODULE_ICONS[log.module]}
                       {log.module}
                     </span>
-                    <span className="font-mono text-xs text-[#00f7ff]">{log.action}</span>
+                    <span className="font-mono text-xs text-brand-400">{log.action}</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="font-mono text-xs text-muted-foreground">{log.ipAddress || '-'}</span>

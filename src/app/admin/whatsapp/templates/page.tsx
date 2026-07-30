@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -16,152 +16,152 @@ interface Template {
 
 const templateConfig = {
   'registration-confirmation': {
-    title: '✅ Konfirmasi Pendaftaran',
+    title: '? Konfirmasi Pendaftaran',
     description: 'Dikirim otomatis saat customer submit form pendaftaran',
     variables: ['{{customerName}}', '{{phone}}', '{{email}}', '{{address}}', '{{profileName}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'registration-approval': {
-    title: '🎉 Persetujuan Pendaftaran',
+    title: '?? Persetujuan Pendaftaran',
     description: 'Dikirim saat admin menyetujui pendaftaran customer baru',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{password}}', '{{phone}}', '{{email}}', '{{address}}', '{{profileName}}', '{{ipAddress}}', '{{expiredAt}}', '{{installationFee}}', '{{subscriptionType}}', '{{invoiceNumber}}', '{{paymentLink}}', '{{paymentToken}}', '{{baseUrl}}', '{{bankAccounts}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'admin-create-user': {
-    title: '👤 Admin Create User',
+    title: '?? Admin Create User',
     description: 'Dikirim saat admin membuat user manual (tanpa flow registrasi)',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{password}}', '{{phone}}', '{{email}}', '{{address}}', '{{profileName}}', '{{area}}', '{{ipAddress}}', '{{expiredDate}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'installation-invoice': {
-    title: '🔧 Invoice Instalasi',
+    title: '?? Invoice Instalasi',
     description: 'Dikirim saat instalasi selesai dan invoice dibuat',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{phone}}', '{{email}}', '{{address}}', '{{invoiceNumber}}', '{{amount}}', '{{dueDate}}', '{{installationFee}}', '{{paymentLink}}', '{{paymentToken}}', '{{baseUrl}}', '{{bankAccounts}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'invoice-reminder': {
-    title: '📅 Invoice Bulanan / Jatuh Tempo',
+    title: '?? Invoice Bulanan / Jatuh Tempo',
     description: 'Dikirim via cron untuk invoice bulanan yang mendekati jatuh tempo',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{customerUsername}}', '{{phone}}', '{{email}}', '{{address}}', '{{profileName}}', '{{area}}', '{{invoiceNumber}}', '{{amount}}', '{{dueDate}}', '{{daysRemaining}}', '{{paymentLink}}', '{{paymentToken}}', '{{baseUrl}}', '{{bankAccounts}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'payment-success': {
-    title: '✅ Pembayaran Berhasil',
+    title: '? Pembayaran Berhasil',
     description: 'Dikirim otomatis saat pembayaran invoice berhasil',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{password}}', '{{phone}}', '{{email}}', '{{address}}', '{{profileName}}', '{{ipAddress}}', '{{expiredDate}}', '{{invoiceNumber}}', '{{amount}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'maintenance-outage': {
-    title: '⚠️ Informasi Gangguan',
+    title: '?? Informasi Gangguan',
     description: 'Template untuk broadcast informasi maintenance atau gangguan jaringan',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{phone}}', '{{email}}', '{{address}}', '{{issueType}}', '{{description}}', '{{estimatedTime}}', '{{affectedArea}}', '{{status}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{baseUrl}}'],
   },
   'maintenance-resolved': {
-    title: '✅ Perbaikan Selesai',
+    title: '? Perbaikan Selesai',
     description: 'Template untuk broadcast informasi perbaikan selesai dan layanan kembali normal',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{phone}}', '{{email}}', '{{address}}', '{{description}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{baseUrl}}'],
   },
   'voucher-purchase': {
-    title: '🎫 Pembelian Voucher',
+    title: '?? Pembelian Voucher',
     description: 'Dikirim otomatis saat customer berhasil membeli voucher internet',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{phone}}', '{{email}}', '{{address}}', '{{voucherCodes}}', '{{profileName}}', '{{price}}', '{{quantity}}', '{{totalAmount}}', '{{purchaseDate}}', '{{expiryDate}}', '{{duration}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'voucher-payment-link': {
-    title: '💳 Link Pembayaran Voucher',
+    title: '?? Link Pembayaran Voucher',
     description: 'Dikirim saat customer melakukan order voucher dan perlu melakukan pembayaran',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{phone}}', '{{email}}', '{{address}}', '{{orderToken}}', '{{profileName}}', '{{price}}', '{{quantity}}', '{{totalAmount}}', '{{paymentLink}}', '{{expiryTime}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'manual-extension': {
-    title: '🎉 Perpanjangan Manual',
+    title: '?? Perpanjangan Manual',
     description: 'Dikirim saat admin melakukan perpanjangan langganan customer secara manual',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{profileName}}', '{{area}}', '{{amount}}', '{{newExpiredAt}}', '{{invoiceNumber}}', '{{profileChanged}}', '{{companyName}}', '{{companyPhone}}'],
   },
   'manual-payment-approval': {
-    title: '✅ Pembayaran Manual Disetujui',
+    title: '? Pembayaran Manual Disetujui',
     description: 'Dikirim otomatis saat admin menyetujui konfirmasi pembayaran manual',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{invoiceNumber}}', '{{amount}}', '{{profileName}}', '{{area}}', '{{expiredDate}}', '{{companyName}}', '{{companyPhone}}'],
   },
   'manual-payment-rejection': {
-    title: '❌ Pembayaran Manual Ditolak',
+    title: '? Pembayaran Manual Ditolak',
     description: 'Dikirim otomatis saat admin menolak konfirmasi pembayaran manual',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{invoiceNumber}}', '{{profileName}}', '{{area}}', '{{rejectionReason}}', '{{paymentLink}}', '{{companyName}}', '{{companyPhone}}'],
   },
   'account-info': {
-    title: '📋 Informasi Akun Pelanggan',
+    title: '?? Informasi Akun Pelanggan',
     description: 'Mengirimkan informasi akun pelanggan seperti username, password, dan detail lainnya',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{password}}', '{{phone}}', '{{email}}', '{{address}}', '{{profileName}}', '{{area}}', '{{ipAddress}}', '{{expiredDate}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'auto-renewal-success': {
-    title: '🔄 Auto-Renewal Berhasil',
+    title: '?? Auto-Renewal Berhasil',
     description: 'Dikirim otomatis saat sistem berhasil melakukan auto-renewal langganan',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{profileName}}', '{{area}}', '{{amount}}', '{{expiredDate}}', '{{newBalance}}', '{{invoiceNumber}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'general-broadcast': {
-    title: '📢 Broadcast Umum ke Pelanggan',
+    title: '?? Broadcast Umum ke Pelanggan',
     description: 'Template untuk broadcast pengumuman atau informasi umum ke pelanggan',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{message}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'invoice-created': {
-    title: '📄 Notifikasi Invoice Baru',
+    title: '?? Notifikasi Invoice Baru',
     description: 'Dikirim saat invoice baru dibuat oleh sistem',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{phone}}', '{{email}}', '{{address}}', '{{invoiceNumber}}', '{{amount}}', '{{dueDate}}', '{{paymentLink}}', '{{paymentToken}}', '{{baseUrl}}', '{{bankAccounts}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
   'invoice-overdue': {
-    title: '⚠️ Invoice Overdue Reminder',
+    title: '?? Invoice Overdue Reminder',
     description: 'Dikirim saat invoice sudah melewati tanggal jatuh tempo',
     variables: ['{{customerId}}', '{{customerName}}', '{{username}}', '{{phone}}', '{{email}}', '{{invoiceNumber}}', '{{amount}}', '{{dueDate}}', '{{daysOverdue}}', '{{paymentLink}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'maintenance-info': {
-    title: '🔧 Pemberitahuan Maintenance',
+    title: '?? Pemberitahuan Maintenance',
     description: 'Template untuk broadcast informasi maintenance terjadwal',
     variables: ['{{customerName}}', '{{maintenanceDate}}', '{{maintenanceTime}}', '{{duration}}', '{{affectedArea}}', '{{description}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'manual_payment_admin': {
-    title: '🔔 Notifikasi Admin Manual Payment',
+    title: '?? Notifikasi Admin Manual Payment',
     description: 'Dikirim ke admin saat ada konfirmasi pembayaran manual dari customer',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{invoiceNumber}}', '{{amount}}', '{{paymentDate}}', '{{paymentMethod}}', '{{bankName}}', '{{accountNumber}}', '{{proofImage}}'],
   },
   'outage_notification': {
-    title: '⚡ Notifikasi Gangguan',
+    title: '? Notifikasi Gangguan',
     description: 'Dikirim otomatis saat terdeteksi gangguan jaringan atau layanan',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{outageType}}', '{{affectedArea}}', '{{description}}', '{{estimatedTime}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'payment_receipt': {
-    title: '🧾 Bukti Pembayaran',
+    title: '?? Bukti Pembayaran',
     description: 'Dikirim sebagai bukti pembayaran yang telah diterima',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{invoiceNumber}}', '{{amount}}', '{{paymentDate}}', '{{paymentMethod}}', '{{receiptNumber}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'payment-confirmed': {
-    title: '✅ Konfirmasi Pembayaran Diterima',
+    title: '? Konfirmasi Pembayaran Diterima',
     description: 'Dikirim saat pembayaran telah dikonfirmasi dan diterima',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{invoiceNumber}}', '{{amount}}', '{{paymentDate}}', '{{newExpiredAt}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'payment-reminder-general': {
-    title: '💰 Pengingat Pembayaran Umum',
+    title: '?? Pengingat Pembayaran Umum',
     description: 'Template umum untuk mengingatkan pembayaran yang akan jatuh tempo',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{invoiceNumber}}', '{{amount}}', '{{dueDate}}', '{{daysRemaining}}', '{{paymentLink}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'payment-warning': {
-    title: '⚠️ Peringatan Pembayaran Tertunda',
+    title: '?? Peringatan Pembayaran Tertunda',
     description: 'Dikirim sebagai peringatan untuk pembayaran yang tertunda',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{invoiceNumber}}', '{{amount}}', '{{dueDate}}', '{{paymentLink}}', '{{suspensionDate}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'promo-offer': {
-    title: '🎁 Promo & Penawaran Khusus',
+    title: '?? Promo & Penawaran Khusus',
     description: 'Template untuk broadcast promo atau penawaran khusus kepada pelanggan',
     variables: ['{{customerName}}', '{{promoTitle}}', '{{promoDescription}}', '{{discount}}', '{{validUntil}}', '{{termsConditions}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'thank-you': {
-    title: '🙏 Ucapan Terima Kasih',
+    title: '?? Ucapan Terima Kasih',
     description: 'Template ucapan terima kasih kepada pelanggan',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{message}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'upgrade-notification': {
-    title: '⬆️ Pemberitahuan Upgrade Paket',
+    title: '?? Pemberitahuan Upgrade Paket',
     description: 'Dikirim saat customer melakukan upgrade paket langganan',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{oldProfile}}', '{{newProfile}}', '{{newSpeed}}', '{{newPrice}}', '{{effectiveDate}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'voucher-purchase-success': {
-    title: '🎉 E-Voucher Purchase Success',
+    title: '?? E-Voucher Purchase Success',
     description: 'Dikirim saat customer berhasil membeli e-voucher',
     variables: ['{{customerName}}', '{{voucherCodes}}', '{{profileName}}', '{{price}}', '{{quantity}}', '{{totalAmount}}', '{{purchaseDate}}', '{{expiryDate}}', '{{duration}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}'],
   },
   'welcome-message': {
-    title: '👋 Selamat Datang Pelanggan Baru',
+    title: '?? Selamat Datang Pelanggan Baru',
     description: 'Pesan selamat datang untuk pelanggan baru yang baru bergabung',
     variables: ['{{customerName}}', '{{customerUsername}}', '{{profileName}}', '{{expiredAt}}', '{{supportContact}}', '{{companyName}}', '{{companyPhone}}', '{{companyEmail}}', '{{companyAddress}}'],
   },
@@ -330,7 +330,7 @@ export default function WhatsAppTemplatesPage() {
                     ))}
                   </div>
                   <p className="text-[9px] sm:text-[10px] text-primary dark:text-primary mt-1.5 sm:mt-2">
-                    💡 {t('whatsapp.clickToInsert')}
+                    ?? {t('whatsapp.clickToInsert')}
                   </p>
                 </div>
               </div>
@@ -339,10 +339,10 @@ export default function WhatsAppTemplatesPage() {
               <div className="bg-muted/50 p-2 sm:p-3 rounded-md border border-border">
                 <p className="text-[10px] sm:text-xs font-medium text-foreground mb-1 sm:mb-2">{t('whatsapp.waFormat')}:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground dark:text-muted-foreground">
-                  <div>• *bold* → <strong>bold</strong></div>
-                  <div>• _italic_ → <em>italic</em></div>
-                  <div>• ~strikethrough~ → <del>strikethrough</del></div>
-                  <div>• ```code``` → <code className="text-[9px] sm:text-[10px]">code</code></div>
+                  <div>� *bold* ? <strong>bold</strong></div>
+                  <div>� _italic_ ? <em>italic</em></div>
+                  <div>� ~strikethrough~ ? <del>strikethrough</del></div>
+                  <div>� ```code``` ? <code className="text-[9px] sm:text-[10px]">code</code></div>
                 </div>
               </div>
 
@@ -456,10 +456,10 @@ export default function WhatsAppTemplatesPage() {
                     })() }}
                   />
                   <div className="absolute -right-[5px] top-0 w-0 h-0 border-l-[6px] border-l-[#005C4B] border-b-[6px] border-b-transparent"></div>
-                  <p className="text-[9px] text-white/40 text-right mt-1.5 select-none">12:00 ✓✓</p>
+                  <p className="text-[9px] text-white/40 text-right mt-1.5 select-none">12:00 ??</p>
                 </div>
               </div>
-              <p className="text-[9px] text-white/25 text-center mt-3">{message.length} karakter · data contoh</p>
+              <p className="text-[9px] text-white/25 text-center mt-3">{message.length} karakter � data contoh</p>
             </div>
           )}
         </div>
@@ -471,28 +471,20 @@ export default function WhatsAppTemplatesPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
-        <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-[#00f7ff] dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] relative z-10" />
+        
+        <Loader2 className="w-12 h-12 animate-spin text-brand-500 dark:text-brand-400 dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] relative z-10" />
       </div>
     );
   }
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
         <div className="max-w-6xl mx-auto space-y-3 sm:space-y-4">
         {/* Header */}
         <div className="px-1 sm:px-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
             <svg className="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -531,16 +523,16 @@ export default function WhatsAppTemplatesPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
-              <p className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100">📋 {t('whatsapp.howToUse')}</p>
+              <p className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100">?? {t('whatsapp.howToUse')}</p>
               <ul className="text-[10px] sm:text-xs text-blue-800 dark:text-blue-200 space-y-0.5 sm:space-y-1">
-                <li>• <strong>Persetujuan Pendaftaran</strong>: Dikirim saat admin approve registrasi baru</li>
-                <li>• <strong>Admin Create User</strong>: Dikirim saat admin create user manual</li>
-                <li>• <strong>Invoice Instalasi</strong>: Dikirim saat mark installed dan invoice dibuat</li>
-                <li>• <strong>Invoice Jatuh Tempo</strong>: Dikirim via cron untuk reminder invoice (H-5, H-3, H-1, H-0)</li>
-                <li>• <strong>Pembayaran Berhasil</strong>: Dikirim otomatis saat invoice dibayar</li>
-                <li>• <strong>Informasi Gangguan</strong>: Template untuk broadcast maintenance</li>
-                <li>• <strong>Perbaikan Selesai</strong>: Template untuk broadcast perbaikan selesai</li>
-                <li className="break-words">• Variabel <code className="bg-primary/20 dark:bg-blue-800 px-1 rounded text-[9px] sm:text-[10px]">{'{{nama}}'}</code> akan diganti otomatis dengan data real</li>
+                <li>� <strong>Persetujuan Pendaftaran</strong>: Dikirim saat admin approve registrasi baru</li>
+                <li>� <strong>Admin Create User</strong>: Dikirim saat admin create user manual</li>
+                <li>� <strong>Invoice Instalasi</strong>: Dikirim saat mark installed dan invoice dibuat</li>
+                <li>� <strong>Invoice Jatuh Tempo</strong>: Dikirim via cron untuk reminder invoice (H-5, H-3, H-1, H-0)</li>
+                <li>� <strong>Pembayaran Berhasil</strong>: Dikirim otomatis saat invoice dibayar</li>
+                <li>� <strong>Informasi Gangguan</strong>: Template untuk broadcast maintenance</li>
+                <li>� <strong>Perbaikan Selesai</strong>: Template untuk broadcast perbaikan selesai</li>
+                <li className="break-words">� Variabel <code className="bg-primary/20 dark:bg-blue-800 px-1 rounded text-[9px] sm:text-[10px]">{'{{nama}}'}</code> akan diganti otomatis dengan data real</li>
               </ul>
             </div>
           </div>

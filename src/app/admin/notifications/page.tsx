@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -91,7 +91,7 @@ export default function NotificationsPage() {
       });
       
       toast({
-        title: "✅ " + t('notifications.markedAsRead'),
+        title: "? " + t('notifications.markedAsRead'),
         description: `${notificationIds.length} ${t('notifications.notificationMarked')}`,
       });
       
@@ -100,7 +100,7 @@ export default function NotificationsPage() {
       console.error('Mark as read error:', error);
       toast({
         variant: "destructive",
-        title: "❌ " + t('common.error'),
+        title: "? " + t('common.error'),
         description: t('notifications.markReadFailed'),
       });
     }
@@ -115,7 +115,7 @@ export default function NotificationsPage() {
       });
       
       toast({
-        title: "✅ " + t('notifications.allMarkedAsRead'),
+        title: "? " + t('notifications.allMarkedAsRead'),
         description: t('notifications.allNotificationsMarked'),
       });
       
@@ -124,7 +124,7 @@ export default function NotificationsPage() {
       console.error('Mark all as read error:', error);
       toast({
         variant: "destructive",
-        title: "❌ " + t('common.error'),
+        title: "? " + t('common.error'),
         description: t('notifications.markAllFailed'),
       });
     }
@@ -137,7 +137,7 @@ export default function NotificationsPage() {
       });
       
       toast({
-        title: "🗑️ " + t('notifications.deleted'),
+        title: "??? " + t('notifications.deleted'),
         description: t('notifications.notificationDeleted'),
       });
       
@@ -146,7 +146,7 @@ export default function NotificationsPage() {
       console.error('Delete notification error:', error);
       toast({
         variant: "destructive",
-        title: "❌ " + t('common.error'),
+        title: "? " + t('common.error'),
         description: t('notifications.deleteFailed'),
       });
     }
@@ -161,7 +161,7 @@ export default function NotificationsPage() {
       });
       
       toast({
-        title: "🗑️ " + t('notifications.deleted'),
+        title: "??? " + t('notifications.deleted'),
         description: `${selectedIds.length} ${t('notifications.notificationsDeleted')}`,
       });
       
@@ -171,7 +171,7 @@ export default function NotificationsPage() {
       console.error('Delete selected error:', error);
       toast({
         variant: "destructive",
-        title: "❌ " + t('common.error'),
+        title: "? " + t('common.error'),
         description: t('notifications.deleteFailed'),
       });
     }
@@ -188,7 +188,7 @@ export default function NotificationsPage() {
       });
       
       toast({
-        title: "✅ " + t('notifications.markedAsRead'),
+        title: "? " + t('notifications.markedAsRead'),
         description: `${selectedIds.length} ${t('notifications.notificationsMarked')}`,
       });
       
@@ -198,7 +198,7 @@ export default function NotificationsPage() {
       console.error('Mark selected as read error:', error);
       toast({
         variant: "destructive",
-        title: "❌ " + t('common.error'),
+        title: "? " + t('common.error'),
         description: t('notifications.markReadFailed'),
       });
     }
@@ -253,34 +253,29 @@ export default function NotificationsPage() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'invoice_overdue': return '💸';
-      case 'invoice_generated': return '🧾';
-      case 'new_registration': return '👤';
-      case 'payment_received': return '✅';
-      case 'manual_payment_submitted': return '📄';
-      case 'manual_payment_approved': return '✅';
-      case 'manual_payment_rejected': return '❌';
-      case 'package_change_request': return '📦';
-      case 'agent_deposit': return '💰';
-      case 'agent_voucher_generated': return '🎟️';
-      case 'agent_balance_adjustment': return '💳';
-      case 'user_expired': return '⏰';
-      case 'system_alert': return '⚠️';
-      default: return '📢';
+      case 'invoice_overdue': return '??';
+      case 'invoice_generated': return '??';
+      case 'new_registration': return '??';
+      case 'payment_received': return '?';
+      case 'manual_payment_submitted': return '??';
+      case 'manual_payment_approved': return '?';
+      case 'manual_payment_rejected': return '?';
+      case 'package_change_request': return '??';
+      case 'agent_deposit': return '??';
+      case 'agent_voucher_generated': return '???';
+      case 'agent_balance_adjustment': return '??';
+      case 'user_expired': return '?';
+      case 'system_alert': return '??';
+      default: return '??';
     }
   };
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
       {/* Header */}
-      <div className="bg-brand-500 dark:bg-gradient-to-r dark:from-[#bc13fe] dark:to-[#ff44cc] rounded-xl p-4 text-white dark:shadow-[0_0_30px_rgba(188,19,254,0.3)]">
+      <div className="bg-brand-500 dark:bg-gradient-to-r dark:from-brand-600 dark:to-accent-foreground rounded-xl p-4 text-white dark:shadow-[0_0_30px_rgba(122, 90, 248,0.3)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5" />
@@ -320,17 +315,17 @@ export default function NotificationsPage() {
                 onClick={() => setCategoryFilter(category.type)}
                 className={`p-2.5 rounded-lg border-2 transition-all ${
                   isActive 
-                    ? 'bg-gradient-to-br from-[#bc13fe]/20 to-[#ff44cc]/20 border-[#bc13fe] shadow-[0_0_20px_rgba(188,19,254,0.4)]' 
-                    : 'bg-card border-border hover:border-[#bc13fe]/50 hover:bg-card/80'
+                    ? 'bg-gradient-to-br from-brand-600/20 to-accent-foreground/20 border-brand-600 shadow-[0_0_20px_rgba(122, 90, 248,0.4)]' 
+                    : 'bg-card border-border hover:border-brand-600/50 hover:bg-card/80'
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-[#00f7ff] drop-shadow-[0_0_6px_rgba(0,247,255,0.8)]' : 'text-muted-foreground'}`} />
+                  <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-brand-400 drop-shadow-[0_0_6px_rgba(70, 95, 255,0.8)]' : 'text-muted-foreground'}`} />
                   <div className="flex-1 text-left min-w-0">
                     <p className={`text-[10px] font-semibold line-clamp-1 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>
                       {t(category.key)}
                     </p>
-                    <p className={`text-sm font-bold ${isActive ? 'text-[#00f7ff]' : 'text-foreground/60'}`}>
+                    <p className={`text-sm font-bold ${isActive ? 'text-brand-400' : 'text-foreground/60'}`}>
                       {count}
                     </p>
                   </div>
@@ -345,7 +340,7 @@ export default function NotificationsPage() {
           <div className="mt-4 pt-4 border-t border-border">
             <button
               onClick={markAllAsRead}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[#00ff88] to-[#00f7ff] hover:from-[#00ff88]/90 hover:to-[#00f7ff]/90 text-[#0a0118] text-sm font-bold rounded-lg transition-all shadow-[0_0_25px_rgba(0,255,136,0.4)]"
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-[success] to-brand-400 hover:from-[success]/90 hover:to-brand-400/90 text-[#0a0118] text-sm font-bold rounded-lg transition-all shadow-[0_0_25px_rgba(18, 183, 106,0.4)]"
             >
               <CheckCheck className="w-5 h-5" />
               {t('notifications.markAllRead')} ({unreadCount})

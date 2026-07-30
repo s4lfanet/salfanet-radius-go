@@ -1,4 +1,4 @@
-ï»¿'use client';
+'use client';
 import { showSuccess, showError } from '@/lib/sweetalert';
 import { format } from 'date-fns';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -215,7 +215,7 @@ export default function AgentVouchersPage() {
   return (
     <div className="p-4 lg:p-6">
       {/* Vouchers List */}
-      <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
         <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -440,12 +440,12 @@ export default function AgentVouchersPage() {
           </table>
         </div>
 
-        {/* Pagination â€” always visible */}
+        {/* Pagination — always visible */}
         <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {pagination.total === 0
               ? 'Tidak ada voucher'
-              : `Menampilkan ${((currentPage - 1) * pagination.limit) + 1}â€“${Math.min(currentPage * pagination.limit, pagination.total)} dari ${pagination.total} voucher`}
+              : `Menampilkan ${((currentPage - 1) * pagination.limit) + 1}–${Math.min(currentPage * pagination.limit, pagination.total)} dari ${pagination.total} voucher`}
           </p>
           {pagination.totalPages > 1 && (
             <div className="flex items-center gap-1">
@@ -454,7 +454,7 @@ export default function AgentVouchersPage() {
                 disabled={currentPage === 1}
                 className="px-2 py-1 text-xs rounded hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-500 dark:text-slate-400"
               >
-                Â«
+                «
               </button>
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -500,7 +500,7 @@ export default function AgentVouchersPage() {
                 disabled={currentPage === pagination.totalPages}
                 className="px-2 py-1 text-xs rounded hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-500 dark:text-slate-400"
               >
-                Â»
+                »
               </button>
             </div>
           )}
@@ -510,7 +510,7 @@ export default function AgentVouchersPage() {
       {/* WhatsApp Dialog */}
       {showWhatsAppDialog && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl shadow-xl max-w-sm w-full">
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl max-w-sm w-full">
             <div className="px-5 py-4 border-b border-slate-200 dark:border-slate-700">
               <h2 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
                 <MessageCircle className="h-5 w-5 text-emerald-500" />

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
@@ -90,7 +90,7 @@ const MENU_ITEMS: MenuItem[] = [
   },
 ];
 
-/* â”€â”€â”€ Notification Bell â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── Notification Bell ────────────────────────────────────── */
 
 /* --- Sidebar Push Notification Toggle --- */
 function SidebarPushToggle({ techId }: { techId: string }) {
@@ -212,7 +212,7 @@ function SidebarPushToggle({ techId }: { techId: string }) {
       disabled={loading || isDenied || !isSupported}
       title={
         !isSupported ? 'Browser tidak mendukung push notification'
-        : isDenied ? 'Notifikasi diblokir — ubah di pengaturan browser'
+        : isDenied ? 'Notifikasi diblokir � ubah di pengaturan browser'
         : isOn ? 'Klik untuk nonaktifkan notifikasi push'
         : 'Klik untuk aktifkan notifikasi push'
       }
@@ -278,7 +278,7 @@ function NotificationBell() {
       const data = await res.json();
       const items = (data.tickets || []).map((t: { id: string; ticketNumber: string; subject: string; customerName: string; description: string; createdAt: string; status: string }) => ({
         id: t.id,
-        title: `#${t.ticketNumber} — ${t.subject}`,
+        title: `#${t.ticketNumber} � ${t.subject}`,
         message: t.customerName || '',
         isRead: !['OPEN'].includes(t.status),
         createdAt: t.createdAt,
@@ -396,7 +396,7 @@ function NotificationBell() {
             </div>
             <div className="px-3 py-2 border-t border-slate-100 dark:border-brand-500/10">
               <Link href="/technician/tickets" onClick={() => setOpen(false)} className="text-[10px] text-brand-500 hover:underline font-medium">
-                Lihat semua tiket →
+                Lihat semua tiket ?
               </Link>
             </div>
           </div>
@@ -540,7 +540,7 @@ function TechSidebar({
   );
 }
 
-/* â”€â”€â”€ Main Layout Inner â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── Main Layout Inner ──────────────────────────────────── */
 function TechnicianPortalInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -609,7 +609,7 @@ function TechnicianPortalInner({ children }: { children: React.ReactNode }) {
     return (
       <div data-role="technician" className="min-h-screen bg-background flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="p-3 bg-gradient-to-br from-brand-500 to-brand-700 rounded-2xl flex items-center justify-center">
+          <div className="p-3 bg-gradient-to-br from-brand-500 to-brand-700 rounded-xl flex items-center justify-center">
             <Wrench className="w-8 h-8 text-white" />
           </div>
           <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
@@ -623,11 +623,8 @@ function TechnicianPortalInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div data-role="technician" className="min-h-screen bg-background">
-      {/* Background blobs — dark only */}
+      {/* Background blobs � dark only */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none hidden dark:block">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-sky-500/10 rounded-full blur-3xl" />
         <div className="absolute inset-0 bg-[linear-gradient(rgba(70,95,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(70,95,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>
 
@@ -715,7 +712,7 @@ function TechnicianPortalInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* â”€â”€â”€ Toast Bridge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── Toast Bridge ───────────────────────────────────────── */
 function TechToastBridge() {
   const { addToast, confirm } = useToast();
   useEffect(() => {

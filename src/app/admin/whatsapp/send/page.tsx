@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
@@ -194,7 +194,7 @@ export default function SendMessagePage() {
       console.log('[Frontend] Broadcast response:', data);
 
       if (data.success) {
-        addToast({ type: 'success', title: t('whatsapp.broadcastComplete'), description: `✅ ${t('whatsapp.success')}: ${data.successCount} | ❌ ${t('whatsapp.failed')}: ${data.failCount}` });
+        addToast({ type: 'success', title: t('whatsapp.broadcastComplete'), description: `? ${t('whatsapp.success')}: ${data.successCount} | ? ${t('whatsapp.failed')}: ${data.failCount}` });
         setBroadcastResult(data);
         setSelectedUsers(new Set());
       } else {
@@ -232,17 +232,12 @@ export default function SendMessagePage() {
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       <div className="relative z-10 space-y-6">
         <div className="max-w-7xl mx-auto space-y-3">
         {/* Header */}
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)]">{t('whatsapp.sendTitle')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)]">{t('whatsapp.sendTitle')}</h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('whatsapp.sendSubtitle')}</p>
         </div>
 
@@ -491,7 +486,7 @@ export default function SendMessagePage() {
                         <div className="text-center py-6 text-[10px] text-muted-foreground">{t('whatsapp.noUsersFound')}</div>
                       ) : (
                         users.map((user) => (
-                          <div key={user.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3">
+                          <div key={user.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3">
                             <div className="flex items-center gap-2 mb-2">
                               <input
                                 type="checkbox"
@@ -615,7 +610,7 @@ export default function SendMessagePage() {
                   <div><code className="bg-muted px-1 rounded">{'{{companyAddress}}'}</code></div>
                 </div>
                 <div className="mt-2 p-2 bg-warning/10 border border-warning/30 rounded text-[9px] text-yellow-800 dark:text-yellow-200">
-                  <p className="font-medium mb-1">⚠️ Catatan Penting:</p>
+                  <p className="font-medium mb-1">?? Catatan Penting:</p>
                   <p>Variabel invoice seperti <code className="bg-warning/20 dark:bg-yellow-800 px-1 rounded">{'{{invoiceNumber}}'}</code>, <code className="bg-warning/20 dark:bg-yellow-800 px-1 rounded">{'{{amount}}'}</code>, <code className="bg-warning/20 dark:bg-yellow-800 px-1 rounded">{'{{dueDate}}'}</code>, <code className="bg-warning/20 dark:bg-yellow-800 px-1 rounded">{'{{paymentLink}}'}</code> TIDAK tersedia di broadcast manual.</p>
                   <p className="mt-1">Untuk mengirim pesan invoice, gunakan fitur <strong>WhatsApp Notifications</strong> yang otomatis mengirim saat invoice dibuat.</p>
                 </div>

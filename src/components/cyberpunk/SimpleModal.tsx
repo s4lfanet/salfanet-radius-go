@@ -133,18 +133,18 @@ export function SimpleModal({
                     // Animation
                     'animate-in fade-in-0 zoom-in-95 slide-in-from-bottom-4 duration-300',
                     // Base styles - theme aware
-                    'bg-card dark:bg-[#1a0f35] rounded-xl overflow-hidden',
+                    'bg-card dark:bg-secondary rounded-xl overflow-hidden',
                     // Border with glow
-                    'border-2 border-border dark:border-[#bc13fe]/40',
+                    'border-2 border-border dark:border-brand-600/40',
                     // Shadow glow effect
-                    'shadow-xl dark:shadow-[0_0_50px_rgba(188,19,254,0.25),0_0_100px_rgba(0,247,255,0.1)]',
+                    'shadow-xl dark:shadow-[0_0_50px_rgba(122, 90, 248,0.25),0_0_100px_rgba(70, 95, 255,0.1)]',
                     className
                 )}
                 onClick={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
             >
                 {/* Top neon line accent */}
-                <div className="absolute top-0 left-8 right-8 h-[2px] bg-gradient-to-r from-transparent via-primary dark:via-[#00f7ff] to-transparent" />
+                <div className="absolute top-0 left-8 right-8 h-[2px] bg-gradient-to-r from-transparent via-primary dark:via-brand-400 to-transparent" />
 
                 {/* Close button */}
                 {showClose && (
@@ -153,8 +153,8 @@ export function SimpleModal({
                         className={cn(
                             'absolute right-3 top-3 z-10 rounded-lg p-2',
                             'text-muted-foreground hover:text-primary',
-                            'bg-muted/50 hover:bg-muted dark:bg-[#0a0520]/50 dark:hover:bg-[#bc13fe]/20',
-                            'border border-border dark:border-[#bc13fe]/30 hover:border-primary/50',
+                            'bg-muted/50 hover:bg-muted dark:bg-input/50 dark:hover:bg-brand-600/20',
+                            'border border-border dark:border-brand-600/30 hover:border-primary/50',
                             'transition-all duration-200',
                             'focus:outline-none focus:ring-2 focus:ring-primary/50'
                         )}
@@ -173,8 +173,8 @@ export function SimpleModal({
 export function ModalHeader({ children, onClose, className }: ModalHeaderProps) {
     return (
         <div className={cn(
-            'px-5 py-4 border-b border-border dark:border-[#bc13fe]/30',
-            'bg-slate-100 dark:bg-[#1a0f35]',
+            'px-5 py-4 border-b border-border dark:border-brand-600/30',
+            'bg-slate-100 dark:bg-secondary',
             className
         )}>
             {children}
@@ -206,7 +206,7 @@ export function ModalBody({ children, className }: ModalBodyProps) {
         <div className={cn(
             'px-5 py-4 max-h-[60vh] overflow-y-auto',
             // Custom scrollbar for cyberpunk theme
-            'scrollbar-thin scrollbar-thumb-[#bc13fe]/40 scrollbar-track-transparent',
+            'scrollbar-thin scrollbar-thumb-[brand-600]/40 scrollbar-track-transparent',
             className
         )}>
             {children}
@@ -217,8 +217,8 @@ export function ModalBody({ children, className }: ModalBodyProps) {
 export function ModalFooter({ children, className }: ModalFooterProps) {
     return (
         <div className={cn(
-            'px-5 py-4 border-t border-border dark:border-[#bc13fe]/30',
-            'bg-slate-50 dark:bg-[#1a0f35]',
+            'px-5 py-4 border-t border-border dark:border-brand-600/30',
+            'bg-slate-50 dark:bg-secondary',
             'flex items-center justify-end gap-3',
             className
         )}>
@@ -233,10 +233,10 @@ export function ModalInput({ className, ...props }: React.InputHTMLAttributes<HT
         <input
             className={cn(
                 'w-full px-3 py-2 text-sm',
-                'bg-background dark:bg-[#0a0520] border-2 border-input dark:border-[#bc13fe]/30 rounded-lg',
+                'bg-background dark:bg-input border-2 border-input dark:border-brand-600/30 rounded-lg',
                 'text-foreground placeholder-muted-foreground',
-                'focus:border-primary dark:focus:border-[#00f7ff] focus:ring-1 focus:ring-primary/50 dark:focus:ring-[#00f7ff]/50',
-                'dark:focus:shadow-[0_0_15px_rgba(0,247,255,0.2)]',
+                'focus:border-primary dark:focus:border-brand-500 focus:ring-1 focus:ring-primary/50 dark:focus:ring-[brand-400]/50',
+                'dark:focus:shadow-[0_0_15px_rgba(70, 95, 255,0.2)]',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
                 'transition-all outline-none',
                 className
@@ -251,9 +251,9 @@ export function ModalSelect({ className, children, ...props }: React.SelectHTMLA
         <select
             className={cn(
                 'w-full px-3 py-2 text-sm',
-                'bg-background dark:bg-[#0a0520] border-2 border-input dark:border-[#bc13fe]/30 rounded-lg',
+                'bg-background dark:bg-input border-2 border-input dark:border-brand-600/30 rounded-lg',
                 'text-foreground',
-                'focus:border-primary dark:focus:border-[#00f7ff] focus:ring-1 focus:ring-primary/50 dark:focus:ring-[#00f7ff]/50',
+                'focus:border-primary dark:focus:border-brand-500 focus:ring-1 focus:ring-primary/50 dark:focus:ring-[brand-400]/50',
                 'transition-all outline-none appearance-none cursor-pointer',
                 className
             )}
@@ -269,10 +269,10 @@ export function ModalTextarea({ className, ...props }: React.TextareaHTMLAttribu
         <textarea
             className={cn(
                 'w-full px-3 py-2 text-sm',
-                'bg-background dark:bg-[#0a0520] border-2 border-input dark:border-[#bc13fe]/30 rounded-lg',
+                'bg-background dark:bg-input border-2 border-input dark:border-brand-600/30 rounded-lg',
                 'text-foreground placeholder-muted-foreground',
-                'focus:border-primary dark:focus:border-[#00f7ff] focus:ring-1 focus:ring-primary/50 dark:focus:ring-[#00f7ff]/50',
-                'dark:focus:shadow-[0_0_15px_rgba(0,247,255,0.2)]',
+                'focus:border-primary dark:focus:border-brand-500 focus:ring-1 focus:ring-primary/50 dark:focus:ring-[brand-400]/50',
+                'dark:focus:shadow-[0_0_15px_rgba(70, 95, 255,0.2)]',
                 'transition-all outline-none resize-none',
                 className
             )}
@@ -283,7 +283,7 @@ export function ModalTextarea({ className, ...props }: React.TextareaHTMLAttribu
 
 export function ModalLabel({ children, className, required }: { children: React.ReactNode; className?: string; required?: boolean }) {
     return (
-        <label className={cn('block text-xs font-medium text-gray-800 dark:text-[#e0d0ff] mb-1.5', className)}>
+        <label className={cn('block text-xs font-medium text-gray-800 dark:text-muted-foreground mb-1.5', className)}>
             {children}
             {required && <span className="text-destructive ml-0.5">*</span>}
         </label>
@@ -300,30 +300,30 @@ export function ModalButton({
     const variants = {
         primary: cn(
             'bg-primary hover:bg-primary/90',
-            'dark:bg-gradient-to-r dark:from-[#bc13fe] dark:to-[#00f7ff]',
+            'dark:bg-gradient-to-r dark:from-brand-600 dark:to-brand-400',
             'dark:hover:from-[#a010e0] dark:hover:to-[#00d4dd]',
             'text-primary-foreground font-bold',
-            'dark:shadow-[0_0_20px_rgba(188,19,254,0.3)]',
-            'dark:hover:shadow-[0_0_30px_rgba(188,19,254,0.5)]'
+            'dark:shadow-[0_0_20px_rgba(122, 90, 248,0.3)]',
+            'dark:hover:shadow-[0_0_30px_rgba(122, 90, 248,0.5)]'
         ),
         secondary: cn(
-            'bg-secondary border-2 border-border dark:border-[#bc13fe]/30',
-            'hover:bg-secondary/80 dark:hover:border-[#00f7ff]/50 dark:hover:bg-[#bc13fe]/10',
+            'bg-secondary border-2 border-border dark:border-brand-600/30',
+            'hover:bg-secondary/80 dark:hover:border-brand-500/50 dark:hover:bg-brand-600/10',
             'text-secondary-foreground'
         ),
         danger: cn(
             'bg-destructive hover:bg-destructive/90',
-            'dark:bg-gradient-to-r dark:from-[#ff4466] dark:to-[#ff44cc]',
+            'dark:bg-gradient-to-r dark:from-[#ff4466] dark:to-accent-foreground',
             'dark:hover:from-[#e03d5d] dark:hover:to-[#e03db3]',
             'text-destructive-foreground font-bold',
             'dark:shadow-[0_0_20px_rgba(255,68,102,0.3)]'
         ),
         success: cn(
             'bg-green-600 hover:bg-green-700 text-white',
-            'dark:bg-gradient-to-r dark:from-[#00ff88] dark:to-[#00f7ff]',
+            'dark:bg-gradient-to-r dark:from-[success] dark:to-brand-400',
             'dark:hover:from-[#00dd77] dark:hover:to-[#00d4dd]',
             'dark:text-black font-bold',
-            'dark:shadow-[0_0_20px_rgba(0,255,136,0.3)]'
+            'dark:shadow-[0_0_20px_rgba(18, 183, 106,0.3)]'
         ),
     };
 

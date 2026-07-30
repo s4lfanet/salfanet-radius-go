@@ -1190,7 +1190,7 @@ function AdminLayoutContent({
           {/* Scan lines */}
           <div className="hidden dark:block absolute inset-0 pointer-events-none bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(70,95,255,0.02)_2px,rgba(70,95,255,0.02)_4px)]" />
 
-          <div className="relative bg-background/95 backdrop-blur-xl border-2 border-brand-500/30 rounded-2xl shadow-theme-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-300">
+          <div className="relative bg-background/95 backdrop-blur-xl border-2 border-brand-500/30 rounded-xl shadow-theme-xl max-w-sm w-full p-6 animate-in zoom-in-95 duration-300">
             {/* Top accent line */}
             <div className="absolute top-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-brand-400 to-transparent" />
 

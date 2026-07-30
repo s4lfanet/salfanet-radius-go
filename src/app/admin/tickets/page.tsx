@@ -1,4 +1,4 @@
-ï»¿'use client';
+'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -149,7 +149,7 @@ export default function AdminTicketsPage() {
   const selectCustomer = (c: DispatchDataResult['customers'][0]) => {
     setForm(f => ({
       ...f,
-      // customerId must reference pppoeUser.id â€” billing customers don't have one
+      // customerId must reference pppoeUser.id — billing customers don't have one
       customerId: c._source === 'billing' ? null : c.id,
       customerName: c.name || c.username,
       customerPhone: c.phone || '',
@@ -251,18 +251,13 @@ export default function AdminTicketsPage() {
   return (
     <div className="bg-background relative">
       {/* Neon Cyberpunk Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       
       <div className="relative z-10 space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
         <div className="min-w-0">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)]">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)]">
             {t('ticket.tickets')}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -281,75 +276,75 @@ export default function AdminTicketsPage() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 sm:gap-3 mb-4">
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-3 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-3 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-[#00f7ff] uppercase tracking-wide truncate">{t('ticket.totalTickets')}</p>
+                <p className="text-[10px] sm:text-xs text-brand-400 uppercase tracking-wide truncate">{t('ticket.totalTickets')}</p>
                 <p className="text-lg sm:text-xl font-bold text-foreground mt-1">{stats.total}</p>
               </div>
-              <Ticket className="text-[#00f7ff] h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(0,247,255,0.6)] flex-shrink-0" />
+              <Ticket className="text-brand-400 h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(70, 95, 255,0.6)] flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-3 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-3 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-[#00f7ff] uppercase tracking-wide truncate">{t('ticket.openTickets')}</p>
+                <p className="text-[10px] sm:text-xs text-brand-400 uppercase tracking-wide truncate">{t('ticket.openTickets')}</p>
                 <p className="text-lg sm:text-xl font-bold text-foreground mt-1">{stats.byStatus.open}</p>
               </div>
-              <TrendingUp className="text-[#00f7ff] h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(0,247,255,0.6)] flex-shrink-0" />
+              <TrendingUp className="text-brand-400 h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(70, 95, 255,0.6)] flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-3 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-3 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-[#00f7ff] uppercase tracking-wide truncate">{t('ticket.urgentTickets')}</p>
+                <p className="text-[10px] sm:text-xs text-brand-400 uppercase tracking-wide truncate">{t('ticket.urgentTickets')}</p>
                 <p className="text-lg sm:text-xl font-bold text-foreground mt-1">{stats.byPriority.urgent}</p>
               </div>
               <AlertCircle className="text-red-400 h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(239,68,68,0.6)] flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-3 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-3 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-[#00f7ff] uppercase tracking-wide truncate">{t('ticket.unassigned')}</p>
+                <p className="text-[10px] sm:text-xs text-brand-400 uppercase tracking-wide truncate">{t('ticket.unassigned')}</p>
                 <p className="text-lg sm:text-xl font-bold text-foreground mt-1">{stats.unassigned}</p>
               </div>
               <Users className="text-amber-400 h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(251,191,36,0.6)] flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-3 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-3 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-[#00f7ff] uppercase tracking-wide truncate">{t('ticket.inProgress')}</p>
+                <p className="text-[10px] sm:text-xs text-brand-400 uppercase tracking-wide truncate">{t('ticket.inProgress')}</p>
                 <p className="text-lg sm:text-xl font-bold text-foreground mt-1">{stats.byStatus.inProgress}</p>
               </div>
               <Clock className="text-amber-400 h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(251,191,36,0.6)] flex-shrink-0" />
             </div>
           </div>
 
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-3 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-3 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-[#00f7ff] uppercase tracking-wide truncate">{t('ticket.resolved')}</p>
+                <p className="text-[10px] sm:text-xs text-brand-400 uppercase tracking-wide truncate">{t('ticket.resolved')}</p>
                 <p className="text-lg sm:text-xl font-bold text-foreground mt-1">{stats.byStatus.resolved}</p>
               </div>
               <CheckCircle className="text-green-400 h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(34,197,94,0.6)] flex-shrink-0" />
             </div>
           </div>
 
-          <div className="col-span-2 sm:col-span-1 bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-3 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
+          <div className="col-span-2 sm:col-span-1 bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-3 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-[10px] sm:text-xs text-[#00f7ff] uppercase tracking-wide truncate">{t('ticket.avgResponseTime')}</p>
+                <p className="text-[10px] sm:text-xs text-brand-400 uppercase tracking-wide truncate">{t('ticket.avgResponseTime')}</p>
                 <p className="text-lg sm:text-xl font-bold text-foreground mt-1">
                   {stats.avgResponseTimeHours.toFixed(1)} {t('ticket.hours')}
                 </p>
               </div>
-              <Clock className="text-[#00f7ff] h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(0,247,255,0.6)] flex-shrink-0" />
+              <Clock className="text-brand-400 h-5 w-5 sm:h-6 sm:w-6 drop-shadow-[0_0_15px_rgba(70, 95, 255,0.6)] flex-shrink-0" />
             </div>
           </div>
         </div>
@@ -521,13 +516,13 @@ export default function AdminTicketsPage() {
                   </div>
                   <div className="flex items-center gap-2 flex-wrap mt-2">
                     <span className="text-[11px] text-muted-foreground">{ticket.customerName}</span>
-                    <span className="text-[9px] text-muted-foreground/50">â€¢</span>
+                    <span className="text-[9px] text-muted-foreground/50">•</span>
                     <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${getStatusColor(ticket.status)}`}>
                       {t(`ticket.status_${ticket.status}`)}
                     </span>
                     {ticket.category && (
                       <>
-                        <span className="text-[9px] text-muted-foreground/50">â€¢</span>
+                        <span className="text-[9px] text-muted-foreground/50">•</span>
                         <span
                           className="px-1.5 py-0.5 rounded text-[9px] font-medium text-foreground"
                           style={{ backgroundColor: ticket.category.color }}
@@ -557,12 +552,12 @@ export default function AdminTicketsPage() {
       {/* Dispatch Modal */}
       {showDispatch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={() => !dispatchLoading && setShowDispatch(false)}>
-          <div className="bg-card border border-[#bc13fe]/30 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="bg-card border border-brand-600/30 rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
             {/* Modal Header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <div>
                 <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-                  <Send className="w-4 h-4 text-[#bc13fe]" />
+                  <Send className="w-4 h-4 text-brand-600" />
                   Kirim Tiket ke Semua Teknisi
                 </h2>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -576,7 +571,7 @@ export default function AdminTicketsPage() {
 
             {dispatchDataLoading && !dispatchData ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="w-8 h-8 animate-spin text-[#bc13fe]" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
               </div>
             ) : (
               <div className="p-5 space-y-4">
@@ -594,7 +589,7 @@ export default function AdminTicketsPage() {
                         value={customerSearch}
                         onChange={e => handleCustomerSearchChange(e.target.value)}
                         placeholder="Nama, username, atau telepon..."
-                        className="w-full pl-9 pr-8 py-2 text-xs bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none"
+                        className="w-full pl-9 pr-8 py-2 text-xs bg-background border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none"
                         autoComplete="off"
                       />
                       {customerSearchLoading && (
@@ -607,10 +602,10 @@ export default function AdminTicketsPage() {
                           <button key={c.id} onClick={() => selectCustomer(c)} className="w-full text-left px-3 py-2.5 text-xs hover:bg-muted transition flex items-center justify-between gap-2">
                             <div className="flex flex-col gap-0.5 min-w-0">
                               <span className="font-medium text-foreground truncate">{c.name || c.username}</span>
-                              <span className="text-muted-foreground">{c.phone} {c.username && c._source === 'pppoe' ? `Â· @${c.username}` : ''}</span>
+                              <span className="text-muted-foreground">{c.phone} {c.username && c._source === 'pppoe' ? `· @${c.username}` : ''}</span>
                             </div>
                             <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                              c._source === 'billing' ? 'bg-amber-500/20 text-amber-400' : 'bg-[#00f7ff]/15 text-[#00f7ff]'
+                              c._source === 'billing' ? 'bg-amber-500/20 text-amber-400' : 'bg-brand-500/15 text-brand-400'
                             }`}>{c._source === 'billing' ? 'Pelanggan' : 'PPPoE'}</span>
                           </button>
                         ))}
@@ -620,7 +615,7 @@ export default function AdminTicketsPage() {
                       <p className="mt-1 text-xs text-muted-foreground px-1">Tidak ada pelanggan ditemukan untuk &quot;{customerSearch}&quot;</p>
                     )}
                     {customerLockedIn && (
-                      <button onClick={() => { setForm(f => ({ ...f, customerId: null })); setCustomerLockedIn(false); setCustomerSearch(''); }} className="mt-1 text-[10px] text-[#bc13fe] hover:underline">
+                      <button onClick={() => { setForm(f => ({ ...f, customerId: null })); setCustomerLockedIn(false); setCustomerSearch(''); }} className="mt-1 text-[10px] text-brand-600 hover:underline">
                         Ganti pelanggan
                       </button>
                     )}
@@ -629,16 +624,16 @@ export default function AdminTicketsPage() {
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Nama <span className="text-red-400">*</span></label>
-                      <input value={form.customerName} onChange={e => setForm(f => ({ ...f, customerName: e.target.value }))} placeholder="Nama pelanggan" className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none" />
+                      <input value={form.customerName} onChange={e => setForm(f => ({ ...f, customerName: e.target.value }))} placeholder="Nama pelanggan" className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none" />
                     </div>
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Telepon <span className="text-red-400">*</span></label>
-                      <input value={form.customerPhone} onChange={e => setForm(f => ({ ...f, customerPhone: e.target.value }))} placeholder="08xx..." className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none" />
+                      <input value={form.customerPhone} onChange={e => setForm(f => ({ ...f, customerPhone: e.target.value }))} placeholder="08xx..." className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none" />
                     </div>
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Alamat</label>
-                    <input value={form.customerAddress} onChange={e => setForm(f => ({ ...f, customerAddress: e.target.value }))} placeholder="Alamat pelanggan" className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none" />
+                    <input value={form.customerAddress} onChange={e => setForm(f => ({ ...f, customerAddress: e.target.value }))} placeholder="Alamat pelanggan" className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none" />
                   </div>
                 </div>
 
@@ -649,8 +644,8 @@ export default function AdminTicketsPage() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Router/NAS</label>
                       <div className="relative">
-                        <select value={form.routerId} onChange={e => setForm(f => ({ ...f, routerId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none pr-8">
-                          <option value="">â€” Pilih Router â€”</option>
+                        <select value={form.routerId} onChange={e => setForm(f => ({ ...f, routerId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
+                          <option value="">— Pilih Router —</option>
                           {dispatchData?.routers.map(r => <option key={r.id} value={r.id}>{r.name}{r.nasname ? ` (${r.nasname})` : ''}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -659,8 +654,8 @@ export default function AdminTicketsPage() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">OLT</label>
                       <div className="relative">
-                        <select value={form.oltId} onChange={e => setForm(f => ({ ...f, oltId: e.target.value, odcId: '', odpId: '' }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none pr-8">
-                          <option value="">â€” Pilih OLT â€”</option>
+                        <select value={form.oltId} onChange={e => setForm(f => ({ ...f, oltId: e.target.value, odcId: '', odpId: '' }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
+                          <option value="">— Pilih OLT —</option>
                           {dispatchData?.olts.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -669,8 +664,8 @@ export default function AdminTicketsPage() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">ODC</label>
                       <div className="relative">
-                        <select value={form.odcId} onChange={e => setForm(f => ({ ...f, odcId: e.target.value, odpId: '' }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none pr-8">
-                          <option value="">â€” Pilih ODC â€”</option>
+                        <select value={form.odcId} onChange={e => setForm(f => ({ ...f, odcId: e.target.value, odpId: '' }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
+                          <option value="">— Pilih ODC —</option>
                           {(dispatchData?.odcs ?? []).filter(o => !form.oltId || o.oltId === form.oltId).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -679,8 +674,8 @@ export default function AdminTicketsPage() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">ODP</label>
                       <div className="relative">
-                        <select value={form.odpId} onChange={e => setForm(f => ({ ...f, odpId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none pr-8">
-                          <option value="">â€” Pilih ODP â€”</option>
+                        <select value={form.odpId} onChange={e => setForm(f => ({ ...f, odpId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
+                          <option value="">— Pilih ODP —</option>
                           {(dispatchData?.odps ?? []).filter(o => !form.odcId || o.odcId === form.odcId).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -696,8 +691,8 @@ export default function AdminTicketsPage() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Kategori</label>
                       <div className="relative">
-                        <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none pr-8">
-                          <option value="">â€” Pilih Kategori â€”</option>
+                        <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
+                          <option value="">— Pilih Kategori —</option>
                           {dispatchData?.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -706,11 +701,11 @@ export default function AdminTicketsPage() {
                     <div>
                       <label className="text-xs text-muted-foreground mb-1 block">Prioritas</label>
                       <div className="relative">
-                        <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none pr-8">
-                          <option value="LOW">ðŸŸ¢ Rendah</option>
-                          <option value="MEDIUM">ðŸŸ¡ Sedang</option>
-                          <option value="HIGH">ðŸŸ  Tinggi</option>
-                          <option value="URGENT">ðŸ”´ Urgent</option>
+                        <select value={form.priority} onChange={e => setForm(f => ({ ...f, priority: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
+                          <option value="LOW">?? Rendah</option>
+                          <option value="MEDIUM">?? Sedang</option>
+                          <option value="HIGH">?? Tinggi</option>
+                          <option value="URGENT">?? Urgent</option>
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
                       </div>
@@ -718,11 +713,11 @@ export default function AdminTicketsPage() {
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Subjek <span className="text-red-400">*</span></label>
-                    <input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} placeholder="Ringkasan masalah" className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none" />
+                    <input value={form.subject} onChange={e => setForm(f => ({ ...f, subject: e.target.value }))} placeholder="Ringkasan masalah" className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none" />
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground mb-1 block">Deskripsi <span className="text-red-400">*</span></label>
-                    <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Detail masalah yang perlu ditangani teknisi..." rows={4} className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[#bc13fe]/40 outline-none resize-none" />
+                    <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Detail masalah yang perlu ditangani teknisi..." rows={4} className="w-full px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none resize-none" />
                   </div>
                 </div>
 
@@ -732,7 +727,7 @@ export default function AdminTicketsPage() {
                     <p className="text-xs font-medium text-muted-foreground mb-2">Akan dikirim ke {dispatchData.technicians.length} teknisi aktif:</p>
                     <div className="flex flex-wrap gap-1.5">
                       {dispatchData.technicians.map(t => (
-                        <span key={t.id} className="px-2 py-0.5 text-[10px] bg-[#bc13fe]/10 text-[#bc13fe] border border-[#bc13fe]/20 rounded-full">{t.name}</span>
+                        <span key={t.id} className="px-2 py-0.5 text-[10px] bg-brand-600/10 text-brand-600 border border-brand-600/20 rounded-full">{t.name}</span>
                       ))}
                     </div>
                   </div>
@@ -743,7 +738,7 @@ export default function AdminTicketsPage() {
                   <button onClick={() => !dispatchLoading && setShowDispatch(false)} disabled={dispatchLoading} className="flex-1 py-2.5 text-sm font-semibold bg-muted text-foreground border border-border rounded-xl hover:bg-muted/80 transition disabled:opacity-50">
                     Batal
                   </button>
-                  <button onClick={handleDispatch} disabled={dispatchLoading} className="flex-[2] py-2.5 text-sm font-semibold bg-gradient-to-r from-[#bc13fe] to-[#9b10d6] text-white rounded-xl shadow-[0_0_15px_rgba(188,19,254,0.4)] hover:shadow-[0_0_25px_rgba(188,19,254,0.6)] transition disabled:opacity-50 flex items-center justify-center gap-2">
+                  <button onClick={handleDispatch} disabled={dispatchLoading} className="flex-[2] py-2.5 text-sm font-semibold bg-gradient-to-r from-brand-600 to-[#9b10d6] text-white rounded-xl shadow-[0_0_15px_rgba(122, 90, 248,0.4)] hover:shadow-[0_0_25px_rgba(122, 90, 248,0.6)] transition disabled:opacity-50 flex items-center justify-center gap-2">
                     {dispatchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                     {dispatchLoading ? 'Mengirim...' : `Kirim ke ${dispatchData?.technicians.length ?? 0} Teknisi`}
                   </button>

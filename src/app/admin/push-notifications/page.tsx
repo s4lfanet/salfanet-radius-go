@@ -740,7 +740,7 @@ export default function PushNotificationsPage() {
                   <CardContent className="px-5 pb-5">
                     {/* Phone mockup */}
                     <div className="mx-auto max-w-[280px]">
-                      <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl p-1 shadow-xl">
+                      <div className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl p-1 shadow-xl">
                         {/* Phone notch */}
                         <div className="flex justify-center py-1">
                           <div className="w-20 h-1 bg-gray-700 rounded-full" />
@@ -832,7 +832,7 @@ export default function PushNotificationsPage() {
                 </div>
               ) : broadcasts.length === 0 ? (
                 <div className="text-center py-16">
-                  <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+                  <div className="w-16 h-16 rounded-xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
                     <Megaphone className="w-8 h-8 text-muted-foreground/30" />
                   </div>
                   <p className="text-sm font-medium text-muted-foreground">{t('pushNotif.noBroadcastYet')}</p>
@@ -842,7 +842,7 @@ export default function PushNotificationsPage() {
                 {/* Mobile Card View */}
                 <div className="block md:hidden space-y-3.5">
                   {broadcasts.map((bc) => (
-                    <div key={bc.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-[#bc13fe]/20 p-3.5">
+                    <div key={bc.id} className="bg-card/80 backdrop-blur-xl rounded-xl border border-brand-600/20 p-3.5">
                       <div className="flex items-start justify-between gap-2 mb-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold leading-tight">{bc.title}</p>

@@ -223,7 +223,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
     <div className="p-4 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc]">
+        <h1 className="text-xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground">
           <Globe className="inline w-5 h-5 mr-2" />
           Subdomain Routing
         </h1>

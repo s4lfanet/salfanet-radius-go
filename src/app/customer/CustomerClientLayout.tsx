@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
@@ -39,7 +39,7 @@ interface NotifEvent {
   timestamp: string;
 }
 
-// â”€â”€â”€ Inner layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Inner layout ────────────────────────────────────────────────────────────
 function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -57,7 +57,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
   const lastCheckedRef = useRef<string>(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { addToast } = useToast();
-  // Stable ref to addToast — prevents poll() recreation when context re-renders
+  // Stable ref to addToast � prevents poll() recreation when context re-renders
   const addToastRef = useRef(addToast);
   useEffect(() => { addToastRef.current = addToast; }, [addToast]);
   // Dedup: track event IDs that already triggered a toast to prevent doubles
@@ -69,7 +69,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
     return () => clearInterval(tick);
   }, []);
 
-  // â”€â”€ Persist notifications to localStorage â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Persist notifications to localStorage ──────────────────────────────
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -218,12 +218,12 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
     return pathname.startsWith(href);
   };
 
-  // Skip portal UI on login page — render children directly
+  // Skip portal UI on login page � render children directly
   if (pathname === '/customer/login') {
     return <>{children}</>;
   }
 
-  // Not yet authenticated (or not checked yet) — render children only so the
+  // Not yet authenticated (or not checked yet) � render children only so the
   // page component can run its own useEffect redirect to /customer/login
   if (!authenticated) {
     return <>{children}</>;
@@ -247,7 +247,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* â”€â”€ DESKTOP SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── DESKTOP SIDEBAR ─────────────────────────────── */}
       <aside
         className={cn(
           'fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out',
@@ -334,7 +334,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* â”€â”€ MAIN CONTENT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── MAIN CONTENT ────────────────────────────────── */}
       <div className="lg:ml-64 flex flex-col min-h-screen">
         {/* Desktop Header */}
         <header className="hidden lg:flex sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border items-center justify-between px-6 py-3">
@@ -365,7 +365,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
               {bellOpen && (
                 <>
                   <div className="fixed inset-0 z-40 touch-none" onClick={() => setBellOpen(false)} />
-                  <div className="absolute right-0 top-full mt-2 w-80 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-lg z-50 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-lg z-50 overflow-hidden">
                     <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                       <span className="text-xs font-bold text-primary uppercase tracking-wider">Notifikasi</span>
                       <div className="flex items-center gap-1">
@@ -416,7 +416,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
                 </>
               )}
             </div>
-            {/* Theme Toggle â€” Desktop */}
+            {/* Theme Toggle — Desktop */}
             <button
               onClick={toggleTheme}
               className="p-2 flex items-center justify-center rounded-xl hover:bg-primary/10 border border-transparent hover:border-border transition-all"
@@ -475,7 +475,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
                 {bellOpen && (
                   <>
                     <div className="fixed inset-0 z-40 touch-none" onClick={() => setBellOpen(false)} />
-                    <div className="absolute right-0 top-full mt-2 w-72 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-lg z-50 overflow-hidden">
+                    <div className="absolute right-0 top-full mt-2 w-72 bg-card/95 backdrop-blur-xl border border-border rounded-xl shadow-lg z-50 overflow-hidden">
                       <div className="px-4 py-3 border-b border-border flex items-center justify-between">
                         <span className="text-xs font-bold text-primary uppercase tracking-wider">Notifikasi</span>
                         <div className="flex items-center gap-1">
@@ -526,7 +526,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
                   </>
                 )}
               </div>
-              {/* Theme Toggle â€” Mobile */}
+              {/* Theme Toggle — Mobile */}
               <button
                 onClick={toggleTheme}
                 className="p-2 flex items-center justify-center hover:bg-primary/10 rounded-xl transition-all border border-border"
@@ -547,7 +547,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
           {children}
         </main>
 
-        {/* ── MOBILE BOTTOM NAV ─────────────────────────────────── */}
+        {/* -- MOBILE BOTTOM NAV ----------------------------------- */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-xl border-t border-border shadow-sm">
           <div className="flex items-center justify-around px-1 py-1.5 safe-area-pb">
             {[
@@ -586,7 +586,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-// â”€â”€â”€ Bridge for global showSuccess/showError helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Bridge for global showSuccess/showError helpers ─────────────────────────
 function CustomerToastBridge() {
   const { addToast, confirm } = useToast();
   useEffect(() => {
@@ -596,7 +596,7 @@ function CustomerToastBridge() {
   return null;
 }
 
-// â”€â”€â”€ Root export: wrap with CyberToastProvider â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Root export: wrap with CyberToastProvider ───────────────────────────────
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   return (
     <CyberToastProvider>

@@ -1,4 +1,4 @@
-ï»¿'use client';
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import {
@@ -180,17 +180,13 @@ ingress:
 
   return (
     <div className="bg-background relative">
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl opacity-50"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl opacity-50"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
 
       <div className="relative z-10 space-y-6 max-w-3xl">
         {/* Header */}
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-            <Cloud className="w-6 h-6 text-brand-500 dark:text-[#00f7ff]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+            <Cloud className="w-6 h-6 text-brand-500 dark:text-brand-400" />
             Cloudflare Tunnel Setup
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
@@ -362,7 +358,7 @@ pm2 reload salfanet-radius --update-env`} />
           <StepCard number={5} title="Konfigurasi Nginx (Opsional)" icon={<Server className="w-4 h-4" />}>
             <p className="text-sm text-muted-foreground">
               Jika menggunakan Nginx sebagai reverse proxy di depan Cloudflare Tunnel, gunakan konfigurasi HTTP sederhana
-              (tanpa SSL â€” SSL sudah dihandle oleh Cloudflare):
+              (tanpa SSL — SSL sudah dihandle oleh Cloudflare):
             </p>
             <CodeBlock code={nginxConfig} />
             <CodeBlock code={`# Simpan ke sites-available
@@ -376,7 +372,7 @@ nginx -t && systemctl reload nginx`} />
             <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg text-xs text-blue-700 dark:text-blue-400 flex items-start gap-2">
               <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
               <span>
-                Dengan Cloudflare Tunnel, koneksi dari Cloudflare ke VPS bersifat outbound â€” Nginx tidak wajib.
+                Dengan Cloudflare Tunnel, koneksi dari Cloudflare ke VPS bersifat outbound — Nginx tidak wajib.
                 Tunnel langsung terhubung ke port 3000 tanpa perlu membuka port di firewall.
               </span>
             </div>

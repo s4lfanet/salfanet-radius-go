@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -131,7 +131,7 @@ export default function SessionsPage() {
     }
   };
 
-  // Format date helper — uses formatWIB for consistent WIB display
+  // Format date helper � uses formatWIB for consistent WIB display
   const formatDateTime = (dateStr: string | null) => {
     if (!dateStr) return '-';
     return formatWIB(dateStr, 'dd/MM/yyyy HH:mm');
@@ -153,7 +153,7 @@ export default function SessionsPage() {
 
   useEffect(() => {
     fetchSessions(1);
-    // Auto-refresh setiap 10 detik — silent refresh to prevent full-page spinner
+    // Auto-refresh setiap 10 detik � silent refresh to prevent full-page spinner
     const interval = setInterval(() => {
       fetchSessions(currentPage, true);
     }, 10000);
@@ -293,11 +293,8 @@ export default function SessionsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
-        <RefreshCw className="w-12 h-12 animate-spin text-brand-500 dark:text-[#00f7ff] dark:drop-shadow-[0_0_20px_rgba(0,247,255,0.6)] relative z-10" />
+        
+        <RefreshCw className="w-12 h-12 animate-spin text-brand-500 dark:text-brand-400 dark:drop-shadow-[0_0_20px_rgba(70, 95, 255,0.6)] relative z-10" />
       </div>
     );
   }
@@ -306,24 +303,24 @@ export default function SessionsPage() {
     <>
     {showDateRangeModal && createPortal(
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowDateRangeModal(false)}>
-        <div className="bg-[#1e1b2e] border border-[#bc13fe]/30 rounded-lg w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
-          <div className="flex items-center justify-between p-4 border-b border-[#bc13fe]/20">
-            <h2 className="text-base font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc]">{t('sessions.exportHistory')}</h2>
+        <div className="bg-[secondary] border border-brand-600/30 rounded-lg w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="flex items-center justify-between p-4 border-b border-brand-600/20">
+            <h2 className="text-base font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground">{t('sessions.exportHistory')}</h2>
             <button onClick={() => setShowDateRangeModal(false)} className="text-muted-foreground hover:text-foreground text-xl">&times;</button>
           </div>
           <div className="p-4 space-y-3">
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">{t('time.from')}</label>
-              <input type="date" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} className="w-full px-3 py-2 border border-[#bc13fe]/30 rounded bg-[#1a0f35] text-gray-200 text-sm" />
+              <input type="date" value={exportStartDate} onChange={(e) => setExportStartDate(e.target.value)} className="w-full px-3 py-2 border border-brand-600/30 rounded bg-secondary text-gray-200 text-sm" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-400 mb-1">{t('time.to')}</label>
-              <input type="date" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} className="w-full px-3 py-2 border border-[#bc13fe]/30 rounded bg-[#1a0f35] text-gray-200 text-sm" />
+              <input type="date" value={exportEndDate} onChange={(e) => setExportEndDate(e.target.value)} className="w-full px-3 py-2 border border-brand-600/30 rounded bg-secondary text-gray-200 text-sm" />
             </div>
           </div>
-          <div className="flex gap-2 p-4 border-t border-[#bc13fe]/20">
+          <div className="flex gap-2 p-4 border-t border-brand-600/20">
             <button onClick={() => setShowDateRangeModal(false)} className="flex-1 px-4 py-2 text-sm border border-gray-600 rounded text-muted-foreground hover:text-foreground">{t('common.cancel')}</button>
-            <button onClick={handlePerformHistoryExport} className="flex-1 px-4 py-2 text-sm font-bold bg-[#00f7ff] text-[#1a0f35] rounded">{t('common.export')}</button>
+            <button onClick={handlePerformHistoryExport} className="flex-1 px-4 py-2 text-sm font-bold bg-brand-500 text-[secondary] rounded">{t('common.export')}</button>
           </div>
         </div>
       </div>,
@@ -331,19 +328,14 @@ export default function SessionsPage() {
     )}
     <div className="bg-background relative">
       {/* Neon Cyberpunk Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#bc13fe]/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/3 right-1/4 w-96 h-96 bg-[#00f7ff]/20 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-1/2 w-96 h-96 bg-[#ff44cc]/20 rounded-full blur-3xl"></div>
-        <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(188,19,254,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(188,19,254,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-      </div>
+      
       
       <div className="relative z-10 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc] dark:drop-shadow-[0_0_30px_rgba(0,247,255,0.5)] flex items-center gap-2">
-            <Activity className="w-6 h-6 text-[#00f7ff]" />
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground dark:drop-shadow-[0_0_30px_rgba(70, 95, 255,0.5)] flex items-center gap-2">
+            <Activity className="w-6 h-6 text-brand-400" />
             {t('sessions.title')}
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">{t('sessions.subtitle')}</p>
@@ -383,24 +375,24 @@ export default function SessionsPage() {
       {/* Stats */}
       {stats && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
-            <div className="text-xs text-[#00f7ff] uppercase tracking-wide">{t('sessions.active')}</div>
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
+            <div className="text-xs text-brand-400 uppercase tracking-wide">{t('sessions.active')}</div>
             <div className="text-lg sm:text-2xl font-bold text-foreground mt-1">{stats.total}</div>
           </div>
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
-            <div className="text-xs text-[#00f7ff] uppercase tracking-wide flex items-center gap-1">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
+            <div className="text-xs text-brand-400 uppercase tracking-wide flex items-center gap-1">
               <Wifi className="w-4 h-4" /> PPPoE
             </div>
             <div className="text-lg sm:text-2xl font-bold text-foreground mt-1">{stats.pppoe}</div>
           </div>
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
-            <div className="text-xs text-[#00f7ff] uppercase tracking-wide flex items-center gap-1">
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
+            <div className="text-xs text-brand-400 uppercase tracking-wide flex items-center gap-1">
               <WifiOff className="w-4 h-4" /> Hotspot
             </div>
             <div className="text-lg sm:text-2xl font-bold text-foreground mt-1">{stats.hotspot}</div>
           </div>
-          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-[#bc13fe]/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(188,19,254,0.2)] hover:border-[#bc13fe]/50 transition-all">
-            <div className="text-xs text-[#00f7ff] uppercase tracking-wide">{t('dashboard.bandwidth')}</div>
+          <div className="bg-card/80 backdrop-blur-xl rounded-xl border-2 border-brand-600/30 p-2.5 sm:p-4 shadow-[0_0_20px_rgba(122, 90, 248,0.2)] hover:border-brand-600/50 transition-all">
+            <div className="text-xs text-brand-400 uppercase tracking-wide">{t('dashboard.bandwidth')}</div>
             <div className="text-lg sm:text-2xl font-bold text-foreground mt-1">{stats.totalBandwidthFormatted}</div>
           </div>
         </div>
@@ -563,9 +555,9 @@ export default function SessionsPage() {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{t('sessions.uploadDownload')}:</span>
                     <span>
-                      <span className="text-success">↑{session.uploadFormatted}</span>
+                      <span className="text-success">?{session.uploadFormatted}</span>
                       {' / '}
-                      <span className="text-accent">↓{session.downloadFormatted}</span>
+                      <span className="text-accent">?{session.downloadFormatted}</span>
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -605,8 +597,8 @@ export default function SessionsPage() {
                 <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden xl:table-cell">{t('sessions.startTime')}</th>
                 <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden xl:table-cell">{t('sessions.lastUpdate')}</th>
                 <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase">{t('sessions.duration')}</th>
-                <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden lg:table-cell">↑ {t('sessions.upload')}</th>
-                <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden lg:table-cell">↓ {t('sessions.download')}</th>
+                <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden lg:table-cell">? {t('sessions.upload')}</th>
+                <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden lg:table-cell">? {t('sessions.download')}</th>
                 <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden sm:table-cell">{t('sessions.router')}</th>
                 <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden sm:table-cell">{t('sessions.ipAddress')}</th>
                 <th className="px-2 py-2 text-left text-[10px] font-medium text-muted-foreground uppercase hidden 2xl:table-cell">{t('sessions.macAddress')}</th>

@@ -98,13 +98,13 @@ export default function TechnicianMonitorPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Monitor className="w-5 h-5 text-[#00f7ff]" />
+            <Monitor className="w-5 h-5 text-brand-400" />
             Monitor Pelanggan
           </h1>
-          <p className="text-xs text-slate-500 dark:text-[#e0d0ff]/60 mt-0.5">
+          <p className="text-xs text-slate-500 dark:text-muted-foreground/60 mt-0.5">
             Status online/offline pelanggan · Auto-refresh 30d
             {lastRefresh && (
-              <span className="ml-1.5 text-[#00f7ff]/60">
+              <span className="ml-1.5 text-brand-400/60">
                 (Terakhir: {lastRefresh.toLocaleTimeString('id-ID')})
               </span>
             )}
@@ -113,7 +113,7 @@ export default function TechnicianMonitorPage() {
         <button
           onClick={loadData}
           disabled={loading}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-[#00f7ff]/10 hover:bg-slate-200 dark:hover:bg-[#00f7ff]/20 text-slate-700 dark:text-[#00f7ff] border border-slate-200 dark:border-[#00f7ff]/30 rounded-xl transition-all"
+          className="flex items-center gap-2 px-3 py-2 text-xs font-semibold bg-slate-100 dark:bg-brand-500/10 hover:bg-slate-200 dark:hover:bg-brand-500/20 text-slate-700 dark:text-brand-400 border border-slate-200 dark:border-brand-500/30 rounded-xl transition-all"
         >
           <RefreshCcw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -141,24 +141,24 @@ export default function TechnicianMonitorPage() {
             label: 'Aktif',
             value: stats.active,
             icon: <Activity className="w-4 h-4" />,
-            color: 'text-[#00f7ff] bg-[#00f7ff]/10 border-[#00f7ff]/30',
+            color: 'text-brand-400 bg-brand-500/10 border-brand-500/30',
             pulse: false,
           },
           {
             label: 'Total Pelanggan',
             value: stats.total,
             icon: <Users className="w-4 h-4" />,
-            color: 'text-[#bc13fe] bg-[#bc13fe]/10 border-[#bc13fe]/30',
+            color: 'text-brand-600 bg-brand-600/10 border-brand-600/30',
             pulse: false,
           },
         ].map((s) => (
           <div
             key={s.label}
-            className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/50 p-4"
+            className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/50 p-4"
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500 dark:text-[#e0d0ff]/60">{s.label}</p>
+                <p className="text-xs text-slate-500 dark:text-muted-foreground/60">{s.label}</p>
                 <p className="text-2xl font-bold text-slate-900 dark:text-white">{s.value}</p>
               </div>
               <div className={`p-2.5 rounded-xl border flex items-center justify-center ${s.color} relative`}>
@@ -173,13 +173,13 @@ export default function TechnicianMonitorPage() {
       </div>
 
       {/* Tab selector */}
-      <div className="flex gap-2 bg-slate-100 dark:bg-slate-800/60 rounded-2xl p-1.5 w-fit">
+      <div className="flex gap-2 bg-slate-100 dark:bg-slate-800/60 rounded-xl p-1.5 w-fit">
         <button
           onClick={() => setTab('online')}
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${
             tab === 'online'
-              ? 'bg-white dark:bg-[#00f7ff]/10 text-green-600 dark:text-[#00f7ff] shadow-sm border border-green-200 dark:border-[#00f7ff]/30'
-              : 'text-slate-500 dark:text-[#e0d0ff]/60 hover:text-slate-800 dark:hover:text-white'
+              ? 'bg-white dark:bg-brand-500/10 text-green-600 dark:text-brand-400 shadow-sm border border-green-200 dark:border-brand-500/30'
+              : 'text-slate-500 dark:text-muted-foreground/60 hover:text-slate-800 dark:hover:text-white'
           }`}
         >
           <Wifi className="w-3.5 h-3.5" />
@@ -190,7 +190,7 @@ export default function TechnicianMonitorPage() {
           className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-xl transition-all ${
             tab === 'isolated'
               ? 'bg-white dark:bg-red-500/10 text-red-600 dark:text-red-400 shadow-sm border border-red-200 dark:border-red-500/30'
-              : 'text-slate-500 dark:text-[#e0d0ff]/60 hover:text-slate-800 dark:hover:text-white'
+              : 'text-slate-500 dark:text-muted-foreground/60 hover:text-slate-800 dark:hover:text-white'
           }`}
         >
           <WifiOff className="w-3.5 h-3.5" />
@@ -201,7 +201,7 @@ export default function TechnicianMonitorPage() {
       {/* Content */}
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-8 h-8 animate-spin text-[#00f7ff]" />
+          <Loader2 className="w-8 h-8 animate-spin text-brand-400" />
         </div>
       ) : tab === 'online' ? (
         /* Online sessions table */
@@ -209,10 +209,10 @@ export default function TechnicianMonitorPage() {
           {sessions.length === 0 ? (
             <div className="text-center py-16">
               <WifiOff className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 dark:text-[#e0d0ff]/50">Tidak ada sesi online saat ini</p>
+              <p className="text-sm text-slate-500 dark:text-muted-foreground/50">Tidak ada sesi online saat ini</p>
             </div>
           ) : (
-            <div className="bg-white dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/50 overflow-hidden">
+            <div className="bg-white dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700/50 overflow-hidden">
               {/* Mobile Card View */}
             <div className="block md:hidden divide-y divide-slate-100 dark:divide-slate-700/30">
               {sessions.map((s) => (
@@ -222,7 +222,7 @@ export default function TechnicianMonitorPage() {
                       <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0 mt-1" />
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{s.customerName ?? s.username}</p>
-                        <p className="text-[10px] font-mono text-[#00f7ff]">{s.username}</p>
+                        <p className="text-[10px] font-mono text-brand-400">{s.username}</p>
                         {s.customerPhone && (
                           <p className="text-[10px] text-slate-400 flex items-center gap-0.5">
                             <Phone className="w-2.5 h-2.5" />{s.customerPhone}
@@ -294,7 +294,7 @@ export default function TechnicianMonitorPage() {
                               <p className="text-xs font-semibold text-slate-900 dark:text-white">
                                 {s.customerName ?? s.username}
                               </p>
-                              <p className="text-[10px] text-[#00f7ff] font-mono">{s.username}</p>
+                              <p className="text-[10px] text-brand-400 font-mono">{s.username}</p>
                               {s.customerPhone && (
                                 <p className="text-[10px] text-slate-400 flex items-center gap-0.5">
                                   <Phone className="w-2.5 h-2.5" />
@@ -343,14 +343,14 @@ export default function TechnicianMonitorPage() {
           {isolatedCustomers.length === 0 ? (
             <div className="text-center py-16">
               <Wifi className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-              <p className="text-sm text-slate-500 dark:text-[#e0d0ff]/50">Tidak ada pelanggan terisolasi</p>
+              <p className="text-sm text-slate-500 dark:text-muted-foreground/50">Tidak ada pelanggan terisolasi</p>
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {isolatedCustomers.map((c) => (
                 <div
                   key={c.id}
-                  className="bg-white dark:bg-slate-800/60 rounded-2xl border border-red-200 dark:border-red-500/20 p-4"
+                  className="bg-white dark:bg-slate-800/60 rounded-xl border border-red-200 dark:border-red-500/20 p-4"
                 >
                   <div className="flex items-start gap-3">
                     <div className="p-2 bg-red-50 dark:bg-red-500/10 rounded-xl border border-red-200 dark:border-red-500/20 flex-shrink-0 flex items-center justify-center">
@@ -360,7 +360,7 @@ export default function TechnicianMonitorPage() {
                       <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                         {c.name}
                       </p>
-                      <p className="text-[10px] font-mono text-[#bc13fe]">{c.username}</p>
+                      <p className="text-[10px] font-mono text-brand-600">{c.username}</p>
                       <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-0.5 mt-0.5">
                         <Phone className="w-2.5 h-2.5" />
                         {c.phone}

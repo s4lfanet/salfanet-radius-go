@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -505,7 +505,7 @@ export default function PaymentHistoryPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-primary shadow-[0_0_15px_rgba(188,19,254,0.5)]" />
+        <Loader2 className="w-6 h-6 animate-spin text-primary shadow-[0_0_15px_rgba(122, 90, 248,0.5)]" />
       </div>
     );
   }
@@ -520,7 +520,7 @@ export default function PaymentHistoryPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-primary drop-shadow-[0_0_5px_rgba(188,19,254,0.5)]">Riwayat Pembayaran</h1>
+          <h1 className="text-xl font-bold text-primary drop-shadow-[0_0_5px_rgba(122, 90, 248,0.5)]">Riwayat Pembayaran</h1>
           <p className="text-xs text-accent mt-1">Lihat status invoice Anda</p>
         </div>
         <button
@@ -814,7 +814,7 @@ export default function PaymentHistoryPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <div className="pointer-events-auto w-full max-w-sm">
               <CyberCard className="bg-card/95 dark:bg-[#0a0514]/95 backdrop-blur-xl border-2 border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.15)] overflow-hidden">
-                <div className="h-1 w-full bg-gradient-to-r from-cyan-400 to-[#bc13fe]" />
+                <div className="h-1 w-full bg-gradient-to-r from-cyan-400 to-brand-600" />
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -863,7 +863,7 @@ export default function PaymentHistoryPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <div className="pointer-events-auto w-full max-w-sm">
               <CyberCard className="bg-card/95 dark:bg-[#0a0514]/95 backdrop-blur-xl border-2 border-cyan-500/40 shadow-[0_0_30px_rgba(6,182,212,0.15)] overflow-hidden">
-                <div className="h-1 w-full bg-gradient-to-r from-cyan-400 to-[#bc13fe]" />
+                <div className="h-1 w-full bg-gradient-to-r from-cyan-400 to-brand-600" />
                 <div className="p-5">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-bold text-foreground">Pilih Payment Gateway</h3>
@@ -910,8 +910,8 @@ export default function PaymentHistoryPage() {
           <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" onClick={() => !submittingOffline && setOfflineDialogVisible(false)} />
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <div className="pointer-events-auto w-full max-w-md max-h-[90vh] flex flex-col">
-              <CyberCard className="bg-card/95 dark:bg-[#0a0514]/95 backdrop-blur-xl border-2 border-purple-500/40 shadow-[0_0_30px_rgba(188,19,254,0.15)] overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="h-1 w-full bg-gradient-to-r from-purple-400 to-[#bc13fe] flex-shrink-0" />
+              <CyberCard className="bg-card/95 dark:bg-[#0a0514]/95 backdrop-blur-xl border-2 border-purple-500/40 shadow-[0_0_30px_rgba(122, 90, 248,0.15)] overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="h-1 w-full bg-gradient-to-r from-purple-400 to-brand-600 flex-shrink-0" />
                 <div className="p-5 border-b border-purple-500/20 flex items-center justify-between flex-shrink-0">
                   <div>
                     <h3 className="text-sm font-bold text-white">Pembayaran Offline</h3>

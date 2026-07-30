@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError } from '@/lib/sweetalert';
@@ -11,10 +11,10 @@ interface Router { id: string; name: string; nasname: string; ipAddress: string;
 interface Area { id: string; name: string; }
 
 const TABS = [
-  { id: 'radius', label: 'Akun RADIUS', icon: '📡' },
-  { id: 'pelanggan', label: 'Data Pelanggan', icon: '👤' },
-  { id: 'instalasi', label: 'Instalasi', icon: '🔧' },
-  { id: 'pengaturan', label: 'Pengaturan', icon: '⚙️' },
+  { id: 'radius', label: 'Akun RADIUS', icon: '??' },
+  { id: 'pelanggan', label: 'Data Pelanggan', icon: '??' },
+  { id: 'instalasi', label: 'Instalasi', icon: '??' },
+  { id: 'pengaturan', label: 'Pengaturan', icon: '??' },
 ];
 
 export default function NewPppoeUserPage() {
@@ -182,7 +182,7 @@ export default function NewPppoeUserPage() {
           <ArrowLeft className="h-3.5 w-3.5" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-[#00f7ff] dark:via-white dark:to-[#ff44cc]">
+          <h1 className="text-lg font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground">
             Tambah Pelanggan
           </h1>
           <p className="text-[10px] text-muted-foreground">PPPoE / IP Statis / MAC</p>
@@ -205,7 +205,7 @@ export default function NewPppoeUserPage() {
       <div className="flex-1 overflow-y-auto min-h-0">
         <div className="space-y-3 pb-2">
 
-          {/* ── TAB 0: Akun RADIUS ─────────────────────────────────── */}
+          {/* -- TAB 0: Akun RADIUS ----------------------------------- */}
           {activeTab === 0 && (
             <>
               <div className={`rounded-xl border p-3 flex items-start gap-3 cursor-pointer transition-all select-none ${hasPppoeAccount ? 'border-primary/50 bg-primary/5' : 'border-amber-400/50 bg-amber-50 dark:bg-amber-950/20'}`}
@@ -255,17 +255,17 @@ export default function NewPppoeUserPage() {
                   <ModalLabel required>Paket Internet</ModalLabel>
                   <ModalSelect value={formData.profileId} onChange={(e) => field('profileId', e.target.value)}>
                     <option value="">-- Pilih Paket --</option>
-                    {profiles.map(p => <option key={p.id} value={p.id}>{p.name} — Rp {p.price.toLocaleString('id-ID')}</option>)}
+                    {profiles.map(p => <option key={p.id} value={p.id}>{p.name} � Rp {p.price.toLocaleString('id-ID')}</option>)}
                   </ModalSelect>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <label className={`flex items-center gap-2 p-2.5 border-2 rounded-lg cursor-pointer transition-all ${formData.subscriptionType === 'POSTPAID' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}>
                     <input type="radio" name="subscriptionType" value="POSTPAID" checked={formData.subscriptionType === 'POSTPAID'} onChange={() => field('subscriptionType', 'POSTPAID')} className="w-3 h-3 accent-primary" />
-                    <div><p className="text-[10px] font-semibold">📅 Postpaid</p><p className="text-[9px] text-muted-foreground">Pakai dulu, bayar nanti</p></div>
+                    <div><p className="text-[10px] font-semibold">?? Postpaid</p><p className="text-[9px] text-muted-foreground">Pakai dulu, bayar nanti</p></div>
                   </label>
                   <label className={`flex items-center gap-2 p-2.5 border-2 rounded-lg cursor-pointer transition-all ${formData.subscriptionType === 'PREPAID' ? 'border-purple-500 bg-purple-500/10' : 'border-border hover:border-purple-400/40'}`}>
                     <input type="radio" name="subscriptionType" value="PREPAID" checked={formData.subscriptionType === 'PREPAID'} onChange={() => field('subscriptionType', 'PREPAID')} className="w-3 h-3 accent-purple-500" />
-                    <div><p className="text-[10px] font-semibold">🎫 Prepaid</p><p className="text-[9px] text-muted-foreground">Bayar dulu, langsung aktif</p></div>
+                    <div><p className="text-[10px] font-semibold">?? Prepaid</p><p className="text-[9px] text-muted-foreground">Bayar dulu, langsung aktif</p></div>
                   </label>
                 </div>
                 {formData.subscriptionType === 'POSTPAID' && (
@@ -276,9 +276,9 @@ export default function NewPppoeUserPage() {
                         {Array.from({ length: 28 }, (_, i) => i + 1).map(day => <option key={day} value={day}>Tanggal {day}</option>)}
                       </ModalSelect>
                     </div>
-                    {/* Tagihan Pertama — selalu tampil (tidak perlu profile dulu) */}
+                    {/* Tagihan Pertama � selalu tampil (tidak perlu profile dulu) */}
                     <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">💳 Tagihan Pertama</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">?? Tagihan Pertama</p>
                       {/* Langkah 1: kapan bayar */}
                       <div className="grid grid-cols-2 gap-1.5 mb-2">
                         <button
@@ -286,7 +286,7 @@ export default function NewPppoeUserPage() {
                           onClick={() => { if (firstInvoice === 'none') setFirstInvoice('prorate'); }}
                           className={`flex flex-col items-center gap-0.5 p-2.5 border-2 rounded-xl cursor-pointer transition-all text-center w-full ${firstInvoice !== 'none' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-border bg-muted/40 hover:border-emerald-400'}`}
                         >
-                          <span className="text-base">🏠</span>
+                          <span className="text-base">??</span>
                           <span className={`text-[9px] font-bold ${firstInvoice !== 'none' ? 'text-emerald-700 dark:text-emerald-300' : ''}`}>Bayar di Awal</span>
                           <span className="text-[8px] text-muted-foreground leading-tight">Invoice dibuat saat pemasangan</span>
                         </button>
@@ -295,7 +295,7 @@ export default function NewPppoeUserPage() {
                           onClick={() => setFirstInvoice('none')}
                           className={`flex flex-col items-center gap-0.5 p-2.5 border-2 rounded-xl cursor-pointer transition-all text-center w-full ${firstInvoice === 'none' ? 'border-border bg-muted' : 'border-border/40 bg-muted/30 hover:border-border'}`}
                         >
-                          <span className="text-base">⏰</span>
+                          <span className="text-base">?</span>
                           <span className="text-[9px] font-bold">Bayar Setelah Pemakaian</span>
                           <span className="text-[8px] text-muted-foreground leading-tight">Dibuat otomatis oleh sistem</span>
                         </button>
@@ -307,7 +307,7 @@ export default function NewPppoeUserPage() {
                           <div className="grid grid-cols-2 gap-1.5">
                             <label className={`flex flex-col items-center p-2 border-2 rounded-lg cursor-pointer transition-all text-center ${firstInvoice === 'prorate' ? 'border-emerald-500 bg-emerald-100 dark:bg-emerald-900/40' : 'border-border bg-background hover:border-emerald-400'}`}>
                               <input type="radio" name="firstInvoice" value="prorate" checked={firstInvoice === 'prorate'} onChange={() => setFirstInvoice('prorate')} className="sr-only" />
-                              <span className="text-sm mb-0.5">📅</span>
+                              <span className="text-sm mb-0.5">??</span>
                               <span className={`text-[9px] font-bold ${firstInvoice === 'prorate' ? 'text-emerald-700 dark:text-emerald-300' : ''}`}>Prorate</span>
                               {prorateInfo ? (
                                 <>
@@ -320,7 +320,7 @@ export default function NewPppoeUserPage() {
                             </label>
                             <label className={`flex flex-col items-center p-2 border-2 rounded-lg cursor-pointer transition-all text-center ${firstInvoice === 'full' ? 'border-primary bg-primary/10' : 'border-border bg-background hover:border-primary/50'}`}>
                               <input type="radio" name="firstInvoice" value="full" checked={firstInvoice === 'full'} onChange={() => setFirstInvoice('full')} className="sr-only" />
-                              <span className="text-sm mb-0.5">💰</span>
+                              <span className="text-sm mb-0.5">??</span>
                               <span className={`text-[9px] font-bold ${firstInvoice === 'full' ? 'text-primary' : ''}`}>Sebulan Penuh</span>
                               {prorateInfo ? (
                                 <span className="text-[9px] font-bold">Rp {prorateInfo.fullPrice.toLocaleString('id-ID')}</span>
@@ -330,10 +330,10 @@ export default function NewPppoeUserPage() {
                             </label>
                           </div>
                           {!prorateInfo && (
-                            <p className="text-[9px] text-amber-600 dark:text-amber-400 mt-1.5">⚠️ Pilih profil paket untuk melihat estimasi tagihan</p>
+                            <p className="text-[9px] text-amber-600 dark:text-amber-400 mt-1.5">?? Pilih profil paket untuk melihat estimasi tagihan</p>
                           )}
                           <p className="text-[9px] text-muted-foreground mt-1.5">
-                            ℹ️ Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan — bisa dibayar via portal pelanggan.
+                            ?? Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan � bisa dibayar via portal pelanggan.
                           </p>
                         </div>
                       )}
@@ -348,14 +348,14 @@ export default function NewPppoeUserPage() {
                       <p className="text-[10px] text-muted-foreground mt-1">Kosongkan untuk hitung otomatis dari validitas paket.</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">💳 Tagihan Pertama</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">?? Tagihan Pertama</p>
                       <div className="grid grid-cols-2 gap-1.5">
                         <button
                           type="button"
                           onClick={() => setFirstInvoice('full')}
                           className={`flex flex-col items-center gap-0.5 p-2.5 border-2 rounded-xl cursor-pointer transition-all text-center w-full ${firstInvoice !== 'none' ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/30' : 'border-border/40 bg-muted/30 hover:border-purple-400'}`}
                         >
-                          <span className="text-base">🏠</span>
+                          <span className="text-base">??</span>
                           <span className={`text-[9px] font-bold ${firstInvoice !== 'none' ? 'text-purple-700 dark:text-purple-300' : ''}`}>Bayar di Awal Pemasangan</span>
                           {profiles.find(p => p.id === formData.profileId) ? (
                             <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400">
@@ -370,14 +370,14 @@ export default function NewPppoeUserPage() {
                           onClick={() => setFirstInvoice('none')}
                           className={`flex flex-col items-center gap-0.5 p-2.5 border-2 rounded-xl cursor-pointer transition-all text-center w-full ${firstInvoice === 'none' ? 'border-border bg-muted' : 'border-border/40 bg-muted/30 hover:border-border'}`}
                         >
-                          <span className="text-base">⏰</span>
+                          <span className="text-base">?</span>
                           <span className="text-[9px] font-bold">Bayar Setelah Pemakaian</span>
                           <span className="text-[8px] text-muted-foreground leading-tight">Tagihan dibuat manual nanti</span>
                         </button>
                       </div>
                       {firstInvoice !== 'none' && (
                         <p className="text-[9px] text-muted-foreground mt-1.5">
-                          ℹ️ Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan — bisa dibayar via portal pelanggan.
+                          ?? Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan � bisa dibayar via portal pelanggan.
                         </p>
                       )}
                     </div>
@@ -395,7 +395,7 @@ export default function NewPppoeUserPage() {
                   <div>
                     <ModalLabel>NAS / Router</ModalLabel>
                     <ModalSelect value={formData.routerId} onChange={(e) => field('routerId', e.target.value)}>
-                      <option value="">— Otomatis —</option>
+                      <option value="">� Otomatis �</option>
                       {routers.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                     </ModalSelect>
                   </div>
@@ -404,7 +404,7 @@ export default function NewPppoeUserPage() {
             </>
           )}
 
-          {/* ── TAB 1: Data Pelanggan ───────────────────────────────── */}
+          {/* -- TAB 1: Data Pelanggan --------------------------------- */}
           {activeTab === 1 && (
             <>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
@@ -430,7 +430,7 @@ export default function NewPppoeUserPage() {
                 </div>
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">🪪 Dokumen KTP (opsional)</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">?? Dokumen KTP (opsional)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <ModalLabel>No. NIK</ModalLabel>
@@ -440,7 +440,7 @@ export default function NewPppoeUserPage() {
                     <ModalLabel>Foto KTP</ModalLabel>
                     <input type="file" accept="image/*" onChange={handleUploadIdCard} disabled={uploadingIdCard} className="hidden" id="idCardUpload" />
                     <label htmlFor="idCardUpload" className={`w-full flex items-center justify-center px-3 py-2 text-xs border border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingIdCard ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                      {uploadingIdCard ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Upload...</span> : '📎 Upload KTP'}
+                      {uploadingIdCard ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Upload...</span> : '?? Upload KTP'}
                     </label>
                   </div>
                 </div>
@@ -457,7 +457,7 @@ export default function NewPppoeUserPage() {
             </>
           )}
 
-          {/* ── TAB 2: Instalasi ───────────────────────────────────── */}
+          {/* -- TAB 2: Instalasi ------------------------------------- */}
           {activeTab === 2 && (
             <>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
@@ -469,10 +469,10 @@ export default function NewPppoeUserPage() {
                 </div>
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">📸 Foto Instalasi (opsional)</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">?? Foto Instalasi (opsional)</p>
                 <input type="file" accept="image/*" onChange={handleUploadInstallation} disabled={uploadingInstallation} className="hidden" id="installUpload" />
                 <label htmlFor="installUpload" className={`w-full block px-3 py-3 text-xs text-center border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingInstallation ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  {uploadingInstallation ? <span className="flex items-center justify-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Mengupload...</span> : '📸 Tambah Foto Instalasi'}
+                  {uploadingInstallation ? <span className="flex items-center justify-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Mengupload...</span> : '?? Tambah Foto Instalasi'}
                 </label>
                 <p className="text-[10px] text-muted-foreground">Maks. 5 foto @ 5MB ({formData.installationPhotos.length}/5)</p>
                 {formData.installationPhotos.length > 0 && (
@@ -491,7 +491,7 @@ export default function NewPppoeUserPage() {
                 )}
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">📍 Lokasi GPS (opsional)</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">?? Lokasi GPS (opsional)</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <ModalLabel>Latitude</ModalLabel>
@@ -522,7 +522,7 @@ export default function NewPppoeUserPage() {
             </>
           )}
 
-          {/* ── TAB 3: Pengaturan ──────────────────────────────────── */}
+          {/* -- TAB 3: Pengaturan ------------------------------------ */}
           {activeTab === 3 && (
             <>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
@@ -530,21 +530,21 @@ export default function NewPppoeUserPage() {
                 <div>
                   <ModalLabel>Area</ModalLabel>
                   <ModalSelect value={formData.areaId} onChange={(e) => field('areaId', e.target.value)}>
-                    <option value="">— Tanpa Area —</option>
+                    <option value="">� Tanpa Area �</option>
                     {areas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </ModalSelect>
                 </div>
                 <div>
-                  <ModalLabel>⚡ Aksi Jatuh Tempo</ModalLabel>
+                  <ModalLabel>? Aksi Jatuh Tempo</ModalLabel>
                   <select value={formData.autoIsolationEnabled ? 'isolate' : 'keep'} onChange={(e) => field('autoIsolationEnabled', e.target.value === 'isolate')}
                     className="w-full px-3 py-2 text-xs border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary">
-                    <option value="isolate">ISOLIR INTERNET (Suspend) — isolir otomatis saat expired</option>
-                    <option value="keep">TETAP TERHUBUNG (No Action) — tidak isolir meski expired</option>
+                    <option value="isolate">ISOLIR INTERNET (Suspend) � isolir otomatis saat expired</option>
+                    <option value="keep">TETAP TERHUBUNG (No Action) � tidak isolir meski expired</option>
                   </select>
                   <p className="text-[10px] text-muted-foreground mt-1">Tindakan otomatis saat tanggal tagihan / expired terlewati.</p>
                 </div>
                 <div>
-                  <ModalLabel>📅 Tanggal Daftar</ModalLabel>
+                  <ModalLabel>?? Tanggal Daftar</ModalLabel>
                   <ModalInput type="date" value={formData.registeredAt} onChange={(e) => field('registeredAt', e.target.value)} />
                   <p className="text-[10px] text-muted-foreground mt-1">Default hari ini. Ubah untuk data historis pelanggan lama.</p>
                 </div>
