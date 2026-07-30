@@ -83,7 +83,7 @@ services:
       - ./prisma:/app/prisma:ro
     environment:
       DATABASE_URL: mysql://${DB_USER:-salfanet_user}:${DB_PASSWORD}@db:3306/${DB_NAME:-salfanet_radius}?connection_limit=10&pool_timeout=20
-    command: sh -c "npx --yes prisma@latest db push --accept-data-loss --schema=/app/prisma/schema.prisma"
+    command: sh -c "npx --yes prisma@5 db push --accept-data-loss --schema=/app/prisma/schema.prisma"
     restart: "no"
     networks:
       - salfanet
