@@ -232,6 +232,17 @@ detect_ip_address() {
     # Try to get public IP from various services
     echo -e "${YELLOW}[INFO] Detecting IP address...${NC}" >&2
     
+    # Get local/private IP first
+    LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}') || \
+    LOCAL_IP=$(ip route get 1 2>/dev/null | awk '{print $7; exit}') || \
+    LOCAL_IP="127.0.0.1"
+    
+    # For LXC/container environments, prefer local IP (accessed via LAN)
+    if [[ "${DEPLOY_ENV:-}" == "lxc" || "${IS_CONTAINER:-}" == "true" ]]; then
+        echo "$LOCAL_IP"
+        return 0
+    fi
+    
     # Method 1: Try curl to external services
     if command -v curl &> /dev/null; then
         PUBLIC_IP=$(curl -s --connect-timeout 5 https://api.ipify.org 2>/dev/null) || \
@@ -247,11 +258,6 @@ detect_ip_address() {
         PUBLIC_IP=$(wget -qO- --timeout=5 https://ifconfig.me 2>/dev/null) || \
         PUBLIC_IP=""
     fi
-    
-    # Get local/private IP
-    LOCAL_IP=$(hostname -I 2>/dev/null | awk '{print $1}') || \
-    LOCAL_IP=$(ip route get 1 2>/dev/null | awk '{print $7; exit}') || \
-    LOCAL_IP="127.0.0.1"
     
     # Validate public IP format (basic IPv4 check)
     if [[ $PUBLIC_IP =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
