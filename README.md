@@ -493,15 +493,8 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### v2.54.23 — 2026-07-30
 
-### Added
-- **Docker installer** — Full Docker Compose stack (`docker-compose.full.yml`) with 6 services: MySQL 8, Go API, Next.js Frontend, FreeRADIUS, Nginx, WhatsApp Service.
-  - `docker/Dockerfile.go` — Multi-stage Go backend build (alpine, stripped binary).
-  - `docker/Dockerfile.nextjs` — Multi-stage Next.js build with standalone output.
-  - `docker/Dockerfile.freeradius` — Custom FreeRADIUS with SQL + REST modules.
-  - `docker/nginx/salfanet.conf` — Nginx reverse proxy config for Docker.
-  - `docker/freeradius/` — FreeRADIUS config templates (clients, sql, rest).
-  - `docker-install.sh` — One-command Docker installer with auto-generated secrets.
-  - `.env.docker.example` — Template for Docker environment configuration.
+### Removed
+- **Docker deployment** — Removed all Docker-related files (`Dockerfile`, `docker-compose.*.yml`, `docker/`, `docker-install.sh`) due to LXC compatibility issues. Use VPS installer method instead.
 
 ### Fixed
 - **VPS installer: DB passwords** (`vps-install/common.sh`) — Replaced hardcoded default passwords with random generated ones.
@@ -513,7 +506,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Fixed
 - **Production cleanup** — Removed tracked binaries (`salfanet-api-linux`, `salfanet-api-win.exe`, `server.exe`), user data exports (`*.xlsx`, `*.csv`), and debug scripts (`dbquery.py`, `dbschema.py`, `debug_rx.py`, `json_keys.txt`, `used_keys.txt`, `step1.ps1`, `step2.ps1`, `audit_i18n.ps1`, `deploy-v2.52.84.sh`) from git. Updated `.gitignore` to prevent re-adding.
 - **package.json** — Set `private: true` (this is not an npm package).
-- **docker-compose.yml** — Removed deprecated `version: '3.8'` key (Docker Compose v2+).
 
 ### Added
 - **`.env.production.example`** — Added missing Go backend env vars (`JWT_SECRET`, `PORT`, `CORS_ORIGINS`, `APP_BASE_URL`, `APP_TIMEZONE`, `WA_SERVICE_URL`, `UPLOAD_DIR`, `GO_API_URL`, Tripay/Duitku/Xendit keys, VAPID keys for Go backend).
