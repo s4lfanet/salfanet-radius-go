@@ -82,10 +82,9 @@ services:
     volumes:
       - ./prisma:/app/prisma:ro
       - ./package.json:/app/package.json:ro
-      - ./package-lock.json:/app/package-lock.json:ro
     environment:
       DATABASE_URL: mysql://${DB_USER:-salfanet_user}:${DB_PASSWORD}@db:3306/${DB_NAME:-salfanet_radius}?connection_limit=10&pool_timeout=20
-    command: sh -c "npm install --omit=dev && npx prisma db push --accept-data-loss"
+    command: sh -c "npm install prisma@latest --omit=dev && npx prisma db push --accept-data-loss"
     restart: "no"
     networks:
       - salfanet
