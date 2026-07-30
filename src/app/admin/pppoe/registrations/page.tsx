@@ -626,10 +626,10 @@ export default function RegistrationsPage() {
                   <div className="bg-[#ff8c00]/10 border border-[#ff8c00]/30 rounded-lg p-3">
                     <div className="text-xs font-medium text-[#ff8c00] mb-1">?? Informasi Postpaid:</div>
                     <div className="text-[10px] text-[#ff8c00]">
-                      • Tagihan <strong>Rp {selectedRegistration.profile.price.toLocaleString('id-ID')}</strong> setiap bulan<br/>
-                      • Jatuh tempo setiap <strong>tanggal {billingDay}</strong> bulan berikutnya<br/>
-                      • expiredAt otomatis diperpanjang setiap bulan<br/>
-                      {installationFee && parseFloat(installationFee) > 0 && (<span>• Biaya instalasi <strong>Rp {parseFloat(installationFee).toLocaleString('id-ID')}</strong> (sekali di awal)</span>)}
+                      â€¢ Tagihan <strong>Rp {selectedRegistration.profile.price.toLocaleString('id-ID')}</strong> setiap bulan<br/>
+                      â€¢ Jatuh tempo setiap <strong>tanggal {billingDay}</strong> bulan berikutnya<br/>
+                      â€¢ expiredAt otomatis diperpanjang setiap bulan<br/>
+                      {installationFee && parseFloat(installationFee) > 0 && (<span>â€¢ Biaya instalasi <strong>Rp {parseFloat(installationFee).toLocaleString('id-ID')}</strong> (sekali di awal)</span>)}
                     </div>
                   </div>
                 )}

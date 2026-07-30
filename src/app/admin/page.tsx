@@ -441,7 +441,7 @@ export default function AdminDashboard() {
     {
       title: t('dashboard.invoiceRevenue'),
       value: stats.invoiceRevenueFormatted,
-      subtitle: `${stats.invoiceCountMonth} tagihan • ${periodLabel || t('dashboard.thisMonth')}`,
+      subtitle: `${stats.invoiceCountMonth} tagihan â€¢ ${periodLabel || t('dashboard.thisMonth')}`,
       detail: `Hari ini: ${stats.invoiceRevenueTodayFormatted} (${stats.invoiceCountToday})`,
       icon: <Receipt className="w-5 h-5" />,
       gradient: 'from-teal-500 to-cyan-400',
@@ -459,7 +459,7 @@ export default function AdminDashboard() {
     {
       title: 'Omzet Total',
       value: fmtIDR(totalMonthRevenue),
-      subtitle: `Invoice + Voucher • ${periodLabel || t('dashboard.thisMonth')}`,
+      subtitle: `Invoice + Voucher â€¢ ${periodLabel || t('dashboard.thisMonth')}`,
       detail: `Invoice: ${stats.invoiceRevenueFormatted}`,
       icon: <TrendingUp className="w-5 h-5" />,
       gradient: 'from-lime-500 to-green-400',
@@ -641,7 +641,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          {/* Activity Log — compact panel beside charts */}
+          {/* Activity Log â€” compact panel beside charts */}
           <div className="bg-card/60 backdrop-blur-xl rounded-xl border border-white/10 flex flex-col overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between p-3 border-b border-white/10">

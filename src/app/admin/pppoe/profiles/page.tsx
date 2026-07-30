@@ -707,7 +707,7 @@ export default function PPPoEProfilesPage() {
                 />
                 <p className="text-[9px] text-muted-foreground mt-1">
                   {formData.groupName && formData.groupName === getAutoGroupName(formData.name)
-                    ? <span>Auto-generate · <button type="button" className="text-primary hover:underline" onClick={() => setFormData(prev => ({...prev, groupName: ''}))}>Edit untuk kustomisasi</button></span>
+                    ? <span>Auto-generate Â· <button type="button" className="text-primary hover:underline" onClick={() => setFormData(prev => ({...prev, groupName: ''}))}>Edit untuk kustomisasi</button></span>
                     : 'Dipakai sebagai Group RADIUS dan otomatis jadi nama PPP Profile MikroTik'
                   }
                 </p>
@@ -750,7 +750,7 @@ export default function PPPoEProfilesPage() {
                   className="w-full flex items-center gap-2 px-4 py-3 text-xs font-medium hover:bg-muted/50 transition-colors text-left">
                   {showBurst ? <ChevronDown className="h-3.5 w-3.5 text-brand-400" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
                   <span>Pengaturan Burst (MikroTik)</span>
-                  <span className="text-[10px] font-normal text-muted-foreground ml-1">opsional — kecepatan sementara saat awal koneksi</span>
+                  <span className="text-[10px] font-normal text-muted-foreground ml-1">opsional â€” kecepatan sementara saat awal koneksi</span>
                 </button>
                 {showBurst && (
                   <div className="px-4 pb-4 space-y-3 border-t border-border bg-muted/20">
@@ -825,7 +825,7 @@ export default function PPPoEProfilesPage() {
                     {formData.hpp && formData.price && parseInt(formData.price) > 0 && parseInt(formData.hpp) > 0 && (
                       <span>Fee reseller: Rp {(parseInt(formData.price) - parseInt(formData.hpp)).toLocaleString('id-ID')}</span>
                     )}
-                    {formData.hpp && formData.price && parseInt(formData.price) > 0 && parseInt(formData.hpp) > 0 && formData.ppnActive && ' · '}
+                    {formData.hpp && formData.price && parseInt(formData.price) > 0 && parseInt(formData.hpp) > 0 && formData.ppnActive && ' Â· '}
                     {formData.ppnActive && formData.price && parseInt(formData.price) > 0 && (
                       <span>Harga + PPN {formData.ppnRate || 11}%: Rp {Math.round(parseInt(formData.price) * (1 + (parseInt(formData.ppnRate) || 11) / 100)).toLocaleString('id-ID')}</span>
                     )}
@@ -1103,7 +1103,7 @@ export default function PPPoEProfilesPage() {
           <ModalHeader>
             <h2 className="text-base font-bold text-foreground">Sync ke MikroTik</h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Sync paket <span className="font-semibold text-purple-400">{syncMikrotikTarget?.name}</span> · Group RADIUS: <span className="font-mono">{syncMikrotikTarget?.groupName}</span>
+              Sync paket <span className="font-semibold text-purple-400">{syncMikrotikTarget?.name}</span> Â· Group RADIUS: <span className="font-mono">{syncMikrotikTarget?.groupName}</span>
             </p>
           </ModalHeader>
           <ModalBody>

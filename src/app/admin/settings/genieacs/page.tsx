@@ -274,19 +274,19 @@ export default function GenieACSSettingsPage() {
         <h3 className="text-sm font-semibold text-foreground mb-2">{t('genieacs.help')}</h3>
         <ul className="text-xs text-muted-foreground dark:text-muted-foreground space-y-1.5">
           <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
+            <span className="text-primary">â€¢</span>
             {t('genieacs.ensureAccessible')}
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
+            <span className="text-primary">â€¢</span>
             {t('genieacs.defaultPort')}
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
+            <span className="text-primary">â€¢</span>
             {t('genieacs.useTestConnection')}
           </li>
           <li className="flex items-start gap-2">
-            <span className="text-primary">•</span>
+            <span className="text-primary">â€¢</span>
             {t('genieacs.afterConfig')}
           </li>
         </ul>

@@ -131,7 +131,7 @@ export default function SessionsPage() {
     }
   };
 
-  // Format date helper — uses formatWIB for consistent WIB display
+  // Format date helper â€” uses formatWIB for consistent WIB display
   const formatDateTime = (dateStr: string | null) => {
     if (!dateStr) return '-';
     return formatWIB(dateStr, 'dd/MM/yyyy HH:mm');
@@ -153,7 +153,7 @@ export default function SessionsPage() {
 
   useEffect(() => {
     fetchSessions(1);
-    // Auto-refresh setiap 10 detik — silent refresh to prevent full-page spinner
+    // Auto-refresh setiap 10 detik â€” silent refresh to prevent full-page spinner
     const interval = setInterval(() => {
       fetchSessions(currentPage, true);
     }, 10000);

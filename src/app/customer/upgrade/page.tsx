@@ -138,7 +138,7 @@ export default function UpgradePackagePage() {
       if (data.success) {
         // Show success toast and redirect
         showSuccess(
-          `${t('customer.invoiceNo')}: ${data.invoiceNumber} — ${t('customer.total')}: ${formatCurrency(data.amount)}`,
+          `${t('customer.invoiceNo')}: ${data.invoiceNumber} â€” ${t('customer.total')}: ${formatCurrency(data.amount)}`,
           t('customer.invoiceCreated')
         );
 
@@ -182,7 +182,7 @@ export default function UpgradePackagePage() {
 
       if (data.success) {
         showSuccess(
-          `${t('customer.invoiceNo')}: ${data.invoice?.invoiceNumber} — ${t('customer.total')}: ${formatCurrency(data.invoice?.amount || 0)}. ${t('customer.contactAdminPayment')}`,
+          `${t('customer.invoiceNo')}: ${data.invoice?.invoiceNumber} â€” ${t('customer.total')}: ${formatCurrency(data.invoice?.amount || 0)}. ${t('customer.contactAdminPayment')}`,
           t('customer.invoiceCreated')
         );
         router.push('/customer/history');

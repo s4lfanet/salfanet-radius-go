@@ -1152,7 +1152,7 @@ export default function HotspotVoucherPage() {
                   <SelectValue placeholder={editMode === 'batch' ? 'Tidak diubah' : t('common.select')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {editMode === 'batch' && <SelectItem value="keep">— Tidak diubah —</SelectItem>}
+                  {editMode === 'batch' && <SelectItem value="keep">â€” Tidak diubah â€”</SelectItem>}
                   {profiles.map(p => (
                     <SelectItem key={p.id} value={p.id}>{p.name} ({formatCurrency(p.sellingPrice)})</SelectItem>
                   ))}
@@ -1170,7 +1170,7 @@ export default function HotspotVoucherPage() {
                   <SelectValue placeholder={editMode === 'batch' ? 'Tidak diubah' : t('common.all')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {editMode === 'batch' && <SelectItem value="keep">— Tidak diubah —</SelectItem>}
+                  {editMode === 'batch' && <SelectItem value="keep">â€” Tidak diubah â€”</SelectItem>}
                   <SelectItem value="clear">Global (hapus router)</SelectItem>
                   {routers.map(r => (
                     <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
@@ -1189,7 +1189,7 @@ export default function HotspotVoucherPage() {
                   <SelectValue placeholder={editMode === 'batch' ? 'Tidak diubah' : t('hotspot.noAgent')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {editMode === 'batch' && <SelectItem value="keep">— Tidak diubah —</SelectItem>}
+                  {editMode === 'batch' && <SelectItem value="keep">â€” Tidak diubah â€”</SelectItem>}
                   <SelectItem value="clear">{t('hotspot.noAgent')} (hapus agen)</SelectItem>
                   {agents.map(a => (
                     <SelectItem key={a.id} value={a.id}>{a.name} ({a.phone})</SelectItem>

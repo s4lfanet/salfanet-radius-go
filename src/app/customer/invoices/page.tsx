@@ -117,7 +117,7 @@ export default function CustomerInvoicesPage() {
       const newInvoices: Invoice[] = data.data.invoices;
       setPagination(data.data.pagination);
 
-      // Payment status tracking — detect when pending manual payments get resolved
+      // Payment status tracking â€” detect when pending manual payments get resolved
       if (silent) {
         const pendingNow = new Set(newInvoices.filter(i => i.manualPaymentStatus === 'pending').map(i => i.id));
         prevPendingIds.current.forEach(id => {
@@ -215,7 +215,7 @@ export default function CustomerInvoicesPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast('success', 'Bukti Transfer Terkirim', 'Admin akan mengkonfirmasi pembayaran Anda dalam 1×24 jam');
+        toast('success', 'Bukti Transfer Terkirim', 'Admin akan mengkonfirmasi pembayaran Anda dalam 1?24 jam');
         setManualPayModal(null);
         setManualForm({ bankName: '', accountName: '', notes: '', file: null });
         setSelectedAdminBank(null);
@@ -295,7 +295,7 @@ export default function CustomerInvoicesPage() {
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="animate-spin w-10 h-10 border-2 border-cyan-400 border-t-transparent rounded-full mx-auto" />
-            <p className="mt-3 text-slate-400 text-sm">Memuat tagihan…</p>
+            <p className="mt-3 text-slate-400 text-sm">Memuat tagihanâ€¦</p>
           </div>
         </div>
       ) : invoices.length === 0 ? (
@@ -360,7 +360,7 @@ export default function CustomerInvoicesPage() {
                       {inv.manualPaymentStatus === 'pending' && (
                         <span className="flex items-center gap-1 text-[10px] text-yellow-400 animate-pulse font-medium">
                           <Clock className="w-3 h-3" />
-                          Menunggu konfirmasi admin…
+                          Menunggu konfirmasi adminâ€¦
                         </span>
                       )}
                       {inv.manualPaymentBank && (
@@ -500,7 +500,7 @@ export default function CustomerInvoicesPage() {
                     Kirim Bukti Transfer
                   </h2>
                   <p className="text-xs text-slate-400 mt-1">
-                    {manualPayModal.invoiceNumber} · Rp {manualPayModal.amount.toLocaleString('id-ID')}
+                    {manualPayModal.invoiceNumber} Â· Rp {manualPayModal.amount.toLocaleString('id-ID')}
                   </p>
                 </div>
                 <button onClick={() => { setManualPayModal(null); setManualForm({ bankName: '', accountName: '', notes: '', file: null }); setSelectedAdminBank(null); }} className="p-1.5 rounded-lg bg-muted/20 hover:bg-muted/40 border border-border/50">
@@ -543,7 +543,7 @@ export default function CustomerInvoicesPage() {
                 ) : (
                   <input
                     type="text"
-                    placeholder="cth: BCA, Mandiri, BRI…"
+                    placeholder="cth: BCA, Mandiri, BRIâ€¦"
                     value={manualForm.bankName}
                     onChange={e => setManualForm(f => ({ ...f, bankName: e.target.value }))}
                     className="w-full bg-background dark:bg-slate-800 border border-border dark:border-slate-600 rounded-xl px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-purple-500/60"
@@ -578,7 +578,7 @@ export default function CustomerInvoicesPage() {
                   Catatan (Opsional)
                 </label>
                 <textarea
-                  placeholder="Informasi tambahan…"
+                  placeholder="Informasi tambahanâ€¦"
                   value={manualForm.notes}
                   onChange={e => setManualForm(f => ({ ...f, notes: e.target.value }))}
                   rows={2}

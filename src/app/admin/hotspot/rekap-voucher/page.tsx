@@ -125,7 +125,7 @@ export default function RekapVoucherPage() {
       const end = new Date(periodValue + 'T00:00:00');
       end.setDate(start.getDate() + 6);
       const fmt = (d: Date) => `${d.getDate()} ${MONTH_NAMES_ID[d.getMonth()].slice(0,3)}`;
-      return `${fmt(start)} – ${fmt(end)} ${end.getFullYear()}`;
+      return `${fmt(start)} â€“ ${fmt(end)} ${end.getFullYear()}`;
     }
     if (periodMode === 'monthly' && periodValue) {
       const [y, m] = periodValue.split('-').map(Number);
@@ -676,7 +676,7 @@ export default function RekapVoucherPage() {
             <ul className="list-disc list-inside space-y-0.5">
               <li><strong>{t('hotspot.qty')}:</strong> {t('hotspot.qtyDesc')}</li>
               <li><strong>{t('hotspot.stock')}:</strong> {t('hotspot.stockDesc')}</li>
-              <li><strong>{t('hotspot.sold')}:</strong> {t('hotspot.soldDesc')} — <span className="text-foreground">klik angka untuk lihat kode voucher</span></li>
+              <li><strong>{t('hotspot.sold')}:</strong> {t('hotspot.soldDesc')} â€” <span className="text-foreground">klik angka untuk lihat kode voucher</span></li>
             </ul>
           </div>
         </div>
@@ -742,7 +742,7 @@ export default function RekapVoucherPage() {
                         </button>
                         {v.profile && (
                           <div className="text-[10px] text-muted-foreground mt-0.5">
-                            {v.profile.name}{v.profile.validityValue ? ` · ${v.profile.validityValue} ${v.profile.validityUnit}` : ''}
+                            {v.profile.name}{v.profile.validityValue ? ` Â· ${v.profile.validityValue} ${v.profile.validityUnit}` : ''}
                           </div>
                         )}
                         {(v.firstLoginAt || v.expiresAt) && (

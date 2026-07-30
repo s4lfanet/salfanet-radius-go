@@ -190,7 +190,7 @@ export default function ODCsPage() {
 
   return (
     <div className="bg-background relative">
-      {/* Neon Cyberpunk Background — dark mode only */}
+      {/* Neon Cyberpunk Background â€” dark mode only */}
       <div className="hidden dark:block absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(122, 90, 248,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(122, 90, 248,0.03)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
       </div>

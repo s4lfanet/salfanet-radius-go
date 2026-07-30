@@ -207,7 +207,7 @@ export default function CustomerSuspendPage() {
         </CyberCard>
       )}
 
-      {/* Request Form — only show if no active PENDING/APPROVED request */}
+      {/* Request Form â€” only show if no active PENDING/APPROVED request */}
       {(!current || ['REJECTED', 'CANCELLED', 'COMPLETED'].includes(current.status)) && (
         <CyberCard className="p-4 space-y-4">
           <p className="text-sm font-semibold text-brand-400">Ajukan Suspend Baru</p>

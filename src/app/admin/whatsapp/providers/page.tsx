@@ -84,7 +84,7 @@ export default function WhatsAppProvidersPage() {
     baileys: 'internal',
   };
 
-  // Known Wablas server hostnames — user picks one which sets apiUrl
+  // Known Wablas server hostnames â€” user picks one which sets apiUrl
   const WABLAS_SERVERS = [
     'wa', 'jakarta', 'pati', 'deu', 'kudus', 'solo', 'bogor', 'jogja', 'bandung',
   ];
@@ -401,7 +401,7 @@ export default function WhatsAppProvidersPage() {
           startQrPolling(provider);
         }
       } else if (response.status === 202) {
-        // Baileys WAITING — QR belum siap, retry otomatis
+        // Baileys WAITING â€” QR belum siap, retry otomatis
         retrying = true;
         setTimeout(() => {
           if (showQrModalRef.current) showQrCode(provider);
@@ -705,17 +705,17 @@ export default function WhatsAppProvidersPage() {
                           );
                         })}
                       </div>
-                      <p className="text-[9px] text-muted-foreground/60 mt-0.5">Server sesuai akun Wablas Anda — lihat di dashboard Wablas</p>
+                      <p className="text-[9px] text-muted-foreground/60 mt-0.5">Server sesuai akun Wablas Anda â€” lihat di dashboard Wablas</p>
                     </div>
                   )}
                   {formData.type !== 'wablas' && DEFAULT_URLS[formData.type] && formData.apiUrl === DEFAULT_URLS[formData.type] && (
-                    <p className="text-[9px] text-primary/70 mt-0.5">? URL default {formData.type} — bisa diubah manual</p>
+                    <p className="text-[9px] text-primary/70 mt-0.5">? URL default {formData.type} â€” bisa diubah manual</p>
                   )}
                   {formData.type !== 'wablas' && DEFAULT_URLS[formData.type] && formData.apiUrl !== DEFAULT_URLS[formData.type] && formData.apiUrl && (
-                    <p className="text-[9px] text-amber-500 mt-0.5">? URL custom — berbeda dari default</p>
+                    <p className="text-[9px] text-amber-500 mt-0.5">? URL custom â€” berbeda dari default</p>
                   )}
                   {!DEFAULT_URLS[formData.type] && (
-                    <p className="text-[9px] text-muted-foreground mt-0.5">Self-hosted — isi URL server {formData.type.toUpperCase()} Anda</p>
+                    <p className="text-[9px] text-muted-foreground mt-0.5">Self-hosted â€” isi URL server {formData.type.toUpperCase()} Anda</p>
                   )}
                 </div>
                 <div>

@@ -147,7 +147,7 @@ export default function RouterPage() {
         }))
       }
     } else {
-      // VPN client dihapus — kosongkan IP agar user isi manual
+      // VPN client dihapus â€” kosongkan IP agar user isi manual
       setFormData(prev => ({ ...prev, vpnClientId: '', ipAddress: '', nasname: '' }))
     }
   }
@@ -204,7 +204,7 @@ export default function RouterPage() {
           showError(`VPN tidak terhubung ke ${formData.ipAddress}`)
           return
         }
-        // Ping berhasil — lanjut test API, tapi error API tidak memblokir simpan
+        // Ping berhasil â€” lanjut test API, tapi error API tidak memblokir simpan
       }
 
       const response = await fetch('/api/network/routers/test', {
@@ -244,11 +244,11 @@ export default function RouterPage() {
       } else {
         setTestResult(result)
         const diagMsg = result.diagnosis === 'port_refused'
-          ? `${result.message}\n\nPort ditolak (ECONNREFUSED) — pastikan /ip service api sudah enabled dan port benar.`
+          ? `${result.message}\n\nPort ditolak (ECONNREFUSED) â€” pastikan /ip service api sudah enabled dan port benar.`
           : result.diagnosis === 'auth_failed'
-          ? `${result.message}\n\nUsername/password salah — cek credentials di /ip service.`
+          ? `${result.message}\n\nUsername/password salah â€” cek credentials di /ip service.`
           : result.diagnosis === 'firewall_block'
-          ? `${result.message}\n\nKoneksi timeout — firewall memblokir port ini.`
+          ? `${result.message}\n\nKoneksi timeout â€” firewall memblokir port ini.`
           : result.message
         showError(diagMsg)
       }
@@ -321,7 +321,7 @@ export default function RouterPage() {
   const handleEdit = async (routerData: Router) => {
     setEditingRouter(routerData)
     setTestResult(null)
-    // Set form with list data first (password/secret will be empty — filled below)
+    // Set form with list data first (password/secret will be empty â€” filled below)
     setFormData({
       name: routerData.name, nasname: routerData.nasname, shortname: routerData.shortname, type: routerData.type,
       ipAddress: routerData.ipAddress, username: routerData.username, password: '',
@@ -518,7 +518,7 @@ export default function RouterPage() {
                   <div className="p-1.5 bg-brand-500/20 rounded-lg flex items-center justify-center">
                     <Info className="w-4 h-4 text-brand-400" />
                   </div>
-                  <span className="text-sm font-bold text-brand-400 uppercase tracking-wider">Cara Penggunaan — Alur NAS / Router</span>
+                  <span className="text-sm font-bold text-brand-400 uppercase tracking-wider">Cara Penggunaan â€” Alur NAS / Router</span>
                 </div>
                 {showTutorial ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
               </button>
@@ -550,7 +550,7 @@ export default function RouterPage() {
 
                   {/* Troubleshooting: unknown client */}
                   <div className="mt-3 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
-                    <p className="text-xs font-bold text-amber-400 mb-2">?? Troubleshooting — FreeRADIUS: &quot;unknown client&quot;</p>
+                    <p className="text-xs font-bold text-amber-400 mb-2">?? Troubleshooting â€” FreeRADIUS: &quot;unknown client&quot;</p>
                     <p className="text-xs text-muted-foreground mb-3">Jika FreeRADIUS menolak request NAS dengan error <code className="bg-slate-800 px-1 rounded text-amber-300">Ignoring request from unknown client X.X.X.X</code>, lakukan langkah berikut:</p>
                     <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
                       <li>Pastikan NAS sudah ditambahkan lewat halaman ini (bukan langsung ke database). Jika baru saja di-INSERT manual ke DB, hapus dan tambah ulang via UI.</li>
@@ -671,7 +671,7 @@ export default function RouterPage() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-muted-foreground text-sm mt-0.5">{routerData.type} • {routerData.nasname}</p>
+                            <p className="text-muted-foreground text-sm mt-0.5">{routerData.type} â€¢ {routerData.nasname}</p>
                           </div>
                         </div>
 
@@ -895,7 +895,7 @@ export default function RouterPage() {
                   />
                 </div>
 
-                {/* Ports — only show for MikroTik routers, not gateway/VPS */}
+                {/* Ports â€” only show for MikroTik routers, not gateway/VPS */}
                 {formData.type !== 'gateway' && (
                 <div className="grid grid-cols-2 gap-4">
                   <div>

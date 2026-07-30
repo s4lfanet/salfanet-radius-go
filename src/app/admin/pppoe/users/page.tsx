@@ -57,7 +57,7 @@ interface Profile { id: string; name: string; groupName: string; price: number; 
 interface Router { id: string; name: string; nasname: string; ipAddress: string; }
 interface Area { id: string; name: string; }
 
-// Isolated form component — formData state lives here so typing only re-renders
+// Isolated form component â€” formData state lives here so typing only re-renders
 // this component, not the entire PppoeUsersPage (which has 100+ state variables).
 // This prevents mobile virtual keyboard dismissal caused by parent re-renders.
 function AddPppoeUserModal({ isOpen, onClose, onSuccess, profiles, routers, areas }: {
@@ -1507,7 +1507,7 @@ export default function PppoeUsersPage() {
                       {/* PPPoE */}
                       <td className="px-3 py-2">
                         <p className="text-xs font-mono font-medium flex items-center gap-1"><span className="text-muted-foreground text-[10px]">User:</span> {user.username}</p>
-                        <p className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="text-[10px]">Pass:</span> ••••••</p>
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1"><span className="text-[10px]">Pass:</span> â€¢â€¢â€¢â€¢â€¢â€¢</p>
                         {user.ipAddress && <p className="text-[10px] text-muted-foreground">IP: {user.ipAddress}</p>}
                       </td>
                       {/* Paket */}
@@ -1657,7 +1657,7 @@ export default function PppoeUsersPage() {
           areas={areas}
         />
 
-        {/* Map Picker (edit flow only — add flow has its own MapPicker inside AddPppoeUserModal) */}
+        {/* Map Picker (edit flow only â€” add flow has its own MapPicker inside AddPppoeUserModal) */}
         <MapPicker isOpen={showMapPicker} onClose={() => setShowMapPicker(false)} onSelect={(lat, lng) => { const latStr = lat.toFixed(6); const lonStr = lng.toFixed(6); setMapPickerLat(latStr); setMapPickerLon(lonStr); setModalLatLng({ lat: latStr, lng: lonStr }); }} initialLat={mapPickerLat ? parseFloat(mapPickerLat) : undefined} initialLng={mapPickerLon ? parseFloat(mapPickerLon) : undefined} />
 
         {/* Import Dialog */}
@@ -1671,7 +1671,7 @@ export default function PppoeUsersPage() {
               Profile akan diambil dari kolom <strong>Profile</strong> dalam file. Pilih <strong>Profile Default</strong> sebagai fallback jika nama di file tidak cocok.
             </div>
             <div>
-              <ModalLabel>Profile Default <span className="text-muted-foreground text-[10px]">({t('common.optional')} — dipakai jika profile di file tidak ditemukan)</span></ModalLabel>
+              <ModalLabel>Profile Default <span className="text-muted-foreground text-[10px]">({t('common.optional')} â€” dipakai jika profile di file tidak ditemukan)</span></ModalLabel>
               <ModalSelect value={importProfileId} onChange={(e) => setImportProfileId(e.target.value)}>
                 <option value="" className="dark:bg-input">-- Tanpa Default (wajib ada di file) --</option>
                 {profiles.map((p) => <option key={p.id} value={p.id} className="dark:bg-input">{p.name}</option>)}
@@ -1684,7 +1684,7 @@ export default function PppoeUsersPage() {
             </div>
             {importResult && (
               <div className="p-3 border border-border dark:border-brand-600/30 rounded-lg bg-muted/30 dark:bg-input/50 text-xs max-h-60 overflow-y-auto">
-                <div className="flex items-center gap-1 text-green-600 dark:text-[success] mb-2"><CheckCircle2 className="h-3 w-3" />{importResult.success} {t('common.create')}{importResult.updated > 0 && <span className="ml-2 text-blue-500 dark:text-brand-400">· {importResult.updated} Diperbarui</span>}</div>
+                <div className="flex items-center gap-1 text-green-600 dark:text-[success] mb-2"><CheckCircle2 className="h-3 w-3" />{importResult.success} {t('common.create')}{importResult.updated > 0 && <span className="ml-2 text-blue-500 dark:text-brand-400">Â· {importResult.updated} Diperbarui</span>}</div>
                 {importResult.failed > 0 && (
                   <div className="text-red-500 dark:text-[#ff4466]">
                     <div className="font-medium mb-1">{importResult.failed} {t('notifications.failed')}</div>

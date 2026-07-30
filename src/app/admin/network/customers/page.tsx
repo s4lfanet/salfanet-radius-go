@@ -580,7 +580,7 @@ export default function CustomerAssignmentPage() {
                         {searchResults.map(customer => (
                           <button key={customer.id} type="button" onClick={() => handleCustomerSelect(customer)} className="w-full px-3 py-2 text-left hover:bg-brand-600/20 transition-colors">
                             <div className="text-xs font-medium text-foreground">{customer.name}</div>
-                            <div className="text-[10px] text-muted-foreground">@{customer.username} • {customer.phone || t('network.noPhone')}</div>
+                            <div className="text-[10px] text-muted-foreground">@{customer.username} â€¢ {customer.phone || t('network.noPhone')}</div>
                           </button>
                         ))}
                       </div>
@@ -607,7 +607,7 @@ export default function CustomerAssignmentPage() {
                           </div>
                           <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
                             <span className="flex items-center gap-0.5"><Navigation className="h-2.5 w-2.5 text-[success]" />{odp.distance?.toFixed(2)} km</span>
-                            <span>•</span>
+                            <span>â€¢</span>
                             <span className={(odp.availablePorts?.length || 0) > 0 ? 'text-[success]' : 'text-[#ff4466]'}>{odp.availablePorts?.length || 0}/{odp.portCount} {t('network.portsFree')}</span>
                           </div>
                         </button>

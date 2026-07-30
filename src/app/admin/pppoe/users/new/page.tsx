@@ -255,7 +255,7 @@ export default function NewPppoeUserPage() {
                   <ModalLabel required>Paket Internet</ModalLabel>
                   <ModalSelect value={formData.profileId} onChange={(e) => field('profileId', e.target.value)}>
                     <option value="">-- Pilih Paket --</option>
-                    {profiles.map(p => <option key={p.id} value={p.id}>{p.name} — Rp {p.price.toLocaleString('id-ID')}</option>)}
+                    {profiles.map(p => <option key={p.id} value={p.id}>{p.name} â€” Rp {p.price.toLocaleString('id-ID')}</option>)}
                   </ModalSelect>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -276,7 +276,7 @@ export default function NewPppoeUserPage() {
                         {Array.from({ length: 28 }, (_, i) => i + 1).map(day => <option key={day} value={day}>Tanggal {day}</option>)}
                       </ModalSelect>
                     </div>
-                    {/* Tagihan Pertama — selalu tampil (tidak perlu profile dulu) */}
+                    {/* Tagihan Pertama â€” selalu tampil (tidak perlu profile dulu) */}
                     <div>
                       <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">?? Tagihan Pertama</p>
                       {/* Langkah 1: kapan bayar */}
@@ -333,7 +333,7 @@ export default function NewPppoeUserPage() {
                             <p className="text-[9px] text-amber-600 dark:text-amber-400 mt-1.5">?? Pilih profil paket untuk melihat estimasi tagihan</p>
                           )}
                           <p className="text-[9px] text-muted-foreground mt-1.5">
-                            ?? Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan — bisa dibayar via portal pelanggan.
+                            ?? Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan â€” bisa dibayar via portal pelanggan.
                           </p>
                         </div>
                       )}
@@ -377,7 +377,7 @@ export default function NewPppoeUserPage() {
                       </div>
                       {firstInvoice !== 'none' && (
                         <p className="text-[9px] text-muted-foreground mt-1.5">
-                          ?? Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan — bisa dibayar via portal pelanggan.
+                          ?? Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan â€” bisa dibayar via portal pelanggan.
                         </p>
                       )}
                     </div>
@@ -395,7 +395,7 @@ export default function NewPppoeUserPage() {
                   <div>
                     <ModalLabel>NAS / Router</ModalLabel>
                     <ModalSelect value={formData.routerId} onChange={(e) => field('routerId', e.target.value)}>
-                      <option value="">— Otomatis —</option>
+                      <option value="">â€” Otomatis â€”</option>
                       {routers.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                     </ModalSelect>
                   </div>
@@ -530,7 +530,7 @@ export default function NewPppoeUserPage() {
                 <div>
                   <ModalLabel>Area</ModalLabel>
                   <ModalSelect value={formData.areaId} onChange={(e) => field('areaId', e.target.value)}>
-                    <option value="">— Tanpa Area —</option>
+                    <option value="">â€” Tanpa Area â€”</option>
                     {areas.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
                   </ModalSelect>
                 </div>
@@ -538,8 +538,8 @@ export default function NewPppoeUserPage() {
                   <ModalLabel>? Aksi Jatuh Tempo</ModalLabel>
                   <select value={formData.autoIsolationEnabled ? 'isolate' : 'keep'} onChange={(e) => field('autoIsolationEnabled', e.target.value === 'isolate')}
                     className="w-full px-3 py-2 text-xs border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary">
-                    <option value="isolate">ISOLIR INTERNET (Suspend) — isolir otomatis saat expired</option>
-                    <option value="keep">TETAP TERHUBUNG (No Action) — tidak isolir meski expired</option>
+                    <option value="isolate">ISOLIR INTERNET (Suspend) â€” isolir otomatis saat expired</option>
+                    <option value="keep">TETAP TERHUBUNG (No Action) â€” tidak isolir meski expired</option>
                   </select>
                   <p className="text-[10px] text-muted-foreground mt-1">Tindakan otomatis saat tanggal tagihan / expired terlewati.</p>
                 </div>

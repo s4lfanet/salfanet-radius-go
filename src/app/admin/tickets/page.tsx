@@ -149,7 +149,7 @@ export default function AdminTicketsPage() {
   const selectCustomer = (c: DispatchDataResult['customers'][0]) => {
     setForm(f => ({
       ...f,
-      // customerId must reference pppoeUser.id — billing customers don't have one
+      // customerId must reference pppoeUser.id â€” billing customers don't have one
       customerId: c._source === 'billing' ? null : c.id,
       customerName: c.name || c.username,
       customerPhone: c.phone || '',
@@ -516,13 +516,13 @@ export default function AdminTicketsPage() {
                   </div>
                   <div className="flex items-center gap-2 flex-wrap mt-2">
                     <span className="text-[11px] text-muted-foreground">{ticket.customerName}</span>
-                    <span className="text-[9px] text-muted-foreground/50">•</span>
+                    <span className="text-[9px] text-muted-foreground/50">â€¢</span>
                     <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${getStatusColor(ticket.status)}`}>
                       {t(`ticket.status_${ticket.status}`)}
                     </span>
                     {ticket.category && (
                       <>
-                        <span className="text-[9px] text-muted-foreground/50">•</span>
+                        <span className="text-[9px] text-muted-foreground/50">â€¢</span>
                         <span
                           className="px-1.5 py-0.5 rounded text-[9px] font-medium text-foreground"
                           style={{ backgroundColor: ticket.category.color }}
@@ -602,7 +602,7 @@ export default function AdminTicketsPage() {
                           <button key={c.id} onClick={() => selectCustomer(c)} className="w-full text-left px-3 py-2.5 text-xs hover:bg-muted transition flex items-center justify-between gap-2">
                             <div className="flex flex-col gap-0.5 min-w-0">
                               <span className="font-medium text-foreground truncate">{c.name || c.username}</span>
-                              <span className="text-muted-foreground">{c.phone} {c.username && c._source === 'pppoe' ? `· @${c.username}` : ''}</span>
+                              <span className="text-muted-foreground">{c.phone} {c.username && c._source === 'pppoe' ? `Â· @${c.username}` : ''}</span>
                             </div>
                             <span className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                               c._source === 'billing' ? 'bg-amber-500/20 text-amber-400' : 'bg-brand-500/15 text-brand-400'
@@ -645,7 +645,7 @@ export default function AdminTicketsPage() {
                       <label className="text-xs text-muted-foreground mb-1 block">Router/NAS</label>
                       <div className="relative">
                         <select value={form.routerId} onChange={e => setForm(f => ({ ...f, routerId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
-                          <option value="">— Pilih Router —</option>
+                          <option value="">â€” Pilih Router â€”</option>
                           {dispatchData?.routers.map(r => <option key={r.id} value={r.id}>{r.name}{r.nasname ? ` (${r.nasname})` : ''}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -655,7 +655,7 @@ export default function AdminTicketsPage() {
                       <label className="text-xs text-muted-foreground mb-1 block">OLT</label>
                       <div className="relative">
                         <select value={form.oltId} onChange={e => setForm(f => ({ ...f, oltId: e.target.value, odcId: '', odpId: '' }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
-                          <option value="">— Pilih OLT —</option>
+                          <option value="">â€” Pilih OLT â€”</option>
                           {dispatchData?.olts.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -665,7 +665,7 @@ export default function AdminTicketsPage() {
                       <label className="text-xs text-muted-foreground mb-1 block">ODC</label>
                       <div className="relative">
                         <select value={form.odcId} onChange={e => setForm(f => ({ ...f, odcId: e.target.value, odpId: '' }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
-                          <option value="">— Pilih ODC —</option>
+                          <option value="">â€” Pilih ODC â€”</option>
                           {(dispatchData?.odcs ?? []).filter(o => !form.oltId || o.oltId === form.oltId).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -675,7 +675,7 @@ export default function AdminTicketsPage() {
                       <label className="text-xs text-muted-foreground mb-1 block">ODP</label>
                       <div className="relative">
                         <select value={form.odpId} onChange={e => setForm(f => ({ ...f, odpId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
-                          <option value="">— Pilih ODP —</option>
+                          <option value="">â€” Pilih ODP â€”</option>
                           {(dispatchData?.odps ?? []).filter(o => !form.odcId || o.odcId === form.odcId).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />
@@ -692,7 +692,7 @@ export default function AdminTicketsPage() {
                       <label className="text-xs text-muted-foreground mb-1 block">Kategori</label>
                       <div className="relative">
                         <select value={form.categoryId} onChange={e => setForm(f => ({ ...f, categoryId: e.target.value }))} className="w-full appearance-none px-3 py-2 text-xs bg-background border border-border rounded-lg text-foreground focus:ring-1 focus:ring-[brand-600]/40 outline-none pr-8">
-                          <option value="">— Pilih Kategori —</option>
+                          <option value="">â€” Pilih Kategori â€”</option>
                           {dispatchData?.categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                         </select>
                         <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground pointer-events-none" />

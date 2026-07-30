@@ -221,7 +221,7 @@ export default function VpnClientPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || 'Gagal tambah peer');
-      const script = `# WireGuard NAS Client Setup — ${wgNewPeerName.trim()}
+      const script = `# WireGuard NAS Client Setup â€” ${wgNewPeerName.trim()}
 # Generated: ${new Date().toISOString().split('T')[0]}
 # Paste script ini ke terminal MikroTik (RouterOS 7+)
 # --------------------------------------------------
@@ -233,7 +233,7 @@ export default function VpnClientPage() {
 # 1. Buat WireGuard interface dengan private key NAS
 /interface/wireguard/add name=${toSafeIfaceName('wg', wgNewPeerName.trim())} private-key="${data.clientPrivateKey || '<PRIVATE_KEY>'}"
 
-# 2. Tambah peer — allowed-address = seluruh subnet VPN (bukan hanya gateway)
+# 2. Tambah peer â€” allowed-address = seluruh subnet VPN (bukan hanya gateway)
 /interface/wireguard/peers/add interface=${toSafeIfaceName('wg', wgNewPeerName.trim())} \\
   public-key="${data.serverPublicKey}" \\
   endpoint-address="${data.serverEndpoint?.split(':')[0]}" \\
@@ -958,7 +958,7 @@ ${vpnCmd}
                   <div className="p-1.5 bg-brand-500/20 rounded-lg flex items-center justify-center">
                     <Info className="w-4 h-4 text-brand-400" />
                   </div>
-                  <span className="text-sm font-bold text-brand-400 uppercase tracking-wider">Cara Penggunaan — Alur VPN Client</span>
+                  <span className="text-sm font-bold text-brand-400 uppercase tracking-wider">Cara Penggunaan â€” Alur VPN Client</span>
                 </div>
                 {showTutorial ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
               </button>
@@ -1013,7 +1013,7 @@ ${vpnCmd}
                   </div>
                   <div>
                     <span className="text-sm font-bold text-brand-400 uppercase tracking-wider">Konfigurasi VPS Built-in VPN</span>
-                    <span className="ml-2 text-xs text-muted-foreground">— Pool IP &amp; Gateway untuk WireGuard dan L2TP yang terinstall di VPS</span>
+                    <span className="ml-2 text-xs text-muted-foreground">â€” Pool IP &amp; Gateway untuk WireGuard dan L2TP yang terinstall di VPS</span>
                   </div>
                 </div>
                 {showVpsSettings ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
@@ -1095,7 +1095,7 @@ ${vpnCmd}
                           </div>
                         </div>
                       )}
-                      <p className="text-xs text-muted-foreground mt-2">Pool subnet: <span className="font-mono text-teal-300">{(() => { const s = wgServerInfo.poolStart; const b = (typeof s === 'string' && s.includes('.')) ? s.split('.').slice(0,3).join('.') : wgServerInfo.subnet?.split('/')[0].split('.').slice(0,3).join('.'); return b ? `${b}.0/24` : wgServerInfo.subnet || '-'; })()}</span> · Server: {wgServerInfo.publicIp}:{wgServerInfo.listenPort}</p>
+                      <p className="text-xs text-muted-foreground mt-2">Pool subnet: <span className="font-mono text-teal-300">{(() => { const s = wgServerInfo.poolStart; const b = (typeof s === 'string' && s.includes('.')) ? s.split('.').slice(0,3).join('.') : wgServerInfo.subnet?.split('/')[0].split('.').slice(0,3).join('.'); return b ? `${b}.0/24` : wgServerInfo.subnet || '-'; })()}</span> Â· Server: {wgServerInfo.publicIp}:{wgServerInfo.listenPort}</p>
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl border border-slate-700/40 bg-slate-900/40 text-center">
@@ -1178,7 +1178,7 @@ ${vpnCmd}
                           </div>
                         </div>
                       )}
-                      <p className="text-xs text-muted-foreground mt-2">Pool subnet: <span className="font-mono text-brand-600">{(() => { const s = l2tpServerInfo.poolStart; const b = (typeof s === 'string' && s.includes('.')) ? s.split('.').slice(0,3).join('.') : l2tpServerInfo.subnet?.split('/')[0].split('.').slice(0,3).join('.'); return b ? `${b}.0/24` : l2tpServerInfo.subnet || '-'; })()}</span> · Server: {l2tpServerInfo.publicIp}</p>
+                      <p className="text-xs text-muted-foreground mt-2">Pool subnet: <span className="font-mono text-brand-600">{(() => { const s = l2tpServerInfo.poolStart; const b = (typeof s === 'string' && s.includes('.')) ? s.split('.').slice(0,3).join('.') : l2tpServerInfo.subnet?.split('/')[0].split('.').slice(0,3).join('.'); return b ? `${b}.0/24` : l2tpServerInfo.subnet || '-'; })()}</span> Â· Server: {l2tpServerInfo.publicIp}</p>
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl border border-slate-700/40 bg-slate-900/40 text-center">
@@ -1317,7 +1317,7 @@ ${vpnCmd}
                           </label>
                         </div>
 
-                        {/* VPS Routing Setup — only shown for RADIUS server nodes */}
+                        {/* VPS Routing Setup â€” only shown for RADIUS server nodes */}
                         {client.isRadiusServer && (
                           <div className="mt-4 pt-4 border-t border-brand-500/20">
                             <button
@@ -1330,7 +1330,7 @@ ${vpnCmd}
                               <span>{t('network.vpsRoutingSetup')}</span>
                               <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
                                 <Route className="w-3 h-3" />
-                                {resolveServer(client.vpnServerId)?.subnet || '—'}
+                                {resolveServer(client.vpnServerId)?.subnet || 'â€”'}
                                 {expandedRoutingPanels.has(client.id)
                                   ? <ChevronUp className="w-4 h-4" />
                                   : <ChevronDown className="w-4 h-4" />}
@@ -1537,7 +1537,7 @@ ${vpnCmd}
                   />
                 </div>
 
-                {/* Local Networks — for WireGuard and VPS L2TP peers */}
+                {/* Local Networks â€” for WireGuard and VPS L2TP peers */}
                 {(formData.vpnType === 'wireguard' || (formData.vpnType === 'l2tp' && formData.vpnServerId === '__vps_l2tp__')) && (
                   <div>
                     <label className="block text-sm font-medium text-brand-400 mb-2">
@@ -1559,11 +1559,11 @@ ${vpnCmd}
                   </div>
                 )}
 
-                {/* Custom VPN IP — only for non-VPS WG (VPS WG assigns IPs automatically) */}
+                {/* Custom VPN IP â€” only for non-VPS WG (VPS WG assigns IPs automatically) */}
                 {formData.vpnServerId && formData.vpnServerId !== '__vps_wg__' && (
                   <div>
                     <label className="block text-sm font-medium text-brand-400 mb-1">
-                      IP VPN Client <span className="text-muted-foreground font-normal">(opsional — kosongkan untuk auto)</span>
+                      IP VPN Client <span className="text-muted-foreground font-normal">(opsional â€” kosongkan untuk auto)</span>
                     </label>
                     <input
                       type="text"
@@ -1577,7 +1577,7 @@ ${vpnCmd}
                       const sub = srv?.subnet;
                       if (!sub) return null;
                       const base = sub.split('/')[0].split('.').slice(0, 3).join('.');
-                      return <p className="text-xs text-muted-foreground mt-1">Subnet server: <span className="text-brand-400 font-mono">{sub}</span> — IP harus dalam range <span className="font-mono">{base}.10</span> – <span className="font-mono">{base}.254</span></p>;
+                      return <p className="text-xs text-muted-foreground mt-1">Subnet server: <span className="text-brand-400 font-mono">{sub}</span> â€” IP harus dalam range <span className="font-mono">{base}.10</span> â€“ <span className="font-mono">{base}.254</span></p>;
                     })()}
                   </div>
                 )}

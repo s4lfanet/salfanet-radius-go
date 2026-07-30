@@ -440,12 +440,12 @@ export default function AgentVouchersPage() {
           </table>
         </div>
 
-        {/* Pagination — always visible */}
+        {/* Pagination â€” always visible */}
         <div className="px-5 py-3 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
           <p className="text-xs text-slate-500 dark:text-slate-400">
             {pagination.total === 0
               ? 'Tidak ada voucher'
-              : `Menampilkan ${((currentPage - 1) * pagination.limit) + 1}–${Math.min(currentPage * pagination.limit, pagination.total)} dari ${pagination.total} voucher`}
+              : `Menampilkan ${((currentPage - 1) * pagination.limit) + 1}â€“${Math.min(currentPage * pagination.limit, pagination.total)} dari ${pagination.total} voucher`}
           </p>
           {pagination.totalPages > 1 && (
             <div className="flex items-center gap-1">
@@ -454,7 +454,7 @@ export default function AgentVouchersPage() {
                 disabled={currentPage === 1}
                 className="px-2 py-1 text-xs rounded hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-500 dark:text-slate-400"
               >
-                «
+                Â«
               </button>
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
@@ -500,7 +500,7 @@ export default function AgentVouchersPage() {
                 disabled={currentPage === pagination.totalPages}
                 className="px-2 py-1 text-xs rounded hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-500 dark:text-slate-400"
               >
-                »
+                Â»
               </button>
             </div>
           )}
