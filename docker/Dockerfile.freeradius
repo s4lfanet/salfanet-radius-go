@@ -1,11 +1,14 @@
 FROM freeradius/freeradius-server:3.2.3-alpine
 
-# Copy custom config files
-COPY docker/freeradius/clients.conf /etc/raddb/clients.conf
-COPY docker/freeradius/sql.conf /etc/raddb/mods-available/sql
+# Install envsubst for templating config files
+RUN apk add --no-cache gettext
+
+# Copy custom config files as templates
+COPY docker/freeradius/clients.conf /etc/raddb/clients.conf.tmpl
+COPY docker/freeradius/sql.conf /etc/raddb/mods-available/sql.tmpl
 COPY docker/freeradius/rest.conf /etc/raddb/mods-available/rest
 
-# Enable modules
+# Enable modules (symlinks point to actual files, not .tmpl)
 RUN ln -sf /etc/raddb/mods-available/sql /etc/raddb/mods-enabled/sql && \
     ln -sf /etc/raddb/mods-available/rest /etc/raddb/mods-enabled/rest
 
@@ -13,9 +16,7 @@ RUN ln -sf /etc/raddb/mods-available/sql /etc/raddb/mods-enabled/sql && \
 COPY freeradius-config/mods-available/mschap /etc/raddb/mods-available/mschap
 COPY freeradius-config/policy.d/filter /etc/raddb/policy.d/filter
 
-# Fix permissions (alpine image runs as root)
-RUN chmod -R 644 /etc/raddb/clients.conf /etc/raddb/mods-available/sql /etc/raddb/mods-available/rest /etc/raddb/mods-available/mschap /etc/raddb/policy.d/filter
-
 EXPOSE 1812/udp 1813/udp 3799/udp
 
-CMD ["radiusd", "-X"]
+# Startup: substitute env vars in templates, then start radiusd
+CMD sh -c 'envsubst < /etc/raddb/clients.conf.tmpl > /etc/raddb/clients.conf && envsubst < /etc/raddb/mods-available/sql.tmpl > /etc/raddb/mods-available/sql && radiusd -X'
