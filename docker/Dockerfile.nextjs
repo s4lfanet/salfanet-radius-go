@@ -34,7 +34,6 @@ COPY --from=builder /app/prisma ./prisma
 # Copy service scripts
 COPY cron-service.js ./
 COPY wa-service.js ./
-COPY ecosystem.config.js ./
 
 # Copy freeradius config
 COPY freeradius-config ./freeradius-config
