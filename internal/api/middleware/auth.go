@@ -38,13 +38,15 @@ type nextAuthSessionResult struct {
 // validateNextAuthSession calls the internal NextAuth session endpoint to validate
 // a browser session cookie. Returns user info on success, error on invalid/expired session.
 func validateNextAuthSession(cookieHeader string) (*nextAuthSessionResult, error) {
-	req, err := http.NewRequest("GET", "http://127.0.0.1:3000/api/auth/session", nil)
+	nextAuthURL := config.C.NextAuthURL
+	if nextAuthURL == "" {
+		nextAuthURL = "http://127.0.0.1:3000"
+	}
+	req, err := http.NewRequest("GET", nextAuthURL+"/api/auth/session", nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Cookie", cookieHeader)
-	// Set Host to ensure NextAuth can find the correct NEXTAUTH_URL config
-	req.Host = "localhost"
 
 	resp, err := nextAuthHTTPClient.Do(req)
 	if err != nil {

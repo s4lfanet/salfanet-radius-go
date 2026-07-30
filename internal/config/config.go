@@ -22,6 +22,9 @@ type Config struct {
 	// Database
 	DatabaseURL string
 
+	// NextAuth session validation (internal URL for Go→Next.js cookie check)
+	NextAuthURL string
+
 	// WhatsApp service
 	WAServiceURL string
 
@@ -58,6 +61,7 @@ func Load() (*Config, error) {
 		AppBaseURL:         getEnv("APP_BASE_URL", "http://localhost:3000"),
 		AppTimezone:        getEnv("APP_TIMEZONE", "Asia/Jakarta"),
 		DatabaseURL:        requireEnv("DATABASE_URL"),
+		NextAuthURL:        getEnv("NEXTAUTH_INTERNAL_URL", "http://127.0.0.1:3000"),
 		WAServiceURL:       getEnv("WA_SERVICE_URL", "http://localhost:3001"),
 		MidtransServerKey:  getEnv("MIDTRANS_SERVER_KEY", ""),
 		MidtransClientKey:  getEnv("MIDTRANS_CLIENT_KEY", ""),

@@ -52,6 +52,7 @@ services:
       AGENT_JWT_SECRET: ${AGENT_JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
+      NEXTAUTH_INTERNAL_URL: http://frontend:3000
       WA_SERVICE_URL: http://wa-service:4000
       RADIUS_SERVER_IP: ${RADIUS_SERVER_IP:-127.0.0.1}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost}
