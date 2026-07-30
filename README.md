@@ -491,6 +491,22 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.24 — 2026-07-30
+
+### Changed — UI/UX Consistency Audit
+- **Theme tokens** — Replaced all hardcoded neon hex colors (`#00f7ff`, `#bc13fe`, `#0a0520`, `#1a0f35`, `#e0d0ff`, `#ff44cc`, `#00ff88`, `#ff4466`, `#ff6b8a`, `#ff8c00`, `#1e1b2e`, `#0f0a1e`) with CSS variable tokens (`brand-400`, `brand-600`, `input`, `secondary`, `muted-foreground`, `accent-foreground`, `success`, `destructive`, etc.) across all 124 TSX files.
+- **Border radius** — Standardized `rounded-2xl` (16px) and `rounded-3xl` (24px) → `rounded-xl` (14px) across 53 files to align with the `--radius-xl` design token.
+- **Typography** — Fixed body font size (13px→14px), html root (14px→16px, mobile 15px), and larger heading sizes for better visual hierarchy.
+- **SweetAlert** — Replaced all neon hex colors in SweetAlert theme with brand tokens. Removed neon glow shadows in favor of clean elevation shadows.
+- **Utility classes** — Standardized `.neon-glow`, `.btn-cyber`, `.badge-*`, `.compact-card`, `.glass`, `.cyber-gradient`, `.table-container` to use theme tokens.
+- **Decorative elements** — Removed 261 decorative `blur-3xl` glow blob elements across 70 files, plus grid overlay patterns and their container divs.
+- **CSS cleanup** — Removed ~630 lines of redundant CSS overrides in `globals.css` targeting legacy hex colors and `slate-900/800` classes no longer present in TSX files. Fixed 2FA input border color from neon cyan to brand blue.
+- **Unused palette** — Removed unreferenced color variables from `globals.css`.
+
+### Stats
+- 124 files changed, 2,912 insertions, 3,787 deletions
+- `globals.css` reduced from ~2,481 to 1,850 lines
+
 ### v2.54.23 — 2026-07-30
 
 ### Fixed
@@ -560,25 +576,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/push_handler.go` — Updated to use push service
 - `internal/api/handlers/admin_misc_handler.go` — Lint fixes
 - `internal/api/handlers/misc_handler.go` — Lint fixes
-
-### v2.54.19 — 2026-06-03
-
-### Fixed
-- **ONU list menampilkan data salah (11 online padahal 53 online)** — Root cause: port 9006 di Mikrotik DST-NAT diarahkan ke SSH ZTE (bukan Telnet), sehingga Telnet selalu gagal dengan SSH banner. v2.54.15 DB fallback kemudian mengunci 44 ONU sebagai offline secara permanen (death spiral). Fix 1: buat SSH pool (`internal/olt/ssh`) dengan API identik ke Telnet pool — poller sekarang pakai SSH (port 9005) untuk fetch ONU state, bukan Telnet. Fix 2: **hapus seluruh DB fallback** di poller — ketika CLI return 0 state, percayai SNMP apa adanya, tidak lagi "preserve DB offline status" yang menjadi sumber death spiral.
-- **DB fallback death spiral dihapus** — Logika "jika CLI gagal, ambil status offline dari DB dan override SNMP online" dihapus permanen. Alasan: SNMP bisa saja memberikan partial data yang benar; mengoverride dengan data DB lama justru mempertahankan status salah selamanya.
-
-### Added
-- **SSH CLI pool** (`internal/olt/ssh/ssh.go`) — Package baru untuk koneksi SSH interaktif ke ZTE OLT. Implements same `Execute`/`ExecuteMultiple` API sebagai `telnet.Pool`. Stateless: setiap `ExecuteMultiple` buka koneksi SSH baru → tidak ada stale connection issue. Auth: password + keyboard-interactive fallback. PTY requested dengan ECHO=0.
-- **`CLIPool` interface** di `internal/olt/vendors/zte/zte.go` — Interface `Execute(string)(string,error)` + `ExecuteMultiple([]string)(string,error)` yang diimplementasi oleh both `*telnet.Pool` dan `*ssh.Pool`. `FetchTelnetONUStates` dan `FetchTelnetDistances` sekarang menerima `CLIPool` bukan `*telnet.Pool`.
-- **`GetCLIPool(oltID)`** di poller — Mengembalikan SSH pool jika tersedia, Telnet pool sebagai fallback. Handlers bisa pakai ini untuk management commands juga.
-
-### Changed
-- **Poller sekarang prefer SSH untuk CLI** — Jika `SSHEnabled=true` di OLT settings, SSH pool dibuat pada `SSHPort`. Telnet pool hanya dibuat jika SSH tidak dikonfigurasi. SSH adalah sumber kebenaran untuk ONU state di ZTE C320.
-
-### Files
-- `internal/olt/ssh/ssh.go` — **NEW** SSH CLI pool
-- `internal/olt/vendors/zte/zte.go` — `CLIPool` interface; update `FetchTelnetONUStates` + `FetchTelnetDistances` signatures
-- `internal/olt/poller/poller.go` — SSH pool support; hapus DB fallback; `GetCLIPool()`
 
 <!-- AUTO-CHANGELOG:END -->
 
