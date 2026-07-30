@@ -2,7 +2,7 @@
 
 Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with FreeRADIUS integration supporting PPPoE and Hotspot authentication.
 
-> **Latest:** v2.51.5 — Fix PM2 auto-start pada fresh install: hapus `pkill` yang bunuh installer, PM2 di bawah systemd supervision (May 19, 2026)
+> **Latest:** v2.54.24 — UI/UX consistency audit: replace all hardcoded neon hex colors with theme tokens, standardize border radius, remove decorative glow blobs, clean up ~630 lines of redundant CSS overrides (Jul 30, 2026)
 
 ---
 

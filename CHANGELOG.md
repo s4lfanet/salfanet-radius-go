@@ -6,6 +6,23 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.24] — 2026-07-30
+### Changed — UI/UX Consistency Audit
+- **Theme tokens** — Replaced all hardcoded neon hex colors (`#00f7ff`, `#bc13fe`, `#0a0520`, `#1a0f35`, `#e0d0ff`, `#ff44cc`, `#00ff88`, `#ff4466`, `#ff6b8a`, `#ff8c00`, `#1e1b2e`, `#0f0a1e`) with CSS variable tokens (`brand-400`, `brand-600`, `input`, `secondary`, `muted-foreground`, `accent-foreground`, `success`, `destructive`, etc.) across all 124 TSX files.
+- **Border radius** — Standardized `rounded-2xl` (16px) and `rounded-3xl` (24px) → `rounded-xl` (14px) across 53 files to align with the `--radius-xl` design token.
+- **Typography** — Fixed body font size (13px→14px), html root (14px→16px, mobile 15px), and larger heading sizes for better visual hierarchy.
+- **SweetAlert** — Replaced all neon hex colors in SweetAlert theme with brand tokens. Removed neon glow shadows in favor of clean elevation shadows.
+- **Utility classes** — Standardized `.neon-glow`, `.btn-cyber`, `.badge-*`, `.compact-card`, `.glass`, `.cyber-gradient`, `.table-container` to use theme tokens.
+- **Decorative elements** — Removed 261 decorative `blur-3xl` glow blob elements across 70 files, plus grid overlay patterns and their container divs.
+- **CSS cleanup** — Removed ~630 lines of redundant CSS overrides in `globals.css` targeting legacy hex colors and `slate-900/800` classes no longer present in TSX files. Fixed 2FA input border color from neon cyan to brand blue.
+- **Unused palette** — Removed unreferenced color variables from `globals.css`.
+
+### Stats
+- 124 files changed, 2,912 insertions, 3,787 deletions
+- `globals.css` reduced from ~2,481 to 1,850 lines
+
+---
+
 ## [2.54.23] — 2026-07-30
 ### Fixed
 - **VPS installer: DB passwords** (`vps-install/common.sh`) — Replaced hardcoded default passwords with random generated ones.
