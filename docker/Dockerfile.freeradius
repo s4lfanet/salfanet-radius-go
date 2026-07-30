@@ -1,4 +1,4 @@
-FROM freeradius/freeradius-server:3.2-alpine
+FROM freeradius/freeradius-server:3.2.3-alpine
 
 # Copy custom config files
 COPY docker/freeradius/clients.conf /etc/raddb/clients.conf
