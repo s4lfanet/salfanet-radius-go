@@ -1,7 +1,7 @@
 FROM freeradius/freeradius-server:3.2.3-alpine
 
 # Install envsubst for templating config files
-RUN apk add --no-cache gettext
+RUN apk add --no-cache gettext mariadb-connector-c
 
 # Copy custom config files as templates
 COPY docker/freeradius/clients.conf /etc/raddb/clients.conf.tmpl

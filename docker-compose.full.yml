@@ -172,9 +172,8 @@ services:
     volumes:
       - ./wa-service.js:/app/wa-service.js:ro
       - ./package.json:/app/package.json:ro
-      - ./package-lock.json:/app/package-lock.json:ro
       - wa_auth:/var/data/salfanet/baileys_auth
-    command: sh -c "npm install --omit=dev && node wa-service.js"
+    command: sh -c "npm install @whiskeysockets/baileys@latest qrcode-terminal@latest --omit=dev && node wa-service.js"
     environment:
       NODE_ENV: production
       TZ: Asia/Jakarta
