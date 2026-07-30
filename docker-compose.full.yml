@@ -72,6 +72,24 @@ services:
       retries: 5
       start_period: 10s
 
+  # ─── Database Migration (one-shot) ─────────────────────────────────────────
+  migrate:
+    image: node:20-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    working_dir: /app
+    volumes:
+      - ./prisma:/app/prisma:ro
+      - ./package.json:/app/package.json:ro
+      - ./package-lock.json:/app/package-lock.json:ro
+    environment:
+      DATABASE_URL: mysql://${DB_USER:-salfanet_user}:${DB_PASSWORD}@db:3306/${DB_NAME:-salfanet_radius}?connection_limit=10&pool_timeout=20
+    command: sh -c "npm install --omit=dev && npx prisma db push --accept-data-loss"
+    restart: "no"
+    networks:
+      - salfanet
+
   # ─── Next.js Frontend ──────────────────────────────────────────────────────
   frontend:
     build:
@@ -83,6 +101,8 @@ services:
         condition: service_healthy
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
       NODE_ENV: production
       TZ: Asia/Jakarta
