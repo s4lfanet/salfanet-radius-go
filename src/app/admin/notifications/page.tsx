@@ -253,20 +253,20 @@ export default function NotificationsPage() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'invoice_overdue': return '??';
-      case 'invoice_generated': return '??';
-      case 'new_registration': return '??';
-      case 'payment_received': return '?';
-      case 'manual_payment_submitted': return '??';
-      case 'manual_payment_approved': return '?';
-      case 'manual_payment_rejected': return '?';
-      case 'package_change_request': return '??';
-      case 'agent_deposit': return '??';
-      case 'agent_voucher_generated': return '???';
-      case 'agent_balance_adjustment': return '??';
-      case 'user_expired': return '?';
-      case 'system_alert': return '??';
-      default: return '??';
+      case 'invoice_overdue': return '!';
+      case 'invoice_generated': return '$';
+      case 'new_registration': return '+';
+      case 'payment_received': return '*';
+      case 'manual_payment_submitted': return '?';
+      case 'manual_payment_approved': return 'OK';
+      case 'manual_payment_rejected': return 'X';
+      case 'package_change_request': return '~';
+      case 'agent_deposit': return '$';
+      case 'agent_voucher_generated': return 'V';
+      case 'agent_balance_adjustment': return '$';
+      case 'user_expired': return 'X';
+      case 'system_alert': return '!';
+      default: return '*';
     }
   };
 

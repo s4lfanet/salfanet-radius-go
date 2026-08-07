@@ -11,10 +11,10 @@ interface Router { id: string; name: string; nasname: string; ipAddress: string;
 interface Area { id: string; name: string; }
 
 const TABS = [
-  { id: 'radius', label: 'Akun RADIUS', icon: '??' },
-  { id: 'pelanggan', label: 'Data Pelanggan', icon: '??' },
-  { id: 'instalasi', label: 'Instalasi', icon: '??' },
-  { id: 'pengaturan', label: 'Pengaturan', icon: '??' },
+  { id: 'radius', label: 'Akun RADIUS', icon: 'R' },
+  { id: 'pelanggan', label: 'Data Pelanggan', icon: 'P' },
+  { id: 'instalasi', label: 'Instalasi', icon: 'I' },
+  { id: 'pengaturan', label: 'Pengaturan', icon: 'S' },
 ];
 
 export default function NewPppoeUserPage() {

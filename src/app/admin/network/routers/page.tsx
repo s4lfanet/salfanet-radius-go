@@ -526,10 +526,10 @@ export default function RouterPage() {
                 <div className="px-6 pb-6 border-t border-brand-500/10">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-5">
                     {[
-                      { step: 1, icon: '??', color: 'border-brand-600/40 bg-brand-600/5', title: 'Sambungkan VPN', desc: 'Pastikan NAS/router sudah tersambung ke VPN (L2TP, WireGuard, atau SSTP) melalui menu VPN Client.', link: '/admin/network/vpn-client', linkLabel: '? Menu VPN Client' },
-                      { step: 2, icon: '?', color: 'border-brand-500/40 bg-brand-500/5', title: 'Tambah NAS/Router', desc: 'Klik "+ Tambah Router/NAS". Isi Nama, IP VPN NAS (mis. 10.20.30.10), username & password Winbox/API MikroTik.', link: null, linkLabel: null },
-                      { step: 3, icon: '??', color: 'border-green-500/40 bg-green-500/5', title: 'Test & Simpan', desc: 'Klik "Test Koneksi" untuk verifikasi API MikroTik dapat diakses. Simpan jika berhasil. NAS terdaftar sebagai RADIUS client.', link: null, linkLabel: null },
-                      { step: 4, icon: '??', color: 'border-amber-500/40 bg-amber-500/5', title: 'Generate RADIUS Script', desc: 'Klik "RADIUS Script" pada kartu NAS. Copy script RouterOS yang dihasilkan dan paste di terminal/WinBox MikroTik NAS tersebut.', link: null, linkLabel: null },
+                      { step: 1, icon: '1', color: 'border-brand-600/40 bg-brand-600/5', title: 'Sambungkan VPN', desc: 'Pastikan NAS/router sudah tersambung ke VPN (L2TP, WireGuard, atau SSTP) melalui menu VPN Client.', link: '/admin/network/vpn-client', linkLabel: 'Menu VPN Client' },
+                      { step: 2, icon: '2', color: 'border-brand-500/40 bg-brand-500/5', title: 'Tambah NAS/Router', desc: 'Klik "+ Tambah Router/NAS". Isi Nama, IP VPN NAS (mis. 10.20.30.10), username & password Winbox/API MikroTik.', link: null, linkLabel: null },
+                      { step: 3, icon: '3', color: 'border-green-500/40 bg-green-500/5', title: 'Test & Simpan', desc: 'Klik "Test Koneksi" untuk verifikasi API MikroTik dapat diakses. Simpan jika berhasil. NAS terdaftar sebagai RADIUS client.', link: null, linkLabel: null },
+                      { step: 4, icon: '4', color: 'border-amber-500/40 bg-amber-500/5', title: 'Generate RADIUS Script', desc: 'Klik "RADIUS Script" pada kartu NAS. Copy script RouterOS yang dihasilkan dan paste di terminal/WinBox MikroTik NAS tersebut.', link: null, linkLabel: null },
                     ].map(item => (
                       <div key={item.step} className={`rounded-xl border ${item.color} p-4`}>
                         <div className="flex items-center gap-2 mb-2">
@@ -545,22 +545,22 @@ export default function RouterPage() {
                     ))}
                   </div>
                   <div className="mt-4 p-3 rounded-xl border border-brand-500/20 bg-brand-500/5">
-                    <p className="text-xs text-brand-400/80"><span className="font-bold">?? Tentang NAS/Router:</span> NAS (Network Access Server) adalah MikroTik router di lokasi pelanggan yang menangani autentikasi PPPoE atau Hotspot. Setiap NAS harus terdaftar di sini agar RADIUS server dapat mengenali request autentikasi dari NAS tersebut.</p>
+                    <p className="text-xs text-brand-400/80"><span className="font-bold">Tentang NAS/Router:</span> NAS (Network Access Server) adalah MikroTik router di lokasi pelanggan yang menangani autentikasi PPPoE atau Hotspot. Setiap NAS harus terdaftar di sini agar RADIUS server dapat mengenali request autentikasi dari NAS tersebut.</p>
                   </div>
 
                   {/* Troubleshooting: unknown client */}
                   <div className="mt-3 p-4 rounded-xl border border-amber-500/30 bg-amber-500/5">
-                    <p className="text-xs font-bold text-amber-400 mb-2">?? Troubleshooting — FreeRADIUS: &quot;unknown client&quot;</p>
+                    <p className="text-xs font-bold text-amber-400 mb-2">Troubleshooting — FreeRADIUS: &quot;unknown client&quot;</p>
                     <p className="text-xs text-muted-foreground mb-3">Jika FreeRADIUS menolak request NAS dengan error <code className="bg-slate-800 px-1 rounded text-amber-300">Ignoring request from unknown client X.X.X.X</code>, lakukan langkah berikut:</p>
                     <ol className="text-xs text-muted-foreground space-y-1.5 list-decimal list-inside">
                       <li>Pastikan NAS sudah ditambahkan lewat halaman ini (bukan langsung ke database). Jika baru saja di-INSERT manual ke DB, hapus dan tambah ulang via UI.</li>
                       <li>Cek IP di kolom <span className="text-foreground font-medium">IP NAS</span> sesuai dengan IP yang dikirim router ke FreeRADIUS (bisa berupa IP VPN atau IP LAN).</li>
-                      <li>Klik <span className="text-amber-400 font-medium">RADIUS Script</span> ? copy script ? paste di terminal MikroTik NAS. Pastikan <code className="bg-slate-800 px-1 rounded text-green-400">src-address</code> pada script sama dengan IP NAS yang terdaftar.</li>
-                      <li>Cek Log FreeRADIUS di menu <a href="/admin/freeradius/logs" className="text-brand-400 underline">FreeRADIUS ? Log Langsung</a>. Error &quot;unknown client&quot; berarti IP pengirim tidak cocok dengan nasname di DB.</li>
+                      <li>Klik <span className="text-amber-400 font-medium">RADIUS Script</span> &gt; copy script &gt; paste di terminal MikroTik NAS. Pastikan <code className="bg-slate-800 px-1 rounded text-green-400">src-address</code> pada script sama dengan IP NAS yang terdaftar.</li>
+                      <li>Cek Log FreeRADIUS di menu <a href="/admin/freeradius/logs" className="text-brand-400 underline">FreeRADIUS &gt; Log Langsung</a>. Error &quot;unknown client&quot; berarti IP pengirim tidak cocok dengan nasname di DB.</li>
                       <li>Jika NAS menggunakan VPN, pastikan VPN Client sudah terhubung dan IP VPN-nya terdaftar. Cek di menu <a href="/admin/network/vpn-client" className="text-brand-400 underline">VPN Client</a>.</li>
                     </ol>
                     <p className="text-xs text-muted-foreground mt-2 border-t border-amber-500/20 pt-2">
-                      Setelah memperbaiki, FreeRADIUS akan otomatis sinkronisasi dalam maks. <span className="text-foreground font-medium">5 menit</span> (cron interval). Untuk sinkronisasi segera, restart FreeRADIUS via menu <a href="/admin/freeradius" className="text-brand-400 underline">FreeRADIUS ? Status</a>.
+                      Setelah memperbaiki, FreeRADIUS akan otomatis sinkronisasi dalam maks. <span className="text-foreground font-medium">5 menit</span> (cron interval). Untuk sinkronisasi segera, restart FreeRADIUS via menu <a href="/admin/freeradius" className="text-brand-400 underline">FreeRADIUS &gt; Status</a>.
                     </p>
                   </div>
                 </div>

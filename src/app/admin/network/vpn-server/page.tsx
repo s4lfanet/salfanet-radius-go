@@ -640,12 +640,12 @@ export default function VpnServerPage() {
     setSettingUpId(server.id);
 
     const formatStep = (s: string) => {
-      const cls = s.startsWith('?') ? 'text-green-400' : s.startsWith('?') ? 'text-red-400' : s.startsWith('??') ? 'text-yellow-400' : 'text-gray-300';
+      const cls = s.startsWith('[OK]') ? 'text-green-400' : s.startsWith('[FAIL]') ? 'text-red-400' : s.startsWith('[WARN]') ? 'text-yellow-400' : 'text-gray-300';
       return `<p class="text-xs ${cls}">${s}</p>`;
     };
 
     // Show live modal immediately so user sees progress
-    setSetupResultModal({ success: null, title: 'Setup Sedang Berjalan...', message: 'Menghubungkan ke RouterOS API...', stepsHtml: '<p class="text-xs text-gray-400 animate-pulse">? Menghubungkan...</p>' });
+    setSetupResultModal({ success: null, title: 'Setup Sedang Berjalan...', message: 'Menghubungkan ke RouterOS API...', stepsHtml: '<p class="text-xs text-gray-400 animate-pulse">Menghubungkan...</p>' });
 
     const liveSteps: string[] = [];
     try {
@@ -884,10 +884,10 @@ export default function VpnServerPage() {
                 <div className="px-6 pb-6 border-t border-brand-500/10">
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-5">
                     {[
-                      { step: 1, icon: '??', color: 'border-brand-600/40 bg-brand-600/5', title: 'Install di VPS', desc: 'Jalankan installer SALFANET di VPS: bash vps-install.sh. FreeRADIUS, Node.js, dan PM2 akan terinstall otomatis.', link: null, linkLabel: null },
-                      { step: 2, icon: '???', color: 'border-brand-500/40 bg-brand-500/5', title: 'Tambah VPN Server', desc: 'Isi IP MikroTik CHR, username admin, dan subnet VPN (contoh: 10.20.30.0/24). Klik "Test Koneksi" lalu Simpan.', link: null, linkLabel: null },
-                      { step: 3, icon: '??', color: 'border-green-500/40 bg-green-500/5', title: 'Setup Protokol', desc: 'Klik tombol "Setup" pada kartu server untuk konfigurasi L2TP/SSTP/PPTP di MikroTik CHR secara otomatis. Untuk WireGuard (RouterOS 7+) klik tombol WireGuard.', link: null, linkLabel: null },
-                      { step: 4, icon: '??', color: 'border-amber-500/40 bg-amber-500/5', title: 'Tambah VPN Client', desc: 'Setelah server siap, pergi ke menu VPN Client untuk tambahkan setiap NAS sebagai client. Sistem generate script RouterOS otomatis.', link: '/admin/network/vpn-client', linkLabel: '? Menu VPN Client' },
+                      { step: 1, icon: '1', color: 'border-brand-600/40 bg-brand-600/5', title: 'Install di VPS', desc: 'Jalankan installer SALFANET di VPS: bash vps-install.sh. FreeRADIUS, Node.js, dan PM2 akan terinstall otomatis.', link: null, linkLabel: null },
+                      { step: 2, icon: '2', color: 'border-brand-500/40 bg-brand-500/5', title: 'Tambah VPN Server', desc: 'Isi IP MikroTik CHR, username admin, dan subnet VPN (contoh: 10.20.30.0/24). Klik "Test Koneksi" lalu Simpan.', link: null, linkLabel: null },
+                      { step: 3, icon: '3', color: 'border-green-500/40 bg-green-500/5', title: 'Setup Protokol', desc: 'Klik tombol "Setup" pada kartu server untuk konfigurasi L2TP/SSTP/PPTP di MikroTik CHR secara otomatis. Untuk WireGuard (RouterOS 7+) klik tombol WireGuard.', link: null, linkLabel: null },
+                      { step: 4, icon: '4', color: 'border-amber-500/40 bg-amber-500/5', title: 'Tambah VPN Client', desc: 'Setelah server siap, pergi ke menu VPN Client untuk tambahkan setiap NAS sebagai client. Sistem generate script RouterOS otomatis.', link: '/admin/network/vpn-client', linkLabel: 'Menu VPN Client' },
                     ].map(item => (
                       <div key={item.step} className={`rounded-xl border ${item.color} p-4`}>
                         <div className="flex items-center gap-2 mb-2">
