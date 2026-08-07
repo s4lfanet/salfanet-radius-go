@@ -60,6 +60,8 @@ _proxy_locations() {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
+    add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+    add_header Cross-Origin-Resource-Policy "same-site" always;
 
     access_log /var/log/nginx/salfanet-radius-access.log;
     error_log  /var/log/nginx/salfanet-radius-error.log;
@@ -322,6 +324,8 @@ _proxy_locations() {
         proxy_hide_header X-Frame-Options;
         proxy_hide_header X-XSS-Protection;
         proxy_hide_header X-Content-Type-Options;
+        proxy_hide_header Cross-Origin-Opener-Policy;
+        proxy_hide_header Cross-Origin-Resource-Policy;
     }
 LOCATIONS
 }
@@ -353,6 +357,8 @@ _proxy_locations_https_domain() {
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+    add_header Cross-Origin-Resource-Policy "same-site" always;
 
     # CSP - allow Cloudflare Insights beacon
     add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://static.cloudflareinsights.com; script-src-elem 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; img-src 'self' data: https: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://api.fonnte.com https://api.wablas.com https://api.kirimi.id https://cloudflareinsights.com; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
@@ -636,6 +642,8 @@ _proxy_locations_https_domain() {
         proxy_hide_header X-Frame-Options;
         proxy_hide_header X-XSS-Protection;
         proxy_hide_header X-Content-Type-Options;
+        proxy_hide_header Cross-Origin-Opener-Policy;
+        proxy_hide_header Cross-Origin-Resource-Policy;
     }
 LOCATIONS
 }
@@ -666,6 +674,8 @@ _proxy_locations_cloudflare() {
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
+    add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+    add_header Cross-Origin-Resource-Policy "same-site" always;
 
     access_log /var/log/nginx/salfanet-radius-access.log;
     error_log  /var/log/nginx/salfanet-radius-error.log;
@@ -898,6 +908,9 @@ _proxy_locations_cloudflare() {
         proxy_cache_bypass $http_upgrade;
         add_header Cache-Control 'no-cache, must-revalidate' always;
         add_header CDN-Cache-Control 'no-store' always;
+
+        proxy_hide_header Cross-Origin-Opener-Policy;
+        proxy_hide_header Cross-Origin-Resource-Policy;
     }
 LOCATIONS
 }
