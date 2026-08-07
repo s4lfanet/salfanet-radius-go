@@ -1,5 +1,5 @@
 /**
- * Billing Feature — Domain Types
+ * Billing Feature -- Domain Types
  *
  * @module features/billing/types
  */

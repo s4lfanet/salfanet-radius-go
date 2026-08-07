@@ -1,5 +1,5 @@
 /**
- * Notifications Feature — Domain Types
+ * Notifications Feature -- Domain Types
  *
  * @module features/notifications/types
  */

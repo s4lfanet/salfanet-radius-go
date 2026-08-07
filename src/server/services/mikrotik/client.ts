@@ -30,7 +30,7 @@ export class MikroTikConnection {
       user: this.config.username,
       password: this.config.password,
       port: this.config.port,
-      // Do NOT set timeout here — node-routeros throws an empty string on its own timeout.
+      // Do NOT set timeout here -- node-routeros throws an empty string on its own timeout.
       // We use Promise.race below to enforce our own timeout with a proper error message.
       timeout: 9999,
     }
@@ -51,10 +51,10 @@ export class MikroTikConnection {
     try {
       // Use Promise.race to enforce a hard connection timeout.
       // node-routeros "timeout" is a socket idle timeout and does NOT cover
-      // the TCP connection phase — an unreachable host can hang for minutes.
+      // the TCP connection phase -- an unreachable host can hang for minutes.
       const connectPromise = this.conn.connect()
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Connection timed out after ${timeoutMs / 1000}s — host unreachable or firewall blocking`)), timeoutMs)
+        setTimeout(() => reject(new Error(`Connection timed out after ${timeoutMs / 1000}s -- host unreachable or firewall blocking`)), timeoutMs)
       )
       await Promise.race([connectPromise, timeoutPromise])
       console.log('MikroTik connection successful!')
@@ -64,7 +64,7 @@ export class MikroTikConnection {
       const c = this.conn
       this.conn = null
       try { c?.close() } catch { /* ignore close errors on failed connection */ }
-      // node-routeros may throw strings, plain objects, or Errors — serialize safely
+      // node-routeros may throw strings, plain objects, or Errors -- serialize safely
       let msg: string
       if (error instanceof Error) {
         msg = error.message
@@ -75,7 +75,7 @@ export class MikroTikConnection {
       } else {
         msg = String(error)
       }
-      // node-routeros may throw empty string — provide meaningful fallback
+      // node-routeros may throw empty string -- provide meaningful fallback
       if (!msg || msg === '{}') {
         msg = `connection timed out or port unreachable (check MikroTik firewall: /ip firewall filter print)`
       }
@@ -90,7 +90,7 @@ export class MikroTikConnection {
       try {
         await c.close()
       } catch {
-        // Ignore close errors — connection may already be dead
+        // Ignore close errors -- connection may already be dead
       }
     }
   }
@@ -513,7 +513,7 @@ export class MikroTikConnection {
       await this.connect()
 
       // Run L2TP/SSTP/PPTP in parallel to cut setup time significantly.
-      // WireGuard is intentionally skipped here — use the dedicated
+      // WireGuard is intentionally skipped here -- use the dedicated
       // "Setup WG Tunnel" button which handles key exchange properly.
       const [l2tp, sstp, pptp] = await Promise.all([
         this.setupL2TPServer(subnet),

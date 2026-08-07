@@ -115,7 +115,7 @@ export function SplitterDiagram({
               fill={DEFAULT_COLORS.text}
               className="font-medium"
             >
-              ← From {node.upstreamNode.type}: {node.upstreamNode.code}
+              &larr; From {node.upstreamNode.type}: {node.upstreamNode.code}
             </text>
           </g>
         )}

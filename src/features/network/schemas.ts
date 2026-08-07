@@ -1,5 +1,5 @@
 /**
- * Network Feature — Zod Schemas
+ * Network Feature -- Zod Schemas
  *
  * @module features/network/schemas
  */

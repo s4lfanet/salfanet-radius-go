@@ -32,7 +32,7 @@ export async function autoBackupToTelegram(): Promise<{ success: boolean; error?
     orderBy: { startedAt: 'desc' },
   });
   if (recentRun) {
-    console.log(`[Telegram Backup] Skipping duplicate — already ${recentRun.status} since ${recentRun.startedAt.toISOString()}`);
+    console.log(`[Telegram Backup] Skipping duplicate -- already ${recentRun.status} since ${recentRun.startedAt.toISOString()}`);
     return { success: true };
   }
 

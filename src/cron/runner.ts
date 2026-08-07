@@ -1,5 +1,5 @@
 /**
- * Standalone Cron Runner — src/cron/runner.ts
+ * Standalone Cron Runner -- src/cron/runner.ts
  *
  * Menjalankan semua cron jobs langsung dari src/server/jobs/ tanpa HTTP.
  * Dijalankan via: tsx src/cron/runner.ts
@@ -32,7 +32,7 @@ const LOCK_JOBS = new Set([
 
 async function runJob(type: string, description: string): Promise<void> {
   if (runningJobs.has(type)) {
-    console.log(`[CRON] Skipping ${description} — already running`);
+    console.log(`[CRON] Skipping ${description} -- already running`);
     return;
   }
 
@@ -60,13 +60,13 @@ async function runJob(type: string, description: string): Promise<void> {
 
 // ==================== STARTUP SEQUENCE ====================
 
-// 1. FreeRADIUS health check — seed isolir radgroupreply sebelum job lain
+// 1. FreeRADIUS health check -- seed isolir radgroupreply sebelum job lain
 setTimeout(() => runJob('freeradius_health', 'FreeRADIUS Health Check (startup)'), 5_000);
 
-// 2. PPPoE auto isolir — catch expired users yang missed saat restart
+// 2. PPPoE auto isolir -- catch expired users yang missed saat restart
 setTimeout(() => runJob('pppoe_auto_isolir', 'PPPoE Auto Isolir (startup)'), 15_000);
 
-// 3. Session recovery — reopen sessions yang salah ditutup saat update
+// 3. Session recovery -- reopen sessions yang salah ditutup saat update
 setTimeout(async () => {
   try {
     // Langsung akses DB untuk session recovery tanpa bergantung pada job config
@@ -118,7 +118,7 @@ async function initSchedules() {
     console.log(`  ${label.padEnd(30)} -> ${job.name}`);
   }
 
-  // Telegram backup/health — schedule diambil dari DB settings saat startup
+  // Telegram backup/health -- schedule diambil dari DB settings saat startup
   setTimeout(async () => {
     try {
       const { startBackupCron, startHealthCron } = await import('@/server/jobs/telegram-cron');

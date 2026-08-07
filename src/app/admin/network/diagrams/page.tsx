@@ -632,7 +632,7 @@ export default function NetworkDiagramsPage() {
                               onChange={e => setAssignJc(e.target.value)}
                               className="flex-1 px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             >
-                              <option value="">— Pilih JC —</option>
+                              <option value="">-- Pilih JC --</option>
                               {jcListAll.map(j => (
                                 <option key={j.id} value={j.id}>{j.name}</option>
                               ))}
@@ -686,7 +686,7 @@ export default function NetworkDiagramsPage() {
                             className="flex-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
                           >
                             {jcList.map(jc => (
-                              <option key={jc.id} value={jc.id}>{jc.code} — {jc.name}</option>
+                              <option key={jc.id} value={jc.id}>{jc.code} -- {jc.name}</option>
                             ))}
                           </select>
                         </div>
@@ -775,7 +775,7 @@ export default function NetworkDiagramsPage() {
 
                       {/* Right col: input/output segments info */}
                       <div className="space-y-4">
-                        {/* Input segments — grouped by cable */}
+                        {/* Input segments -- grouped by cable */}
                         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                           <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-3">Kabel Masuk (dari OTB)</h3>
                           {(jcDetail?.inputSegments?.length ?? 0) === 0 ? (
@@ -801,7 +801,7 @@ export default function NetworkDiagramsPage() {
                                         {cable?.name ?? cid}
                                       </p>
                                       <p className="text-muted-foreground dark:text-gray-400">
-                                        {tubes}T × {cores}C = {tubes * cores} core
+                                        {tubes}T x {cores}C = {tubes * cores} core
                                       </p>
                                       {tubeNums.length > 0 && (
                                         <p className="text-gray-400 dark:text-muted-foreground">
@@ -819,7 +819,7 @@ export default function NetworkDiagramsPage() {
                           })()}
                         </div>
 
-                        {/* Output segments — grouped by cable */}
+                        {/* Output segments -- grouped by cable */}
                         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
                           <h3 className="font-semibold text-gray-900 dark:text-white text-sm mb-3">Kabel Keluar (ke JC/ODC/ODP)</h3>
                           {(jcDetail?.outputSegments?.length ?? 0) === 0 ? (
@@ -843,7 +843,7 @@ export default function NetworkDiagramsPage() {
                                         {cable?.name ?? cid}
                                       </p>
                                       <p className="text-muted-foreground dark:text-gray-400">
-                                        {tubes}T × {cores}C = {tubes * cores} core
+                                        {tubes}T x {cores}C = {tubes * cores} core
                                       </p>
                                       <p className="text-gray-400 dark:text-muted-foreground">
                                         Ke: {toDevice ? `${toDevice.name} (${segments[0]?.toDeviceType})` : segments[0]?.toDeviceId}

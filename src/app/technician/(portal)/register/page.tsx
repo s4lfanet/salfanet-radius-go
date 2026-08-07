@@ -353,7 +353,7 @@ export default function TechnicianRegisterPage() {
                       className="w-full flex items-center justify-center gap-2 py-2 px-4 text-xs font-semibold bg-brand-600/10 hover:bg-brand-600/20 text-brand-600 border border-brand-600/30 rounded-xl transition-all disabled:opacity-60"
                     >
                       {gpsLoading ? <><span className="w-3.5 h-3.5 border-2 border-brand-600/40 border-t-[brand-600] rounded-full animate-spin" /></> : <MapPin className="w-3.5 h-3.5" />}
-                      {gpsLoading ? 'Mendapatkan lokasi...' : '📍 Ambil Lokasi GPS Saya'}
+                      {gpsLoading ? 'Mendapatkan lokasi...' : ' Ambil Lokasi GPS Saya'}
                     </button>
                     {form.latitude && form.longitude && (
                       <a href={`https://maps.google.com/?q=${form.latitude},${form.longitude}`} target="_blank" rel="noopener noreferrer" className="mt-1.5 flex items-center gap-1 text-xs text-brand-400 hover:underline">
@@ -418,7 +418,7 @@ export default function TechnicianRegisterPage() {
                           <option value="">-- Pilih Paket Internet --</option>
                           {profiles.map((p) => (
                             <option key={p.id} value={p.id}>
-                              {p.name} — {formatIDR(p.price)}/bln
+                              {p.name} -- {formatIDR(p.price)}/bln
                             </option>
                           ))}
                         </select>

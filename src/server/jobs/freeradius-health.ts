@@ -106,7 +106,7 @@ async function checkFreeRADIUSHealth(): Promise<HealthCheckResult> {
                 const { stdout } = await execAsync('freeradius -C 2>&1 || radiusd -C 2>&1', { timeout: 15000 });
                 responsive = stdout.includes('Configuration appears to be OK') || !stdout.includes('Error');
             } catch (error: any) {
-                // If timeout or error, service might be hung — but don't auto-restart
+                // If timeout or error, service might be hung -- but don't auto-restart
                 // solely based on config-check timeout (VPS under load can cause false positives)
                 responsive = false;
                 console.error('FreeRADIUS responsiveness check failed:', error.message);
@@ -319,13 +319,13 @@ export async function freeradiusHealthCheck(autoRestart = true): Promise<{
             }
         }
 
-        // If service is running but responsiveness check failed — alert only, DO NOT restart.
+        // If service is running but responsiveness check failed -- alert only, DO NOT restart.
         // The freeradius -C config-check can time out (15s) when the VPS is under load
         // (e.g., right after a web-app build). Restarting FreeRADIUS based on a config-check
         // timeout kills all active PPPoE sessions unnecessarily. Alert admins instead so they
         // can investigate if there is a genuine hang.
         if (healthCheck.status.running && !healthCheck.status.responsive) {
-            console.log('[FreeRADIUS-Health] Running but responsiveness check failed — alerting only (not restarting)');
+            console.log('[FreeRADIUS-Health] Running but responsiveness check failed -- alerting only (not restarting)');
 
             await sendAlert(
                 'FreeRADIUS responsiveness check (freeradius -C) failed or timed out. The service is still running. This may be a false positive under high VPS load. Check manually if active sessions drop.',
@@ -340,7 +340,7 @@ export async function freeradiusHealthCheck(autoRestart = true): Promise<{
                     startedAt: new Date(startTime),
                     completedAt: new Date(),
                     duration: Date.now() - startTime,
-                    result: 'FreeRADIUS running but responsiveness check failed — alerted, not restarted'
+                    result: 'FreeRADIUS running but responsiveness check failed -- alerted, not restarted'
                 }
             });
 
@@ -361,7 +361,7 @@ export async function freeradiusHealthCheck(autoRestart = true): Promise<{
 
         // ==================== NAS Config Sync ====================
         // Ensure nas-from-db.conf always reflects the current database.
-        // syncNasClients() is idempotent — returns true only when the file changed.
+        // syncNasClients() is idempotent -- returns true only when the file changed.
         let nasSynced = false;
         let nasSyncError: string | undefined;
         try {
@@ -373,12 +373,12 @@ export async function freeradiusHealthCheck(autoRestart = true): Promise<{
                 // MikroTik maintains sessions independently of RADIUS.
                 await execAsync('systemctl restart freeradius 2>&1');
                 nasSynced = true;
-                console.log('[FreeRADIUS-Health] NAS config was out of sync — restarted to load new clients');
+                console.log('[FreeRADIUS-Health] NAS config was out of sync -- restarted to load new clients');
                 await logActivity({
                     username: 'system',
                     userRole: 'system',
                     action: 'nas_sync',
-                    description: 'FreeRADIUS NAS config was out of sync with DB — updated and restarted',
+                    description: 'FreeRADIUS NAS config was out of sync with DB -- updated and restarted',
                     module: 'system',
                     status: 'success',
                 });
@@ -447,7 +447,7 @@ export async function freeradiusHealthCheck(autoRestart = true): Promise<{
                 await execAsync(`ip route show ${cidr} | grep -q '${networkBase}' || ip route add ${cidr} via ${nasIp} 2>/dev/null || true`);
             }
         } catch (routeErr: any) {
-            // Non-fatal — might lack capability or route already exists
+            // Non-fatal -- might lack capability or route already exists
             console.warn('[FreeRADIUS-Health] pool-isolir route check skipped:', routeErr.message);
         }
 

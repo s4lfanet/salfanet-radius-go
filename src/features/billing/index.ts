@@ -1,5 +1,5 @@
 /**
- * Billing Feature — Public API
+ * Billing Feature -- Public API
  *
  * Import dari sini, bukan langsung dari sub-file.
  * @example

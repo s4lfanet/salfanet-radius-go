@@ -127,7 +127,7 @@ export default function GenieACSProvisionsPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold">GenieACS Provisions</h1>
-          <p className="text-sm text-slate-500">Skrip provisioning yang dipanggil oleh preset · {items.length} script</p>
+          <p className="text-sm text-slate-500">Skrip provisioning yang dipanggil oleh preset . {items.length} script</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={load} disabled={loading}
@@ -171,9 +171,9 @@ export default function GenieACSProvisionsPage() {
             ) : items.map((p) => (
               <tr key={p._id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                 <td className="px-3 py-2 font-mono text-blue-700 dark:text-blue-400 font-medium">{p._id}</td>
-                <td className="px-3 py-2 hidden md:table-cell text-xs text-slate-500">{p.description || <span className="italic">—</span>}</td>
+                <td className="px-3 py-2 hidden md:table-cell text-xs text-slate-500">{p.description || <span className="italic">--</span>}</td>
                 <td className="px-3 py-2 truncate max-w-[300px] font-mono text-xs text-slate-600 dark:text-slate-400">
-                  {(p.script || '').split('\n').find(l => l.trim() && !l.startsWith('/'))?.slice(0, 80) || '—'}
+                  {(p.script || '').split('\n').find(l => l.trim() && !l.startsWith('/'))?.slice(0, 80) || '--'}
                 </td>
                 <td className="px-3 py-2 text-right">
                   <button onClick={() => setEditing(p)}

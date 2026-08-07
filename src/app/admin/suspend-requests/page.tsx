@@ -326,7 +326,7 @@ export default function AdminSuspendRequestsPage() {
             <div className="space-y-4">
               <div className="bg-gray-50 rounded-lg p-3 text-sm">
                 <p><strong>Pelanggan:</strong> {selected.user.name} ({selected.user.username})</p>
-                <p><strong>Periode:</strong> {fmt(selected.startDate)} – {fmt(selected.endDate)}</p>
+                <p><strong>Periode:</strong> {fmt(selected.startDate)} - {fmt(selected.endDate)}</p>
                 {selected.reason && <p><strong>Alasan:</strong> {selected.reason}</p>}
               </div>
 

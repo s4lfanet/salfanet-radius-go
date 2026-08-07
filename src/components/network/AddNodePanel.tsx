@@ -27,7 +27,7 @@ const NODE_TYPES: {
   {
     type: 'OLT',
     label: 'OLT',
-    description: 'Optical Line Terminal — perangkat inti jaringan fiber optik',
+    description: 'Optical Line Terminal -- perangkat inti jaringan fiber optik',
     color: 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900/40',
     iconBg: 'bg-purple-100 dark:bg-purple-900/50',
     iconColor: 'text-purple-600 dark:text-purple-300',
@@ -36,7 +36,7 @@ const NODE_TYPES: {
   {
     type: 'OTB',
     label: 'OTB',
-    description: 'Optical Terminal Box — titik terminasi utama dari OLT',
+    description: 'Optical Terminal Box -- titik terminasi utama dari OLT',
     color: 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700 hover:bg-blue-100 dark:hover:bg-blue-900/40',
     iconBg: 'bg-blue-100 dark:bg-blue-900/50',
     iconColor: 'text-blue-600 dark:text-blue-300',
@@ -54,7 +54,7 @@ const NODE_TYPES: {
   {
     type: 'ODC',
     label: 'ODC',
-    description: 'Optical Distribution Cabinet — distribusi dari OLT ke ODP',
+    description: 'Optical Distribution Cabinet -- distribusi dari OLT ke ODP',
     color: 'bg-cyan-50 dark:bg-cyan-900/20 border-cyan-200 dark:border-cyan-700 hover:bg-cyan-100 dark:hover:bg-cyan-900/40',
     iconBg: 'bg-cyan-100 dark:bg-cyan-900/50',
     iconColor: 'text-cyan-600 dark:text-cyan-300',
@@ -63,7 +63,7 @@ const NODE_TYPES: {
   {
     type: 'ODP',
     label: 'ODP',
-    description: 'Optical Distribution Point — titik distribusi ke pelanggan',
+    description: 'Optical Distribution Point -- titik distribusi ke pelanggan',
     color: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/40',
     iconBg: 'bg-emerald-100 dark:bg-emerald-900/50',
     iconColor: 'text-emerald-600 dark:text-emerald-300',
@@ -163,17 +163,17 @@ function OTBForm({ lat, lng, olts, cables, onSubmit, loading }: { lat: number; l
                   </div>
                   <select value={row.cableId} onChange={e => updateFeeder(idx, e.target.value)}
                     className="w-full text-[11px] px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    <option value="">— Pilih Kabel —</option>
+                    <option value="">-- Pilih Kabel --</option>
                     {cables.map((c: any) => (
                       <option key={c.id} value={c.id} disabled={usedCableIds.has(c.id) && c.id !== row.cableId}>
-                        {c.name} ({c.tubeCount}T × {c.coresPerTube}C = {c.totalCores} core)
+                        {c.name} ({c.tubeCount}T x {c.coresPerTube}C = {c.totalCores} core)
                       </option>
                     ))}
                   </select>
                   {detail?.cable && (
                     <div className="bg-green-50 dark:bg-green-900/30 rounded px-2 py-1 text-[10px] text-green-700 dark:text-green-300 flex items-center justify-between">
                       <span>{detail.cable.totalCores} core</span>
-                      <span className="font-semibold">Port {detail.portFrom} – {detail.portTo}</span>
+                      <span className="font-semibold">Port {detail.portFrom} - {detail.portTo}</span>
                     </div>
                   )}
                 </div>
@@ -193,7 +193,7 @@ function OTBForm({ lat, lng, olts, cables, onSubmit, loading }: { lat: number; l
 
       <FRow label="OLT (opsional)">
         <select value={data.oltId} onChange={e => set('oltId', e.target.value)} className={INPUT}>
-          <option value="">— Tidak dipilih —</option>
+          <option value="">-- Tidak dipilih --</option>
           {olts.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
       </FRow>
@@ -231,8 +231,8 @@ function JCForm({ lat, lng, otbs, cables, odcsList, jcsList, onSubmit, loading }
       </FRow>
       <FRow label="Tipe Closure">
         <select value={data.closureType} onChange={e => set('closureType', e.target.value)} className={INPUT}>
-          <option value="BRANCHING">BRANCHING — Percabangan (1 input &rarr; N output)</option>
-          <option value="INLINE">INLINE — Transit lurus (1 input &rarr; 1 output)</option>
+          <option value="BRANCHING">BRANCHING -- Percabangan (1 input &rarr; N output)</option>
+          <option value="INLINE">INLINE -- Transit lurus (1 input &rarr; 1 output)</option>
         </select>
       </FRow>
       <FRow label="Tipe Kabel">
@@ -249,9 +249,9 @@ function JCForm({ lat, lng, otbs, cables, odcsList, jcsList, onSubmit, loading }
 
       {/* Info box: connections are done via map draw-line mode */}
       <div className="rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 p-3">
-        <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium mb-1">💡 Koneksi via Draw Line</p>
+        <p className="text-[11px] text-amber-700 dark:text-amber-300 font-medium mb-1"> Koneksi via Draw Line</p>
         <p className="text-[10px] text-amber-600 dark:text-amber-400">
-          Setelah node dibuat, gunakan tombol <strong>🔗 Hubungkan</strong> di peta untuk menghubungkan node ini ke OTB/JC lain. 
+          Setelah node dibuat, gunakan tombol <strong> Hubungkan</strong> di peta untuk menghubungkan node ini ke OTB/JC lain. 
           Kabel dan core akan otomatis dialokasikan.
         </p>
       </div>
@@ -270,7 +270,7 @@ function ODCForm({ lat, lng, olts, onSubmit, loading }: { lat: number; lng: numb
       <FRow label="Nama *"><input required value={data.name} onChange={e => set('name', e.target.value)} className={INPUT} placeholder="ODC Cluster A" /></FRow>
       <FRow label="OLT *">
         <select required value={data.oltId} onChange={e => set('oltId', e.target.value)} className={INPUT}>
-          <option value="">— Pilih OLT —</option>
+          <option value="">-- Pilih OLT --</option>
           {olts.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
       </FRow>
@@ -295,13 +295,13 @@ function ODPForm({ lat, lng, olts, odcs, onSubmit, loading }: { lat: number; lng
       <FRow label="Nama *"><input required value={data.name} onChange={e => set('name', e.target.value)} className={INPUT} placeholder="ODP-A01" /></FRow>
       <FRow label="OLT *">
         <select required value={data.oltId} onChange={e => set('oltId', e.target.value)} className={INPUT}>
-          <option value="">— Pilih OLT —</option>
+          <option value="">-- Pilih OLT --</option>
           {olts.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
       </FRow>
       <FRow label="ODC (opsional)">
         <select value={data.odcId} onChange={e => set('odcId', e.target.value)} className={INPUT}>
-          <option value="">— Tidak dipilih —</option>
+          <option value="">-- Tidak dipilih --</option>
           {odcs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
       </FRow>
@@ -449,7 +449,7 @@ function OLTForm({
             <input value={data.username} onChange={e => set('username', e.target.value)} className={INPUT} placeholder="admin" />
           </FRow>
           <FRow label="Password SNMP/SSH">
-            <input type="password" value={data.password} onChange={e => set('password', e.target.value)} className={INPUT} placeholder="••••••••" />
+            <input type="password" value={data.password} onChange={e => set('password', e.target.value)} className={INPUT} placeholder="********" />
           </FRow>
           <CoordRow lat={lat} lng={lng} />
           <SubmitBtn loading={loading} label="Buat OLT Baru" />
@@ -486,7 +486,7 @@ function OTBSetupPanel({ otbId, jcs, onDone }: {
 
         const feeders: any[] = d.feederCableAssignments ?? [];
         if (feeders.length > 0) {
-          // Multiple feeder cables — group tubes per cable
+          // Multiple feeder cables -- group tubes per cable
           const groups = feeders.map((f: any) => ({
             cableName: f.cable?.name ?? f.cableId,
             portFrom: f.portFrom ?? 1,
@@ -553,7 +553,7 @@ function OTBSetupPanel({ otbId, jcs, onDone }: {
             <div key={gIdx} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
               <div className="bg-green-50 dark:bg-green-900/20 px-3 py-2 border-b border-gray-200 dark:border-gray-700">
                 <p className="text-[11px] font-semibold text-green-700 dark:text-green-300">{group.cableName}</p>
-                <p className="text-[10px] text-green-500 dark:text-green-400">Port {group.portFrom} – {group.portTo} · {group.tubes.length} tabung</p>
+                <p className="text-[10px] text-green-500 dark:text-green-400">Port {group.portFrom} - {group.portTo} . {group.tubes.length} tabung</p>
               </div>
               <div className="p-2 space-y-1.5">
                 {group.tubes.map((tube: any) => {
@@ -565,7 +565,7 @@ function OTBSetupPanel({ otbId, jcs, onDone }: {
                     <div key={tube.id} className="border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-2 bg-white dark:bg-gray-800">
                       <div className="flex items-center gap-2 mb-1.5">
                         <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: getTubeColor(tube.tubeNumber) }} />
-                        <span className="text-xs font-semibold text-gray-800 dark:text-white">T{tube.tubeNumber} · {tube.colorCode}</span>
+                        <span className="text-xs font-semibold text-gray-800 dark:text-white">T{tube.tubeNumber} . {tube.colorCode}</span>
                         <span className="text-[10px] text-gray-400 ml-auto">{tube.cores?.length ?? 0}C</span>
                       </div>
                       {alreadySet ? (
@@ -580,7 +580,7 @@ function OTBSetupPanel({ otbId, jcs, onDone }: {
                             onChange={e => setPendingJC(prev => ({ ...prev, [tubeKey]: e.target.value }))}
                             className="flex-1 text-[10px] px-1.5 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                           >
-                            <option value="">— Pilih JC —</option>
+                            <option value="">-- Pilih JC --</option>
                             {jcs.map(j => <option key={j.id} value={j.id}>{j.name}</option>)}
                           </select>
                           <button
@@ -695,14 +695,14 @@ export default function AddNodePanel({ lat, lng, onClose, onCreated, initialNode
       }
 
       // JC connections are now handled via "Draw Line" connect mode on the map
-      // No segment creation needed here — user draws connections after node is placed
+      // No segment creation needed here -- user draws connections after node is placed
 
       // OTB has a post-creation setup wizard (for feeder cable assignment)
       if (selectedType === 'OTB') {
         setCreatedNode({ ...node, _formData: formData });
         setStep('setup');
       } else {
-        Swal.fire({ icon: 'success', title: 'Node berhasil ditambahkan', text: selectedType === 'JOINT_CLOSURE' ? 'Gunakan 🔗 Hubungkan di peta untuk menghubungkan ke device lain' : undefined, timer: 2000, showConfirmButton: false });
+        Swal.fire({ icon: 'success', title: 'Node berhasil ditambahkan', text: selectedType === 'JOINT_CLOSURE' ? 'Gunakan  Hubungkan di peta untuk menghubungkan ke device lain' : undefined, timer: 2000, showConfirmButton: false });
         onClose();
       }
     } catch (err: any) {
@@ -738,7 +738,7 @@ export default function AddNodePanel({ lat, lng, onClose, onCreated, initialNode
           <span className="text-white font-semibold text-sm">
             {step === 'type' && 'Tambah Node Baru'}
             {step === 'form' && `Tambah ${NODE_TYPES.find(t => t.type === selectedType)?.label}`}
-            {step === 'setup' && 'Setup OTB — Penugasan Tabung'}
+            {step === 'setup' && 'Setup OTB -- Penugasan Tabung'}
           </span>
         </div>
         <button onClick={onClose} className="p-1.5 hover:bg-white/20 rounded text-white">
@@ -746,7 +746,7 @@ export default function AddNodePanel({ lat, lng, onClose, onCreated, initialNode
         </button>
       </div>
 
-      {/* Coordinate info — updates live as user drags the map pin */}
+      {/* Coordinate info -- updates live as user drags the map pin */}
       <div className="px-4 py-2 bg-gray-50 dark:bg-gray-800/60 border-b border-gray-200 dark:border-gray-700 shrink-0">
         <div className="flex items-center gap-2">
           <MapPin className="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 shrink-0" />

@@ -1,6 +1,6 @@
 import 'server-only'
 /**
- * Company Repository — Data Access Layer
+ * Company Repository -- Data Access Layer
  *
  * Thin wrapper around Prisma calls for the `company` model.
  * There is always exactly ONE company record (single-tenant).

@@ -1,11 +1,11 @@
 /**
- * Environment Configuration — Single Source of Truth
+ * Environment Configuration -- Single Source of Truth
  *
  * Semua akses ke process.env sebaiknya melalui file ini.
  * Variabel wajib (required) akan throw saat startup jika tidak diset,
  * sehingga error terdeteksi lebih awal (fail-fast).
  *
- * File ini SERVER-ONLY — tidak bisa diimport di client component.
+ * File ini SERVER-ONLY -- tidak bisa diimport di client component.
  * Variabel NEXT_PUBLIC_* tetap dapat diakses di client via process.env langsung.
  *
  * @module lib/env
@@ -28,28 +28,28 @@ function optionalEnv(key: string, defaultValue = ''): string {
 }
 
 // ---------------------------------------------
-// REQUIRED — app tidak bisa berjalan tanpa ini
+// REQUIRED -- app tidak bisa berjalan tanpa ini
 // ---------------------------------------------
 const _required = {
   /** MySQL connection string (Prisma) */
   DATABASE_URL: requireEnv('DATABASE_URL'),
-  /** NextAuth signing secret — generate: openssl rand -base64 32 */
+  /** NextAuth signing secret -- generate: openssl rand -base64 32 */
   NEXTAUTH_SECRET: requireEnv('NEXTAUTH_SECRET'),
   /** Public URL aplikasi untuk NextAuth callback */
   NEXTAUTH_URL: requireEnv('NEXTAUTH_URL'),
 }
 
 // ---------------------------------------------
-// SERVER-ONLY OPTIONAL — fitur tertentu tidak aktif tanpa ini
+// SERVER-ONLY OPTIONAL -- fitur tertentu tidak aktif tanpa ini
 // ---------------------------------------------
 const _server = {
-  /** Secret untuk endpoint /api/cron — generate: crypto.randomBytes(32).toString('hex') */
+  /** Secret untuk endpoint /api/cron -- generate: crypto.randomBytes(32).toString('hex') */
   CRON_SECRET: optionalEnv('CRON_SECRET'),
   /** VAPID private key untuk Web Push notifications */
   VAPID_PRIVATE_KEY: optionalEnv('VAPID_PRIVATE_KEY'),
   /** VAPID contact email / subject */
   VAPID_CONTACT_EMAIL: optionalEnv('VAPID_CONTACT_EMAIL', optionalEnv('VAPID_SUBJECT')),
-  /** Radius CoA secret — harus sama dengan konfigurasi MikroTik */
+  /** Radius CoA secret -- harus sama dengan konfigurasi MikroTik */
   RADIUS_COA_SECRET: optionalEnv('RADIUS_COA_SECRET'),
   /** Radius CoA port (default: 3799) */
   RADIUS_COA_PORT: parseInt(optionalEnv('RADIUS_COA_PORT', '3799'), 10),
@@ -70,7 +70,7 @@ const _server = {
 }
 
 // ---------------------------------------------
-// PUBLIC — aman diakses di client via process.env langsung
+// PUBLIC -- aman diakses di client via process.env langsung
 // (disertakan di sini hanya untuk referensi & type safety server-side)
 // ---------------------------------------------
 const _public = {

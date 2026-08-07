@@ -1,5 +1,5 @@
 /**
- * PPPoE Feature — Common Queries
+ * PPPoE Feature -- Common Queries
  *
  * Reusable server-side query helpers for PPPoE data.
  * These are thin orchestrators between the repository and the presentation layer.

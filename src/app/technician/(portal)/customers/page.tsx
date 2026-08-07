@@ -407,7 +407,7 @@ export default function TechnicianCustomersPage() {
           {pages > 1 && (
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs text-slate-400 dark:text-muted-foreground/40">
-                {((page - 1) * LIMIT) + 1}–{Math.min(page * LIMIT, total)} dari {total.toLocaleString('id-ID')}
+                {((page - 1) * LIMIT) + 1}-{Math.min(page * LIMIT, total)} dari {total.toLocaleString('id-ID')}
               </span>
               <div className="flex items-center gap-2">
                 <button

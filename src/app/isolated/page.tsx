@@ -285,13 +285,13 @@ function IsolatedContent() {
   }
 
   /* --- main page -------------------------------------------------------------- */
-  // Build user info rows — primary (always shown) and secondary (show more)
+  // Build user info rows -- primary (always shown) and secondary (show more)
   const primaryInfoItems = userInfo ? ([
     { label: 'Username',     value: userInfo.username,              mono: true },
     { label: 'Nama',         value: userInfo.name                              },
     userInfo.profileName  ? { label: 'Paket',       value: userInfo.profileName                } : null,
     { label: 'Expired',      value: fmtDate(userInfo.expiredAt),    warn: true },
-    { label: 'Telepon',      value: userInfo.phone || '—'                     },
+    { label: 'Telepon',      value: userInfo.phone || '--'                     },
   ] as Array<{ label: string; value: string; mono?: boolean; warn?: boolean; full?: boolean } | null>).filter(Boolean) : [];
 
   const secondaryInfoItems = userInfo ? ([
@@ -465,7 +465,7 @@ function IsolatedContent() {
                                     : <QrCode className="w-5 h-5" style={{ color: '#fff' }} />}
                                   <div style={{ textAlign: 'left' }}>
                                     <span style={{ fontSize: 13, fontWeight: 700, color: '#fff', display: 'block' }}>QRIS Langsung</span>
-                                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)' }}>Scan & bayar · Tanpa biaya admin</span>
+                                    <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)' }}>Scan & bayar . Tanpa biaya admin</span>
                                   </div>
                                   <ArrowRight className="w-4 h-4" style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.6)' }} />
                                 </button>
@@ -550,7 +550,7 @@ function IsolatedContent() {
                 'Klik "Bayar Sekarang" pada tagihan di atas',
                 'Pilih metode pembayaran yang diinginkan',
                 'Selesaikan pembayaran di halaman yang terbuka di tab baru',
-                'Layanan aktif otomatis 1–2 menit setelah dikonfirmasi',
+                'Layanan aktif otomatis 1-2 menit setelah dikonfirmasi',
                 'Logout & login ulang PPPoE untuk akses penuh',
               ].map((step, i) => (
                 <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
@@ -678,7 +678,7 @@ function IsolatedContent() {
                     ))}
                   </div>
 
-                  {/* Status indicator — different for qris_own vs third-party */}
+                  {/* Status indicator -- different for qris_own vs third-party */}
                   {qrisData.isQrisOwn ? (
                     <>
                       {/* QRIS Mandiri: manual confirmation */}

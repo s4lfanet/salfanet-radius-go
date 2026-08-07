@@ -1,5 +1,5 @@
 /**
- * PPPoE Feature — Domain Types
+ * PPPoE Feature -- Domain Types
  *
  * TypeScript types for the PPPoE feature domain.
  * These extend/alias Prisma types with additional computed/presentation fields.

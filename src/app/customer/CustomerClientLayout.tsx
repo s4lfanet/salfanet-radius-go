@@ -57,7 +57,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
   const lastCheckedRef = useRef<string>(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { addToast } = useToast();
-  // Stable ref to addToast — prevents poll() recreation when context re-renders
+  // Stable ref to addToast -- prevents poll() recreation when context re-renders
   const addToastRef = useRef(addToast);
   useEffect(() => { addToastRef.current = addToast; }, [addToast]);
   // Dedup: track event IDs that already triggered a toast to prevent doubles
@@ -218,12 +218,12 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
     return pathname.startsWith(href);
   };
 
-  // Skip portal UI on login page — render children directly
+  // Skip portal UI on login page -- render children directly
   if (pathname === '/customer/login') {
     return <>{children}</>;
   }
 
-  // Not yet authenticated (or not checked yet) — render children only so the
+  // Not yet authenticated (or not checked yet) -- render children only so the
   // page component can run its own useEffect redirect to /customer/login
   if (!authenticated) {
     return <>{children}</>;
@@ -416,7 +416,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
                 </>
               )}
             </div>
-            {/* Theme Toggle — Desktop */}
+            {/* Theme Toggle -- Desktop */}
             <button
               onClick={toggleTheme}
               className="p-2 flex items-center justify-center rounded-xl hover:bg-primary/10 border border-transparent hover:border-border transition-all"
@@ -526,7 +526,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
                   </>
                 )}
               </div>
-              {/* Theme Toggle — Mobile */}
+              {/* Theme Toggle -- Mobile */}
               <button
                 onClick={toggleTheme}
                 className="p-2 flex items-center justify-center hover:bg-primary/10 rounded-xl transition-all border border-border"

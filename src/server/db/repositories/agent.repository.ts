@@ -1,6 +1,6 @@
 import 'server-only'
 /**
- * Agent Repository — Data Access Layer
+ * Agent Repository -- Data Access Layer
  *
  * Thin wrapper around Prisma calls for the `agent`, `agentSale`, `agentDeposit` models.
  *

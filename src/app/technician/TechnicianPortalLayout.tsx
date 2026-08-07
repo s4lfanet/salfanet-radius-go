@@ -212,7 +212,7 @@ function SidebarPushToggle({ techId }: { techId: string }) {
       disabled={loading || isDenied || !isSupported}
       title={
         !isSupported ? 'Browser tidak mendukung push notification'
-        : isDenied ? 'Notifikasi diblokir — ubah di pengaturan browser'
+        : isDenied ? 'Notifikasi diblokir -- ubah di pengaturan browser'
         : isOn ? 'Klik untuk nonaktifkan notifikasi push'
         : 'Klik untuk aktifkan notifikasi push'
       }
@@ -278,7 +278,7 @@ function NotificationBell() {
       const data = await res.json();
       const items = (data.tickets || []).map((t: { id: string; ticketNumber: string; subject: string; customerName: string; description: string; createdAt: string; status: string }) => ({
         id: t.id,
-        title: `#${t.ticketNumber} — ${t.subject}`,
+        title: `#${t.ticketNumber} -- ${t.subject}`,
         message: t.customerName || '',
         isRead: !['OPEN'].includes(t.status),
         createdAt: t.createdAt,
@@ -623,7 +623,7 @@ function TechnicianPortalInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div data-role="technician" className="min-h-screen bg-background">
-      {/* Background blobs — dark only */}
+      {/* Background blobs -- dark only */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none hidden dark:block">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(70,95,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(70,95,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>

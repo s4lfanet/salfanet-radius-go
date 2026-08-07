@@ -1,5 +1,5 @@
 /**
- * Hotspot Feature — Domain Types
+ * Hotspot Feature -- Domain Types
  *
  * @module features/hotspot/types
  */

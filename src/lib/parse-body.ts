@@ -4,7 +4,7 @@ import { badRequest, validationError } from './api-response';
 
 /**
  * Parse and validate request body against a Zod schema.
- * Returns `{ data, error }` — if error is set, return it directly from the route.
+ * Returns `{ data, error }` -- if error is set, return it directly from the route.
  */
 export async function parseBody<T>(
   request: Request,
@@ -28,7 +28,7 @@ export async function parseBody<T>(
 
 /**
  * Parse and validate URL search params against a Zod schema.
- * Returns `{ data, error }` — if error is set, return it directly from the route.
+ * Returns `{ data, error }` -- if error is set, return it directly from the route.
  */
 export function parseQuery<T>(
   searchParams: URLSearchParams,

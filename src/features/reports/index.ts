@@ -1,5 +1,5 @@
 /**
- * Reports Feature — Public API
+ * Reports Feature -- Public API
  *
  * Import dari sini, bukan langsung dari sub-file.
  * @example

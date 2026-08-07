@@ -126,7 +126,7 @@ export class WhatsAppService {
       }
     }
     
-    // All providers failed — return structured failure instead of throwing
+    // All providers failed -- return structured failure instead of throwing
     // so the route can include per-provider attempt details in the response.
     return {
       success: false as const,
@@ -167,7 +167,7 @@ export class WhatsAppService {
     const provider = providers[0];
 
     if (provider.type === 'kirimi') {
-      // For a single recipient use the single-send endpoint — Kirimi.id
+      // For a single recipient use the single-send endpoint -- Kirimi.id
       // /v1/broadcast-message requires 2+ numbers in the queue.
       if (messages.length === 1) {
         const msg = messages[0];
@@ -201,7 +201,7 @@ export class WhatsAppService {
   }
 
   /**
-   * Kirimi.id native broadcast API — groups messages by unique content so
+   * Kirimi.id native broadcast API -- groups messages by unique content so
    * identical messages are sent in a single /v1/broadcast-message call.
    */
   private static async sendBroadcastViaKirimi(
@@ -310,7 +310,7 @@ export class WhatsAppService {
   }
 
   /**
-   * Baileys Native Service — calls internal wa-service.js Express server
+   * Baileys Native Service -- calls internal wa-service.js Express server
    */
   private static async sendViaBaileys(
     provider: WhatsAppProvider,
@@ -529,7 +529,7 @@ export class WhatsAppService {
     phone: string,
     message: string
   ) {
-    // Use Wablas simple GET endpoint (/api/send-message) — most universally
+    // Use Wablas simple GET endpoint (/api/send-message) -- most universally
     // compatible across all Wablas server versions (wa, deu, jakarta, etc.).
     // token param accepts both "token" and "token.secret_key" formats.
     const baseUrl = provider.apiUrl.replace(/\/+$/, '');
@@ -563,14 +563,14 @@ export class WhatsAppService {
 
   /**
    * WABlast API (self-hosted WhatsApp gateway)
-   * Common for ISP in Indonesia — many run local WABlast Jakarta instances
+   * Common for ISP in Indonesia -- many run local WABlast Jakarta instances
    */
   private static async sendViaWABlast(
     provider: WhatsAppProvider,
     phone: string,
     message: string
   ) {
-    // WABlast self-hosted gateway — POST JSON to /send-message
+    // WABlast self-hosted gateway -- POST JSON to /send-message
     // apiKey can be empty string if the server runs without auth
     const baseUrl = provider.apiUrl.replace(/\/+$/, ''); // strip trailing slash
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };

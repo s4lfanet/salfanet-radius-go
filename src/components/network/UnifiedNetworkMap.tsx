@@ -164,7 +164,7 @@ function createPendingPinIcon(nodeType?: string, isDragging = false) {
  */
 const createCustomIcon = (type: string, status: string) => {
   let color = '#6366f1'; // Default indigo
-  let iconSymbol = '●';
+  let iconSymbol = '*';
 
   switch (type) {
     case 'OLT':
@@ -192,7 +192,7 @@ const createCustomIcon = (type: string, status: string) => {
       if (status === 'active') color = '#22c55e'; // Green
       else if (status === 'isolated') color = '#ef4444'; // Red
       else color = '#6b7280'; // Gray (offline)
-      iconSymbol = '👤';
+      iconSymbol = '';
       break;
   }
 
@@ -244,7 +244,7 @@ export default function UnifiedNetworkMap({
   // Tracks whether the pending pin is mid-drag (suppresses re-play of drop animation)
   const [pinDragging, setPinDragging] = useState(false);
 
-  // Default center — will be overridden by map settings from API
+  // Default center -- will be overridden by map settings from API
   const [mapCenter, setMapCenter] = useState<[number, number]>([-8.6705, 115.2126]);
   const [mapZoom, setMapZoom] = useState(13);
 
@@ -283,7 +283,7 @@ export default function UnifiedNetworkMap({
     document.head.appendChild(s);
   }, []);
 
-  // Memoised pending pin icon — only rebuilds when nodeType changes or drag state changes
+  // Memoised pending pin icon -- only rebuilds when nodeType changes or drag state changes
   const pendingPinIcon = useMemo(
     () => pendingPin ? createPendingPinIcon(pendingPin.nodeType, pinDragging) : null,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -389,7 +389,7 @@ export default function UnifiedNetworkMap({
     if (entity.type === 'CUSTOMER') {
       return (
         <div className="p-2 min-w-[200px]">
-          <h3 className="font-bold text-lg mb-1">👤 {entity.name}</h3>
+          <h3 className="font-bold text-lg mb-1"> {entity.name}</h3>
           <div className="text-sm space-y-1">
             <div><span className="font-semibold">Username:</span> {entity.username}</div>
             <div><span className="font-semibold">Status:</span> 
@@ -521,8 +521,8 @@ export default function UnifiedNetworkMap({
             <div className="p-2 min-w-[180px] text-sm">
               <p className="font-bold text-gray-900 mb-1">{conn.cableName}</p>
               <p className="text-gray-600">{conn.from.name} &rarr; {conn.to.name}</p>
-              <p className="text-gray-500">{conn.tubeCount}T × {conn.coresPerTube}C = {conn.totalCores} core</p>
-              {conn.lengthMeters > 0 && <p className="text-gray-400">≈{conn.lengthMeters}m</p>}
+              <p className="text-gray-500">{conn.tubeCount}T x {conn.coresPerTube}C = {conn.totalCores} core</p>
+              {conn.lengthMeters > 0 && <p className="text-gray-400">~={conn.lengthMeters}m</p>}
               <p className="text-gray-400">{conn.segmentCount} segment(s)</p>
             </div>
           </Popup>
@@ -549,7 +549,7 @@ export default function UnifiedNetworkMap({
         />
       )}
 
-      {/* Google Earth-style drop pin for pending node placement — draggable, outside cluster */}
+      {/* Google Earth-style drop pin for pending node placement -- draggable, outside cluster */}
       {pendingPin && pendingPinIcon && (
         <Marker
           position={[pendingPin.lat, pendingPin.lng]}

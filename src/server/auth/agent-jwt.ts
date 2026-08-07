@@ -9,7 +9,7 @@ export type AgentJwtPayload = {
 function getSecret(): Uint8Array {
   const secret = process.env.AGENT_JWT_SECRET;
   if (!secret || secret.length < 32) {
-    // Log warning but do not crash — fallback is used until admin sets the secret.
+    // Log warning but do not crash -- fallback is used until admin sets the secret.
     // All tokens signed with the fallback become invalid when AGENT_JWT_SECRET is set.
     console.warn('[agent-jwt] AGENT_JWT_SECRET not configured or too short. Using fallback dev secret. Set AGENT_JWT_SECRET in .env for production security.');
     return new TextEncoder().encode('dev-agent-secret-change-in-production-please-set-env!!');

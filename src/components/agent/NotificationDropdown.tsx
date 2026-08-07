@@ -40,7 +40,7 @@ export default function AgentNotificationDropdown({ agentId, enableToasts = true
     // Only the first mounted instance polls (prevents double polling from desktop+mobile headers)
     const id = instanceIdRef.current;
     if (_agentPollingInstance && _agentPollingInstance !== id) {
-      // Another instance is already polling — just load once for the dropdown UI
+      // Another instance is already polling -- just load once for the dropdown UI
       loadNotifications(true);
       return;
     }
@@ -95,7 +95,7 @@ export default function AgentNotificationDropdown({ agentId, enableToasts = true
       const data = await res.json();
       if (data.success) {
         if (skipToasts || !enableToasts) {
-          // Passive instance — just update dropdown data, no toasts
+          // Passive instance -- just update dropdown data, no toasts
           data.notifications.forEach((n: Notification) => shownNotifIdsRef.current.add(n.id));
           isFirstLoadRef.current = false;
         } else if (isFirstLoadRef.current) {

@@ -102,7 +102,7 @@ export default function TechnicianMonitorPage() {
             Monitor Pelanggan
           </h1>
           <p className="text-xs text-slate-500 dark:text-muted-foreground/60 mt-0.5">
-            Status online/offline pelanggan · Auto-refresh 30d
+            Status online/offline pelanggan . Auto-refresh 30d
             {lastRefresh && (
               <span className="ml-1.5 text-brand-400/60">
                 (Terakhir: {lastRefresh.toLocaleTimeString('id-ID')})

@@ -52,8 +52,8 @@ const PORTALS = [
     label: 'Admin Portal',
     subdomains: ['admin'],
     path: '/admin',
-    desc: 'Halaman manajemen utama — hanya untuk admin & staf',
-    icon: '🛡',
+    desc: 'Halaman manajemen utama -- hanya untuk admin & staf',
+    icon: '',
     color: 'text-red-600 dark:text-red-400',
     bg: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800',
   },
@@ -61,8 +61,8 @@ const PORTALS = [
     label: 'Portal Pelanggan',
     subdomains: ['customer', 'pelanggan'],
     path: '/customer',
-    desc: 'Halaman self-service pelanggan — cek tagihan, bayar, download invoice',
-    icon: '👤',
+    desc: 'Halaman self-service pelanggan -- cek tagihan, bayar, download invoice',
+    icon: '',
     color: 'text-blue-600 dark:text-blue-400',
     bg: 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800',
   },
@@ -70,8 +70,8 @@ const PORTALS = [
     label: 'Portal Agent',
     subdomains: ['agent', 'agen'],
     path: '/agent',
-    desc: 'Halaman reseller/agent — kelola voucher hotspot & deposit',
-    icon: '🤝',
+    desc: 'Halaman reseller/agent -- kelola voucher hotspot & deposit',
+    icon: '',
     color: 'text-emerald-600 dark:text-emerald-400',
     bg: 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800',
   },
@@ -79,8 +79,8 @@ const PORTALS = [
     label: 'Portal Teknisi',
     subdomains: ['teknisi', 'technician'],
     path: '/technician',
-    desc: 'Halaman teknisi — tiket gangguan, monitoring sesi, info pelanggan',
-    icon: '🔧',
+    desc: 'Halaman teknisi -- tiket gangguan, monitoring sesi, info pelanggan',
+    icon: '',
     color: 'text-amber-600 dark:text-amber-400',
     bg: 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800',
   },
@@ -217,7 +217,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
   if (loading) {
     return (
       <div className="p-6 flex items-center gap-2 text-muted-foreground text-sm">
-        <span className="animate-spin">⏳</span> Memuat...
+        <span className="animate-spin"></span> Memuat...
       </div>
     );
   }
@@ -260,7 +260,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
           </div>
         </div>
         <p className="text-[10px] text-muted-foreground">
-          Domain diambil dari pengaturan <strong>Base URL</strong> perusahaan. Ubah di sini hanya untuk preview — tidak disimpan ke database.
+          Domain diambil dari pengaturan <strong>Base URL</strong> perusahaan. Ubah di sini hanya untuk preview -- tidak disimpan ke database.
         </p>
       </div>
 
@@ -291,7 +291,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
         </div>
       </div>
 
-      {/* Step 1 — DNS */}
+      {/* Step 1 -- DNS */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-3">
         <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2 flex items-center gap-2">
           <span className="bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">1</span>
@@ -318,7 +318,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
         </div>
       </div>
 
-      {/* Step 2 — Nginx */}
+      {/* Step 2 -- Nginx */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-3">
         <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2 flex items-center gap-2">
           <span className="bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">2</span>
@@ -346,7 +346,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
 nginx -t && systemctl reload nginx`}</CodeBlock>
       </div>
 
-      {/* Step 3 — SSL */}
+      {/* Step 3 -- SSL */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-3">
         <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2 flex items-center gap-2">
           <span className="bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">3</span>
@@ -357,7 +357,7 @@ nginx -t && systemctl reload nginx`}</CodeBlock>
         <CopyButton text={certbotCmd} label="Salin" />
       </div>
 
-      {/* Step 4 — Test */}
+      {/* Step 4 -- Test */}
       <div className="bg-card border border-border rounded-xl p-5 space-y-3">
         <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2 flex items-center gap-2">
           <span className="bg-primary text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">4</span>

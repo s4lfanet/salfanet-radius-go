@@ -77,7 +77,7 @@ if (args[0].name === "${p.path}") {
 `;
   }
   const lines = [
-    '// Virtual parameter — returns value of the matched parameter',
+    '// Virtual parameter -- returns value of the matched parameter',
     `// Covers: ${params.slice(0, 3).map((p) => p.path).join(', ')}${params.length > 3 ? '...' : ''}`,
     '',
     'switch (args[0].name) {',
@@ -250,14 +250,14 @@ export default function DeviceParametersPage({ params }: { params: Promise<{ dev
           <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
             <Link href="/admin/genieacs/devices" className="hover:text-gray-700 dark:hover:text-gray-200">Devices</Link>
             <ChevronRight className="h-3.5 w-3.5" />
-            <Link href={`/admin/genieacs/devices/${encodeURIComponent(deviceId)}`} className="hover:text-gray-700 dark:hover:text-gray-200 font-mono text-xs">{deviceId.slice(0, 30)}{deviceId.length > 30 ? '…' : ''}</Link>
+            <Link href={`/admin/genieacs/devices/${encodeURIComponent(deviceId)}`} className="hover:text-gray-700 dark:hover:text-gray-200 font-mono text-xs">{deviceId.slice(0, 30)}{deviceId.length > 30 ? '...' : ''}</Link>
             <ChevronRight className="h-3.5 w-3.5" />
             <span className="text-gray-900 dark:text-white">Parameters</span>
           </div>
           <h1 className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">Parameter Browser</h1>
           {!loading && (
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {totalParams} parameters cached · {filtered.length} shown · {selected.size} selected
+              {totalParams} parameters cached . {filtered.length} shown . {selected.size} selected
             </p>
           )}
         </div>
@@ -298,7 +298,7 @@ export default function DeviceParametersPage({ params }: { params: Promise<{ dev
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search parameter path…"
+            placeholder="Search parameter path..."
             className="block w-full rounded-md border border-gray-300 py-1.5 pl-8 pr-3 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-white"
           />
           {search && (
@@ -340,7 +340,7 @@ export default function DeviceParametersPage({ params }: { params: Promise<{ dev
       {loading && (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-          <p className="text-sm text-gray-500">Loading all parameters from GenieACS cache…</p>
+          <p className="text-sm text-gray-500">Loading all parameters from GenieACS cache...</p>
         </div>
       )}
 
@@ -532,9 +532,9 @@ function ParameterRow({ param, isSelected, onToggle, isCopied, onCopy }: Paramet
 
   const displayValue = () => {
     if (param.object) return <span className="text-gray-400 italic text-xs">[object]</span>;
-    if (param.value === null || param.value === undefined) return <span className="text-gray-400">—</span>;
+    if (param.value === null || param.value === undefined) return <span className="text-gray-400">--</span>;
     const str = String(param.value);
-    if (str.length > 60) return <span className="font-mono text-xs" title={str}>{str.slice(0, 60)}…</span>;
+    if (str.length > 60) return <span className="font-mono text-xs" title={str}>{str.slice(0, 60)}...</span>;
     return <span className="font-mono text-xs">{str}</span>;
   };
 
@@ -569,7 +569,7 @@ function ParameterRow({ param, isSelected, onToggle, isCopied, onCopy }: Paramet
       </td>
       <td className="px-3 py-1.5 text-center">
         {param.object ? (
-          <span className="text-gray-300">—</span>
+          <span className="text-gray-300">--</span>
         ) : param.writable ? (
           <span className="text-green-500 text-xs font-medium">RW</span>
         ) : (

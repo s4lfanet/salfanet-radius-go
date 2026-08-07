@@ -3,7 +3,7 @@ import { join } from 'path';
 import { existsSync, mkdirSync } from 'fs';
 
 /**
- * Persistent upload directory — lives OUTSIDE the build/git directory so that
+ * Persistent upload directory -- lives OUTSIDE the build/git directory so that
  * `git reset --hard`, `rm -rf .next`, and `npm run build` never touch it.
  *
  * Production: /var/data/salfanet/uploads  (set via UPLOAD_DIR env var)

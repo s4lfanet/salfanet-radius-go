@@ -202,7 +202,7 @@ export function ODPDiagramV2({
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">{node.name}</p>
             {node.address && (
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">📍 {node.address}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"> {node.address}</p>
             )}
           </div>
           <div className="text-right">
@@ -364,7 +364,7 @@ export function ODPDiagramV2({
           ODP Diagram - {node.code}
         </text>
         <text x={width / 2} y={50} textAnchor="middle" className="text-sm fill-gray-500 dark:fill-gray-400">
-          {getHierarchyLabel(hierarchyLevel)} • {splitterConfig?.type || 'PLC'} {splitterConfig?.ratio || node.splittingRatio}
+          {getHierarchyLabel(hierarchyLevel)} * {splitterConfig?.type || 'PLC'} {splitterConfig?.ratio || node.splittingRatio}
         </text>
 
         {/* Upstream Connection */}

@@ -290,7 +290,7 @@ export default function DeviceDetailPage({ params }: { params: Promise<{ deviceI
                       {device.rxPower && device.rxPower !== '-' ? `${device.rxPower} dBm` : '-'}
                     </span>
                   </div>
-                  <InfoRow label={t('genieacsDevice.labels.temperature')} value={device.temp && device.temp !== '-' ? `${device.temp}°C` : '-'} />
+                  <InfoRow label={t('genieacsDevice.labels.temperature')} value={device.temp && device.temp !== '-' ? `${device.temp} degC` : '-'} />
                 </div>
               )}
 

@@ -1,5 +1,5 @@
 /**
- * Notifications Feature — Zod Schemas
+ * Notifications Feature -- Zod Schemas
  *
  * @module features/notifications/schemas
  */

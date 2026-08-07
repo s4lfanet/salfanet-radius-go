@@ -1,5 +1,5 @@
 /**
- * Network Feature — Public API
+ * Network Feature -- Public API
  *
  * Import dari sini, bukan langsung dari sub-file.
  * @example

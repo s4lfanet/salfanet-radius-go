@@ -17,7 +17,7 @@ export async function createMidtransPayment(params: {
     quantity: number
   }>
 }) {
-  // Get company base URL — prefer explicitly passed baseUrl, then DB (with localhost check)
+  // Get company base URL -- prefer explicitly passed baseUrl, then DB (with localhost check)
   let baseUrl = params.baseUrl
   if (!baseUrl) {
     const company = await prisma.company.findFirst()

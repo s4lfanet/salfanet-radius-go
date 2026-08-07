@@ -30,9 +30,9 @@ function formatBankAccountsForWA(bankAccounts: any): string {
   }
   if (!accounts.length) return '';
   const lines = accounts.map(a =>
-    `🏦 ${a.bankName || a.bank || '-'}\n   📋 No. Rek: ${a.accountNumber || '-'}\n   👤 A/N: ${a.accountName || '-'}`
+    ` ${a.bankName || a.bank || '-'}\n    No. Rek: ${a.accountNumber || '-'}\n    A/N: ${a.accountName || '-'}`
   );
-  return `━━━━━━━━━━━━━━━━━━━━━━\n🏦 *Transfer Manual ke Rekening:*\n${lines.join('\n\n')}`;
+  return `----------------------\n *Transfer Manual ke Rekening:*\n${lines.join('\n\n')}`;
 }
 
 /**

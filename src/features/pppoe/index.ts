@@ -1,5 +1,5 @@
 /**
- * PPPoE Feature — Public API
+ * PPPoE Feature -- Public API
  *
  * Import dari sini, bukan langsung dari sub-file.
  * @example

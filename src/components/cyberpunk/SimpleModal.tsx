@@ -53,7 +53,7 @@ export function SimpleModal({
     showClose = true,
     className
 }: SimpleModalProps) {
-    // Stable ref for onClose — prevents useEffect churn when consumers pass inline arrows.
+    // Stable ref for onClose -- prevents useEffect churn when consumers pass inline arrows.
     // Without this, every parent re-render (e.g. notification polling every 30s,
     // or setFormData on each keystroke) creates a new onClose reference, causing the
     // Escape-key effect to teardown/setup on EVERY render. On mobile this rapid
@@ -66,7 +66,7 @@ export function SimpleModal({
     const pointerDownTarget = React.useRef<EventTarget | null>(null);
     const contentRef = React.useRef<HTMLDivElement>(null);
 
-    // Handle escape key — depends only on isOpen (not onClose)
+    // Handle escape key -- depends only on isOpen (not onClose)
     React.useEffect(() => {
         if (!isOpen) return;
         const handleEscape = (e: KeyboardEvent) => {

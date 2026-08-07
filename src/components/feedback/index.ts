@@ -1,5 +1,5 @@
 /**
- * Feedback Components — Barrel Export
+ * Feedback Components -- Barrel Export
  *
  * Shared feedback UI: loading spinners, empty states, error boundaries.
  *

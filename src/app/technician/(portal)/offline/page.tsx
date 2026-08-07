@@ -138,7 +138,7 @@ export default function TechnicianOfflinePage() {
                   </div>
                 </div>
                 <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-brand-600/10 text-xs">
-                  <span className="text-slate-500 dark:text-muted-foreground/60">{u.router?.name || '-'} {u.area ? `• ${u.area.name}` : ''}</span>
+                  <span className="text-slate-500 dark:text-muted-foreground/60">{u.router?.name || '-'} {u.area ? `* ${u.area.name}` : ''}</span>
                   <span className={`px-2 py-0.5 rounded-lg font-medium ${u.status === 'isolated' ? 'bg-orange-500/10 text-orange-500' : 'text-slate-500 dark:text-muted-foreground/60'}`}>{u.status}</span>
                 </div>
               </div>

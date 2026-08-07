@@ -1,5 +1,5 @@
 /**
- * Billing Feature — Common Queries
+ * Billing Feature -- Common Queries
  *
  * @module features/billing/queries
  */

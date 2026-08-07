@@ -131,7 +131,7 @@ export default function SecuritySettingsPage() {
         <h1 className="text-xl sm:text-2xl font-bold text-foreground dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-400 dark:via-white dark:to-accent-foreground">
           Security Settings
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">Manage your account security — Two-Factor Authentication</p>
+        <p className="text-sm text-muted-foreground mt-1">Manage your account security -- Two-Factor Authentication</p>
       </div>
 
       {/* Success Banner */}
@@ -202,7 +202,7 @@ export default function SecuritySettingsPage() {
       {phase === 'setup-qr' && (
         <div className="bg-card dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900/60 border border-border dark:border-brand-600/30 rounded-xl p-6 space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Step 1 — Scan QR Code</h2>
+            <h2 className="text-lg font-semibold text-foreground">Step 1 -- Scan QR Code</h2>
             <button onClick={cancelPhase} className="text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"><X className="w-5 h-5" /></button>
           </div>
 
@@ -244,7 +244,7 @@ export default function SecuritySettingsPage() {
       {phase === 'setup-verify' && (
         <div className="bg-card dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900/60 border border-border dark:border-brand-600/30 rounded-xl p-6 space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Step 2 — Verify Code</h2>
+            <h2 className="text-lg font-semibold text-foreground">Step 2 -- Verify Code</h2>
             <button onClick={cancelPhase} className="text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:text-white"><X className="w-5 h-5" /></button>
           </div>
 
@@ -280,7 +280,7 @@ export default function SecuritySettingsPage() {
 
           <div className="flex gap-3">
             <button onClick={() => setPhase('setup-qr')} className="flex-1 py-3 border border-border dark:border-slate-600 text-muted-foreground hover:text-foreground hover:border-foreground/50 dark:text-slate-400 dark:hover:text-white dark:hover:border-slate-500 rounded-xl text-sm font-medium transition-colors">
-              ← Back
+              &larr; Back
             </button>
             <button
               onClick={verifyAndEnable}

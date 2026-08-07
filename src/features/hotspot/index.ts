@@ -1,5 +1,5 @@
 /**
- * Hotspot Feature — Public API
+ * Hotspot Feature -- Public API
  *
  * Import dari sini, bukan langsung dari sub-file.
  * @example

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Isolation System — SALFANET RADIUS Documentation',
+  title: 'Isolation System -- SALFANET RADIUS Documentation',
   description: 'Dokumentasi lengkap sistem isolasi otomatis untuk PPPoE users yang masa berlangganannya habis.',
 };
 
@@ -13,7 +13,7 @@ export default function IsolationDocsPage() {
         {/* Header */}
         <div className="mb-8">
           <Link href="/admin/settings/isolation" className="text-sm text-blue-600 hover:underline mb-4 inline-block">
-            ← Kembali ke Isolation Settings
+            &larr; Kembali ke Isolation Settings
           </Link>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
             Isolation System
@@ -37,7 +37,7 @@ export default function IsolationDocsPage() {
               'Gambaran Umum',
               'Alur Kerja Lengkap',
               'Komponen Sistem',
-              'Cron Job — Auto Isolir',
+              'Cron Job -- Auto Isolir',
               'Konfigurasi MikroTik',
               'Konfigurasi FreeRADIUS',
               'Database & Status PPPoE User',
@@ -62,7 +62,7 @@ export default function IsolationDocsPage() {
             <SectionTitle number={1} title="Gambaran Umum" />
             <Prose>
               <p>
-                Sistem isolasi bekerja dengan cara <strong>membatasi akses internet</strong> user yang sudah expired —
+                Sistem isolasi bekerja dengan cara <strong>membatasi akses internet</strong> user yang sudah expired --
                 bukan memblokir login sepenuhnya. User tetap bisa connect PPPoE, namun:
               </p>
               <ul>
@@ -82,38 +82,38 @@ export default function IsolationDocsPage() {
           <section id="section-2">
             <SectionTitle number={2} title="Alur Kerja Lengkap" />
             <CodeBlock>{`1. CRON JOB (setiap jam)
-   +-► Cek pppoe_users WHERE status='active' AND expiredAt < CURDATE()
+   +-> Cek pppoe_users WHERE status='active' AND expiredAt < CURDATE()
    
 2. UNTUK SETIAP USER EXPIRED:
-   +-► Update status: active &rarr; isolated
-   +-► Radcheck: Cleartext-Password TETAP ADA (user boleh login!)
-   +-► Radcheck: HAPUS Auth-Type:Reject
-   +-► Radusergroup: Pindah ke group 'isolir'
-   +-► Radreply: HAPUS Framed-IP-Address (IP statis dicopot)
-   +-► MikroTik API: Disconnect session aktif
-   +-► Notifikasi: WhatsApp/Email ke user
+   +-> Update status: active &rarr; isolated
+   +-> Radcheck: Cleartext-Password TETAP ADA (user boleh login!)
+   +-> Radcheck: HAPUS Auth-Type:Reject
+   +-> Radusergroup: Pindah ke group 'isolir'
+   +-> Radreply: HAPUS Framed-IP-Address (IP statis dicopot)
+   +-> MikroTik API: Disconnect session aktif
+   +-> Notifikasi: WhatsApp/Email ke user
 
 3. USER RECONNECT PPPoE:
-   +-► FreeRADIUS: Auth sukses (password OK)
-   +-► FreeRADIUS: Assign PPP profile 'isolir'
-   +-► MikroTik: Rate-limit 64k/64k
-   +-► MikroTik: IP dari pool-isolir (192.168.200.x)
+   +-> FreeRADIUS: Auth sukses (password OK)
+   +-> FreeRADIUS: Assign PPP profile 'isolir'
+   +-> MikroTik: Rate-limit 64k/64k
+   +-> MikroTik: IP dari pool-isolir (192.168.200.x)
 
 4. USER BUKA BROWSER:
-   +-► MikroTik NAT: Redirect HTTP(80) & HTTPS(443) ke billing server
-   +-► Next.js Middleware (proxy.ts): Deteksi IP dari isolation pool
-   +-► Redirect ke /isolated?ip=192.168.200.x
+   +-> MikroTik NAT: Redirect HTTP(80) & HTTPS(443) ke billing server
+   +-> Next.js Middleware (proxy.ts): Deteksi IP dari isolation pool
+   +-> Redirect ke /isolated?ip=192.168.200.x
 
 5. HALAMAN /isolated:
-   +-► Tampilkan info akun (nama, expired date)
-   +-► Tampilkan invoice belum dibayar + link pembayaran
-   +-► Tampilkan kontak support
+   +-> Tampilkan info akun (nama, expired date)
+   +-> Tampilkan invoice belum dibayar + link pembayaran
+   +-> Tampilkan kontak support
 
 6. SETELAH PEMBAYARAN:
-   +-► Invoice status: PENDING &rarr; PAID
-   +-► Status user: isolated &rarr; active
-   +-► Radusergroup: Kembali ke group/profile normal
-   +-► User perlu reconnect PPPoE untuk akses penuh`}</CodeBlock>
+   +-> Invoice status: PENDING &rarr; PAID
+   +-> Status user: isolated &rarr; active
+   +-> Radusergroup: Kembali ke group/profile normal
+   +-> User perlu reconnect PPPoE untuk akses penuh`}</CodeBlock>
           </section>
 
           {/* Section 3 */}
@@ -154,9 +154,9 @@ export default function IsolationDocsPage() {
 
           {/* Section 4 */}
           <section id="section-4">
-            <SectionTitle number={4} title="Cron Job — Auto Isolir" />
+            <SectionTitle number={4} title="Cron Job -- Auto Isolir" />
             <Prose>
-              <p><strong>Schedule:</strong> <Code>0 * * * *</Code> — Setiap jam tepat (00 menit)</p>
+              <p><strong>Schedule:</strong> <Code>0 * * * *</Code> -- Setiap jam tepat (00 menit)</p>
               <p>Cron job berjalan di <Code>salfanet-cron</Code> (PM2) dan memanggil API endpoint <Code>POST /api/cron</Code> dengan <Code>type: "pppoe_auto_isolir"</Code>.</p>
             </Prose>
             <h3 className="font-semibold text-lg mt-4 mb-2">Yang Dilakukan Per User Expired</h3>
@@ -220,7 +220,7 @@ add chain=forward src-address=192.168.200.0/24 \\
     protocol=icmp action=accept \\
     comment="Allow ping for isolated users"
 
-# Allow billing server — GANTI DENGAN IP ADDRESS SERVER!
+# Allow billing server -- GANTI DENGAN IP ADDRESS SERVER!
 add chain=forward src-address=192.168.200.0/24 \\
     dst-address=103.x.x.x action=accept \\
     comment="Allow access to billing server"
@@ -237,7 +237,7 @@ add chain=forward src-address=192.168.200.0/24 \\
 
             <h3 className="font-semibold text-lg mt-4 mb-2">Script 4: Firewall NAT (Redirect)</h3>
             <CodeBlock>{`/ip firewall nat
-# Redirect HTTP — GANTI 103.x.x.x DENGAN IP SERVER!
+# Redirect HTTP -- GANTI 103.x.x.x DENGAN IP SERVER!
 add chain=dstnat src-address=192.168.200.0/24 \\
     protocol=tcp dst-port=80 \\
     dst-address=!103.x.x.x dst-address-list=!payment-gateways \\
@@ -325,7 +325,7 @@ INSERT INTO radusergroup (username, groupname, priority)
 VALUES ('john123', 'isolir', 1);
 
 -- 2. radcheck: Pastikan password ada, hapus reject
--- (Cleartext-Password tetap ada — user BOLEH login)
+-- (Cleartext-Password tetap ada -- user BOLEH login)
 DELETE FROM radcheck WHERE username = 'john123' AND attribute = 'Auth-Type';
 
 -- 3. radreply: Hapus IP statis (pakai pool)
@@ -409,7 +409,7 @@ WHERE status = 'active' AND expiredAt < CURDATE();`}</CodeBlock>
             </TroubleshootBlock>
 
             <TroubleshootBlock title="User Isolated Masih Bisa Akses Internet">
-              <CodeBlock>{`# Di MikroTik — cek apakah user dapat IP dari pool-isolir
+              <CodeBlock>{`# Di MikroTik -- cek apakah user dapat IP dari pool-isolir
 /ppp active print where name=USERNAME
 
 # Cek radusergroup
@@ -463,26 +463,26 @@ SELECT attribute, value FROM radreply WHERE username = 'USERNAME';
             </InfoBox>
             <CodeBlock>{`ALUR SINGKAT:
 expiredAt < hari ini
-+--► (Cron setiap jam)
-     +--► status = isolated
-          +--► radusergroup = 'isolir'
-               +--► (User reconnect)
-                    +--► IP: 192.168.200.x
-                         +--► (Browser)
-                              +--► MikroTik NAT redirect &rarr; /isolated
-                                   +--► User bayar invoice
-                                        +--► status = active
-                                             +--► (Reconnect PPPoE)
-                                                  +--► Internet penuh [OK] `}</CodeBlock>
++--> (Cron setiap jam)
+     +--> status = isolated
+          +--> radusergroup = 'isolir'
+               +--> (User reconnect)
+                    +--> IP: 192.168.200.x
+                         +--> (Browser)
+                              +--> MikroTik NAT redirect &rarr; /isolated
+                                   +--> User bayar invoice
+                                        +--> status = active
+                                             +--> (Reconnect PPPoE)
+                                                  +--> Internet penuh [OK] `}</CodeBlock>
           </section>
 
         </div>
 
         {/* Footer */}
         <div className="mt-12 pt-6 border-t border-gray-200 dark:border-gray-700 text-center text-sm text-gray-500 dark:text-gray-400">
-          <p>SALFANET RADIUS — Isolation System Documentation</p>
+          <p>SALFANET RADIUS -- Isolation System Documentation</p>
           <Link href="/admin/settings/isolation" className="text-blue-600 hover:underline mt-1 inline-block">
-            ← Kembali ke Isolation Settings
+            &larr; Kembali ke Isolation Settings
           </Link>
         </div>
 
@@ -544,7 +544,7 @@ function TroubleshootBlock({ title, children }: { title: string; children: React
   return (
     <div className="mb-5">
       <h3 className="font-semibold text-base text-gray-800 dark:text-gray-200 mb-2 flex items-center gap-2">
-        <span className="text-red-500">●</span> {title}
+        <span className="text-red-500">*</span> {title}
       </h3>
       {children}
     </div>

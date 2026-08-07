@@ -279,7 +279,7 @@ export default function UserDetailModal({
               { id: 'sessions', label: t('userModal.sessions') },
               { id: 'auth', label: t('userModal.authLogs') },
               { id: 'invoices', label: t('userModal.invoices') },
-              { id: 'photos', label: '📷 Foto' },
+              { id: 'photos', label: ' Foto' },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -529,7 +529,7 @@ export default function UserDetailModal({
                         className="w-4 h-4 accent-primary dark:accent-[brand-400] border-border dark:border-brand-600/50 focus:ring-primary dark:focus:ring-[brand-400]"
                       />
                       <div className="ml-3 flex-1">
-                        <div className="text-sm font-medium text-foreground dark:text-muted-foreground">📅 {t('userModal.postpaid')}</div>
+                        <div className="text-sm font-medium text-foreground dark:text-muted-foreground"> {t('userModal.postpaid')}</div>
                         <div className="text-xs text-muted-foreground dark:text-muted-foreground/50">Tagihan bulanan, tanggal tetap</div>
                       </div>
                     </label>
@@ -554,7 +554,7 @@ export default function UserDetailModal({
                 {formData.subscriptionType === 'POSTPAID' && (
                   <div>
                     <label className={labelCls}>
-                      📅 Tanggal Tagihan
+                       Tanggal Tagihan
                     </label>
                     <select
                       value={formData.billingDay}
@@ -597,7 +597,7 @@ export default function UserDetailModal({
                   />
                   <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 mt-1">
                     {formData.subscriptionType === 'POSTPAID' 
-                      ? '📌 Untuk testing: expiredAt = tanggal tagihan bulan depan (auto calculated)' 
+                      ? ' Untuk testing: expiredAt = tanggal tagihan bulan depan (auto calculated)' 
                       : 'Tanggal kadaluarsa paket. Kosongkan untuk auto dari profile.'}
                   </p>
                 </div>
@@ -632,8 +632,8 @@ export default function UserDetailModal({
                     onChange={(e) => setFormData({ ...formData, autoIsolationEnabled: e.target.value === 'isolate' })}
                     className={selectCls}
                   >
-                    <option value="isolate">ISOLIR INTERNET (Suspend) — isolir otomatis saat expired</option>
-                    <option value="keep">TETAP TERHUBUNG (No Action) — tidak isolir meski expired</option>
+                    <option value="isolate">ISOLIR INTERNET (Suspend) -- isolir otomatis saat expired</option>
+                    <option value="keep">TETAP TERHUBUNG (No Action) -- tidak isolir meski expired</option>
                   </select>
                   <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 mt-1">
                     Pilih tindakan otomatis saat tanggal tagihan / expired terlewati.
@@ -642,7 +642,7 @@ export default function UserDetailModal({
 
                 {/* Tanggal Register */}
                 <div>
-                  <label className={labelCls}>📅 Tanggal Register</label>
+                  <label className={labelCls}> Tanggal Register</label>
                   <input
                     type="date"
                     value={formData.registeredAt}
@@ -657,7 +657,7 @@ export default function UserDetailModal({
 
               {/* Dokumen KTP */}
               <div className="border border-border dark:border-brand-600/30 rounded-lg p-4 space-y-3">
-                <p className="text-sm font-semibold text-foreground dark:text-muted-foreground">🪪 Dokumen Identitas (KTP)</p>
+                <p className="text-sm font-semibold text-foreground dark:text-muted-foreground"> Dokumen Identitas (KTP)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={labelCls}>No. NIK KTP</label>
@@ -693,7 +693,7 @@ export default function UserDetailModal({
                 </div>
               </div>
               <div className="border border-border dark:border-brand-500/20 rounded-lg p-4 space-y-3">
-                <p className="text-sm font-semibold text-foreground dark:text-muted-foreground">📷 Foto Instalasi</p>
+                <p className="text-sm font-semibold text-foreground dark:text-muted-foreground"> Foto Instalasi</p>
                 <div>
                   <input type="file" accept="image/*" onChange={handleUploadInstallation} disabled={uploadingInstallation} className="sr-only" id="installationUploadEdit" />
                   {installCameraOpen ? (
@@ -704,7 +704,7 @@ export default function UserDetailModal({
                   ) : (
                   <div className="grid grid-cols-2 gap-2">
                     <label htmlFor={uploadingInstallation ? undefined : 'installationUploadEdit'} className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs border border-border dark:border-brand-500/30 rounded hover:bg-muted dark:hover:bg-brand-500/10 text-muted-foreground dark:text-muted-foreground/70 ${uploadingInstallation ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}>
-                      <ImageIcon className="w-3 h-3" /> {uploadingInstallation ? '⏳ Mengupload...' : 'Galeri'}
+                      <ImageIcon className="w-3 h-3" /> {uploadingInstallation ? ' Mengupload...' : 'Galeri'}
                     </label>
                     <button type="button" onClick={() => setInstallCameraOpen(true)} disabled={uploadingInstallation} className={`flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs border border-primary/30 dark:border-brand-500/40 rounded hover:bg-primary/5 dark:hover:bg-brand-500/10 text-primary/70 dark:text-brand-400/70 ${uploadingInstallation ? 'opacity-50 cursor-not-allowed' : ''}`}>
                       <Camera className="w-3 h-3" /> Kamera
@@ -719,7 +719,7 @@ export default function UserDetailModal({
                       <div key={index} className="relative">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={photo} alt={`Instalasi ${index + 1}`} className="w-full h-16 object-cover rounded border border-border dark:border-brand-500/20" />
-                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, installationPhotos: prev.installationPhotos.filter((_, i) => i !== index) }))} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] hover:bg-red-600">×</button>
+                        <button type="button" onClick={() => setFormData(prev => ({ ...prev, installationPhotos: prev.installationPhotos.filter((_, i) => i !== index) }))} className="absolute top-0.5 right-0.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] hover:bg-red-600">x</button>
                       </div>
                     ))}
                   </div>
@@ -915,7 +915,7 @@ export default function UserDetailModal({
               {/* KTP Section */}
               <div className="border border-border dark:border-brand-600/30 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">🪪</span>
+                  <span className="text-base"></span>
                   <p className="text-sm font-semibold text-foreground dark:text-muted-foreground">Foto KTP</p>
                   {formData.idCardNumber && (
                     <span className="ml-auto text-xs text-muted-foreground dark:text-muted-foreground/50 font-mono bg-muted dark:bg-input/60 px-2 py-0.5 rounded">
@@ -949,7 +949,7 @@ export default function UserDetailModal({
               {/* Installation Photos Section */}
               <div className="border border-border dark:border-brand-500/20 rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <span className="text-base">📷</span>
+                  <span className="text-base"></span>
                   <p className="text-sm font-semibold text-foreground dark:text-muted-foreground">Foto Instalasi</p>
                   {formData.installationPhotos.length > 0 && (
                     <span className="ml-auto text-xs bg-primary/10 dark:bg-brand-500/10 text-primary dark:text-brand-400 px-2 py-0.5 rounded-full">

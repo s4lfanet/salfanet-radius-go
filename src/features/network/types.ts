@@ -1,5 +1,5 @@
 /**
- * Network Feature — Domain Types
+ * Network Feature -- Domain Types
  *
  * @module features/network/types
  */

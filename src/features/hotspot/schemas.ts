@@ -1,5 +1,5 @@
 /**
- * Hotspot Feature — Zod Schemas
+ * Hotspot Feature -- Zod Schemas
  *
  * @module features/hotspot/schemas
  */

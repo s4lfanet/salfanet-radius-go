@@ -342,10 +342,10 @@ export default function WhatsAppTemplatesPage() {
               <div className="bg-muted/50 p-2 sm:p-3 rounded-md border border-border">
                 <p className="text-[10px] sm:text-xs font-medium text-foreground mb-1 sm:mb-2">{t('whatsapp.waFormat')}:</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground dark:text-muted-foreground">
-                  <div>• *bold* ? <strong>bold</strong></div>
-                  <div>• _italic_ ? <em>italic</em></div>
-                  <div>• ~strikethrough~ ? <del>strikethrough</del></div>
-                  <div>• ```code``` ? <code className="text-[9px] sm:text-[10px]">code</code></div>
+                  <div>* *bold* ? <strong>bold</strong></div>
+                  <div>* _italic_ ? <em>italic</em></div>
+                  <div>* ~strikethrough~ ? <del>strikethrough</del></div>
+                  <div>* ```code``` ? <code className="text-[9px] sm:text-[10px]">code</code></div>
                 </div>
               </div>
 
@@ -462,7 +462,7 @@ export default function WhatsAppTemplatesPage() {
                   <p className="text-[9px] text-white/40 text-right mt-1.5 select-none">12:00 ??</p>
                 </div>
               </div>
-              <p className="text-[9px] text-white/25 text-center mt-3">{message.length} karakter · data contoh</p>
+              <p className="text-[9px] text-white/25 text-center mt-3">{message.length} karakter . data contoh</p>
             </div>
           )}
         </div>
@@ -528,14 +528,14 @@ export default function WhatsAppTemplatesPage() {
             <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
               <p className="text-xs sm:text-sm font-semibold text-blue-900 dark:text-blue-100">?? {t('whatsapp.howToUse')}</p>
               <ul className="text-[10px] sm:text-xs text-blue-800 dark:text-blue-200 space-y-0.5 sm:space-y-1">
-                <li>• <strong>Persetujuan Pendaftaran</strong>: Dikirim saat admin approve registrasi baru</li>
-                <li>• <strong>Admin Create User</strong>: Dikirim saat admin create user manual</li>
-                <li>• <strong>Invoice Instalasi</strong>: Dikirim saat mark installed dan invoice dibuat</li>
-                <li>• <strong>Invoice Jatuh Tempo</strong>: Dikirim via cron untuk reminder invoice (H-5, H-3, H-1, H-0)</li>
-                <li>• <strong>Pembayaran Berhasil</strong>: Dikirim otomatis saat invoice dibayar</li>
-                <li>• <strong>Informasi Gangguan</strong>: Template untuk broadcast maintenance</li>
-                <li>• <strong>Perbaikan Selesai</strong>: Template untuk broadcast perbaikan selesai</li>
-                <li className="break-words">• Variabel <code className="bg-primary/20 dark:bg-blue-800 px-1 rounded text-[9px] sm:text-[10px]">{'{{nama}}'}</code> akan diganti otomatis dengan data real</li>
+                <li>* <strong>Persetujuan Pendaftaran</strong>: Dikirim saat admin approve registrasi baru</li>
+                <li>* <strong>Admin Create User</strong>: Dikirim saat admin create user manual</li>
+                <li>* <strong>Invoice Instalasi</strong>: Dikirim saat mark installed dan invoice dibuat</li>
+                <li>* <strong>Invoice Jatuh Tempo</strong>: Dikirim via cron untuk reminder invoice (H-5, H-3, H-1, H-0)</li>
+                <li>* <strong>Pembayaran Berhasil</strong>: Dikirim otomatis saat invoice dibayar</li>
+                <li>* <strong>Informasi Gangguan</strong>: Template untuk broadcast maintenance</li>
+                <li>* <strong>Perbaikan Selesai</strong>: Template untuk broadcast perbaikan selesai</li>
+                <li className="break-words">* Variabel <code className="bg-primary/20 dark:bg-blue-800 px-1 rounded text-[9px] sm:text-[10px]">{'{{nama}}'}</code> akan diganti otomatis dengan data real</li>
               </ul>
             </div>
           </div>

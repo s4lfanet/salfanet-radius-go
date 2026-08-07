@@ -87,11 +87,11 @@ export function JointClosureDiagramV2({
 
   const getClosureTypeIcon = (type: ClosureType): string => {
     switch (type) {
-      case 'INLINE': return '━━━';
-      case 'BRANCHING': return '╋';
+      case 'INLINE': return '---';
+      case 'BRANCHING': return '+';
       case 'DOME': return '';
-      case 'HORIZONTAL': return '▬';
-      default: return '○';
+      case 'HORIZONTAL': return '';
+      default: return '( )';
     }
   };
 
@@ -146,7 +146,7 @@ export function JointClosureDiagramV2({
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">{node.name}</p>
             {node.address && (
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">📍 {node.address}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"> {node.address}</p>
             )}
           </div>
           <div className="text-right">
@@ -219,7 +219,7 @@ export function JointClosureDiagramV2({
                         {cable.cableCode}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {cable.tubeCount}T × {cable.coresPerTube}C = {cable.tubeCount * cable.coresPerTube} cores
+                        {cable.tubeCount}T x {cable.coresPerTube}C = {cable.tubeCount * cable.coresPerTube} cores
                       </span>
                     </div>
                     {cable.tubes && (
@@ -267,7 +267,7 @@ export function JointClosureDiagramV2({
                         {cable.cableCode}
                       </span>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        {cable.tubeCount}T × {cable.coresPerTube}C = {cable.tubeCount * cable.coresPerTube} cores
+                        {cable.tubeCount}T x {cable.coresPerTube}C = {cable.tubeCount * cable.coresPerTube} cores
                       </span>
                     </div>
                     {cable.tubes && (
@@ -423,7 +423,7 @@ export function JointClosureDiagramV2({
                   {cable.cableCode}
                 </text>
                 <text x={75} y={38} textAnchor="middle" className="text-xs fill-gray-500 dark:fill-gray-400">
-                  {cable.tubeCount}T × {cable.coresPerTube}C
+                  {cable.tubeCount}T x {cable.coresPerTube}C
                 </text>
                 <text x={75} y={52} textAnchor="middle" className="text-xs fill-gray-400 dark:fill-gray-500">
                   {cable.tubeCount * cable.coresPerTube} cores
@@ -471,7 +471,7 @@ export function JointClosureDiagramV2({
                   {cable.cableCode}
                 </text>
                 <text x={75} y={38} textAnchor="middle" className="text-xs fill-gray-500 dark:fill-gray-400">
-                  {cable.tubeCount}T × {cable.coresPerTube}C
+                  {cable.tubeCount}T x {cable.coresPerTube}C
                 </text>
                 <text x={75} y={52} textAnchor="middle" className="text-xs fill-gray-400 dark:fill-gray-500">
                   {cable.tubeCount * cable.coresPerTube} cores
@@ -574,7 +574,7 @@ export function JointClosureDiagramV2({
             <div>
               <span className="text-gray-500 dark:text-gray-400">Configuration:</span>
               <span className="ml-2 text-gray-900 dark:text-white">
-                {hoveredCable.tubeCount} tubes × {hoveredCable.coresPerTube} cores
+                {hoveredCable.tubeCount} tubes x {hoveredCable.coresPerTube} cores
               </span>
             </div>
             <div>

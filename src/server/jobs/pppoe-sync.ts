@@ -99,14 +99,14 @@ export async function disconnectViaMikrotikAPI(username: string) {
       }
     }
 
-    // Hard timeout wrapper — node-routeros timeout doesn't limit TCP SYN phase
+    // Hard timeout wrapper -- node-routeros timeout doesn't limit TCP SYN phase
     const withTimeout = <T>(p: Promise<T>, ms: number, label: string): Promise<T> =>
       new Promise((resolve, reject) => {
         const t = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
         p.then(v => { clearTimeout(t); resolve(v) }, e => { clearTimeout(t); reject(e) })
       })
 
-    // Try API-SSL first (8729), then plaintext (8728) — 5s hard timeout each
+    // Try API-SSL first (8729), then plaintext (8728) -- 5s hard timeout each
     const first = await withTimeout(tryDisconnect(primaryPort), 5000, `API ${host}:${primaryPort}`)
     if (first.success) {
       console.log(`[MikroTik API] ? Disconnected ${username} on ${router.name} (${host}:${primaryPort})`)
@@ -161,7 +161,7 @@ export async function autoIsolatePPPoEUsers(): Promise<{
   isPPPoESyncRunning = now
   const startedAt = new Date()
 
-  // Read isolation settings — respect admin toggle and grace period
+  // Read isolation settings -- respect admin toggle and grace period
   const isolationSettings = await getIsolationSettings()
   const gracePeriodDays = isolationSettings.gracePeriodDays ?? 0
 
@@ -339,7 +339,7 @@ export async function autoIsolatePPPoEUsers(): Promise<{
             AND attribute = 'Framed-IP-Address'
         `
 
-        // 5. Disconnect user — disconnectPPPoEUser handles API-first (Method 1) + CoA (Method 2)
+        // 5. Disconnect user -- disconnectPPPoEUser handles API-first (Method 1) + CoA (Method 2)
         try {
           const { disconnectPPPoEUser } = await import('@/server/services/radius/coa-handler.service')
           const disconnectResult = await disconnectPPPoEUser(user.username)

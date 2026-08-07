@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -290,7 +290,7 @@ export default function CustomerProfilePage() {
         </div>
       </CyberCard>
 
-      {/* Package Information + Account Information â€” 2-col on desktop */}
+      {/* Package Information + Account Information EUR" 2-col on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
       {/* Package Information */}
       {customer.profile && (
@@ -312,7 +312,7 @@ export default function CustomerProfilePage() {
               <div className="flex-1">
                 <p className="text-xs text-accent font-bold uppercase tracking-wide">Kecepatan</p>
                 <p className="text-sm font-medium text-foreground">
-                  â†“ {customer.profile.downloadSpeed} Mbps / â†‘ {customer.profile.uploadSpeed} Mbps
+                  +" {customer.profile.downloadSpeed} Mbps / +' {customer.profile.uploadSpeed} Mbps
                 </p>
               </div>
             </div>

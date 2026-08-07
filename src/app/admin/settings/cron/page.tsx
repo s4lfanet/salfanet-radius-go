@@ -65,7 +65,7 @@ const SCHEDULE_PRESETS = [
   { label: 'Daily at 7 AM', value: '0 7 * * *' },
   { label: 'Daily at 8 AM', value: '0 8 * * *' },
   { label: 'Daily at noon', value: '0 12 * * *' },
-  { label: 'Custom…', value: 'custom' },
+  { label: 'Custom...', value: 'custom' },
 ];
 
 function ScheduleEditor({ config, onSave, onClose }: {
@@ -427,7 +427,7 @@ export default function CronSettingsPage() {
 
             <div className="p-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2 px-6 py-2.5">
               <span className="font-semibold">? Catatan:</span>
-              Perubahan jadwal disimpan ke database. Cron runner membaca jadwal saat startup — jalankan
+              Perubahan jadwal disimpan ke database. Cron runner membaca jadwal saat startup -- jalankan
               <code className="mx-1 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded font-mono">pm2 restart salfanet-cron</code>
               di VPS untuk menerapkan jadwal baru.
             </div>

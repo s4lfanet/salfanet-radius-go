@@ -209,7 +209,7 @@ export default function StoppedSubscriptionsPage() {
       <div className="flex justify-end">
         <div className="bg-muted rounded-lg px-6 py-4 text-right">
           <div className="text-3xl font-bold text-destructive">{totalStopped}</div>
-          <div className="text-[10px] text-muted-foreground mt-1">— {t('pppoe.totalData')}</div>
+          <div className="text-[10px] text-muted-foreground mt-1">-- {t('pppoe.totalData')}</div>
         </div>
       </div>
 

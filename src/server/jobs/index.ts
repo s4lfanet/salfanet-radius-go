@@ -1,5 +1,5 @@
 /**
- * Job Registry — src/server/jobs/index.ts
+ * Job Registry -- src/server/jobs/index.ts
  *
  * Central entry point for all background cron jobs.
  * Import and start all jobs from here.

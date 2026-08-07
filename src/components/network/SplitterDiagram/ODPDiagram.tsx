@@ -94,7 +94,7 @@ export function ODPDiagram({
             </div>
             <p className="text-sm text-gray-600 mt-1">{node.name}</p>
             {node.address && (
-              <p className="text-xs text-gray-500 mt-1">📍 {node.address}</p>
+              <p className="text-xs text-gray-500 mt-1"> {node.address}</p>
             )}
           </div>
           <div className="text-right">

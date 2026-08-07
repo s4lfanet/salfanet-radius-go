@@ -16,7 +16,7 @@ if (!NEXTAUTH_SECRET) {
 }
 
 /**
- * Typed HTTP error — thrown by requireAuth/requireAdmin/requireStaff/requireRole.
+ * Typed HTTP error -- thrown by requireAuth/requireAdmin/requireStaff/requireRole.
  * Catch blocks can inspect `.status` to return the correct HTTP status code
  * instead of a generic 500.
  *

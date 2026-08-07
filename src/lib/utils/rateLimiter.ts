@@ -124,7 +124,7 @@ export async function sendWithRateLimit(
 
     // Delay between batches (except after last batch)
     if (batchIndex < totalBatches - 1) {
-      console.log(`[RateLimiter] ⏳ Waiting ${delayBetweenBatches}ms before next batch...`);
+      console.log(`[RateLimiter]  Waiting ${delayBetweenBatches}ms before next batch...`);
       await delay(delayBetweenBatches);
     }
   }

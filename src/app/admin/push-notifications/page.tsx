@@ -150,30 +150,30 @@ const QUICK_TEMPLATES_BY_ROLE: Record<RecipientRole, Array<{ key: string; icon: 
 
 const TEMPLATE_CONTENT: Record<string, { title: string; body: string }> = {
   // Customer templates
-  cust_broadcast: { title: '📢 Pengumuman dari Salfanet', body: 'Kepada pelanggan setia Salfanet, kami ingin menyampaikan informasi penting. Terima kasih atas kepercayaan Anda.' },
-  cust_tagihan: { title: '💳 Tagihan Internet Jatuh Tempo', body: 'Tagihan internet Anda akan segera jatuh tempo. Segera lakukan pembayaran agar layanan tetap aktif.' },
-  cust_maintenance: { title: '🔧 Jadwal Maintenance Jaringan', body: 'Akan dilakukan maintenance jaringan. Layanan internet mungkin terganggu sementara. Mohon maaf atas ketidaknyamanannya.' },
+  cust_broadcast: { title: ' Pengumuman dari Salfanet', body: 'Kepada pelanggan setia Salfanet, kami ingin menyampaikan informasi penting. Terima kasih atas kepercayaan Anda.' },
+  cust_tagihan: { title: ' Tagihan Internet Jatuh Tempo', body: 'Tagihan internet Anda akan segera jatuh tempo. Segera lakukan pembayaran agar layanan tetap aktif.' },
+  cust_maintenance: { title: ' Jadwal Maintenance Jaringan', body: 'Akan dilakukan maintenance jaringan. Layanan internet mungkin terganggu sementara. Mohon maaf atas ketidaknyamanannya.' },
   cust_gangguan: { title: '  Gangguan Jaringan', body: 'Saat ini terjadi gangguan pada jaringan kami. Tim teknis sedang bekerja untuk memulihkan layanan. Mohon maaf atas ketidaknyamanannya.' },
-  cust_promo: { title: '🎁 Promo Spesial Salfanet!', body: 'Dapatkan penawaran spesial dari Salfanet! Upgrade paket internet Anda dengan harga terbaik. Berlaku terbatas!' },
+  cust_promo: { title: ' Promo Spesial Salfanet!', body: 'Dapatkan penawaran spesial dari Salfanet! Upgrade paket internet Anda dengan harga terbaik. Berlaku terbatas!' },
   cust_info: { title: '  Informasi Layanan Salfanet', body: 'Kepada pelanggan Salfanet, berikut informasi penting terkait layanan kami. Harap dibaca dengan seksama.' },
   // Technician templates
-  tech_broadcast: { title: '📢 Pengumuman untuk Teknisi', body: 'Kepada seluruh teknisi Salfanet, berikut pengumuman penting dari manajemen. Harap diperhatikan.' },
-  tech_tugas: { title: '🔧 Ada Tugas Baru untuk Anda', body: 'Anda mendapat penugasan baru. Segera cek aplikasi teknisi untuk detail pekerjaan dan lokasi pelanggan.' },
-  tech_jadwal: { title: '📅 Perubahan Jadwal Kerja', body: 'Terdapat perubahan pada jadwal kerja Anda. Silakan cek aplikasi teknisi untuk jadwal terbaru.' },
-  tech_darurat: { title: '🚨 Kondisi Darurat - Tindakan Segera', body: 'Terjadi kondisi darurat pada jaringan. Semua teknisi harap segera standby dan hubungi supervisor Anda.' },
-  tech_maintenance: { title: '🛠 Jadwal Maintenance Terjadwal', body: 'Pengingat: ada jadwal maintenance terjadwal. Pastikan semua peralatan siap dan koordinasikan dengan tim.' },
+  tech_broadcast: { title: ' Pengumuman untuk Teknisi', body: 'Kepada seluruh teknisi Salfanet, berikut pengumuman penting dari manajemen. Harap diperhatikan.' },
+  tech_tugas: { title: ' Ada Tugas Baru untuk Anda', body: 'Anda mendapat penugasan baru. Segera cek aplikasi teknisi untuk detail pekerjaan dan lokasi pelanggan.' },
+  tech_jadwal: { title: ' Perubahan Jadwal Kerja', body: 'Terdapat perubahan pada jadwal kerja Anda. Silakan cek aplikasi teknisi untuk jadwal terbaru.' },
+  tech_darurat: { title: ' Kondisi Darurat - Tindakan Segera', body: 'Terjadi kondisi darurat pada jaringan. Semua teknisi harap segera standby dan hubungi supervisor Anda.' },
+  tech_maintenance: { title: ' Jadwal Maintenance Terjadwal', body: 'Pengingat: ada jadwal maintenance terjadwal. Pastikan semua peralatan siap dan koordinasikan dengan tim.' },
   tech_info: { title: '  Info Teknis Terbaru', body: 'Ada informasi teknis penting yang perlu diketahui seluruh teknisi. Harap baca dan implementasikan.' },
   // Agent templates
-  agent_broadcast: { title: '📢 Pengumuman untuk Agen', body: 'Kepada seluruh agen Salfanet, berikut pengumuman penting dari manajemen. Harap diperhatikan.' },
-  agent_komisi: { title: '💰 Komisi Anda Telah Diproses', body: 'Komisi penjualan Anda telah diproses dan siap dicairkan. Cek aplikasi agen untuk detail komisi Anda.' },
-  agent_registrasi: { title: '🎉 Ada Registrasi Pelanggan Baru!', body: 'Ada pelanggan baru yang mendaftar melalui kode referral Anda. Terus tingkatkan penjualan untuk bonus lebih besar!' },
-  agent_target: { title: '🎯 Update Target Bulanan', body: 'Target penjualan bulan ini telah diperbarui. Cek aplikasi agen untuk melihat progress dan sisa target Anda.' },
-  agent_promo: { title: '🎁 Promo Spesial untuk Agen', body: 'Ada promo spesial yang bisa Anda tawarkan kepada calon pelanggan. Cek detail promo dan manfaatkan kesempatan ini!' },
+  agent_broadcast: { title: ' Pengumuman untuk Agen', body: 'Kepada seluruh agen Salfanet, berikut pengumuman penting dari manajemen. Harap diperhatikan.' },
+  agent_komisi: { title: ' Komisi Anda Telah Diproses', body: 'Komisi penjualan Anda telah diproses dan siap dicairkan. Cek aplikasi agen untuk detail komisi Anda.' },
+  agent_registrasi: { title: ' Ada Registrasi Pelanggan Baru!', body: 'Ada pelanggan baru yang mendaftar melalui kode referral Anda. Terus tingkatkan penjualan untuk bonus lebih besar!' },
+  agent_target: { title: ' Update Target Bulanan', body: 'Target penjualan bulan ini telah diperbarui. Cek aplikasi agen untuk melihat progress dan sisa target Anda.' },
+  agent_promo: { title: ' Promo Spesial untuk Agen', body: 'Ada promo spesial yang bisa Anda tawarkan kepada calon pelanggan. Cek detail promo dan manfaatkan kesempatan ini!' },
   agent_info: { title: '  Informasi Penting untuk Agen', body: 'Ada informasi penting yang perlu diketahui seluruh agen Salfanet. Harap baca dan pahami dengan seksama.' },
   // All templates
-  all_broadcast: { title: '📢 Pengumuman Salfanet', body: 'Kepada seluruh pengguna, pelanggan, teknisi, dan agen Salfanet — berikut pengumuman penting dari manajemen.' },
+  all_broadcast: { title: ' Pengumuman Salfanet', body: 'Kepada seluruh pengguna, pelanggan, teknisi, dan agen Salfanet -- berikut pengumuman penting dari manajemen.' },
   all_gangguan: { title: '  Gangguan Jaringan Area', body: 'Saat ini terjadi gangguan pada jaringan di beberapa area. Tim teknis sedang bekerja keras untuk pemulihan. Mohon maaf atas gangguan yang terjadi.' },
-  all_maintenance: { title: '🔧 Scheduled Maintenance', body: 'Akan dilakukan pemeliharaan jaringan terjadwal. Teknisi harap standby, pelanggan mohon maaf atas gangguan sementara.' },
+  all_maintenance: { title: ' Scheduled Maintenance', body: 'Akan dilakukan pemeliharaan jaringan terjadwal. Teknisi harap standby, pelanggan mohon maaf atas gangguan sementara.' },
 };
 
 export default function PushNotificationsPage() {
@@ -271,7 +271,7 @@ export default function PushNotificationsPage() {
 
     const confirmed = await showConfirm(
       t('pushNotif.confirmSendTitle'),
-      `Kirim notifikasi "${title}" ke: ${roleLabel} — ${targetLabel}?`
+      `Kirim notifikasi "${title}" ke: ${roleLabel} -- ${targetLabel}?`
     );
     if (!confirmed) return;
 
@@ -341,7 +341,7 @@ export default function PushNotificationsPage() {
       : target === 'area' ? t('pushNotif.perArea')
       : target === 'selected' ? t('pushNotif.selected')
       : target;
-    return `${roleLabel} — ${targetLabel}`;
+    return `${roleLabel} -- ${targetLabel}`;
   };
 
   const coveragePct = stats && stats.totalUsers > 0 ? Math.round((stats.usersWithTokens / stats.totalUsers) * 100) : 0;
@@ -381,7 +381,7 @@ export default function PushNotificationsPage() {
               </div>
               <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full">total</span>
             </div>
-            <p className="text-lg sm:text-2xl font-bold tracking-tight">{loading ? '—' : stats?.totalUsers ?? 0}</p>
+            <p className="text-lg sm:text-2xl font-bold tracking-tight">{loading ? '--' : stats?.totalUsers ?? 0}</p>
             <p className="text-xs text-muted-foreground mt-1">{t('pushNotif.totalCustomers')}</p>
           </CardContent>
         </Card>
@@ -394,7 +394,7 @@ export default function PushNotificationsPage() {
               </div>
               <span className="text-xs font-medium text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">push</span>
             </div>
-            <p className="text-lg sm:text-2xl font-bold tracking-tight text-emerald-600">{loading ? '—' : stats?.usersWithTokens ?? 0}</p>
+            <p className="text-lg sm:text-2xl font-bold tracking-tight text-emerald-600">{loading ? '--' : stats?.usersWithTokens ?? 0}</p>
             <p className="text-xs text-muted-foreground mt-1">{t('pushNotif.registeredPush')}</p>
           </CardContent>
         </Card>
@@ -407,7 +407,7 @@ export default function PushNotificationsPage() {
               </div>
               <span className="text-xs font-medium text-orange-600 bg-orange-100 px-2 py-0.5 rounded-full">sent</span>
             </div>
-            <p className="text-lg sm:text-2xl font-bold tracking-tight">{loading ? '—' : stats?.totalBroadcasts ?? 0}</p>
+            <p className="text-lg sm:text-2xl font-bold tracking-tight">{loading ? '--' : stats?.totalBroadcasts ?? 0}</p>
             <p className="text-xs text-muted-foreground mt-1">{t('pushNotif.totalBroadcast')}</p>
           </CardContent>
         </Card>
@@ -419,7 +419,7 @@ export default function PushNotificationsPage() {
                 <Zap className="w-5 h-5 text-purple-600" />
               </div>
             </div>
-            <p className="text-lg sm:text-2xl font-bold tracking-tight text-purple-600">{loading ? '—' : `${coveragePct}%`}</p>
+            <p className="text-lg sm:text-2xl font-bold tracking-tight text-purple-600">{loading ? '--' : `${coveragePct}%`}</p>
             <p className="text-xs text-muted-foreground mt-1">{t('pushNotif.coverage')}</p>
             {!loading && stats && stats.totalUsers > 0 && (
               <div className="mt-2.5">
@@ -621,10 +621,10 @@ export default function PushNotificationsPage() {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="all">🌐 {t('pushNotif.allCustomers')}</SelectItem>
+                            <SelectItem value="all"> {t('pushNotif.allCustomers')}</SelectItem>
                             <SelectItem value="active">[OK]  {t('pushNotif.activeCustomers')}</SelectItem>
                             <SelectItem value="expired">[FAIL]  {t('pushNotif.expiredCustomers')}</SelectItem>
-                            <SelectItem value="area">📍 {t('pushNotif.perArea')}</SelectItem>
+                            <SelectItem value="area"> {t('pushNotif.perArea')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -689,11 +689,11 @@ export default function PushNotificationsPage() {
                           <span className="font-bold text-amber-600">{(stats?.technicianSubscribers ?? 0) + (stats?.adminSubscribers ?? 0)} teknisi</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground text-[10px]">↳ Teknisi OTP</span>
+                          <span className="text-muted-foreground text-[10px]"> Teknisi OTP</span>
                           <span className="font-medium text-amber-500">{stats?.technicianSubscribers ?? 0}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground text-[10px]">↳ Admin via portal teknisi</span>
+                          <span className="text-muted-foreground text-[10px]"> Admin via portal teknisi</span>
                           <span className="font-medium text-orange-500">{stats?.adminSubscribers ?? 0}</span>
                         </div>
                       </>
@@ -827,7 +827,7 @@ export default function PushNotificationsPage() {
                 <div className="flex items-center justify-center py-16">
                   <div className="text-center">
                     <RefreshCw className="w-8 h-8 animate-spin text-muted-foreground mx-auto" />
-                    <p className="text-sm text-muted-foreground mt-3">Memuat data…</p>
+                    <p className="text-sm text-muted-foreground mt-3">Memuat data...</p>
                   </div>
                 </div>
               ) : broadcasts.length === 0 ? (
@@ -925,7 +925,7 @@ export default function PushNotificationsPage() {
                                 <span className="font-bold text-sm">{bc.failedCount}</span>
                               </div>
                             ) : (
-                              <span className="text-muted-foreground text-sm">—</span>
+                              <span className="text-muted-foreground text-sm">--</span>
                             )}
                           </TableCell>
                           <TableCell>

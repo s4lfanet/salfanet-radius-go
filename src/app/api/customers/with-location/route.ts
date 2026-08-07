@@ -6,7 +6,7 @@ import { prisma } from '@/server/db/client';
  * GET /api/customers/with-location
  *
  * Returns PPPoE customers that have GPS coordinates set.
- * Served from Next.js (not Go) so that getServerSession handles auth —
+ * Served from Next.js (not Go) so that getServerSession handles auth --
  * bypassing the cookie-forwarding issue that occurs when Cloudflare
  * strips __Secure-* cookies before they reach the Go backend.
  *
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const limit = parseInt(searchParams.get('limit') || '2000', 10);
-  // Clamp limit to a safe range (1–5000)
+  // Clamp limit to a safe range (1-5000)
   const safeLimit = Math.min(Math.max(1, isNaN(limit) ? 2000 : limit), 5000);
 
   const customers = await prisma.pppoeUser.findMany({

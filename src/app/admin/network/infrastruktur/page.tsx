@@ -144,10 +144,10 @@ function OTBTable({ search }: { search: string }) {
               {r.usedPorts}/{r.portCount}
             </td>
             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-              {r.network_olts?.name ?? <span className="text-gray-400">—</span>}
+              {r.network_olts?.name ?? <span className="text-gray-400">--</span>}
             </td>
             <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[180px] truncate">
-              {r.address || <span className="text-gray-400">—</span>}
+              {r.address || <span className="text-gray-400">--</span>}
             </td>
             <td className="px-4 py-3"><CoordCell lat={r.latitude} lng={r.longitude} /></td>
             <td className="px-4 py-3">
@@ -222,9 +222,9 @@ function JCTable({ search }: { search: string }) {
               <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">{r.code}</p>
             </td>
             <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
-            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.type?.replace(/_/g, ' ') ?? '—'}</td>
-            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.closureType ?? '—'}</td>
-            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{r.fiberCount ?? '—'}</td>
+            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.type?.replace(/_/g, ' ') ?? '--'}</td>
+            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.closureType ?? '--'}</td>
+            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap">{r.fiberCount ?? '--'}</td>
             <td className="px-4 py-3"><CoordCell lat={r.latitude} lng={r.longitude} /></td>
             <td className="px-4 py-3"><MapPinLink lat={r.latitude} lng={r.longitude} /></td>
             <td className="px-4 py-3">
@@ -300,7 +300,7 @@ function ODCTable({ search }: { search: string }) {
             </td>
             <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-              {r.network_olts?.name ?? <span className="text-gray-400">—</span>}
+              {r.network_olts?.name ?? <span className="text-gray-400">--</span>}
             </td>
             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.ponPort}</td>
             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.portCount}</td>
@@ -380,13 +380,13 @@ function ODPTable({ search }: { search: string }) {
             </td>
             <td className="px-4 py-3"><StatusBadge status={r.status} /></td>
             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-              {r.network_olts?.name ?? <span className="text-gray-400">—</span>}
+              {r.network_olts?.name ?? <span className="text-gray-400">--</span>}
             </td>
             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">
-              {r.network_odcs?.name ?? <span className="text-gray-400">—</span>}
+              {r.network_odcs?.name ?? <span className="text-gray-400">--</span>}
             </td>
             <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.portCount}</td>
-            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.splitterRatio ?? '—'}</td>
+            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300">{r.splitterRatio ?? '--'}</td>
             <td className="px-4 py-3"><CoordCell lat={r.latitude} lng={r.longitude} /></td>
             <td className="px-4 py-3"><MapPinLink lat={r.latitude} lng={r.longitude} /></td>
             <td className="px-4 py-3">
@@ -465,14 +465,14 @@ function TableWrapper({
           <div className="flex gap-1">
             <button disabled={page <= 1} onClick={() => onPage(page - 1)}
               className="px-3 py-1 rounded text-xs border border-gray-200 dark:border-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-              ‹ {t('common.prev')}
+               {t('common.prev')}
             </button>
             <span className="px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
               {page} / {totalPages}
             </span>
             <button disabled={page >= totalPages} onClick={() => onPage(page + 1)}
               className="px-3 py-1 rounded text-xs border border-gray-200 dark:border-gray-600 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300">
-              {t('common.next')} ›
+              {t('common.next')} 
             </button>
           </div>
         </div>

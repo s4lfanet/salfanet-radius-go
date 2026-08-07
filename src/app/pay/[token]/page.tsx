@@ -498,9 +498,9 @@ export default function PaymentPage() {
         {company && (
           <div className="bg-[secondary]/80 backdrop-blur-xl rounded-xl border-2 border-[brand-600]/30 p-4 text-center shadow-[0_0_30px_rgba(122, 90, 248,0.1)]">
             <h3 className="text-sm font-bold text-white">{company.name}</h3>
-            {company.address && <p className="text-[10px] text-[muted-foreground]/60 mt-1">📍 {company.address}</p>}
+            {company.address && <p className="text-[10px] text-[muted-foreground]/60 mt-1"> {company.address}</p>}
             <div className="flex flex-wrap justify-center gap-3 text-[10px] text-[muted-foreground]/60 mt-2">
-              {company.phone && <span>📞 {company.phone}</span>}
+              {company.phone && <span> {company.phone}</span>}
               {company.email && <span> {company.email}</span>}
             </div>
           </div>
@@ -609,7 +609,7 @@ export default function PaymentPage() {
 
                   {qrisData.isQrisOwn ? (
                     <>
-                      {/* Unique amount warning — KRITIS untuk matching otomatis */}
+                      {/* Unique amount warning -- KRITIS untuk matching otomatis */}
                       {qrisData.uniqueAmount && qrisData.uniqueAmount !== invoice?.amount && (
                         <div className="bg-[destructive]/10 border border-[destructive]/40 rounded-xl p-3">
                           <p className="text-[11px] font-bold text-[destructive] mb-1">  Transfer TEPAT nominal berikut:</p>
@@ -621,7 +621,7 @@ export default function PaymentPage() {
                       )}
 
                       {qrisData.hasListener ? (
-                        /* Android listener aktif — polling otomatis */
+                        /* Android listener aktif -- polling otomatis */
                         <div className="bg-[success]/10 border border-[success]/30 rounded-xl p-3">
                           <p className="text-[11px] font-bold text-[success] mb-1 flex items-center gap-1.5">
                             <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Menunggu konfirmasi otomatis...
@@ -631,7 +631,7 @@ export default function PaymentPage() {
                           </p>
                         </div>
                       ) : (
-                        /* Tidak ada listener — konfirmasi manual */
+                        /* Tidak ada listener -- konfirmasi manual */
                         <div className="bg-[success]/10 border border-[success]/30 rounded-xl p-3">
                           <p className="text-[11px] font-bold text-[success] mb-1 flex items-center gap-1.5">
                             <CheckCircle className="w-3.5 h-3.5" /> Setelah bayar:

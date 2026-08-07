@@ -1325,13 +1325,13 @@ export async function generateInvoices(force = false): Promise<{ success: boolea
     });
 
     if (force) {
-      console.log(`[Invoice Generate] Found ${prepaidUsers.length} PREPAID users (FORCE mode — range: H-90 to H+30)`);
+      console.log(`[Invoice Generate] Found ${prepaidUsers.length} PREPAID users (FORCE mode -- range: H-90 to H+30)`);
     } else {
       console.log(`[Invoice Generate] Found ${prepaidUsers.length} PREPAID users (range: H+0 to H+30)`);
     }  
 
     // ========================================
-    // POSTPAID: tagihan tetap — generate invoiceGenerateDays before billingDay.
+    // POSTPAID: tagihan tetap -- generate invoiceGenerateDays before billingDay.
     // Each POSTPAID user has a billingDay (default 1). Invoice is generated
     // invoiceGenerateDays before that day so customer has time to pay.
     // Due date = next billingDay occurrence.
@@ -1376,7 +1376,7 @@ export async function generateInvoices(force = false): Promise<{ success: boolea
     });
 
     if (force) {
-      console.log(`[Invoice Generate] Found ${postpaidUsers.length} POSTPAID users (FORCE mode — date window bypassed)`);
+      console.log(`[Invoice Generate] Found ${postpaidUsers.length} POSTPAID users (FORCE mode -- date window bypassed)`);
     } else {
       console.log(`[Invoice Generate] Found ${postpaidUsers.length}/${allPostpaidUsers.length} POSTPAID users within ${invoiceGenerateDays}-day window`);
     }
@@ -1467,7 +1467,7 @@ export async function generateInvoices(force = false): Promise<{ success: boolea
           }
         }
 
-        // For POSTPAID: check if there's a PAID invoice for the upcoming billingDay period (±5 days tolerance)
+        // For POSTPAID: check if there's a PAID invoice for the upcoming billingDay period (+/-5 days tolerance)
         if (user.subscriptionType === 'POSTPAID') {
           const bd = user.billingDay ?? 1;
           const nextBD = getNextBillingDay(bd);
@@ -1503,7 +1503,7 @@ export async function generateInvoices(force = false): Promise<{ success: boolea
           if (user.subscriptionType === 'PREPAID' && user.expiredAt) {
             // First period: skip if the user's expiry is still within createdAt + 1 billing cycle + invoiceGenerateDays.
             // This correctly handles 30-day plans (validityValue=30, validityUnit=DAYS) and
-            // monthly plans (validityUnit=MONTHS) — using 31 days/month as a conservative estimate.
+            // monthly plans (validityUnit=MONTHS) -- using 31 days/month as a conservative estimate.
             // Once the user has renewed (expiredAt > createdAt + 1 cycle + invoiceGenerateDays), invoices are generated.
             const validityDays = user.profile
               ? (user.profile.validityUnit === 'MONTHS'

@@ -1,6 +1,6 @@
 import 'server-only'
 /**
- * Payment Repository — Data Access Layer
+ * Payment Repository -- Data Access Layer
  *
  * Thin wrapper around Prisma calls for the `payment` model.
  *

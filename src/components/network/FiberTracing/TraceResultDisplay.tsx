@@ -161,7 +161,7 @@ export function TraceResultDisplay({ path, summary, onNodeClick }: TraceResultDi
                     </div>
                     {node.coordinates && (
                       <div className="text-xs opacity-75 mt-0.5">
-                        📍 {parseFloat(node.coordinates.lat).toFixed(6)}, {parseFloat(node.coordinates.lng).toFixed(6)}
+                         {parseFloat(node.coordinates.lat).toFixed(6)}, {parseFloat(node.coordinates.lng).toFixed(6)}
                       </div>
                     )}
                   </div>

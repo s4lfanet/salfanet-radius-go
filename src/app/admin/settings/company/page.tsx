@@ -323,7 +323,7 @@ export default function CompanySettingsPage() {
                         )}
                       </div>
                     </label>
-                    <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, SVG, WebP, AVIF, GIF · Maks 2MB</p>
+                    <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, SVG, WebP, AVIF, GIF . Maks 2MB</p>
                   </div>
                 </div>
               </div>
@@ -412,7 +412,7 @@ export default function CompanySettingsPage() {
               {/* Invoice Generate Days */}
               <div>
                 <label className="flex items-center gap-1.5 text-[11px] font-medium text-foreground mb-1">
-                  📅 {t('settings.invoiceGenerateDays')}
+                   {t('settings.invoiceGenerateDays')}
                 </label>
                 <input
                   type="number"
@@ -430,7 +430,7 @@ export default function CompanySettingsPage() {
               {/* Prefix ID Pelanggan */}
               <div>
                 <label className="flex items-center gap-1.5 text-[11px] font-medium text-foreground mb-1">
-                  🏷 Prefix ID Pelanggan
+                   Prefix ID Pelanggan
                 </label>
                 <input
                   type="text"
@@ -462,7 +462,7 @@ export default function CompanySettingsPage() {
               {/* Timezone */}
               <div>
                 <label className="flex items-center gap-1.5 text-[11px] font-medium text-foreground mb-1">
-                  🌍 Timezone
+                   Timezone
                 </label>
                 <select
                   value={settings.timezone}
@@ -513,7 +513,7 @@ export default function CompanySettingsPage() {
               <div className="border border-border rounded-lg p-3 bg-card/50">
                 <div className="flex items-center justify-between mb-2">
                   <label className="flex items-center gap-1.5 text-[11px] font-medium text-foreground">
-                    🔲 QRIS Mandiri (Tanpa Pihak Ke-3)
+                     QRIS Mandiri (Tanpa Pihak Ke-3)
                   </label>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -610,7 +610,7 @@ export default function CompanySettingsPage() {
               {timezoneChanged && (
                 <div className="mt-2 p-2 bg-warning/10 border border-warning/30 rounded-lg">
                   <p className="text-[10px] text-warning">
-                    🔄 {t('settings.timezoneChangedNote')}
+                     {t('settings.timezoneChangedNote')}
                   </p>
                 </div>
               )}

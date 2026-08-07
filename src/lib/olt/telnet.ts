@@ -97,7 +97,7 @@ expect eof
 }
 
 /**
- * Execute multiple commands in sequence via Telnet — for ZTE ONU registration workflows.
+ * Execute multiple commands in sequence via Telnet -- for ZTE ONU registration workflows.
  * Connects once, runs each command in order, then disconnects.
  */
 export async function executeMultipleCommands(
@@ -166,7 +166,7 @@ expect eof
 }
 
 /**
- * Test Telnet connectivity — check port open first, then try auth
+ * Test Telnet connectivity -- check port open first, then try auth
  * Uses a minimal expect script: just connect, wait for any prompt/banner, and disconnect.
  * Avoids running `display version` which may hang on some OLT models.
  */
@@ -209,7 +209,7 @@ expect {
   eof                { exit 1 }
 }
 
-# Wait for any shell prompt — if we get it, auth succeeded
+# Wait for any shell prompt -- if we get it, auth succeeded
 expect {
   -re {[>#$]} { send "exit\\r"; expect eof; exit 0 }
   timeout     { exit 0 }

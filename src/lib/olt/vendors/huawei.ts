@@ -116,7 +116,7 @@ export async function getOnuOpticalInfoSSH(
 export async function getTrafficStats(config: SNMPConfig): Promise<{
   rxBytes?: bigint; txBytes?: bigint; rxErrors?: bigint; txErrors?: bigint;
 }> {
-  const ifIndex = '1'; // port index — adapt as needed
+  const ifIndex = '1'; // port index -- adapt as needed
   const [rxResult, txResult] = await Promise.all([
     snmpGet(config, `1.3.6.1.2.1.2.2.1.10.${ifIndex}`), // ifInOctets
     snmpGet(config, `1.3.6.1.2.1.2.2.1.16.${ifIndex}`), // ifOutOctets

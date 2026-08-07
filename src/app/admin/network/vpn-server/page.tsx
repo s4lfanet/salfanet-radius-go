@@ -172,7 +172,7 @@ export default function VpnServerPage() {
       }));
       setVpnClients(clients);
     } catch {
-      // non-critical — ignore
+      // non-critical -- ignore
     }
   };
 
@@ -242,7 +242,7 @@ export default function VpnServerPage() {
     }
   };
 
-  // handleL2tpSshSubmit removed — form is now inline in the L2TP Control modal via handleConnectL2tp
+  // handleL2tpSshSubmit removed -- form is now inline in the L2TP Control modal via handleConnectL2tp
 
   const loadServers = async () => {
     try {
@@ -441,7 +441,7 @@ export default function VpnServerPage() {
 
       // Build RouterOS 7 WireGuard setup script
       const parts = data.vpnIp.split('.');
-      const script = `# WireGuard NAS Setup — ${wgNewPeerName}
+      const script = `# WireGuard NAS Setup -- ${wgNewPeerName}
 # Generated: ${new Date().toISOString().split('T')[0]}
 # ------------------------------------------------
 
@@ -616,7 +616,7 @@ export default function VpnServerPage() {
       }
       const result = await response.json();
       if (result.success) {
-        addToast({ type: 'success', title: t('network.connectionSuccess') || 'Koneksi Berhasil', description: `Identity: ${result.identity || '-'} — ${result.message || ''}` });
+        addToast({ type: 'success', title: t('network.connectionSuccess') || 'Koneksi Berhasil', description: `Identity: ${result.identity || '-'} -- ${result.message || ''}` });
       } else {
         addToast({ type: 'error', title: t('network.connectionFailed') || 'Koneksi Gagal', description: result.message || 'Tidak dapat terhubung ke RouterOS API' });
       }
@@ -698,7 +698,7 @@ export default function VpnServerPage() {
                 addToast({ type: 'success', title: t('network.setupComplete') || 'Setup VPN Berhasil', description: `Protokol aktif: ${protocols.join(', ') || '-'}` });
                 loadServers();
               } else {
-                const errMsg = data.message || 'Setup gagal — periksa koneksi ke CHR';
+                const errMsg = data.message || 'Setup gagal -- periksa koneksi ke CHR';
                 setSetupResultModal({ success: false, title: t('network.connectionFailed') || 'Setup Gagal', message: errMsg, stepsHtml });
                 addToast({ type: 'error', title: 'Setup VPN Gagal', description: errMsg });
               }
@@ -737,8 +737,8 @@ export default function VpnServerPage() {
 
   return (
     <>
-      {/* L2TP SSH Credential Modal — removed, form is now inline in L2TP Control modal */}
-      {/* PPTP SSH Credential Modal — removed, form is now inline in PPTP Control modal */}
+      {/* L2TP SSH Credential Modal -- removed, form is now inline in L2TP Control modal */}
+      {/* PPTP SSH Credential Modal -- removed, form is now inline in PPTP Control modal */}
       {/* Test Password Modal */}
       {showTestPasswordModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowTestPasswordModal(false)}>
@@ -877,7 +877,7 @@ export default function VpnServerPage() {
                   <div className="p-1.5 bg-brand-500/20 rounded-lg flex items-center justify-center">
                     <Info className="w-4 h-4 text-brand-400" />
                   </div>
-                  <span className="text-sm font-bold text-brand-400 uppercase tracking-wider">Cara Penggunaan — Alur VPN Server</span>
+                  <span className="text-sm font-bold text-brand-400 uppercase tracking-wider">Cara Penggunaan -- Alur VPN Server</span>
                 </div>
                 {showTutorial ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
               </button>
@@ -1057,7 +1057,7 @@ export default function VpnServerPage() {
 
                     {/* Pool Config Info */}
                     <div className="mb-4 px-4 py-3 rounded-xl bg-brand-500/5 border border-brand-500/20 flex flex-wrap gap-4 text-xs">
-                      <span className="text-muted-foreground">Pool IP: <span className="font-mono text-foreground">{server.subnet.split('.').slice(0,3).join('.')}.{server.poolStart ?? 10} – {server.subnet.split('.').slice(0,3).join('.')}.{server.poolEnd ?? 254}</span></span>
+                      <span className="text-muted-foreground">Pool IP: <span className="font-mono text-foreground">{server.subnet.split('.').slice(0,3).join('.')}.{server.poolStart ?? 10} - {server.subnet.split('.').slice(0,3).join('.')}.{server.poolEnd ?? 254}</span></span>
                       <span className="text-muted-foreground">Gateway: <span className="font-mono text-foreground">{server.gateway || (server.subnet.split('.').slice(0,3).join('.') + '.1')}</span></span>
                       <button onClick={() => handleEdit(server)} className="ml-auto text-brand-400 hover:underline flex items-center gap-1"><Settings className="w-3 h-3" /> Edit Pool</button>
                     </div>
@@ -1290,7 +1290,7 @@ export default function VpnServerPage() {
                         placeholder="mis. 10.20.30.1 (opsional)"
                       />
                     </div>
-                    <p className="mt-2 text-xs text-muted-foreground">Pool: x.x.x.<strong>{formData.poolStart || '10'}</strong> – x.x.x.<strong>{formData.poolEnd || '254'}</strong> · Gateway: <strong>{formData.gateway || (formData.subnet ? formData.subnet.split('.').slice(0,3).join('.') + '.1' : 'auto')}</strong></p>
+                    <p className="mt-2 text-xs text-muted-foreground">Pool: x.x.x.<strong>{formData.poolStart || '10'}</strong> - x.x.x.<strong>{formData.poolEnd || '254'}</strong> . Gateway: <strong>{formData.gateway || (formData.subnet ? formData.subnet.split('.').slice(0,3).join('.') + '.1' : 'auto')}</strong></p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-brand-400 mb-3">Protokol VPN</label>
@@ -1367,7 +1367,7 @@ export default function VpnServerPage() {
                   <div className="p-2 bg-gradient-to-br from-teal-500 to-brand-400 rounded-lg flex items-center justify-center">
                     <Wifi className="w-5 h-5 text-white" />
                   </div>
-                  <h2 className="text-xl font-bold text-foreground">WireGuard VPN Server — {wgPanelServer.name}</h2>
+                  <h2 className="text-xl font-bold text-foreground">WireGuard VPN Server -- {wgPanelServer.name}</h2>
                 </div>
                 <button onClick={() => setShowWgPanel(false)} className="p-2 text-muted-foreground hover:text-foreground transition-colors">
                   <XCircle className="w-6 h-6" />
@@ -1422,8 +1422,8 @@ export default function VpnServerPage() {
                         {wgPeers.map((peer) => (
                           <div key={peer.publicKey} className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-teal-500/20">
                             <div>
-                              <p className="text-xs font-mono text-foreground">{peer.allowedIps || '–'}</p>
-                              <p className="text-xs text-muted-foreground">{peer.endpoint || 'no endpoint'} • {peer.transfer || '–'}</p>
+                              <p className="text-xs font-mono text-foreground">{peer.allowedIps || '-'}</p>
+                              <p className="text-xs text-muted-foreground">{peer.endpoint || 'no endpoint'} * {peer.transfer || '-'}</p>
                               <p className="text-xs text-muted-foreground truncate max-w-[200px]">{peer.publicKey}</p>
                               {peer.lastHandshake && <p className="text-xs text-teal-400">Handshake: {new Date(peer.lastHandshake).toLocaleString('id-ID')}</p>}
                             </div>
@@ -1462,7 +1462,7 @@ export default function VpnServerPage() {
                   {wgGeneratedScript && (
                     <div className="mt-4 p-4 rounded-xl bg-slate-900 border border-teal-500/30">
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-bold text-teal-300">Script RouterOS 7 — Copy ke Winbox Terminal</p>
+                        <p className="text-sm font-bold text-teal-300">Script RouterOS 7 -- Copy ke Winbox Terminal</p>
                         <button onClick={() => { copyText(wgGeneratedScript); addToast({ type: 'success', title: 'Script disalin!' }); }} className="text-xs text-brand-400 bg-muted px-2 py-1 rounded">Copy</button>
                       </div>
                       <pre className="text-xs font-mono text-green-300 whitespace-pre overflow-x-auto max-h-64">{wgGeneratedScript}</pre>
@@ -1496,7 +1496,7 @@ export default function VpnServerPage() {
               {/* Inline SSH + L2TP Credentials */}
               {!savedSshCredentials ? (
                 <div className="mb-6 p-4 rounded-xl border border-brand-600/30 bg-muted/50 dark:bg-slate-900/60">
-                  <p className="text-xs font-bold text-brand-400 mb-1">?? SSH Connection — VPS RADIUS Server</p>
+                  <p className="text-xs font-bold text-brand-400 mb-1">?? SSH Connection -- VPS RADIUS Server</p>
                   <p className="text-xs text-muted-foreground mb-3">Target: <span className="text-brand-600 font-medium">{editingServer.name}</span> ({editingServer.host})</p>
                   <input className="w-full px-3 py-2 bg-input border border-border rounded-lg text-foreground text-sm mb-2" placeholder="VPS IP/Hostname" value={l2tpSshForm.host} onChange={(e) => setL2tpSshForm(p => ({...p, host: e.target.value}))} />
                   <div className="grid grid-cols-2 gap-2 mb-2">
@@ -1533,7 +1533,7 @@ export default function VpnServerPage() {
                               <option value="" disabled>?? Pilih akun VPN Client (RADIUS Server)...</option>
                               {radiusClients.map(c => (
                                 <option key={c.id} value={c.id}>
-                                  ?? {c.name} — {c.username} ({c.vpnServerHost || 'no host'})
+                                  ?? {c.name} -- {c.username} ({c.vpnServerHost || 'no host'})
                                 </option>
                               ))}
                             </select>

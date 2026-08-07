@@ -512,13 +512,13 @@ function PayManualPageContent() {
 
         <Card className="mt-6 bg-primary/10 border-primary/30">
           <CardContent className="pt-6">
-            <h3 className="font-semibold mb-3"> ️ Penting:</h3>
+            <h3 className="font-semibold mb-3">  Penting:</h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>• Pastikan transfer sesuai dengan jumlah tagihan</li>
-              <li>• Upload bukti transfer yang jelas dan terbaca</li>
-              <li>• Verifikasi pembayaran membutuhkan waktu maksimal 1x24 jam</li>
-              <li>• Anda akan menerima notifikasi setelah pembayaran diverifikasi</li>
-              <li>• Hubungi admin jika ada kendala dalam pembayaran</li>
+              <li>* Pastikan transfer sesuai dengan jumlah tagihan</li>
+              <li>* Upload bukti transfer yang jelas dan terbaca</li>
+              <li>* Verifikasi pembayaran membutuhkan waktu maksimal 1x24 jam</li>
+              <li>* Anda akan menerima notifikasi setelah pembayaran diverifikasi</li>
+              <li>* Hubungi admin jika ada kendala dalam pembayaran</li>
             </ul>
           </CardContent>
         </Card>

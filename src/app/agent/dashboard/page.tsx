@@ -741,7 +741,7 @@ export default function AgentDashboardPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">{t('agent.portal.codeLength')} (4–10)</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-300 mb-1.5">{t('agent.portal.codeLength')} (4-10)</label>
               <input
                 type="number"
                 min="4"

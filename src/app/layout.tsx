@@ -44,7 +44,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   minimumScale: 1,
-  // maximumScale and userScalable intentionally NOT set — allow pinch-zoom
+  // maximumScale and userScalable intentionally NOT set -- allow pinch-zoom
   // (Lighthouse accessibility: user-scalable=no harms visually impaired users)
 };
 

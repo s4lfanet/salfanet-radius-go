@@ -225,7 +225,7 @@ export default function VpScriptsPage() {
             VP Scripts (GenieACS)
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Kelola Virtual Parameter scripts — disimpan di Prisma, otomatis sync ke GenieACS NBI
+            Kelola Virtual Parameter scripts -- disimpan di Prisma, otomatis sync ke GenieACS NBI
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -335,11 +335,11 @@ export default function VpScriptsPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell text-slate-500 dark:text-slate-400 text-xs">
-                    {vp.description || <span className="italic">—</span>}
+                    {vp.description || <span className="italic">--</span>}
                   </td>
                   <td className="px-4 py-3 hidden lg:table-cell">
                     <code className="text-xs text-slate-600 dark:text-slate-400 font-mono">
-                      {(vp.script || '').split('\n').find((l) => l.trim() && !l.startsWith('/'))?.slice(0, 70) || '—'}
+                      {(vp.script || '').split('\n').find((l) => l.trim() && !l.startsWith('/'))?.slice(0, 70) || '--'}
                     </code>
                   </td>
                   <td className="px-4 py-3">
@@ -347,7 +347,7 @@ export default function VpScriptsPage() {
                       <SyncBadge syncedAt={vp.syncedAt} syncError={vp.syncError} />
                       {vp.syncError && (
                         <span className="text-xs text-red-600 dark:text-red-400 truncate max-w-[160px]" title={vp.syncError}>
-                          {vp.syncError.slice(0, 40)}…
+                          {vp.syncError.slice(0, 40)}...
                         </span>
                       )}
                     </div>
@@ -388,13 +388,13 @@ export default function VpScriptsPage() {
       {/* Sync status summary */}
       {!loading && items.length > 0 && (
         <div className="text-xs text-slate-500 dark:text-slate-400">
-          Total: {items.length} VP script ·{' '}
+          Total: {items.length} VP script .{' '}
           <span className="text-green-600 dark:text-green-400">
             {items.filter((x) => x.syncedAt && !x.syncError).length} synced
-          </span>{' '}·{' '}
+          </span>{' '}.{' '}
           <span className="text-red-600 dark:text-red-400">
             {items.filter((x) => x.syncError).length} error
-          </span>{' '}·{' '}
+          </span>{' '}.{' '}
           <span className="text-yellow-600 dark:text-yellow-400">
             {items.filter((x) => !x.syncedAt && !x.syncError).length} pending
           </span>

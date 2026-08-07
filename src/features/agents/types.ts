@@ -1,5 +1,5 @@
 /**
- * Agents Feature — Domain Types
+ * Agents Feature -- Domain Types
  *
  * @module features/agents/types
  */

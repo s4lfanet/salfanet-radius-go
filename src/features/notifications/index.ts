@@ -1,5 +1,5 @@
 /**
- * Notifications Feature — Public API
+ * Notifications Feature -- Public API
  *
  * Import dari sini, bukan langsung dari sub-file.
  * @example

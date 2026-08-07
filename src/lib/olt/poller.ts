@@ -100,7 +100,7 @@ export async function pollOLTWithOptions(
       ]);
     }
 
-    // Discover ONUs — try SNMP first (ZTE C320 supports SNMP-based ONU discovery)
+    // Discover ONUs -- try SNMP first (ZTE C320 supports SNMP-based ONU discovery)
     if (snmpConfig && isOnline && typeof (vendor as any).discoverONUsSNMP === 'function') {
       try {
         discoveredOnus = await (vendor as any).discoverONUsSNMP(snmpConfig, olt.firmwareVersion, telnetConfig);
@@ -237,7 +237,7 @@ async function pruneMissingOnus(oltId: string, discoveredKeys: Set<string>): Pro
 
   const staleIds = currentOnus
     .filter((onu) => {
-      if (discoveredKeys.has(buildOnuKey(onu))) return false; // still visible — keep
+      if (discoveredKeys.has(buildOnuKey(onu))) return false; // still visible -- keep
       // auth_failed = unregistered ONU (explicitly deleted or never configured).
       // Do NOT prune these: the OLT SEEN_ONU_TABLE may not reflect the ONU yet
       // right after deletion, and operators need to see it to re-register it.
@@ -270,7 +270,7 @@ async function upsertONU(
 
     // Manual sync/delete refresh should stay lightweight so the request can finish.
     // If SNMP discovery already provided rxPower (e.g. ZTE V2.1 via discoverONUsSNMP/discoverPonV21),
-    // skip the per-ONU Telnet/SSH optical info call entirely — it's redundant and causes N×Telnet sessions per cycle.
+    // skip the per-ONU Telnet/SSH optical info call entirely -- it's redundant and causes NxTelnet sessions per cycle.
     const snmpHasOptical = onu.rxPower !== null && onu.rxPower !== undefined;
     if (!options.skipOpticalInfo && !snmpHasOptical) {
       // Only fallback to Telnet optical info when SNMP could not supply rxPower.
@@ -367,7 +367,7 @@ async function checkAlerts(
 
   // Alert: High temperature
   if (temperature !== null && temperature > 65) {
-    await createAlertIfNotExists(oltId, null, 'olt_high_temp', 'warning', `OLT ${olt.name} temperature is ${temperature}°C`);
+    await createAlertIfNotExists(oltId, null, 'olt_high_temp', 'warning', `OLT ${olt.name} temperature is ${temperature} degC`);
   }
 
   // Alert: Dying gasp ONUs

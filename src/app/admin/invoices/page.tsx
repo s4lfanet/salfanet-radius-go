@@ -809,7 +809,7 @@ export default function InvoicesPage() {
               <span className="text-[10px] text-muted-foreground whitespace-nowrap">Periode:</span>
               <input type="date" value={exportDateFrom} onChange={e => setExportDateFrom(e.target.value)}
                 className="text-[10px] px-1.5 py-1 bg-[#1a1135]/80 border border-brand-600/30 rounded text-foreground focus:outline-none focus:border-brand-600/60" />
-              <span className="text-[10px] text-muted-foreground/40">–</span>
+              <span className="text-[10px] text-muted-foreground/40">-</span>
               <input type="date" value={exportDateTo} onChange={e => setExportDateTo(e.target.value)}
                 className="text-[10px] px-1.5 py-1 bg-[#1a1135]/80 border border-brand-600/30 rounded text-foreground focus:outline-none focus:border-brand-600/60" />
             </div>
@@ -1415,7 +1415,7 @@ export default function InvoicesPage() {
                             >
                               <div className="min-w-0">
                                 <p className="text-xs font-medium truncate">{u.name}</p>
-                                <p className="text-[10px] text-muted-foreground font-mono">{u.username} · {u.profile?.name || '-'}</p>
+                                <p className="text-[10px] text-muted-foreground font-mono">{u.username} . {u.profile?.name || '-'}</p>
                               </div>
                             </button>
                           ))}

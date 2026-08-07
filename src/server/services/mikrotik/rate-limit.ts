@@ -40,7 +40,7 @@ export interface RateLimitChangeResult {
  * Change rate limit via MikroTik RouterOS API.
  *
  * Tries two API approaches:
- * 1. /ppp/active/set rate-limit=X  (RouterOS 7.x — modifies the dynamic queue automatically)
+ * 1. /ppp/active/set rate-limit=X  (RouterOS 7.x -- modifies the dynamic queue automatically)
  * 2. /queue/simple/set max-limit=X (find queue named <pppoe-{username}>)
  *
  * Returns { success, method } to indicate which worked.
@@ -62,7 +62,7 @@ async function changeRateLimitViaAPI(
     await api.connect();
 
     // -- Approach 1: /ppp/active/set rate-limit (RouterOS 7.x) --------------
-    // This is the most reliable method — directly modifies the PPP session's
+    // This is the most reliable method -- directly modifies the PPP session's
     // rate-limit which automatically updates the dynamic simple queue.
     const activePPP = await api.write('/ppp/active/print');
     const activeConn = activePPP.find(
@@ -122,12 +122,12 @@ async function changeRateLimitViaAPI(
 }
 
 /**
- * Change rate limit of an active PPPoE session — without disconnect.
+ * Change rate limit of an active PPPoE session -- without disconnect.
  *
  * Tries (in order):
- * 1. RADIUS CoA — Mikrotik-Rate-Limit attribute via radclient
- * 2. RouterOS API — /ppp/active/set rate-limit (RouterOS 7.x)
- * 3. RouterOS API — /queue/simple/set max-limit on <pppoe-{username}> queue
+ * 1. RADIUS CoA -- Mikrotik-Rate-Limit attribute via radclient
+ * 2. RouterOS API -- /ppp/active/set rate-limit (RouterOS 7.x)
+ * 3. RouterOS API -- /queue/simple/set max-limit on <pppoe-{username}> queue
  * 4. Disconnect as last resort (if allowDisconnect=true)
  *
  * CoA is preferred because it's the standard RADIUS approach, works across
@@ -169,7 +169,7 @@ export async function changePPPoERateLimit(
       );
 
       if (coaResult.success) {
-        console.log(`[RateLimit] CoA-ACK received — rate limit changed to ${newRateLimit} for ${username}`);
+        console.log(`[RateLimit] CoA-ACK received -- rate limit changed to ${newRateLimit} for ${username}`);
         return {
           success: true,
           method: 'coa',
@@ -181,7 +181,7 @@ export async function changePPPoERateLimit(
       console.log(`[RateLimit] CoA error: ${coaErr?.message}, trying API methods...`);
     }
   } else {
-    console.log('[RateLimit] radclient not available, skipping CoA — trying API methods...');
+    console.log('[RateLimit] radclient not available, skipping CoA -- trying API methods...');
   }
 
   // -- Method 2+3: RouterOS API (ppp/active/set -> queue/simple/set) ---------
@@ -194,7 +194,7 @@ export async function changePPPoERateLimit(
     };
   }
 
-  // -- Method 4: Fallback — disconnect (user reconnects with new rate) -------
+  // -- Method 4: Fallback -- disconnect (user reconnects with new rate) -------
   if (allowDisconnect) {
     console.log(`[RateLimit] All non-disruptive methods failed. Disconnecting user ${username}...`);
     const disconnectResult = await sendDisconnectRequest(
@@ -211,7 +211,7 @@ export async function changePPPoERateLimit(
       return {
         success: true,
         method: 'disconnect',
-        message: 'User disconnected — will reconnect with new rate limit',
+        message: 'User disconnected -- will reconnect with new rate limit',
       };
     }
 

@@ -350,7 +350,7 @@ async function restoreUserInRADIUS(username: string, groupName?: string, ipAddre
     `
     console.log(`[RADIUS] Restored ${username} radusergroup ? ${groupName}`)
   } else {
-    console.warn(`[RADIUS] No groupName for ${username} — radusergroup left empty`)
+    console.warn(`[RADIUS] No groupName for ${username} -- radusergroup left empty`)
   }
 
   // 4. Restore static IP if available

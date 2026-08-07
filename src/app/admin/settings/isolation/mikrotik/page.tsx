@@ -145,13 +145,13 @@ add name=isolir \\
     use-mpls=no use-compression=no use-encryption=no \\
     comment="Profile untuk user yang diisolir"`;
 
-  // Script 2b: RADIUS Attributes — address-list agar IP langsung masuk ke isolir list
+  // Script 2b: RADIUS Attributes -- address-list agar IP langsung masuk ke isolir list
   // Ini penting! Tanpa ini, user yang belum reconnect bisa masih akses internet penuh.
   const addressListScript = `/ip firewall address-list
 # Catatan: address-list 'isolir' akan diisi otomatis oleh RADIUS via Mikrotik-Address-List
 # attribute saat user login ulang dengan profile isolir.
 # Untuk user yang SEDANG ONLINE saat diisolir, sistem menambahkan IP secara langsung via API.
-# Script ini hanya untuk verifikasi — tidak perlu dijalankan manual.
+# Script ini hanya untuk verifikasi -- tidak perlu dijalankan manual.
 
 # Cek isi address-list isolir saat ini:
 /ip firewall address-list print where list=isolir
@@ -180,7 +180,7 @@ add name=isolir \\
 # RADIUS akan otomatis memasukkan IP user ke address-list 'isolir' via Mikrotik-Address-List attribute.
 # Sistem juga menambahkan IP via API saat isolasi aktif, tanpa menunggu reconnect.
 
-# [1] Allow ESTABLISHED & RELATED — return traffic dari payment gateway
+# [1] Allow ESTABLISHED & RELATED -- return traffic dari payment gateway
 add chain=forward \\
     src-address-list=isolir \\
     connection-state=established,related \\
@@ -426,7 +426,7 @@ ${firewallNatScript}
           </div>
         </div>
 
-        {/* ?? IMPORTANT WARNING BOX — only shown when server IP is not explicitly configured */}
+        {/* ?? IMPORTANT WARNING BOX -- only shown when server IP is not explicitly configured */}
         {!settings.isolationServerIp && (
         <div className="bg-gradient-to-r from-[#ff4466]/10 to-accent-foreground/10 border-2 border-[#ff4466]/50 rounded-lg p-4 mb-4">
           <div className="flex items-start gap-3">
@@ -477,7 +477,7 @@ ${firewallNatScript}
               <div>
                 <span className="text-muted-foreground dark:text-muted-foreground">Server IP (NAT):</span>
                 <p className={`font-mono font-semibold ${settings.isolationServerIp ? 'text-green-500' : 'text-amber-500'}`}>
-                  {settings.isolationServerIp || 'Belum diset — atur di pengaturan isolasi'}
+                  {settings.isolationServerIp || 'Belum diset -- atur di pengaturan isolasi'}
                 </p>
               </div>
               <div>

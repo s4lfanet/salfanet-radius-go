@@ -197,7 +197,7 @@ export default function TechnicianIsolatedPage() {
                     </div>
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-slate-500 dark:text-muted-foreground/60">{u.profileName} {u.areaName ? `• ${u.areaName}` : ''}</span>
+                    <span className="text-slate-500 dark:text-muted-foreground/60">{u.profileName} {u.areaName ? `* ${u.areaName}` : ''}</span>
                     <span className="font-bold text-red-600 dark:text-red-400 flex items-center gap-1">
                       <DollarSign className="w-3 h-3" />
                       {formatCurrency(u.totalUnpaid)}

@@ -25,7 +25,7 @@ const execAsync = promisify(exec);
 const DEFAULT_COA_PORT = process.env.RADIUS_COA_PORT || '3799';
 const DEFAULT_COA_SECRET = process.env.RADIUS_COA_SECRET || '';
 if (!DEFAULT_COA_SECRET) {
-  console.warn('[CoA] RADIUS_COA_SECRET env var not set — CoA will use empty secret (ensure this matches NAS config)');
+  console.warn('[CoA] RADIUS_COA_SECRET env var not set -- CoA will use empty secret (ensure this matches NAS config)');
 }
 
 interface CoAResult {
@@ -69,7 +69,7 @@ async function executeRadclient(
 ): Promise<CoAResult> {
   const tmpFile = `/tmp/coa-${Date.now()}-${Math.random().toString(36).slice(2)}.txt`;
   try {
-    // Write attributes to a temp file — avoids shell quoting/injection issues
+    // Write attributes to a temp file -- avoids shell quoting/injection issues
     await writeFile(tmpFile, attributes + '\n');
 
     // Build radclient command - send directly to NAS (MikroTik)

@@ -133,7 +133,7 @@ export function OTBDiagramV2({
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400">{node.name}</p>
             {node.address && (
-              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">📍 {node.address}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1"> {node.address}</p>
             )}
           </div>
           <div className="text-right">
@@ -314,7 +314,7 @@ export function OTBDiagramV2({
           OTB Diagram - {node.code}
         </text>
 
-        {/* OLT Input Section — supports multiple OLTs */}
+        {/* OLT Input Section -- supports multiple OLTs */}
         {(() => {
           // Determine OLT sources: from feeder cable assignments or single upstream
           const feederAssignments: any[] = node.metadata?.feederCableAssignments ?? [];
@@ -350,7 +350,7 @@ export function OTBDiagramV2({
                 {cableCoreCount ? `${cableCoreCount} cores` : ''}
               </text>
 
-              {/* OTB Box — patch-through (no splitter) */}
+              {/* OTB Box -- patch-through (no splitter) */}
               <g transform={`translate(290, 50)`}>
                 <rect width={210} height={100} rx="8" fill="url(#otbGradient)" className="stroke-blue-500" strokeWidth="2.5" />
                 <text x={105} y={25} textAnchor="middle" className="text-base font-bold fill-blue-700 dark:fill-blue-300">
@@ -363,7 +363,7 @@ export function OTBDiagramV2({
                   Patch-through (Lurus)
                 </text>
                 <text x={105} y={80} textAnchor="middle" className="text-[10px] fill-gray-400 dark:fill-gray-500">
-                  {node.spliceTrayCount || 1} tray · {tubes.length} tubes · {cableCoreCount} cores
+                  {node.spliceTrayCount || 1} tray . {tubes.length} tubes . {cableCoreCount} cores
                 </text>
               </g>
 

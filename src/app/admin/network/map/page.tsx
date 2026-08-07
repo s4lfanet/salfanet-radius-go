@@ -502,11 +502,11 @@ export default function NetworkMapPage() {
             message = 'Akses lokasi ditolak. Silakan izinkan akses lokasi di pengaturan browser:\n\n1. Klik ikon gembok di address bar\n2. Izinkan akses lokasi\n3. Refresh halaman';
             break;
           case error.POSITION_UNAVAILABLE:
-            message = 'GPS tidak tersedia. Pastikan:\n\n• Perangkat memiliki GPS\n• GPS diaktifkan\n• Koneksi internet stabil';
+            message = 'GPS tidak tersedia. Pastikan:\n\n* Perangkat memiliki GPS\n* GPS diaktifkan\n* Koneksi internet stabil';
             break;
           case error.TIMEOUT:
             title = 'Timeout';
-            message = 'Deteksi lokasi membutuhkan waktu lebih lama. Pastikan:\n\n• GPS perangkat aktif\n• Berada di area terbuka\n• Izin lokasi sudah diberikan\n\nCoba lagi dalam beberapa saat.';
+            message = 'Deteksi lokasi membutuhkan waktu lebih lama. Pastikan:\n\n* GPS perangkat aktif\n* Berada di area terbuka\n* Izin lokasi sudah diberikan\n\nCoba lagi dalam beberapa saat.';
             break;
         }
         addToast({ type: error.code === error.TIMEOUT ? 'warning' : 'error', title: title, description: message });
@@ -1192,7 +1192,7 @@ export default function NetworkMapPage() {
                                       <div>
                                         <p className="text-sm font-medium text-gray-800">{conn.oltName}</p>
                                         <p className="text-xs text-muted-foreground">
-                                          {conn.uplinkPort || 'Auto'} • Priority: {conn.priority}
+                                          {conn.uplinkPort || 'Auto'} * Priority: {conn.priority}
                                         </p>
                                       </div>
                                     </div>

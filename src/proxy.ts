@@ -34,7 +34,7 @@ function inMemoryRateLimit(key: string, max: number, windowMs: number): boolean 
   return true; // allowed
 }
 
-// Paths known to be attacked by bots / scanners — block them immediately
+// Paths known to be attacked by bots / scanners -- block them immediately
 const BLOCKED_PATHS = [
   '/wp-admin', '/wp-login', '/.env', '/phpinfo', '/admin/config',
   '/config.php', '/setup.php', '/install.php', '/.git', '/xmlrpc.php',
@@ -205,7 +205,7 @@ export default async function proxy(req: NextRequest) {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   
   // Permissions-Policy: Controls browser features
-  // geolocation=(self) — allow same-origin geolocation (used in GPS features on admin pages)
+  // geolocation=(self) -- allow same-origin geolocation (used in GPS features on admin pages)
   response.headers.set(
     'Permissions-Policy',
     'camera=(), microphone=(), geolocation=(self), interest-cohort=()'

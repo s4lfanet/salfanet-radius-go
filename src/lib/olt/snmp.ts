@@ -47,7 +47,7 @@ export async function snmpGet(config: SNMPConfig, oid: string): Promise<SNMPResu
       return { success: false, error: 'OID not found' };
     }
 
-    // Parse value — type may include hyphen (e.g. "Hex-STRING:", "Timeticks:")
+    // Parse value -- type may include hyphen (e.g. "Hex-STRING:", "Timeticks:")
     const match = output.match(/=\s*[\w-]+:\s*(.+)$/m);
     if (match) {
       return { success: true, value: match[1].trim().replace(/"/g, '') };

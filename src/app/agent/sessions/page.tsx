@@ -275,7 +275,7 @@ export default function AgentSessionsPage() {
                     <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0 mt-1" />
                     <div className="min-w-0">
                       <p className="font-mono font-bold text-sm text-slate-900 dark:text-white truncate">{session.username}</p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{session.profileName || '-'} · {session.routerName || '-'}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400">{session.profileName || '-'} . {session.routerName || '-'}</p>
                     </div>
                   </div>
                   <span className="text-xs font-semibold text-slate-600 dark:text-white whitespace-nowrap">

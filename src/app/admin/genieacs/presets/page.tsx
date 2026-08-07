@@ -147,7 +147,7 @@ export default function GenieACSPresetsPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl md:text-2xl font-bold">GenieACS Presets</h1>
-          <p className="text-sm text-slate-500">Kelola preset provisioning di NBI server · {items.length} preset</p>
+          <p className="text-sm text-slate-500">Kelola preset provisioning di NBI server . {items.length} preset</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={load} disabled={loading}

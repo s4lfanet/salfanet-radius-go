@@ -1,13 +1,13 @@
 /**
  * Hioso / C-Data OLT SNMP/Telnet Integration
  *
- * Supports 5 profiles verified from production OIDs (April–May 2026):
+ * Supports 5 profiles verified from production OIDs (April-May 2026):
  *
- *   HIOSO_C  — HA7304V,  community: public,   EPON, PON2/3/4 merged in SNMP
- *   HIOSO_B2 — HA7304C,  community: SNMPREAD, EPON, 4 PON ports exposed correctly
- *   HIOSO_VX — HA7304VX, community: public,   EPON, identical MIB to HIOSO_C
- *   HIOSO_B  — BDCOM/Huawei clone,            EPON, different MIB tree (.3320.101.10)
- *   HIOSO_GPON — C-Data GPON,                 GPON, MIB tree .25355.3.3
+ *   HIOSO_C  -- HA7304V,  community: public,   EPON, PON2/3/4 merged in SNMP
+ *   HIOSO_B2 -- HA7304C,  community: SNMPREAD, EPON, 4 PON ports exposed correctly
+ *   HIOSO_VX -- HA7304VX, community: public,   EPON, identical MIB to HIOSO_C
+ *   HIOSO_B  -- BDCOM/Huawei clone,            EPON, different MIB tree (.3320.101.10)
+ *   HIOSO_GPON -- C-Data GPON,                 GPON, MIB tree .25355.3.3
  *
  * OID Reference: OLT_OID_REFERENCE.md
  * Enterprise OID roots:
@@ -31,28 +31,28 @@ const HIOSO_EPON_OIDS = {
   // Optical readings (index format: board.pon.onu_id)
   onuTxPower:   '1.3.6.1.4.1.25355.3.2.6.14.2.1.4', // Float string dBm (already in dBm, divider=1)
   onuRxPower:   '1.3.6.1.4.1.25355.3.2.6.14.2.1.8', // Float string dBm (already in dBm, divider=1)
-  onuOptTemp:   '1.3.6.1.4.1.25355.3.2.6.14.2.1.7', // Integer, °C
+  onuOptTemp:   '1.3.6.1.4.1.25355.3.2.6.14.2.1.7', // Integer,  degC
 };
 
-// HIOSO_B profile — BDCOM/Huawei clone MIB (.3320.101.10)
+// HIOSO_B profile -- BDCOM/Huawei clone MIB (.3320.101.10)
 const HIOSO_B_OIDS = {
   onuName:    '1.3.6.1.4.1.3320.101.10.1.1.79', // String
   onuSn:      '1.3.6.1.4.1.3320.101.10.1.1.3',  // Serial number
   onuStatus:  '1.3.6.1.4.1.3320.101.10.1.1.26', // Status
-  onuTxPower: '1.3.6.1.4.1.3320.101.10.5.1.5',  // Integer raw — auto-scale
-  onuRxPower: '1.3.6.1.4.1.3320.101.10.5.1.6',  // Integer raw — auto-scale
+  onuTxPower: '1.3.6.1.4.1.3320.101.10.5.1.5',  // Integer raw -- auto-scale
+  onuRxPower: '1.3.6.1.4.1.3320.101.10.5.1.6',  // Integer raw -- auto-scale
 };
 
-// HIOSO_GPON profile — C-Data GPON MIB (.25355.3.3)
+// HIOSO_GPON profile -- C-Data GPON MIB (.25355.3.3)
 const HIOSO_GPON_OIDS = {
   onuName:    '1.3.6.1.4.1.25355.3.3.1.1.1.2',  // String
   onuSn:      '1.3.6.1.4.1.25355.3.3.1.1.1.5',  // Serial number
   onuStatus:  '1.3.6.1.4.1.25355.3.3.1.1.1.11', // Status
-  onuTxPower: '1.3.6.1.4.1.25355.3.3.1.1.4.1.2',// Integer raw — auto-scale (divider=100)
-  onuRxPower: '1.3.6.1.4.1.25355.3.3.1.1.4.1.1',// Integer raw — auto-scale (divider=100)
+  onuTxPower: '1.3.6.1.4.1.25355.3.3.1.1.4.1.2',// Integer raw -- auto-scale (divider=100)
+  onuRxPower: '1.3.6.1.4.1.25355.3.3.1.1.4.1.1',// Integer raw -- auto-scale (divider=100)
 };
 
-// Standard MIBs — common to all profiles
+// Standard MIBs -- common to all profiles
 const STD_OIDS = {
   sysDescr:        '1.3.6.1.2.1.1.1.0',
   sysUpTime:       '1.3.6.1.2.1.1.3.0',
@@ -105,7 +105,7 @@ function parsePower(rawValue: string, profile: HiosoProfile): number | null {
   if (isNaN(num)) return null;
 
   if (profile === 'HIOSO_C' || profile === 'HIOSO_B2' || profile === 'HIOSO_VX') {
-    // Already in dBm — just round to 2 dp
+    // Already in dBm -- just round to 2 dp
     return Math.round(num * 100) / 100;
   }
 
@@ -185,7 +185,7 @@ export async function getTemperature(config: SNMPConfig): Promise<number | null>
 // --- CPU / Memory -------------------------------------------------------------
 
 /**
- * Get CPU load % — only available on HIOSO_B2 via HOST-RESOURCES-MIB.
+ * Get CPU load % -- only available on HIOSO_B2 via HOST-RESOURCES-MIB.
  */
 export async function getCpuUsage(config: SNMPConfig): Promise<number | null> {
   const result = await snmpGet(config, STD_OIDS.cpuLoad);
@@ -197,7 +197,7 @@ export async function getCpuUsage(config: SNMPConfig): Promise<number | null> {
 }
 
 /**
- * Get memory usage % — only available on HIOSO_B2 via HOST-RESOURCES-MIB.
+ * Get memory usage % -- only available on HIOSO_B2 via HOST-RESOURCES-MIB.
  */
 export async function getMemoryUsage(config: SNMPConfig): Promise<number | null> {
   const [totalRes, usedRes] = await Promise.all([
@@ -255,7 +255,7 @@ export async function discoverONUsSNMP(
   for (const onu of baseOnus) {
     const suffix = `${onu.board}.${onu.pon}.${onu.onuId}`;
 
-    // Find matching SN — try both full OID and suffix match
+    // Find matching SN -- try both full OID and suffix match
     const snRaw  = snMap[`${oids.onuSn}.${suffix}`]    ?? findBySuffix(snMap, suffix);
     const namRaw = nameMap[`${oids.onuName}.${suffix}`] ?? findBySuffix(nameMap, suffix);
     const rxRaw  = rxMap[`${oids.onuRxPower}.${suffix}`]  ?? findBySuffix(rxMap, suffix);
@@ -325,7 +325,7 @@ function parseOnuTelnet(output: string, board: number, pon: number): any[] {
 }
 
 /**
- * Discover ONUs via Telnet — used as fallback when SNMP is insufficient
+ * Discover ONUs via Telnet -- used as fallback when SNMP is insufficient
  * (e.g. HIOSO_C PON3/PON4 which are merged in SNMP).
  */
 export async function discoverONUs(config: TelnetConfig): Promise<any[]> {
@@ -339,7 +339,7 @@ export async function discoverONUs(config: TelnetConfig): Promise<any[]> {
   return onus;
 }
 
-// Telnet SSH stub — Hioso uses Telnet CLI, no SSH in practice
+// Telnet SSH stub -- Hioso uses Telnet CLI, no SSH in practice
 export async function discoverONUsSSH(config: any): Promise<any[]> {
   return []; // Hioso does not support SSH polling in standard config
 }

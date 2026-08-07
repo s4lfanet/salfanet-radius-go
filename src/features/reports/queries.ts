@@ -1,5 +1,5 @@
 /**
- * Reports Feature — Common Queries
+ * Reports Feature -- Common Queries
  *
  * Reusable data-fetching functions for reports and analytics.
  *

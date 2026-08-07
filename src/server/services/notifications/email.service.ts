@@ -191,7 +191,7 @@ export const EmailService = {
         </tr>`
     ).join('');
     return `<div style="margin:20px 0;padding:18px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;">
-  <h4 style="margin:0 0 12px 0;color:#0369a1;font-size:14px;">🏦 Rekening Pembayaran Manual</h4>
+  <h4 style="margin:0 0 12px 0;color:#0369a1;font-size:14px;"> Rekening Pembayaran Manual</h4>
   <table width="100%" cellpadding="0" cellspacing="0" style="font-size:13px;border-collapse:collapse;border:1px solid #bae6fd;border-radius:6px;overflow:hidden;">
     <thead>
       <tr style="background:#e0f2fe;">
@@ -242,7 +242,7 @@ export const EmailService = {
               
               <div style="background-color: #f8f9fa; border-left: 4px solid #667eea; padding: 15px; margin: 20px 0; border-radius: 4px;">
                 <p style="color: #333333; margin: 0; font-size: 14px;">
-                  <strong>💡 Info:</strong> Sistem akan mengirimkan notifikasi email untuk:
+                  <strong> Info:</strong> Sistem akan mengirimkan notifikasi email untuk:
                 </p>
                 <ul style="color: #666666; margin: 10px 0 0 0; padding-left: 20px; font-size: 14px;">
                   <li>User baru terdaftar</li>
@@ -265,7 +265,7 @@ export const EmailService = {
                 Email ini dikirim secara otomatis oleh RADIUS Notification System
               </p>
               <p style="color: #999999; font-size: 12px; margin: 5px 0 0 0;">
-                © ${new Date().getFullYear()} All rights reserved
+                (C) ${new Date().getFullYear()} All rights reserved
               </p>
             </td>
           </tr>
@@ -307,7 +307,7 @@ export const EmailService = {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <tr>
             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">🎉 Akun PPPoE Aktif</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;"> Akun PPPoE Aktif</h1>
             </td>
           </tr>
           
@@ -498,7 +498,7 @@ export const EmailService = {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <tr>
             <td style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">💳 Tagihan Pending</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;"> Tagihan Pending</h1>
             </td>
           </tr>
           
@@ -548,7 +548,7 @@ export const EmailService = {
               
               <div style="background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0; border-radius: 4px;">
                 <p style="color: #2e7d32; margin: 0; font-size: 14px;">
-                  <strong>💡 Info:</strong> Lakukan pembayaran sebelum jatuh tempo untuk menghindari penonaktifan layanan.
+                  <strong> Info:</strong> Lakukan pembayaran sebelum jatuh tempo untuk menghindari penonaktifan layanan.
                 </p>
               </div>
             </td>
@@ -866,7 +866,7 @@ export const EmailService = {
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8f9fa; border-radius: 6px; margin-bottom: 30px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <h3 style="margin: 0 0 15px 0; color: #333333; font-size: 18px;">📋 Detail Pembayaran</h3>
+                    <h3 style="margin: 0 0 15px 0; color: #333333; font-size: 18px;"> Detail Pembayaran</h3>
                     <table width="100%" cellpadding="8" cellspacing="0" border="0">
                       <tr>
                         <td style="color: #666666; font-size: 14px;">Invoice</td>
@@ -892,7 +892,7 @@ export const EmailService = {
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #e8f5e9; border-radius: 6px; margin-bottom: 30px;">
                 <tr>
                   <td style="padding: 20px;">
-                    <h3 style="margin: 0 0 10px 0; color: #2e7d32; font-size: 18px;">📅 Masa Aktif Baru</h3>
+                    <h3 style="margin: 0 0 10px 0; color: #2e7d32; font-size: 18px;"> Masa Aktif Baru</h3>
                     <p style="margin: 0; color: #333333; font-size: 16px;">
                       Aktif sampai: <strong>${expiredDate}</strong>
                     </p>
@@ -911,7 +911,7 @@ export const EmailService = {
                 ${data.companyName}
               </p>
               <p style="margin: 0; color: #666666; font-size: 14px;">
-                📞 ${data.companyPhone}
+                 ${data.companyPhone}
               </p>
             </td>
           </tr>

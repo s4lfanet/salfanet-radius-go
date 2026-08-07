@@ -754,7 +754,7 @@ function AdminLayoutContent({
     setMounted(true);
   }, []);
 
-  // Delayed unauthenticated redirect — avoids spurious full-page reload during
+  // Delayed unauthenticated redirect -- avoids spurious full-page reload during
   // the brief window after signIn() where the outer SessionProvider hasn't yet
   // received the session broadcast and status is momentarily 'unauthenticated'.
   const unauthRedirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -830,7 +830,7 @@ function AdminLayoutContent({
         .then((data) => {
           if (data.stats) setPendingRegistrations(data.stats.pending || 0);
         })
-        .catch(() => { /* silently ignore — retried once already */ });
+        .catch(() => { /* silently ignore -- retried once already */ });
     };
 
     loadPending();
@@ -848,7 +848,7 @@ function AdminLayoutContent({
         .then((data) => {
           if (data.success) setPendingManualPayments(data.data?.length || 0);
         })
-        .catch(() => { /* silently ignore — retried once already */ });
+        .catch(() => { /* silently ignore -- retried once already */ });
     };
 
     loadPendingPayments();
@@ -903,7 +903,7 @@ function AdminLayoutContent({
     pollNotifications();
     const interval = setInterval(pollNotifications, 30000);
     return () => clearInterval(interval);
-  // addToast intentionally excluded — we use addToastRef to prevent re-runs
+  // addToast intentionally excluded -- we use addToastRef to prevent re-runs
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
@@ -965,10 +965,10 @@ function AdminLayoutContent({
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[70px] animate-pulse delay-1000" style={{ willChange: 'opacity', transform: 'translateZ(0)' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-[60%] bg-blue-500/3 rounded-full blur-[80px]" />
 
-        {/* Scan lines overlay — dark mode only */}
+        {/* Scan lines overlay -- dark mode only */}
         <div className="hidden dark:block absolute inset-0 bg-[repeating-linear-gradient(0deg,transparent,transparent_2px,rgba(70,95,255,0.01)_2px,rgba(70,95,255,0.01)_4px)]" />
 
-        {/* Grid pattern — dark mode only */}
+        {/* Grid pattern -- dark mode only */}
         <div className="hidden dark:block absolute inset-0 bg-[linear-gradient(rgba(70,95,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(70,95,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
       </div>
 
@@ -1003,7 +1003,7 @@ function AdminLayoutContent({
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
       >
-        {/* Top neon line — dark mode only */}
+        {/* Top neon line -- dark mode only */}
         <div className="hidden dark:block absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-400 to-transparent" />
 
         <div className="flex flex-col h-full">
@@ -1122,7 +1122,7 @@ function AdminLayoutContent({
       <div className="lg:pl-64 min-h-screen flex flex-col relative z-10 transition-all duration-300">
         {/* Header - optimized for mobile */}
         <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-gray-200 dark:border-primary/15 shadow-theme-sm safe-area-inset-top">
-          {/* Top neon line — dark mode only */}
+          {/* Top neon line -- dark mode only */}
           <div className="hidden dark:block absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-brand-400 to-transparent" />
 
           <div className="flex items-center gap-2 sm:gap-4 px-3 sm:px-6 py-2 sm:py-3">
@@ -1269,7 +1269,7 @@ function AppVersionBadge() {
       <div className="flex items-center gap-1.5">
         <GitBranch className="w-3 h-3 text-sidebar-foreground/60 group-hover:text-sidebar-primary transition-colors" />
         <span className="text-[10px] font-mono text-sidebar-foreground/70 group-hover:text-sidebar-foreground transition-colors">
-          v{info.version} · {info.commit}
+          v{info.version} . {info.commit}
         </span>
       </div>
       {info.hasUpdate && (

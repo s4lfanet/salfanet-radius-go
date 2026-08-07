@@ -505,7 +505,7 @@ export default function AgentTicketsPage() {
                               {msg.message}
                             </div>
                             <div className={`text-[9px] text-slate-400 dark:text-slate-500 px-1 ${isAgent ? 'text-right' : 'text-left'}`}>
-                              {msg.senderType === 'ADMIN' ? '\uD83D\uDC64 Admin' : msg.senderType === 'TECHNICIAN' ? '\uD83D\uDD27 Teknisi' : msg.senderName} · {fmtDate(msg.createdAt)}
+                              {msg.senderType === 'ADMIN' ? '\uD83D\uDC64 Admin' : msg.senderType === 'TECHNICIAN' ? '\uD83D\uDD27 Teknisi' : msg.senderName} . {fmtDate(msg.createdAt)}
                             </div>
                           </div>
                         </div>

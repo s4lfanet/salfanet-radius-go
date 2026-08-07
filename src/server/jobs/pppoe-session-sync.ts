@@ -1,12 +1,12 @@
 import 'server-only'
 /**
- * PPPoE Session Sync — Pure RADIUS approach (no MikroTik API).
+ * PPPoE Session Sync -- Pure RADIUS approach (no MikroTik API).
  *
  * Runs periodically (every 5 min) and maintains radacct health:
  *  1. Closes stale sessions that haven't received an Accounting-Update in >1h
  *     (indicates the session ended but Accounting-Stop was lost)
  *  2. Updates acctsessiontime for healthy active sessions
- *  3. Cross-checks with pppoe_users table — closes sessions for deleted/blocked users
+ *  3. Cross-checks with pppoe_users table -- closes sessions for deleted/blocked users
  *
  * This is a pure RADIUS/database approach that does NOT depend on
  * MikroTik RouterOS API connectivity.
@@ -49,7 +49,7 @@ export async function syncPPPoESessions(): Promise<SyncResult> {
   let imported = 0;
 
   try {
-    // 1. Close stale sessions — no Accounting-Update in over 90 minutes
+    // 1. Close stale sessions -- no Accounting-Update in over 90 minutes
     //    Acct-Interim-Interval = 300s (5 min), so 90 min = 18 missed intervals.
     //    90 minutes provides a safe window that survives:
     //    - Web app rebuild (PM2 stop?build?start, typically 5-20 min)
@@ -129,7 +129,7 @@ export async function syncPPPoESessions(): Promise<SyncResult> {
           }
 
           if (!profileId) {
-            console.log(`[PPPoE-Sync] ?? Skip import "${username}" — no profile found`);
+            console.log(`[PPPoE-Sync] ?? Skip import "${username}" -- no profile found`);
             continue;
           }
 
@@ -169,7 +169,7 @@ export async function syncPPPoESessions(): Promise<SyncResult> {
       }
     }
 
-    // 4. Close orphan sessions — username still not in pppoe_users AND not hotspot voucher
+    // 4. Close orphan sessions -- username still not in pppoe_users AND not hotspot voucher
     //    (after import above, legitimate users should now be in pppoe_users)
     const orphanResult = await prisma.$executeRaw`
       UPDATE radacct ra

@@ -7,7 +7,7 @@ import { compressImage } from '@/lib/utils';
 interface CameraPhotoInputProps {
   photoUrl: string;
   onRemove: () => void;
-  /** Called when user selects a file – handles upload & state update. Returns URL on success or null on failure. */
+  /** Called when user selects a file - handles upload & state update. Returns URL on success or null on failure. */
   onUploadFile: (file: File) => Promise<string | null>;
   uploading: boolean;
   /** Called after GPS coords are captured; use to fill parent lat/lng state */
@@ -92,7 +92,7 @@ export function CameraPhotoInput({
   }, []);
 
   const startCamera = useCallback(async (facing: 'environment' | 'user' = facingMode) => {
-    // On HTTP (no HTTPS), getUserMedia is unavailable — fall back to native camera via capture
+    // On HTTP (no HTTPS), getUserMedia is unavailable -- fall back to native camera via capture
     if (!navigator.mediaDevices?.getUserMedia) {
       captureRef.current?.click();
       return;
@@ -308,7 +308,7 @@ export function CameraPhotoInput({
             className={`flex items-center gap-1.5 text-[10px] rounded px-2 py-1 hover:underline ${gpsBadgeClass}`}
           >
             <MapPin className="w-3 h-3" />
-            📍 {gps.lat.toFixed(5)}, {gps.lng.toFixed(5)} · Lihat di Maps ↗
+             {gps.lat.toFixed(5)}, {gps.lng.toFixed(5)} . Lihat di Maps 
           </a>
         )}
 
@@ -330,7 +330,7 @@ export function CameraPhotoInput({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-2">
-          {/* Gallery — opens file picker */}
+          {/* Gallery -- opens file picker */}
           <label
             htmlFor={galleryId}
             className={`flex flex-col items-center justify-center gap-1 w-full py-3 rounded-xl border-2 border-dashed transition-all text-[11px] cursor-pointer ${
@@ -342,7 +342,7 @@ export function CameraPhotoInput({
             <ImageIcon className="w-5 h-5" />
             Galeri
           </label>
-          {/* Camera — opens live camera via getUserMedia */}
+          {/* Camera -- opens live camera via getUserMedia */}
           <button
             type="button"
             onClick={() => startCamera()}

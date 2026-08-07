@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -523,7 +523,7 @@ export default function RenewalPage() {
             <span className="text-sm font-bold text-white">Upload Bukti Transfer</span>
           </div>
 
-          {/* Admin Bank Accounts â€” transfer destination */}
+          {/* Admin Bank Accounts EUR" transfer destination */}
           {adminBankAccounts.length > 0 && (
             <CyberCard className="p-4 bg-card/80 backdrop-blur-xl border-2 border-cyan-500/30">
               <div className="flex items-center gap-2 mb-3">
@@ -608,7 +608,7 @@ export default function RenewalPage() {
             <CyberButton onClick={handleSubmitManual} disabled={submittingManual} className="w-full" variant="purple">
               {submittingManual ? <><Loader2 className="w-4 h-4 animate-spin" /> Mengirim...</> : <><Banknote className="w-4 h-4" /> Kirim Bukti Transfer</>}
             </CyberButton>
-            <p className="text-[10px] text-muted-foreground text-center">Pembayaran akan dikonfirmasi admin dalam 1Ã—24 jam</p>
+            <p className="text-[10px] text-muted-foreground text-center">Pembayaran akan dikonfirmasi admin dalam 1--24 jam</p>
           </CyberCard>
         </div>
       )}

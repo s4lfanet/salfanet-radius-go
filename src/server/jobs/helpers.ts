@@ -23,7 +23,7 @@ export async function saveCronHistory(data: {
   }
 }
 
-// Cleanup old history — keep last 50 per job type + delete anything older than 30 days
+// Cleanup old history -- keep last 50 per job type + delete anything older than 30 days
 export async function cleanupOldHistory() {
   try {
     // 1. Delete all entries older than 30 days in one query

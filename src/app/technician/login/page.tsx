@@ -55,7 +55,7 @@ export default function TechnicianLoginPage() {
 
       if (res.ok) {
         if (data.requireOtp === false) {
-          // No OTP required — auto login via verify-otp with skipOtp
+          // No OTP required -- auto login via verify-otp with skipOtp
           const verifyRes = await fetch('/api/technician/auth/verify-otp', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -277,9 +277,9 @@ export default function TechnicianLoginPage() {
 
           <div className="space-y-3">
             {[
-              { color: 'bg-blue-500', text: 'Manajemen Tiket — Terima, proses, dan tutup tiket gangguan' },
-              { color: 'bg-cyan-500', text: 'Foto Dokumentasi — Upload foto instalasi &amp; KTP dari kamera HP' },
-              { color: 'bg-green-500', text: 'Registrasi Pelanggan — Daftarkan pelanggan baru dari lapangan' },
+              { color: 'bg-blue-500', text: 'Manajemen Tiket -- Terima, proses, dan tutup tiket gangguan' },
+              { color: 'bg-cyan-500', text: 'Foto Dokumentasi -- Upload foto instalasi &amp; KTP dari kamera HP' },
+              { color: 'bg-green-500', text: 'Registrasi Pelanggan -- Daftarkan pelanggan baru dari lapangan' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3 bg-white/70 dark:bg-slate-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-slate-700/50">
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${item.color}`} />

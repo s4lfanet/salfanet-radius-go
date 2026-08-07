@@ -1,6 +1,6 @@
 import 'server-only'
 /**
- * Invoice Repository — Data Access Layer
+ * Invoice Repository -- Data Access Layer
  *
  * Thin wrapper around Prisma calls for the `invoice` model.
  *

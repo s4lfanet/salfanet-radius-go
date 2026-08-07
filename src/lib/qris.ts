@@ -1,5 +1,5 @@
 /**
- * QRIS Utility — Konversi QRIS Statis -> Dinamis
+ * QRIS Utility -- Konversi QRIS Statis -> Dinamis
  * 
  * Format QRIS mengikuti standar EMVCo QR Code.
  * Setiap field menggunakan TLV (Tag-Length-Value):

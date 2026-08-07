@@ -1,5 +1,5 @@
 /**
- * PPPoE Feature — Zod Schemas
+ * PPPoE Feature -- Zod Schemas
  *
  * Validation schemas for API request bodies and forms related to PPPoE users.
  * Import and use in route handlers or server actions.

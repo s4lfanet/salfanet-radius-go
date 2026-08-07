@@ -184,7 +184,7 @@ export function formatWIB(
   try {
     const d = typeof date === 'string' ? new Date(date) : date;
     if (isNaN(d.getTime())) return '-';
-    // Format using UTC timezone — the UTC values ARE the WIB time
+    // Format using UTC timezone -- the UTC values ARE the WIB time
     return formatInTimeZone(d, 'UTC', formatStr, { locale: localeId });
   } catch (error) {
     console.error('formatWIB error:', error);

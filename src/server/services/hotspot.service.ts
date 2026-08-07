@@ -1,6 +1,6 @@
 import 'server-only'
 /**
- * Hotspot Voucher service — business logic extracted from route handlers.
+ * Hotspot Voucher service -- business logic extracted from route handlers.
  */
 
 import { prisma } from '@/server/db/client';
@@ -262,7 +262,7 @@ export async function generateVouchers(data: GenerateVouchersInput, session: Ses
     skipDuplicates: true,
   });
 
-  // RADIUS sync — batch mode (3 createMany instead of quantity × 7 queries)
+  // RADIUS sync -- batch mode (3 createMany instead of quantity x 7 queries)
   let syncCount = 0;
   try {
     const profileName = profile.name.toLowerCase().replace(/[^a-z0-9]/g, '');

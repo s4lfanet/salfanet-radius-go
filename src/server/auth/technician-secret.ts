@@ -1,7 +1,7 @@
 import 'server-only'
 import { TextEncoder } from 'util';
 
-/** Resolved JWT secret — falls back to dev-only default in non-production. */
+/** Resolved JWT secret -- falls back to dev-only default in non-production. */
 export const JWT_SECRET_VALUE =
   process.env.JWT_SECRET ?? 'your-secret-key-change-this-in-production';
 

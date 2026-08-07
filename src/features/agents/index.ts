@@ -1,5 +1,5 @@
 /**
- * Agents Feature — Public API
+ * Agents Feature -- Public API
  *
  * Import dari sini, bukan langsung dari sub-file.
  * @example

@@ -215,9 +215,9 @@ export default function AgentLoginPage() {
 
           <div className="space-y-3">
             {[
-              { color: 'bg-indigo-500', text: 'Deposit Agent — Kelola saldo deposit untuk pembelian voucher' },
-              { color: 'bg-violet-500', text: 'Kelola Voucher — Cetak dan distribusikan voucher ke pelanggan' },
-              { color: 'bg-purple-500', text: 'Monitor Pelanggan — Pantau pelanggan yang didaftarkan lewat akun Anda' },
+              { color: 'bg-indigo-500', text: 'Deposit Agent -- Kelola saldo deposit untuk pembelian voucher' },
+              { color: 'bg-violet-500', text: 'Kelola Voucher -- Cetak dan distribusikan voucher ke pelanggan' },
+              { color: 'bg-purple-500', text: 'Monitor Pelanggan -- Pantau pelanggan yang didaftarkan lewat akun Anda' },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3 bg-white/70 dark:bg-slate-800/60 rounded-xl px-4 py-3 border border-gray-100 dark:border-slate-700/50">
                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${item.color}`} />

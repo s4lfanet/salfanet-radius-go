@@ -317,7 +317,7 @@ export default function ActivityLogsPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground">
-            Menampilkan {page * LIMIT + 1}–{Math.min((page + 1) * LIMIT, total)} dari {total.toLocaleString('id-ID')} entri
+            Menampilkan {page * LIMIT + 1}-{Math.min((page + 1) * LIMIT, total)} dari {total.toLocaleString('id-ID')} entri
           </p>
           <div className="flex items-center gap-2">
             <button

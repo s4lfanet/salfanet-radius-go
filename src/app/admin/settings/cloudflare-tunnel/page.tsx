@@ -360,7 +360,7 @@ pm2 reload salfanet-radius --update-env`} />
           <StepCard number={5} title="Konfigurasi Nginx (Opsional)" icon={<Server className="w-4 h-4" />}>
             <p className="text-sm text-muted-foreground">
               Jika menggunakan Nginx sebagai reverse proxy di depan Cloudflare Tunnel, gunakan konfigurasi HTTP sederhana
-              (tanpa SSL — SSL sudah dihandle oleh Cloudflare):
+              (tanpa SSL -- SSL sudah dihandle oleh Cloudflare):
             </p>
             <CodeBlock code={nginxConfig} />
             <CodeBlock code={`# Simpan ke sites-available
@@ -374,7 +374,7 @@ nginx -t && systemctl reload nginx`} />
             <div className="p-3 bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/30 rounded-lg text-xs text-blue-700 dark:text-blue-400 flex items-start gap-2">
               <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
               <span>
-                Dengan Cloudflare Tunnel, koneksi dari Cloudflare ke VPS bersifat outbound — Nginx tidak wajib.
+                Dengan Cloudflare Tunnel, koneksi dari Cloudflare ke VPS bersifat outbound -- Nginx tidak wajib.
                 Tunnel langsung terhubung ke port 3000 tanpa perlu membuka port di firewall.
               </span>
             </div>

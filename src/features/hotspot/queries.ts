@@ -1,5 +1,5 @@
 /**
- * Hotspot Feature — Common Queries
+ * Hotspot Feature -- Common Queries
  *
  * @module features/hotspot/queries
  */
@@ -13,7 +13,7 @@ export async function getVouchers(params: VoucherListQuery) {
 
 export async function getVoucherStats(): Promise<{ total: number; waiting: number; used: number; expired: number }> {
   const [total, waiting, used, expired] = await Promise.all([
-    hotspotRepository.countByStatus('WAITING').then(() => 0), // placeholder — real count below
+    hotspotRepository.countByStatus('WAITING').then(() => 0), // placeholder -- real count below
     hotspotRepository.countByStatus('WAITING'),
     hotspotRepository.countByStatus('USED'),
     hotspotRepository.countByStatus('EXPIRED'),

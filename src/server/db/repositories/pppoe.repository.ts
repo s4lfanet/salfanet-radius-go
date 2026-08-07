@@ -1,6 +1,6 @@
 import 'server-only'
 /**
- * PPPoE User Repository — Data Access Layer
+ * PPPoE User Repository -- Data Access Layer
  *
  * Thin wrapper around Prisma calls for the `pppoeUser` model.
  * Services should call these functions instead of calling prisma directly,

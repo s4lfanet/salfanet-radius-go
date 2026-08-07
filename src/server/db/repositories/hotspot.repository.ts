@@ -1,6 +1,6 @@
 import 'server-only'
 /**
- * Hotspot Repository — Data Access Layer
+ * Hotspot Repository -- Data Access Layer
  *
  * Thin wrapper around Prisma calls for `hotspotVoucher` and `hotspotProfile`.
  *

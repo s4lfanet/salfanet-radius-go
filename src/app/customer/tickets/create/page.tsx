@@ -154,10 +154,10 @@ export default function CreateTicketPage() {
       if (formData.locationTag || (formData.latitude && formData.longitude)) {
         finalDescription += '\n\n---';
         if (formData.locationTag) {
-          finalDescription += `\n📍 Lokasi: ${formData.locationTag}`;
+          finalDescription += `\n Lokasi: ${formData.locationTag}`;
         }
         if (formData.latitude && formData.longitude) {
-          finalDescription += `\n🌐 Koordinat: ${formData.latitude}, ${formData.longitude}`;
+          finalDescription += `\n Koordinat: ${formData.latitude}, ${formData.longitude}`;
           finalDescription += `\n Maps: https://maps.google.com/?q=${formData.latitude},${formData.longitude}`;
         }
       }
@@ -373,19 +373,19 @@ export default function CreateTicketPage() {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-lg border border-cyan-500/40 text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {gpsLoading ? (
-                  <><div className="w-3 h-3 border border-cyan-400 border-t-transparent rounded-full animate-spin" /> Mendapatkan lokasi…</>
+                  <><div className="w-3 h-3 border border-cyan-400 border-t-transparent rounded-full animate-spin" /> Mendapatkan lokasi...</>
                 ) : (
                   <><Navigation size={12} /> Ambil Koordinat GPS</>
                 )}
               </button>
               {formData.latitude && formData.longitude && (
                 <span className="text-xs text-emerald-400">
-                  📍 {formData.latitude}, {formData.longitude}
+                   {formData.latitude}, {formData.longitude}
                 </span>
               )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Opsional — membantu teknisi menemukan lokasi rumah Anda
+              Opsional -- membantu teknisi menemukan lokasi rumah Anda
             </p>
           </div>
 

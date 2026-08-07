@@ -179,7 +179,7 @@ export async function executeCommandsInShell(config: SSHConfig, commands: string
 }
 
 /**
- * Test SSH connectivity — just check if handshake/auth succeeds, no command needed
+ * Test SSH connectivity -- just check if handshake/auth succeeds, no command needed
  */
 export async function testSSH(config: SSHConfig): Promise<boolean> {
   return new Promise((resolve) => {

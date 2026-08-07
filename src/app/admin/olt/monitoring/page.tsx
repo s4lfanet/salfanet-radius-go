@@ -177,7 +177,7 @@ export default function OLTMonitoringPage() {
             OLT Monitoring
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            {onlineCount}/{olts.length} online — auto refresh dalam{' '}
+            {onlineCount}/{olts.length} online -- auto refresh dalam{' '}
             <span className={countdown <= 5 ? 'text-amber-500 font-semibold' : ''}>{countdown}d</span>
           </p>
         </div>
@@ -430,7 +430,7 @@ export default function OLTMonitoringPage() {
                       <Thermometer className="h-2.5 w-2.5" />Suhu
                     </div>
                     <div className={`text-[10px] font-semibold ${tempColor(olt.temperature)}`}>
-                      {olt.temperature !== null ? `${olt.temperature}°C` : 'N/A'}
+                      {olt.temperature !== null ? `${olt.temperature} degC` : 'N/A'}
                     </div>
                   </div>
                   <div>

@@ -596,7 +596,7 @@ export default function OLTsPage() {
                     </td>
                     <td className="px-3 py-2 hidden lg:table-cell">
                       <span className="text-xs text-gray-700 dark:text-gray-300 font-mono">
-                        {olt.hasPassword ? '••••••••' : '-'}
+                        {olt.hasPassword ? '********' : '-'}
                       </span>
                     </td>
                     <td className="px-3 py-2 hidden md:table-cell">
@@ -609,11 +609,11 @@ export default function OLTsPage() {
                         <div className="flex flex-col gap-1">
                           {status.online ? (
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 inline-flex items-center gap-1">
-                              🟢 Online
+                               Online
                             </span>
                           ) : (
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 inline-flex items-center gap-1">
-                              🔴 Offline
+                               Offline
                             </span>
                           )}
                           {status.details && (
@@ -716,7 +716,7 @@ export default function OLTsPage() {
                                 className="text-[9px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors cursor-pointer inline-flex items-center gap-0.5"
                                 title="View online ONUs"
                               >
-                                🟢 {olt.onu_stats.online} Online
+                                 {olt.onu_stats.online} Online
                               </Link>
                             )}
                             {olt.onu_stats.dying_gasp > 0 && (
@@ -734,7 +734,7 @@ export default function OLTsPage() {
                                 className="text-[9px] px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded font-medium hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors cursor-pointer inline-flex items-center gap-0.5"
                                 title="View LOS ONUs"
                               >
-                                📡 {olt.onu_stats.los} LOS
+                                 {olt.onu_stats.los} LOS
                               </Link>
                             )}
                             {olt.onu_stats.unconfig > 0 && (
@@ -743,7 +743,7 @@ export default function OLTsPage() {
                                 className="text-[9px] px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded font-medium hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors cursor-pointer inline-flex items-center gap-0.5"
                                 title="View unconfigured ONUs"
                               >
-                                🔧 {olt.onu_stats.unconfig} Unconfig
+                                 {olt.onu_stats.unconfig} Unconfig
                               </Link>
                             )}
                             {olt.onu_stats.offline > 0 && (
@@ -752,7 +752,7 @@ export default function OLTsPage() {
                                 className="text-[9px] px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors cursor-pointer inline-flex items-center gap-0.5"
                                 title="View offline ONUs"
                               >
-                                🔴 {olt.onu_stats.offline} Offline
+                                 {olt.onu_stats.offline} Offline
                               </Link>
                             )}
                           </div>
@@ -826,9 +826,9 @@ export default function OLTsPage() {
                 <div className="flex gap-1 flex-shrink-0">
                   {oltStatusMap[olt.id] ? (
                     oltStatusMap[olt.id].online ? (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">🟢</span>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"></span>
                     ) : (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">🔴</span>
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"></span>
                     )
                   ) : (
                     <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-600"></span>
@@ -893,7 +893,7 @@ export default function OLTsPage() {
                     {olt.hasPassword && (
                       <div>
                         <span className="text-gray-500 dark:text-gray-400">Password:</span>
-                        <span className="ml-1 font-mono text-gray-700 dark:text-gray-300">••••••</span>
+                        <span className="ml-1 font-mono text-gray-700 dark:text-gray-300">******</span>
                       </div>
                     )}
                     {(olt.snmpCommunity || olt.snmp_community) && (
@@ -932,7 +932,7 @@ export default function OLTsPage() {
                         className="text-[9px] px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors cursor-pointer"
                         title="View online ONUs"
                       >
-                        🟢 {olt.onu_stats.online} Online
+                         {olt.onu_stats.online} Online
                       </Link>
                     )}
                     {olt.onu_stats.dying_gasp > 0 && (
@@ -950,7 +950,7 @@ export default function OLTsPage() {
                         className="text-[9px] px-1.5 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 rounded font-medium hover:bg-orange-200 dark:hover:bg-orange-900/50 transition-colors cursor-pointer"
                         title="View LOS ONUs"
                       >
-                        📡 {olt.onu_stats.los} LOS
+                         {olt.onu_stats.los} LOS
                       </Link>
                     )}
                     {olt.onu_stats.unconfig > 0 && (
@@ -959,7 +959,7 @@ export default function OLTsPage() {
                         className="text-[9px] px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded font-medium hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors cursor-pointer"
                         title="View unconfigured ONUs"
                       >
-                        🔧 {olt.onu_stats.unconfig} Unconfig
+                         {olt.onu_stats.unconfig} Unconfig
                       </Link>
                     )}
                     {olt.onu_stats.offline > 0 && (
@@ -968,7 +968,7 @@ export default function OLTsPage() {
                         className="text-[9px] px-1.5 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 rounded font-medium hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors cursor-pointer"
                         title="View all ONUs"
                       >
-                        🔴 {olt.onu_stats.offline} Offline
+                         {olt.onu_stats.offline} Offline
                       </Link>
                     )}
                   </div>
@@ -1149,7 +1149,7 @@ export default function OLTsPage() {
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="••••••••"
+                    placeholder="********"
                     className="w-full px-2 py-1.5 text-xs border dark:border-gray-700 rounded dark:bg-gray-800"
                   />
                 </div>

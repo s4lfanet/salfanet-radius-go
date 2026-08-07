@@ -17,11 +17,11 @@ import { SSHConfig, executeCommand as sshExecute } from '../ssh';
 // Uses zxAnGponOnuCfgTable (3.28.1.1) and zxAnGponOnuRegTable (3.50.12.1.1).
 const V21 = {
   base: '1.3.6.1.4.1.3902.1012',
-  // zxAnGponOnuCfgTable (3.28.1.1) — indexed by .{col}.{ponIndex}.{onuId}
+  // zxAnGponOnuCfgTable (3.28.1.1) -- indexed by .{col}.{ponIndex}.{onuId}
   // VERIFIED WORKING on ZTE C320 V2.1.0 via live SNMP walk
   onuDescription: '.3.28.1.1.2',    // ONU name/description string (e.g. "test-customer")
   onuSerial:      '.3.28.1.1.5',    // Serial (Hex-STRING: 8 bytes = 4 ASCII vendor + 4 hex id)
-  // zxAnGponOnuRegTable (3.50.12.1.1) — indexed by .{col}.{ponIndex}.{onuSlot}.{onuId}
+  // zxAnGponOnuRegTable (3.50.12.1.1) -- indexed by .{col}.{ponIndex}.{onuSlot}.{onuId}
   // VERIFIED WORKING on ZTE C320 V2.1.0 via live SNMP walk
   onuRegStatus: '.3.50.12.1.1.1',   // Registration status: 1=registered/active
   onuOperState: '.3.50.12.1.1.6',   // Oper state: 5=working/online, others=offline
@@ -33,7 +33,7 @@ const V21 = {
 };
 // Seen-ONU table: zxAnGponOnuDiscoveredInfoTable (3.27.4.1.1)
 // Contains ALL ONUs seen on a PON port including unregistered ones.
-// Indexed by .{ponIndex}.{onuSlot}.{onuId} — only col 1 accessible.
+// Indexed by .{ponIndex}.{onuSlot}.{onuId} -- only col 1 accessible.
 // VERIFIED: returns INTEGER: 2 for both registered (onuId=1) and unregistered (onuId=2).
 const ZTE_V21_SEEN_ONU_TABLE = '1.3.6.1.4.1.3902.1012.3.27.4.1.1';
 
@@ -43,7 +43,7 @@ const V22 = {
   onuName:    '.500.10.2.3.3.1.2',  // ONU name
   onuSerial:  '.500.10.2.3.3.1.18', // Serial number
   onuStatus:  '.500.10.2.3.8.1.4',  // Online status (1=online)
-  onuRxPower: '.500.20.2.2.2.1.10', // RX Power (×0.01 dBm), suffix .{x}.{id}.1
+  onuRxPower: '.500.20.2.2.2.1.10', // RX Power (x0.01 dBm), suffix .{x}.{id}.1
   onuModel:   '.3.50.11.2.1.17',    // ONU model (uses typeSuffix)
   board1IdBase:   285278464,   board2IdBase:   285278720,
   board1TypeBase: 268500992,   board2TypeBase: 268566528,
@@ -52,7 +52,7 @@ const V22 = {
 
 // -- PON Port Discovery Table (V2.1) -----------------------------------------
 // Walking this OID returns one entry per provisioned PON port (indexed by ponIndex).
-// Allows dynamic port count discovery instead of hardcoding 2 boards × 8 ports.
+// Allows dynamic port count discovery instead of hardcoding 2 boards x 8 ports.
 const ZTE_V21_PON_TABLE = '1.3.6.1.4.1.3902.1012.3.11.3.1.1';
 
 // -- ZTE Performance OIDs (tried in order) -----------------------------------
@@ -157,7 +157,7 @@ async function walkFirstNumber(
   return null;
 }
 
-// Temperatures must be in plausible range for network equipment (10–85°C)
+// Temperatures must be in plausible range for network equipment (10-85 degC)
 const isValidTemp = (n: number) => n >= 10 && n <= 85;
 
 export async function getTemperature(config: SNMPConfig): Promise<number | null> {
@@ -206,7 +206,7 @@ export async function getSystemMetricsTelnet(
 ): Promise<{ temperature: number | null; cpuUsage: number | null; memoryUsage: number | null }> {
   const result = { temperature: null as number | null, cpuUsage: null as number | null, memoryUsage: null as number | null };
   try {
-    // Try "show card" — some ZTE models show board temp here
+    // Try "show card" -- some ZTE models show board temp here
     const cardResult = await executeCommand(telnetConfig, 'show card');
     if (cardResult.success && cardResult.output) {
       const tempMatch = cardResult.output.match(/temp(?:erature)?\s*[:\s]+(\d+)/i);
@@ -237,7 +237,7 @@ export async function getSystemMetricsTelnet(
       }
     }
   } catch {
-    // Silently ignore — Telnet may not be configured or supported
+    // Silently ignore -- Telnet may not be configured or supported
   }
   return result;
 }
@@ -247,14 +247,14 @@ export async function getSystemMetricsTelnet(
 /**
  * Walk the ZTE C320 V2.1 PON port table to discover all provisioned PON ports.
  * Converts each ponIndex back to (board, pon) using the V21 base constants.
- * Falls back to the traditional 2 boards × 8 ports if the walk fails.
+ * Falls back to the traditional 2 boards x 8 ports if the walk fails.
  */
 async function discoverPONPortsV21(config: SNMPConfig): Promise<Array<{board: number, pon: number}>> {
   const res = await snmpWalk(config, ZTE_V21_PON_TABLE);
 
   const seenPonIndexes = new Set<number>();
   if (res.success && res.results && Object.keys(res.results).length > 0) {
-    // ponIndexes are very large numbers (> 268 million) — scan all OID components
+    // ponIndexes are very large numbers (> 268 million) -- scan all OID components
     // to handle any MIB column layout (e.g. .col.ponIndex or .ponIndex directly)
     for (const oid of Object.keys(res.results)) {
       for (const part of oid.split('.')) {
@@ -281,13 +281,13 @@ async function discoverPONPortsV21(config: SNMPConfig): Promise<Array<{board: nu
     return ports.sort((a, b) => a.board !== b.board ? a.board - b.board : a.pon - b.pon);
   }
 
-  // Fallback: traditional 2 boards × 8 ports
+  // Fallback: traditional 2 boards x 8 ports
   const fallback: Array<{board: number, pon: number}> = [];
   for (let b = 1; b <= 2; b++) for (let p = 1; p <= 8; p++) fallback.push({ board: b, pon: p });
   return fallback;
 }
 
-// -- SNMP ONU Discovery — V2.1 ------------------------------------------------
+// -- SNMP ONU Discovery -- V2.1 ------------------------------------------------
 
 async function discoverPonV21(
   config: SNMPConfig,
@@ -300,7 +300,7 @@ async function discoverPonV21(
   const base = V21.base;
 
   // Walk ALL OID subtrees for this PON port in PARALLEL (7 concurrent SNMP walks).
-  // This replaces N_onu × 5 sequential snmpGet calls with a single bulk walk pass.
+  // This replaces N_onu x 5 sequential snmpGet calls with a single bulk walk pass.
   const [regWalk, operWalk, serialWalk, rxWalk, descWalk, distWalk, seenWalk] = await Promise.all([
     snmpWalk(config, `${base}${V21.onuRegStatus}.${ponIndex}`),    // reg status  (.ponIndex.slot.onuId)
     snmpWalk(config, `${base}${V21.onuOperState}.${ponIndex}`),    // oper state  (.ponIndex.slot.onuId)
@@ -359,7 +359,7 @@ async function discoverPonV21(
       if (!isNaN(distRaw) && distRaw > 0 && distRaw < 100000) distance = distRaw;
 
       // Serial (hex bytes -> ASCII). If SNMP hex can't be parsed, leave null.
-      // Do NOT fallback to per-ONU Telnet `show gpon onu detail-info` during polling —
+      // Do NOT fallback to per-ONU Telnet `show gpon onu detail-info` during polling --
       // that would spawn N concurrent Telnet sessions (one per ONU with bad serial),
       // which saturates the OLT's concurrent session limit and is the root cause of
       // slow polling. Serial can be null; DB still tracks ONU status via onuId.
@@ -456,7 +456,7 @@ async function discoverPonV21(
   // SNMP seenWalk fallback: only use when Telnet was completely unavailable.
   // The OLT's seen table can contain stale entries (ONUs previously connected),
   // so if Telnet data is present (authoritative), we must NOT add ghost entries
-  // from the seen table — doing so creates phantom "N/A" unregistered ONUs.
+  // from the seen table -- doing so creates phantom "N/A" unregistered ONUs.
   if (!hadTelnetData) {
     for (const id of unregisteredIds) {
       if (!uncfgSerials.has(id)) uncfgSerials.set(id, '');
@@ -508,7 +508,7 @@ function mergePonPortsFromUncfgMap(
   return ports.sort((a, b) => a.board !== b.board ? a.board - b.board : a.pon - b.pon);
 }
 
-// -- SNMP ONU Discovery — V2.2 ------------------------------------------------
+// -- SNMP ONU Discovery -- V2.2 ------------------------------------------------
 
 async function discoverPonV22(config: SNMPConfig, board: number, pon: number): Promise<any[]> {
   const { idSuffix, typeSuffix } = ponSuffixV22(board, pon);
@@ -549,10 +549,10 @@ async function discoverPonV22(config: SNMPConfig, board: number, pon: number): P
 // -- Public: SNMP-based ONU Discovery -----------------------------------------
 
 /**
- * Discover all ONUs via SNMP — primary method for ZTE C320.
+ * Discover all ONUs via SNMP -- primary method for ZTE C320.
  * Supports V2.1.0 (base 1012) and V2.2+ (base 1082).
  * For V2.1: dynamically discovers PON ports from the PON table (supports 8, 16, or more ports).
- * For V2.2: falls back to scanning 2 boards × 8 ports.
+ * For V2.2: falls back to scanning 2 boards x 8 ports.
  */
 export async function discoverONUsSNMP(
   config: SNMPConfig,
@@ -572,7 +572,7 @@ export async function discoverONUsSNMP(
       try {
         // ZTE C320 V2.1 uses "show gpon onu uncfg".
         // Output format: "gpon-onu_F/S/P:ID  SN  State"
-        // (3 columns: OnuIndex Sn State — SN is at index 1, NOT 2)
+        // (3 columns: OnuIndex Sn State -- SN is at index 1, NOT 2)
         const result = await executeCommand(telnetConfig, 'show gpon onu uncfg');
         if (result.success && result.output) {
           globalUncfgMap = new Map();
@@ -603,7 +603,7 @@ export async function discoverONUsSNMP(
             }
           }
         }
-      } catch { /* Telnet unavailable — global map stays null, per-port fallback used */ }
+      } catch { /* Telnet unavailable -- global map stays null, per-port fallback used */ }
     }
 
     // V2.1: walk PON port table to discover actual port count dynamically
@@ -612,16 +612,16 @@ export async function discoverONUsSNMP(
       try {
         const ponOnus = await discoverPonV21(config, board, pon, telnetConfig, globalUncfgMap);
         onus.push(...ponOnus);
-      } catch { /* empty/unprovisioned PON — skip */ }
+      } catch { /* empty/unprovisioned PON -- skip */ }
     }
   } else {
-    // V2.2: scan 2 boards × 8 ports (V2.2 port table OID not yet mapped)
+    // V2.2: scan 2 boards x 8 ports (V2.2 port table OID not yet mapped)
     for (let board = 1; board <= 2; board++) {
       for (let pon = 1; pon <= 8; pon++) {
         try {
           const ponOnus = await discoverPonV22(config, board, pon);
           onus.push(...ponOnus);
-        } catch { /* empty/unprovisioned PON — skip */ }
+        } catch { /* empty/unprovisioned PON -- skip */ }
       }
     }
   }

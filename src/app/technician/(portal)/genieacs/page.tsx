@@ -615,7 +615,7 @@ export default function TechnicianGenieACSPage() {
                           <div key={i} className="flex items-center justify-between bg-slate-50 dark:bg-input/50 rounded-lg px-3 py-1.5 text-xs">
                             <div className="min-w-0 flex-1">
                               <p className="font-medium text-slate-900 dark:text-white truncate">{h.hostName || 'Unknown'}</p>
-                              <p className="text-slate-500 dark:text-muted-foreground/50">{h.ipAddress !== '-' ? h.ipAddress + ' · ' : ''}{h.macAddress}</p>
+                              <p className="text-slate-500 dark:text-muted-foreground/50">{h.ipAddress !== '-' ? h.ipAddress + ' . ' : ''}{h.macAddress}</p>
                             </div>
                             <div className="text-right ml-2">
                               <p className="text-[10px] text-slate-400">{h.interfaceType}</p>

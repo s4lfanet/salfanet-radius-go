@@ -70,7 +70,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'salfanet-settings',
       partialize: (state) => {
-        // Exclude logo from persistence — always fetch fresh from API
+        // Exclude logo from persistence -- always fetch fresh from API
         // to avoid stale file URLs that result in 404s
         const { company, ...rest } = state;
         const { logo: _logo, ...companyWithoutLogo } = company;

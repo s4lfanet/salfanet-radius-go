@@ -2,7 +2,7 @@
  * Server-side GenieACS NBI client.
  *
  * Resolves credentials in this order:
- *   1. `genieacsSettings` row from the application DB (preferred — set
+ *   1. `genieacsSettings` row from the application DB (preferred -- set
  *      via the existing /admin/settings/genieacs UI).
  *   2. Environment variables `GENIEACS_NBI_INTERNAL_URL` /
  *      `GENIEACS_NBI_URL`, `GENIEACS_NBI_USERNAME`,

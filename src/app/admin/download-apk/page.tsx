@@ -129,7 +129,7 @@ echo 'Selesai!'`;
         <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
         <div className="flex-1 text-sm text-emerald-300">
           <span className="font-semibold">Build environment siap.</span>{' '}
-          <span className="text-emerald-200/70">Java {env.javaVersion} · Android SDK di {env.androidHome}</span>
+          <span className="text-emerald-200/70">Java {env.javaVersion} . Android SDK di {env.androidHome}</span>
         </div>
         <button onClick={onRecheck} className="text-emerald-400 hover:text-emerald-300">
           <RefreshCw className="w-3.5 h-3.5" />
@@ -219,14 +219,14 @@ function RoleCard({
             {isBuilding && (
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 border-2 border-blue-400/40 border-t-blue-400 rounded-full animate-spin" />
-                <span>Build berjalan… <span className="opacity-60 text-[10px]">{formatTime(status.startedAt)}</span></span>
+                <span>Build berjalan... <span className="opacity-60 text-[10px]">{formatTime(status.startedAt)}</span></span>
               </div>
             )}
             {isDone && (
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Selesai · {formatTime(status.finishedAt)}</span>
+                  <span>Selesai . {formatTime(status.finishedAt)}</span>
                 </div>
                 {status.apkSize && <span className="font-mono opacity-70">{formatBytes(status.apkSize)}</span>}
               </div>
@@ -235,7 +235,7 @@ function RoleCard({
               <div>
                 <div className="flex items-center gap-1.5">
                   <XCircle className="w-3.5 h-3.5" />
-                  <span>Build gagal · {formatTime(status.finishedAt)}</span>
+                  <span>Build gagal . {formatTime(status.finishedAt)}</span>
                 </div>
                 {status.error && <p className="text-[10px] opacity-70 mt-0.5 pl-5 truncate">{status.error}</p>}
               </div>
@@ -260,7 +260,7 @@ function RoleCard({
             className={`${hasApk ? '' : 'flex-1'} flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-bold transition-all text-white bg-gradient-to-r ${role.btn} disabled:opacity-40 disabled:cursor-not-allowed`}
           >
             {isBuilding ? (
-              <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Building…</>
+              <><div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Building...</>
             ) : (
               <><Package className="w-3.5 h-3.5" />{hasApk ? 'Rebuild' : 'Build APK'}</>
             )}
@@ -389,7 +389,7 @@ export default function DownloadApkPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-white tracking-wide">Build Aplikasi Android</h1>
-            <p className="text-xs text-slate-400 mt-0.5">Build APK langsung di server — download setelah selesai, tanpa GitHub.</p>
+            <p className="text-xs text-slate-400 mt-0.5">Build APK langsung di server -- download setelah selesai, tanpa GitHub.</p>
           </div>
         </div>
       </div>
@@ -419,7 +419,7 @@ export default function DownloadApkPage() {
         <div className="flex items-center gap-2 text-slate-300 text-xs font-semibold mb-3">
           <ImageIcon className="w-3.5 h-3.5 text-cyan-400" /> Logo Aplikasi (digunakan sebagai ikon APK)
         </div>
-        {/* Preview — full width */}
+        {/* Preview -- full width */}
         <div className="w-44 h-44 mx-auto rounded-xl border border-slate-700 bg-slate-800/60 flex items-center justify-center overflow-hidden mb-3">
           {currentLogo ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -438,7 +438,7 @@ export default function DownloadApkPage() {
               uploadingLogo ? 'bg-slate-700 cursor-not-allowed' : 'bg-cyan-600 hover:bg-cyan-500'
             }`}>
               {uploadingLogo ? (
-                <><RefreshCw className="w-3 h-3 animate-spin" /> Mengupload…</>
+                <><RefreshCw className="w-3 h-3 animate-spin" /> Mengupload...</>
               ) : (
                 <><Upload className="w-3 h-3" /> {currentLogo ? 'Ganti Logo' : 'Upload Logo'}</>
               )}
@@ -467,7 +467,7 @@ export default function DownloadApkPage() {
       {env && <EnvBanner env={env} onRecheck={fetchEnv} />}
       {!env && (
         <div className="flex items-center gap-2 text-slate-400 text-sm">
-          <RefreshCw className="w-4 h-4 animate-spin" /> Memeriksa environment…
+          <RefreshCw className="w-4 h-4 animate-spin" /> Memeriksa environment...
         </div>
       )}
 
@@ -501,7 +501,7 @@ export default function DownloadApkPage() {
           </div>
           <div className="flex items-start gap-2">
             <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-500" />
-            <span>Ikon APK masih placeholder 1×1px. Untuk ikon custom, perlu modifikasi project sebelum build.</span>
+            <span>Ikon APK masih placeholder 1x1px. Untuk ikon custom, perlu modifikasi project sebelum build.</span>
           </div>
         </div>
       </div>

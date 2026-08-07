@@ -129,7 +129,7 @@ export default function FreeRADIUSBackupPage() {
                 body: JSON.stringify({ file }),
             });
             const data = await res.json();
-            setRestoreLog({ file, log: data.log || data.error || '—', ok: res.ok && data.success });
+            setRestoreLog({ file, log: data.log || data.error || '--', ok: res.ok && data.success });
             if (res.ok && data.success) {
                 addToast({ type: 'success', title: 'Restore berhasil', description: `${data.restored} file dipulihkan`, duration: 4000 });
             } else {
@@ -178,7 +178,7 @@ export default function FreeRADIUSBackupPage() {
                 body: JSON.stringify({ file: savedAs }),
             });
             const restData = await restRes.json();
-            setRestoreLog({ file: savedAs, log: restData.log || restData.error || '—', ok: restRes.ok && restData.success });
+            setRestoreLog({ file: savedAs, log: restData.log || restData.error || '--', ok: restRes.ok && restData.success });
             if (restRes.ok && restData.success) {
                 addToast({ type: 'success', title: 'Restore berhasil', description: `${restData.restored} file dipulihkan`, duration: 4000 });
                 setUploadFile(null);
@@ -206,7 +206,7 @@ export default function FreeRADIUSBackupPage() {
                         Backup & Restore FreeRADIUS
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
-                        Backup config yang berjalan di VPS ke arsip lokal — bisa di-restore atau didownload
+                        Backup config yang berjalan di VPS ke arsip lokal -- bisa di-restore atau didownload
                     </p>
                 </div>
                 <button
@@ -268,7 +268,7 @@ export default function FreeRADIUSBackupPage() {
                                     <Archive className="w-4 h-4 text-primary flex-shrink-0" />
                                     <div className="min-w-0">
                                         <p className="text-sm font-mono text-foreground truncate">{b.name}</p>
-                                        <p className="text-xs text-muted-foreground">{formatDate(b.createdAt)} · {formatBytes(b.size)}</p>
+                                        <p className="text-xs text-muted-foreground">{formatDate(b.createdAt)} . {formatBytes(b.size)}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2 flex-shrink-0 ml-7 sm:ml-0">
@@ -313,7 +313,7 @@ export default function FreeRADIUSBackupPage() {
                 </div>
             )}
 
-            {/* Restore from other VPS — Upload section */}
+            {/* Restore from other VPS -- Upload section */}
             <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-4 py-3 border-b border-border bg-muted/20 flex items-center gap-2">
                     <Server className="w-4 h-4 text-primary" />
@@ -330,7 +330,7 @@ export default function FreeRADIUSBackupPage() {
                         >
                             <Upload className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                             <span className="text-sm text-muted-foreground truncate">
-                                {uploadFile ? uploadFile.name : 'Pilih file backup (.tar.gz)…'}
+                                {uploadFile ? uploadFile.name : 'Pilih file backup (.tar.gz)...'}
                             </span>
                         </label>
                         <input
@@ -350,7 +350,7 @@ export default function FreeRADIUSBackupPage() {
                                 ? <Loader2 className="w-4 h-4 animate-spin" />
                                 : <RotateCcw className="w-4 h-4" />
                             }
-                            {uploading ? 'Memproses…' : 'Upload & Restore'}
+                            {uploading ? 'Memproses...' : 'Upload & Restore'}
                         </button>
                     </div>
                     {uploadFile && (
@@ -370,7 +370,7 @@ export default function FreeRADIUSBackupPage() {
                     <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                         <Terminal className="w-4 h-4 text-primary" />
                         Log Backup
-                        {polling && <span className="text-xs text-amber-500 animate-pulse font-normal">● live</span>}
+                        {polling && <span className="text-xs text-amber-500 animate-pulse font-normal">* live</span>}
                     </h2>
                     <div className="flex items-center gap-2">
                         {isDone && (

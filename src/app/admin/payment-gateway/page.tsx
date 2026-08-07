@@ -665,7 +665,7 @@ export default function PaymentGatewayPage() {
               <div className="flex items-center justify-between p-2 bg-muted rounded-lg">
                 <div>
                   <p className="text-xs font-medium">QRIS Mandiri (Tanpa Pihak Ke-3)</p>
-                  <p className="text-[10px] text-muted-foreground">Gunakan QRIS dari rekening bank Anda sendiri — tanpa biaya admin</p>
+                  <p className="text-[10px] text-muted-foreground">Gunakan QRIS dari rekening bank Anda sendiri -- tanpa biaya admin</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" checked={qrisForm.enabled} onChange={(e) => setQrisForm({ ...qrisForm, enabled: e.target.checked })} className="sr-only peer" />
@@ -708,7 +708,7 @@ export default function PaymentGatewayPage() {
               <div className="p-2.5 bg-muted rounded-lg space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-[11px] font-semibold">Device Key — Android Listener (Opsional)</p>
+                    <p className="text-[11px] font-semibold">Device Key -- Android Listener (Opsional)</p>
                     <p className="text-[10px] text-muted-foreground">Jika diisi, pembayaran QRIS otomatis terdeteksi via aplikasi Android QrisListener.</p>
                   </div>
                 </div>
@@ -772,7 +772,7 @@ export default function PaymentGatewayPage() {
 
               {/* Simulasi / Testing QRIS Mandiri */}
               <div className="p-2.5 bg-orange-500/10 border border-orange-500/20 rounded-lg space-y-2">
-                <p className="text-[11px] font-semibold text-orange-600 dark:text-orange-400">🧪 Simulasi Pembayaran QRIS (Testing)</p>
+                <p className="text-[11px] font-semibold text-orange-600 dark:text-orange-400"> Simulasi Pembayaran QRIS (Testing)</p>
                 <p className="text-[10px] text-muted-foreground">Masukkan Order ID dari invoice QRIS Mandiri yang masih pending untuk mensimulasikan pembayaran masuk tanpa menggunakan HP Android.</p>
                 <div className="flex gap-2">
                   <input
@@ -788,14 +788,14 @@ export default function PaymentGatewayPage() {
                     disabled={qrisTest.loading || !qrisTest.orderId.trim()}
                     className="px-3 py-1.5 text-xs font-medium bg-orange-500 hover:bg-orange-600 text-white rounded-lg disabled:opacity-50 whitespace-nowrap"
                   >
-                    {qrisTest.loading ? '⏳ Testing...' : '▶ Jalankan'}
+                    {qrisTest.loading ? ' Testing...' : ' Jalankan'}
                   </button>
                 </div>
                 {qrisTest.result && (
                   <div className={`p-2 rounded-lg text-[10px] ${qrisTest.result.success ? 'bg-success/10 border border-success/20 text-success' : 'bg-destructive/10 border border-destructive/20 text-destructive'}`}>
                     <p className="font-semibold">{qrisTest.result.message}</p>
                     {qrisTest.result.success && qrisTest.result.invoiceId && (
-                      <p className="text-muted-foreground mt-0.5">Invoice: {qrisTest.result.invoiceId} • Base: Rp {qrisTest.result.baseAmount?.toLocaleString('id-ID')} • Unique: Rp {qrisTest.result.uniqueAmount?.toLocaleString('id-ID')}</p>
+                      <p className="text-muted-foreground mt-0.5">Invoice: {qrisTest.result.invoiceId} * Base: Rp {qrisTest.result.baseAmount?.toLocaleString('id-ID')} * Unique: Rp {qrisTest.result.uniqueAmount?.toLocaleString('id-ID')}</p>
                     )}
                   </div>
                 )}

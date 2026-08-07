@@ -343,7 +343,7 @@ function DaftarPageInner() {
                       {submitting ? (
                         <><Loader2 className="w-3.5 h-3.5 animate-spin" />Mengambil...</>
                       ) : (
-                        <><MapPin className="w-3.5 h-3.5" />📍 Otomatis</>
+                        <><MapPin className="w-3.5 h-3.5" /> Otomatis</>
                       )}
                     </button>
 
@@ -365,13 +365,13 @@ function DaftarPageInner() {
                         Lokasi GPS Tersimpan
                       </p>
                       <p className="text-[10px] text-brand-400 mt-1 font-mono">
-                        📍 Lat: {formData.latitude.toFixed(6)}, Lng: {formData.longitude.toFixed(6)}
+                         Lat: {formData.latitude.toFixed(6)}, Lng: {formData.longitude.toFixed(6)}
                       </p>
                     </div>
                   )}
                 </div>
                 <p className="text-[10px] text-muted-foreground/60 mt-1.5">
-                  💡 Pilih "Otomatis" untuk GPS real-time atau "Manual" untuk pilih di peta
+                   Pilih "Otomatis" untuk GPS real-time atau "Manual" untuk pilih di peta
                 </p>
               </div>
             </div>

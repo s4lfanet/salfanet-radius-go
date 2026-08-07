@@ -164,7 +164,7 @@ function ODCEditForm({ data, onChange, olts }: { data: any; onChange: (n: string
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">OLT</label>
         <select value={data.oltId || ''} onChange={e => onChange('oltId', e.target.value)}
           className="w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-          <option value="">— Select OLT —</option>
+          <option value="">-- Select OLT --</option>
           {olts.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
       </div>
@@ -187,7 +187,7 @@ function ODPEditForm({ data, onChange, odcs }: { data: any; onChange: (n: string
         <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">ODC</label>
         <select value={data.odcId || ''} onChange={e => onChange('odcId', e.target.value)}
           className="w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
-          <option value="">— Select ODC —</option>
+          <option value="">-- Select ODC --</option>
           {odcs.map(o => <option key={o.id} value={o.id}>{o.name}</option>)}
         </select>
       </div>

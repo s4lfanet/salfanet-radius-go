@@ -21,7 +21,7 @@ const NAS_CLIENTS_FILE = '/etc/freeradius/3.0/clients.d/nas-from-db.conf';
  * Generates:
  * 1. Per-NAS client entries (individual IP + secret)
  * 2. Per-VPN-server gateway client entries (gateway IP with shared secret)
- *    Required because VPN CHR servers masquerade RADIUS traffic — all packets
+ *    Required because VPN CHR servers masquerade RADIUS traffic -- all packets
  *    from NAS behind the same CHR arrive with the CHR gateway IP as source.
  *    All NAS behind the same VPN server MUST share the same RADIUS secret.
  * 
@@ -32,7 +32,7 @@ export async function syncNasClients(): Promise<boolean> {
     // Use raw SQL to avoid Prisma silently dropping rows that have NULL in
     // non-nullable app columns (port, apiPort, username, password).
     // These fields are irrelevant for RADIUS sync but a Prisma findMany()
-    // returns only rows it can fully deserialize — rows with NULL in non-nullable
+    // returns only rows it can fully deserialize -- rows with NULL in non-nullable
     // Int/String fields are silently omitted, causing "unknown client" errors.
     const nasEntries: Array<{
       nasname: string;
@@ -125,7 +125,7 @@ export async function syncNasClients(): Promise<boolean> {
 
       for (const [, gw] of vpnGateways) {
         if (gw.secrets.size > 1) {
-          // Multiple different secrets — gateway entry would use the wrong secret for some NAS.
+          // Multiple different secrets -- gateway entry would use the wrong secret for some NAS.
           // Skip it and log a warning. A CHR NAT bypass rule for RADIUS (UDP 1812-1813) is required.
           console.warn(
             `[FreeRADIUS] VPN gateway ${gw.gatewayIp} skipped: NAS behind it have ` +
@@ -133,7 +133,7 @@ export async function syncNasClients(): Promise<boolean> {
             `Add a CHR srcnat accept rule for UDP 1812-1813 to bypass masquerade, ` +
             `or make all NAS use the same shared secret.`
           );
-          lines.push(`# SKIPPED: vpn_gw_${gw.serverName} — NAS secrets differ (${gw.secrets.size} unique secrets).`);
+          lines.push(`# SKIPPED: vpn_gw_${gw.serverName} -- NAS secrets differ (${gw.secrets.size} unique secrets).`);
           lines.push(`# Add a CHR NAT bypass rule: srcnat accept, protocol=udp, dst-port=1812-1813, dst=${gw.gatewayIp.replace('.1', '.10')}`);
           lines.push('');
           continue;
@@ -154,12 +154,12 @@ export async function syncNasClients(): Promise<boolean> {
 
     const newContent = lines.join('\n');
 
-    // Compare with current file — only write if different
+    // Compare with current file -- only write if different
     let currentContent = '';
     try {
       currentContent = await readFile(NAS_CLIENTS_FILE, 'utf8');
     } catch {
-      // File doesn't exist yet — will be created
+      // File doesn't exist yet -- will be created
     }
 
     if (currentContent.trim() === newContent.trim()) {
@@ -177,7 +177,7 @@ export async function syncNasClients(): Promise<boolean> {
       await execAsync(`echo '\n$INCLUDE clients.d/' >> /etc/freeradius/3.0/clients.conf`);
     }
 
-    console.log(`[FreeRADIUS] NAS config updated (${nasEntries.length} entries, ${vpnGateways.size} VPN gateways) — reload required`);
+    console.log(`[FreeRADIUS] NAS config updated (${nasEntries.length} entries, ${vpnGateways.size} VPN gateways) -- reload required`);
     return true;
   } catch (error: any) {
     console.error('[FreeRADIUS] Failed to sync NAS clients:', error.message);
@@ -201,7 +201,7 @@ export async function reloadFreeRadius(): Promise<void> {
   try {
     lastRestartTime = now;
 
-    // Sync NAS clients to clients.d before restart — only restart if config changed
+    // Sync NAS clients to clients.d before restart -- only restart if config changed
     const configChanged = await syncNasClients();
 
     if (!configChanged) {

@@ -26,7 +26,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: '#f59e0b',
-  // maximumScale and userScalable intentionally NOT set — allow pinch-zoom
+  // maximumScale and userScalable intentionally NOT set -- allow pinch-zoom
 };
 
 export default function TechnicianRootLayout({ children }: { children: React.ReactNode }) {

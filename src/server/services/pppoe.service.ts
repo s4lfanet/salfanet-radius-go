@@ -1,5 +1,5 @@
 /**
- * PPPoE User service — business logic extracted from route handlers.
+ * PPPoE User service -- business logic extracted from route handlers.
  * All DB mutations, RADIUS sync, notifications and activity logging live here.
  */
 

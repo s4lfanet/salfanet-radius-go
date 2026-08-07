@@ -1,5 +1,5 @@
 /**
- * Billing Feature — Zod Schemas
+ * Billing Feature -- Zod Schemas
  *
  * @module features/billing/schemas
  */

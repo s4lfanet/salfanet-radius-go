@@ -247,7 +247,7 @@ export default function TechnicianTicketsPage() {
       (pos) => {
         const { latitude, longitude } = pos.coords;
         const mapsUrl = `https://maps.google.com/?q=${latitude},${longitude}`;
-        const gpsText = `📍 Lokasi: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n${mapsUrl}`;
+        const gpsText = ` Lokasi: ${latitude.toFixed(6)}, ${longitude.toFixed(6)}\n${mapsUrl}`;
         setReplyMessage((prev) => (prev ? `${prev}\n${gpsText}` : gpsText));
         setGpsLoading(false);
         replyTextareaRef.current?.focus();
@@ -706,7 +706,7 @@ export default function TechnicianTicketsPage() {
                               </div>
                             )}
                             {/* Message text */}
-                            {msg.message && msg.message !== '📷 Foto dikirim' && (
+                            {msg.message && msg.message !== ' Foto dikirim' && (
                               <div className={`px-3 py-2 rounded-xl text-xs leading-relaxed whitespace-pre-wrap ${
                                 isTech
                                   ? 'bg-brand-600/15 dark:bg-brand-600/20 text-slate-800 dark:text-[#f0e0ff] rounded-tr-sm border border-brand-600/20'

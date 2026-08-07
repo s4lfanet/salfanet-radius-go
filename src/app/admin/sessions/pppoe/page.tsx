@@ -140,7 +140,7 @@ export default function PPPoESessionsPage() {
     fetchSessions(1);
     const interval = setInterval(() => {
       fetchSessions(pagination.page);
-    }, 10000); // 10 detik — live bytes dari MikroTik API
+    }, 10000); // 10 detik -- live bytes dari MikroTik API
     return () => clearInterval(interval);
   }, [fetchSessions, pagination.page]);
 

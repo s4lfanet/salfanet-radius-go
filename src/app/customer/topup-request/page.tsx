@@ -120,7 +120,7 @@ export default function TopUpRequestPage() {
 
       {/* Two-column layout on desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Form — takes 2/3 on desktop */}
+        {/* Form -- takes 2/3 on desktop */}
         <div className="lg:col-span-2">
         <CyberCard className="p-6 bg-card/80 backdrop-blur-xl border-2 border-brand-600/30">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -278,15 +278,15 @@ export default function TopUpRequestPage() {
         </CyberCard>
         </div>
 
-        {/* Info panel — 1/3 on desktop, full-width below form on mobile */}
+        {/* Info panel -- 1/3 on desktop, full-width below form on mobile */}
         <div className="lg:col-span-1">
           <div className="bg-brand-500/10 border-2 border-brand-500/30 rounded-xl p-5">
-            <h3 className="text-sm font-bold text-brand-400 mb-3"> ️ {t('customer.importantInfo')}:</h3>
+            <h3 className="text-sm font-bold text-brand-400 mb-3">  {t('customer.importantInfo')}:</h3>
             <ul className="text-xs text-muted-foreground/70 space-y-2">
-              <li className="flex gap-2"><span className="text-brand-400 shrink-0">•</span>{t('customer.infoProcessTime')}</li>
-              <li className="flex gap-2"><span className="text-brand-400 shrink-0">•</span>{t('customer.infoProofClear')}</li>
-              <li className="flex gap-2"><span className="text-brand-400 shrink-0">•</span>{t('customer.infoBalanceAuto')}</li>
-              <li className="flex gap-2"><span className="text-brand-400 shrink-0">•</span>{t('customer.infoContactAdmin')}</li>
+              <li className="flex gap-2"><span className="text-brand-400 shrink-0">*</span>{t('customer.infoProcessTime')}</li>
+              <li className="flex gap-2"><span className="text-brand-400 shrink-0">*</span>{t('customer.infoProofClear')}</li>
+              <li className="flex gap-2"><span className="text-brand-400 shrink-0">*</span>{t('customer.infoBalanceAuto')}</li>
+              <li className="flex gap-2"><span className="text-brand-400 shrink-0">*</span>{t('customer.infoContactAdmin')}</li>
             </ul>
           </div>
         </div>
