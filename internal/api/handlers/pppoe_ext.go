@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -21,6 +22,17 @@ type PppoeExtHandler struct{ db *gorm.DB }
 
 func NewPppoeExtHandler(db *gorm.DB) *PppoeExtHandler {
 	return &PppoeExtHandler{db: db}
+}
+
+// dialMikrotik connects to a MikroTik router API, automatically using TLS for
+// port 8729 (SSL API) and plain TCP for port 8728 (non-SSL API).
+func dialMikrotik(addr, username, password string, timeout time.Duration) (*ros.Client, error) {
+	// Detect SSL port: 8729 is the default MikroTik SSL API port
+	if strings.HasSuffix(addr, ":8729") {
+		tlsConfig := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		return ros.DialTLSTimeout(addr, username, password, tlsConfig, timeout)
+	}
+	return ros.DialTimeout(addr, username, password, timeout)
 }
 
 // writeXLSX creates a proper .xlsx file from column headers and data rows.
@@ -727,7 +739,7 @@ func (h *PppoeExtHandler) TestMikrotikConnection(c fiber.Ctx) error {
 
 	tryPort := func(port int) portResult {
 		addr := fmt.Sprintf("%s:%d", router.IPAddress, port)
-		client, err := ros.DialTimeout(addr, router.Username, routerPass, 8*time.Second)
+		client, err := dialMikrotik(addr, router.Username, routerPass, 8*time.Second)
 		if err != nil {
 			return portResult{Port: port, Success: false, Error: err.Error()}
 		}
@@ -841,7 +853,7 @@ func (h *PppoeExtHandler) SyncProfilesMikrotik(c fiber.Ctx) error {
 			port = 8728
 		}
 		addr := fmt.Sprintf("%s:%d", router.IPAddress, port)
-		client, err := ros.DialTimeout(addr, router.Username, pass, 10*time.Second)
+		client, err := dialMikrotik(addr, router.Username, pass, 10*time.Second)
 		if err != nil {
 			// fallback ke apiPort
 			apiPort := router.APIPort
@@ -849,7 +861,7 @@ func (h *PppoeExtHandler) SyncProfilesMikrotik(c fiber.Ctx) error {
 				apiPort = 8729
 			}
 			addr2 := fmt.Sprintf("%s:%d", router.IPAddress, apiPort)
-			client, err = ros.DialTimeout(addr2, router.Username, pass, 10*time.Second)
+			client, err = dialMikrotik(addr2, router.Username, pass, 10*time.Second)
 			if err != nil {
 				debugLines = append(debugLines, fmt.Sprintf("[%s] gagal konek: %s", router.Name, err.Error()))
 				continue

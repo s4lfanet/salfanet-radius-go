@@ -30,7 +30,6 @@ import (
 	"strings"
 	"time"
 
-	ros "github.com/go-routeros/routeros/v3"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/curve25519"
@@ -814,7 +813,7 @@ func (h *NetworkVPNHandler) CreateVPNClient(c fiber.Ctx) error {
 		apiPort = 8728
 	}
 	mtAddr := fmt.Sprintf("%s:%d", server.Host, apiPort)
-	mtClient, err := ros.DialTimeout(mtAddr, server.Username, routerPass, 15*time.Second)
+	mtClient, err := dialMikrotik(mtAddr, server.Username, routerPass, 15*time.Second)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": "Tidak bisa konek ke VPN server: " + err.Error()})
 	}
@@ -1022,7 +1021,7 @@ func (h *NetworkVPNHandler) PatchVPNClient(c fiber.Ctx) error {
 			if apiPort == 0 {
 				apiPort = 8728
 			}
-			if mtClient, merr := ros.DialTimeout(
+			if mtClient, merr := dialMikrotik(
 				fmt.Sprintf("%s:%d", server.Host, apiPort),
 				server.Username, routerPass, 10*time.Second,
 			); merr == nil {
