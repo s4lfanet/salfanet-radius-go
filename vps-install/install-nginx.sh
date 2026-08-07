@@ -945,15 +945,15 @@ events {
 http {
     # Only send COOP/COEP headers on HTTPS (or Cloudflare-proxied HTTPS)
     # to avoid browser "untrustworthy origin" warnings on HTTP access.
-    map $http_x_forwarded_proto $real_proto {
+    map \$http_x_forwarded_proto \$real_proto {
         https "https";
-        default $scheme;
+        default \$scheme;
     }
-    map $real_proto $coop_header {
+    map \$real_proto \$coop_header {
         https "same-origin-allow-popups";
         default "";
     }
-    map $real_proto $corp_header {
+    map \$real_proto \$corp_header {
         https "same-site";
         default "";
     }
