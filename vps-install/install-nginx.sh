@@ -320,6 +320,8 @@ _proxy_locations() {
         proxy_cache_bypass $http_upgrade;
 
         add_header Cache-Control 'no-cache, must-revalidate' always;
+        add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+        add_header Cross-Origin-Resource-Policy "same-site" always;
 
         proxy_hide_header X-Frame-Options;
         proxy_hide_header X-XSS-Protection;
@@ -637,6 +639,8 @@ _proxy_locations_https_domain() {
         add_header Cache-Control 'no-cache, must-revalidate' always;
         add_header CDN-Cache-Control 'no-store' always;
         add_header Cloudflare-CDN-Cache-Control 'no-store' always;
+        add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+        add_header Cross-Origin-Resource-Policy "same-site" always;
 
         proxy_hide_header Content-Security-Policy;
         proxy_hide_header X-Frame-Options;
@@ -908,6 +912,8 @@ _proxy_locations_cloudflare() {
         proxy_cache_bypass $http_upgrade;
         add_header Cache-Control 'no-cache, must-revalidate' always;
         add_header CDN-Cache-Control 'no-store' always;
+        add_header Cross-Origin-Opener-Policy "same-origin-allow-popups" always;
+        add_header Cross-Origin-Resource-Policy "same-site" always;
 
         proxy_hide_header Cross-Origin-Opener-Policy;
         proxy_hide_header Cross-Origin-Resource-Policy;
