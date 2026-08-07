@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError } from '@/lib/sweetalert';
-import { ArrowLeft, MapPin, Map, Eye, EyeOff, Loader2, X, ChevronRight, ChevronLeft, Wifi, WifiOff } from 'lucide-react';
+import { ArrowLeft, MapPin, Map, Eye, EyeOff, Loader2, X, ChevronRight, ChevronLeft, Wifi, WifiOff, Clock } from 'lucide-react';
 import MapPicker from '@/components/MapPicker';
 import { ModalInput, ModalSelect, ModalLabel } from '@/components/cyberpunk';
 
@@ -261,11 +261,11 @@ export default function NewPppoeUserPage() {
                 <div className="grid grid-cols-2 gap-2">
                   <label className={`flex items-center gap-2 p-2.5 border-2 rounded-lg cursor-pointer transition-all ${formData.subscriptionType === 'POSTPAID' ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/40'}`}>
                     <input type="radio" name="subscriptionType" value="POSTPAID" checked={formData.subscriptionType === 'POSTPAID'} onChange={() => field('subscriptionType', 'POSTPAID')} className="w-3 h-3 accent-primary" />
-                    <div><p className="text-[10px] font-semibold">?? Postpaid</p><p className="text-[9px] text-muted-foreground">Pakai dulu, bayar nanti</p></div>
+                    <div><p className="text-[10px] font-semibold">Postpaid</p><p className="text-[9px] text-muted-foreground">Pakai dulu, bayar nanti</p></div>
                   </label>
                   <label className={`flex items-center gap-2 p-2.5 border-2 rounded-lg cursor-pointer transition-all ${formData.subscriptionType === 'PREPAID' ? 'border-purple-500 bg-purple-500/10' : 'border-border hover:border-purple-400/40'}`}>
                     <input type="radio" name="subscriptionType" value="PREPAID" checked={formData.subscriptionType === 'PREPAID'} onChange={() => field('subscriptionType', 'PREPAID')} className="w-3 h-3 accent-purple-500" />
-                    <div><p className="text-[10px] font-semibold">?? Prepaid</p><p className="text-[9px] text-muted-foreground">Bayar dulu, langsung aktif</p></div>
+                    <div><p className="text-[10px] font-semibold">Prepaid</p><p className="text-[9px] text-muted-foreground">Bayar dulu, langsung aktif</p></div>
                   </label>
                 </div>
                 {formData.subscriptionType === 'POSTPAID' && (
@@ -278,7 +278,7 @@ export default function NewPppoeUserPage() {
                     </div>
                     {/* Tagihan Pertama -- selalu tampil (tidak perlu profile dulu) */}
                     <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">?? Tagihan Pertama</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">Tagihan Pertama</p>
                       {/* Langkah 1: kapan bayar */}
                       <div className="grid grid-cols-2 gap-1.5 mb-2">
                         <button
@@ -286,7 +286,6 @@ export default function NewPppoeUserPage() {
                           onClick={() => { if (firstInvoice === 'none') setFirstInvoice('prorate'); }}
                           className={`flex flex-col items-center gap-0.5 p-2.5 border-2 rounded-xl cursor-pointer transition-all text-center w-full ${firstInvoice !== 'none' ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-border bg-muted/40 hover:border-emerald-400'}`}
                         >
-                          <span className="text-base">??</span>
                           <span className={`text-[9px] font-bold ${firstInvoice !== 'none' ? 'text-emerald-700 dark:text-emerald-300' : ''}`}>Bayar di Awal</span>
                           <span className="text-[8px] text-muted-foreground leading-tight">Invoice dibuat saat pemasangan</span>
                         </button>
@@ -295,7 +294,7 @@ export default function NewPppoeUserPage() {
                           onClick={() => setFirstInvoice('none')}
                           className={`flex flex-col items-center gap-0.5 p-2.5 border-2 rounded-xl cursor-pointer transition-all text-center w-full ${firstInvoice === 'none' ? 'border-border bg-muted' : 'border-border/40 bg-muted/30 hover:border-border'}`}
                         >
-                          <span className="text-base">?</span>
+                          <Clock className="h-4 w-4 text-muted-foreground" />
                           <span className="text-[9px] font-bold">Bayar Setelah Pemakaian</span>
                           <span className="text-[8px] text-muted-foreground leading-tight">Dibuat otomatis oleh sistem</span>
                         </button>
@@ -307,7 +306,6 @@ export default function NewPppoeUserPage() {
                           <div className="grid grid-cols-2 gap-1.5">
                             <label className={`flex flex-col items-center p-2 border-2 rounded-lg cursor-pointer transition-all text-center ${firstInvoice === 'prorate' ? 'border-emerald-500 bg-emerald-100 dark:bg-emerald-900/40' : 'border-border bg-background hover:border-emerald-400'}`}>
                               <input type="radio" name="firstInvoice" value="prorate" checked={firstInvoice === 'prorate'} onChange={() => setFirstInvoice('prorate')} className="sr-only" />
-                              <span className="text-sm mb-0.5">??</span>
                               <span className={`text-[9px] font-bold ${firstInvoice === 'prorate' ? 'text-emerald-700 dark:text-emerald-300' : ''}`}>Prorate</span>
                               {prorateInfo ? (
                                 <>
@@ -320,7 +318,6 @@ export default function NewPppoeUserPage() {
                             </label>
                             <label className={`flex flex-col items-center p-2 border-2 rounded-lg cursor-pointer transition-all text-center ${firstInvoice === 'full' ? 'border-primary bg-primary/10' : 'border-border bg-background hover:border-primary/50'}`}>
                               <input type="radio" name="firstInvoice" value="full" checked={firstInvoice === 'full'} onChange={() => setFirstInvoice('full')} className="sr-only" />
-                              <span className="text-sm mb-0.5">??</span>
                               <span className={`text-[9px] font-bold ${firstInvoice === 'full' ? 'text-primary' : ''}`}>Sebulan Penuh</span>
                               {prorateInfo ? (
                                 <span className="text-[9px] font-bold">Rp {prorateInfo.fullPrice.toLocaleString('id-ID')}</span>
@@ -330,10 +327,10 @@ export default function NewPppoeUserPage() {
                             </label>
                           </div>
                           {!prorateInfo && (
-                            <p className="text-[9px] text-amber-600 dark:text-amber-400 mt-1.5">?? Pilih profil paket untuk melihat estimasi tagihan</p>
+                            <p className="text-[9px] text-amber-600 dark:text-amber-400 mt-1.5">Pilih profil paket untuk melihat estimasi tagihan</p>
                           )}
                           <p className="text-[9px] text-muted-foreground mt-1.5">
-                            ?? Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan -- bisa dibayar via portal pelanggan.
+                            Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan -- bisa dibayar via portal pelanggan.
                           </p>
                         </div>
                       )}
@@ -348,14 +345,13 @@ export default function NewPppoeUserPage() {
                       <p className="text-[10px] text-muted-foreground mt-1">Kosongkan untuk hitung otomatis dari validitas paket.</p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">?? Tagihan Pertama</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground mb-1.5">Tagihan Pertama</p>
                       <div className="grid grid-cols-2 gap-1.5">
                         <button
                           type="button"
                           onClick={() => setFirstInvoice('full')}
                           className={`flex flex-col items-center gap-0.5 p-2.5 border-2 rounded-xl cursor-pointer transition-all text-center w-full ${firstInvoice !== 'none' ? 'border-purple-500 bg-purple-50 dark:bg-purple-950/30' : 'border-border/40 bg-muted/30 hover:border-purple-400'}`}
                         >
-                          <span className="text-base">??</span>
                           <span className={`text-[9px] font-bold ${firstInvoice !== 'none' ? 'text-purple-700 dark:text-purple-300' : ''}`}>Bayar di Awal Pemasangan</span>
                           {profiles.find(p => p.id === formData.profileId) ? (
                             <span className="text-[9px] font-bold text-purple-600 dark:text-purple-400">
@@ -370,14 +366,13 @@ export default function NewPppoeUserPage() {
                           onClick={() => setFirstInvoice('none')}
                           className={`flex flex-col items-center gap-0.5 p-2.5 border-2 rounded-xl cursor-pointer transition-all text-center w-full ${firstInvoice === 'none' ? 'border-border bg-muted' : 'border-border/40 bg-muted/30 hover:border-border'}`}
                         >
-                          <span className="text-base">?</span>
                           <span className="text-[9px] font-bold">Bayar Setelah Pemakaian</span>
                           <span className="text-[8px] text-muted-foreground leading-tight">Tagihan dibuat manual nanti</span>
                         </button>
                       </div>
                       {firstInvoice !== 'none' && (
                         <p className="text-[9px] text-muted-foreground mt-1.5">
-                          ?? Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan -- bisa dibayar via portal pelanggan.
+                          Invoice <span className="font-semibold">PENDING</span> dibuat saat simpan -- bisa dibayar via portal pelanggan.
                         </p>
                       )}
                     </div>
@@ -430,7 +425,7 @@ export default function NewPppoeUserPage() {
                 </div>
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">?? Dokumen KTP (opsional)</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Dokumen KTP (opsional)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <ModalLabel>No. NIK</ModalLabel>
@@ -440,7 +435,7 @@ export default function NewPppoeUserPage() {
                     <ModalLabel>Foto KTP</ModalLabel>
                     <input type="file" accept="image/*" onChange={handleUploadIdCard} disabled={uploadingIdCard} className="hidden" id="idCardUpload" />
                     <label htmlFor="idCardUpload" className={`w-full flex items-center justify-center px-3 py-2 text-xs border border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingIdCard ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                      {uploadingIdCard ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Upload...</span> : '?? Upload KTP'}
+                      {uploadingIdCard ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Upload...</span> : 'Upload KTP'}
                     </label>
                   </div>
                 </div>
@@ -469,10 +464,10 @@ export default function NewPppoeUserPage() {
                 </div>
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">?? Foto Instalasi (opsional)</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Foto Instalasi (opsional)</p>
                 <input type="file" accept="image/*" onChange={handleUploadInstallation} disabled={uploadingInstallation} className="hidden" id="installUpload" />
                 <label htmlFor="installUpload" className={`w-full block px-3 py-3 text-xs text-center border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingInstallation ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  {uploadingInstallation ? <span className="flex items-center justify-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Mengupload...</span> : '?? Tambah Foto Instalasi'}
+                  {uploadingInstallation ? <span className="flex items-center justify-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Mengupload...</span> : 'Tambah Foto Instalasi'}
                 </label>
                 <p className="text-[10px] text-muted-foreground">Maks. 5 foto @ 5MB ({formData.installationPhotos.length}/5)</p>
                 {formData.installationPhotos.length > 0 && (
@@ -491,7 +486,7 @@ export default function NewPppoeUserPage() {
                 )}
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">?? Lokasi GPS (opsional)</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Lokasi GPS (opsional)</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <ModalLabel>Latitude</ModalLabel>
@@ -535,7 +530,7 @@ export default function NewPppoeUserPage() {
                   </ModalSelect>
                 </div>
                 <div>
-                  <ModalLabel>? Aksi Jatuh Tempo</ModalLabel>
+                  <ModalLabel>Aksi Jatuh Tempo</ModalLabel>
                   <select value={formData.autoIsolationEnabled ? 'isolate' : 'keep'} onChange={(e) => field('autoIsolationEnabled', e.target.value === 'isolate')}
                     className="w-full px-3 py-2 text-xs border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary">
                     <option value="isolate">ISOLIR INTERNET (Suspend) -- isolir otomatis saat expired</option>
@@ -544,7 +539,7 @@ export default function NewPppoeUserPage() {
                   <p className="text-[10px] text-muted-foreground mt-1">Tindakan otomatis saat tanggal tagihan / expired terlewati.</p>
                 </div>
                 <div>
-                  <ModalLabel>?? Tanggal Daftar</ModalLabel>
+                  <ModalLabel>Tanggal Daftar</ModalLabel>
                   <ModalInput type="date" value={formData.registeredAt} onChange={(e) => field('registeredAt', e.target.value)} />
                   <p className="text-[10px] text-muted-foreground mt-1">Default hari ini. Ubah untuk data historis pelanggan lama.</p>
                 </div>
