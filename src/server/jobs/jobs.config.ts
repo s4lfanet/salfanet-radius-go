@@ -310,7 +310,7 @@ export const CRON_JOBS: CronJobConfig[] = [
 // Helper to get next run time from cron pattern.
 // IMPORTANT: 'from' must be a WIB-as-UTC Date (UTC value = WIB time).
 // Use UTC methods so the WIB values stored in the UTC field are read correctly.
-// Default: nowWIB() � current WIB time encoded as UTC.
+// Default: nowWIB() - current WIB time encoded as UTC.
 export function getNextRunTime(cronPattern: string, from?: Date): Date {
   // Import lazily to avoid circular dependency issues at module init time
   const { nowWIB } = require('@/lib/timezone') as { nowWIB: () => Date };
@@ -320,14 +320,14 @@ export function getNextRunTime(cronPattern: string, from?: Date): Date {
     // Every minute
     return new Date(now.getTime() + 60000);
   } else if (cronPattern === '*/5 * * * *') {
-    // Every 5 minutes � use UTC minutes (WIB-as-UTC)
+    // Every 5 minutes - use UTC minutes (WIB-as-UTC)
     const nextMinute = Math.ceil(now.getUTCMinutes() / 5) * 5;
     const next = new Date(now);
     next.setUTCMinutes(nextMinute, 0, 0);
     if (next <= now) next.setUTCMinutes(nextMinute + 5, 0, 0);
     return next;
   } else if (cronPattern === '0 * * * *') {
-    // Every hour � advance to top of next UTC hour (= WIB hour)
+    // Every hour - advance to top of next UTC hour (= WIB hour)
     const next = new Date(now);
     next.setUTCHours(now.getUTCHours() + 1, 0, 0, 0);
     return next;

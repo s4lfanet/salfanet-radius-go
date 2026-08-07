@@ -53,7 +53,7 @@ const PORTALS = [
     subdomains: ['admin'],
     path: '/admin',
     desc: 'Halaman manajemen utama — hanya untuk admin & staf',
-    icon: '🛡️',
+    icon: '🛡',
     color: 'text-red-600 dark:text-red-400',
     bg: 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800',
   },
@@ -123,12 +123,12 @@ export default function SubdomainSettingsPage() {
   })();
 
   const dnsRecords = PORTALS.flatMap(p =>
-    p.subdomains.map(sub => `${sub}.${domain}  →  A  ${vpsIp}`)
+    p.subdomains.map(sub => `${sub}.${domain}  &rarr;  A  ${vpsIp}`)
   );
 
   const nginxConfig = `# /etc/nginx/sites-available/salfanet-subdomains
 
-# ─── Admin Portal ───────────────────────────────────────────
+# --- Admin Portal -------------------------------------------
 server {
     listen 80;
     server_name admin.${domain};
@@ -148,7 +148,7 @@ server {
     }
 }
 
-# ─── Portal Pelanggan ────────────────────────────────────────
+# --- Portal Pelanggan ----------------------------------------
 server {
     listen 80;
     server_name customer.${domain} pelanggan.${domain};
@@ -166,7 +166,7 @@ server {
     }
 }
 
-# ─── Portal Agent ────────────────────────────────────────────
+# --- Portal Agent --------------------------------------------
 server {
     listen 80;
     server_name agent.${domain} agen.${domain};
@@ -184,7 +184,7 @@ server {
     }
 }
 
-# ─── Portal Teknisi ──────────────────────────────────────────
+# --- Portal Teknisi ------------------------------------------
 server {
     listen 80;
     server_name teknisi.${domain} technician.${domain};
@@ -266,7 +266,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
 
       {/* Portal Cards */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Pemetaan Subdomain → Portal</h2>
+        <h2 className="text-sm font-semibold text-foreground">Pemetaan Subdomain &rarr; Portal</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           {PORTALS.map(p => (
             <div key={p.path} className={`rounded-xl border p-4 ${p.bg}`}>
@@ -306,7 +306,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
               <div key={sub} className="flex items-center gap-2 text-[11px] font-mono bg-zinc-900 text-green-300 rounded px-3 py-1.5">
                 <span className="text-zinc-400">A</span>
                 <span className="text-blue-300">{sub}.{domain}</span>
-                <span className="text-zinc-500">→</span>
+                <span className="text-zinc-500">&rarr;</span>
                 <span>{vpsIp}</span>
               </div>
             ))
@@ -314,7 +314,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
         </div>
         <div className="flex items-start gap-2 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700 rounded-lg p-2">
           <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-          <p>Gunakan IP VPS <strong>{vpsIp}</strong>. Jika menggunakan Cloudflare, matikan proxy (☁️ → abu-abu) agar tidak ada masalah SSL.</p>
+          <p>Gunakan IP VPS <strong>{vpsIp}</strong>. Jika menggunakan Cloudflare, matikan proxy ( &rarr; abu-abu) agar tidak ada masalah SSL.</p>
         </div>
       </div>
 
@@ -338,7 +338,7 @@ curl -H "Host: admin.${domain}" http://localhost:3000/`;
             }}
             className="inline-flex items-center gap-1 px-2 py-1 text-[10px] border border-border rounded hover:bg-muted text-muted-foreground"
           >
-            ⬇️ Download .conf
+             Download .conf
           </button>
         </div>
         <p className="text-[10px] text-muted-foreground">Setelah edit, aktifkan dengan:</p>
@@ -367,12 +367,12 @@ nginx -t && systemctl reload nginx`}</CodeBlock>
         <CodeBlock>{testCmd}</CodeBlock>
         <CopyButton text={testCmd} label="Salin" />
         <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-3 text-[10px] text-emerald-700 dark:text-emerald-300 space-y-1">
-          <p className="font-semibold">✅ Tanda berhasil:</p>
+          <p className="font-semibold">[OK]  Tanda berhasil:</p>
           <ul className="list-disc list-inside space-y-0.5">
-            <li><code>customer.{domain}</code> → tampilkan halaman portal pelanggan</li>
-            <li><code>agent.{domain}</code> → tampilkan halaman portal agent</li>
-            <li><code>teknisi.{domain}</code> → tampilkan halaman portal teknisi</li>
-            <li><code>admin.{domain}</code> → tampilkan halaman login admin</li>
+            <li><code>customer.{domain}</code> &rarr; tampilkan halaman portal pelanggan</li>
+            <li><code>agent.{domain}</code> &rarr; tampilkan halaman portal agent</li>
+            <li><code>teknisi.{domain}</code> &rarr; tampilkan halaman portal teknisi</li>
+            <li><code>admin.{domain}</code> &rarr; tampilkan halaman login admin</li>
           </ul>
         </div>
       </div>

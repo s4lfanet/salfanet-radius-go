@@ -9,7 +9,7 @@ import { CyberToastProvider } from '@/components/cyberpunk/CyberToast';
  * code-splitting can place the layout bundle and each page bundle into separate
  * JS chunks. When CyberToast.tsx ends up in two chunks, createContext() is called
  * twice, producing two different context objects. The outer provider sets one
- * context while the page's useToast() reads the other → "must be used within a
+ * context while the page's useToast() reads the other &rarr; "must be used within a
  * CyberToastProvider" error.
  *
  * By adding a provider co-located with the consuming pages (same bundle group),

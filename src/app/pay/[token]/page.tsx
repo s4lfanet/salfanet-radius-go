@@ -417,7 +417,7 @@ export default function PaymentPage() {
                     {processing ? (
                       <Loader2 className="w-4 h-4 animate-spin text-[success-foreground]" />
                     ) : (
-                      <span className="text-[10px] text-[success-foreground] font-medium">Bayar Sekarang →</span>
+                      <span className="text-[10px] text-[success-foreground] font-medium">Bayar Sekarang &rarr;</span>
                     )}
                   </button>
                 )}
@@ -455,7 +455,7 @@ export default function PaymentPage() {
                               {processing ? (
                                 <Loader2 className="w-4 h-4 animate-spin text-[brand-400]" />
                               ) : (
-                                <span className="text-[10px] text-[brand-400] font-medium">Bayar →</span>
+                                <span className="text-[10px] text-[brand-400] font-medium">Bayar &rarr;</span>
                               )}
                             </button>
                           ))}
@@ -484,7 +484,7 @@ export default function PaymentPage() {
                       {processing ? (
                         <Loader2 className="w-4 h-4 animate-spin text-[brand-400]" />
                       ) : (
-                        <span className="text-[10px] text-[brand-400] font-medium">Bayar Sekarang →</span>
+                        <span className="text-[10px] text-[brand-400] font-medium">Bayar Sekarang &rarr;</span>
                       )}
                     </button>
                   );
@@ -501,7 +501,7 @@ export default function PaymentPage() {
             {company.address && <p className="text-[10px] text-[muted-foreground]/60 mt-1">📍 {company.address}</p>}
             <div className="flex flex-wrap justify-center gap-3 text-[10px] text-[muted-foreground]/60 mt-2">
               {company.phone && <span>📞 {company.phone}</span>}
-              {company.email && <span>✉️ {company.email}</span>}
+              {company.email && <span> {company.email}</span>}
             </div>
           </div>
         )}
@@ -612,7 +612,7 @@ export default function PaymentPage() {
                       {/* Unique amount warning — KRITIS untuk matching otomatis */}
                       {qrisData.uniqueAmount && qrisData.uniqueAmount !== invoice?.amount && (
                         <div className="bg-[destructive]/10 border border-[destructive]/40 rounded-xl p-3">
-                          <p className="text-[11px] font-bold text-[destructive] mb-1">⚠️ Transfer TEPAT nominal berikut:</p>
+                          <p className="text-[11px] font-bold text-[destructive] mb-1">  Transfer TEPAT nominal berikut:</p>
                           <p className="text-lg font-bold text-white text-center py-1">{formatCurrency(qrisData.uniqueAmount)}</p>
                           <p className="text-[10px] text-[muted-foreground]/70 leading-relaxed">
                             Nominal ini berbeda tipis dari tagihan Anda agar sistem dapat mencocokkan pembayaran secara otomatis. <strong>Jangan dibulatkan.</strong>

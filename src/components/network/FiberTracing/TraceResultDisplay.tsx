@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Check } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface PathNode {
@@ -95,7 +96,7 @@ export function TraceResultDisplay({ path, summary, onNodeClick }: TraceResultDi
             {t('network.tracing.pathFound')}
           </h3>
           <span className="px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full text-sm font-medium">
-            ✓ {t('network.tracing.pathDetails')}
+            <Check className="w-3 h-3 inline mr-1" /> {t('network.tracing.pathDetails')}
           </span>
         </div>
       </div>

@@ -145,7 +145,7 @@ export default function CustomerLoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-background transition-colors duration-300">
-      {/* ── Mobile Brand Header (mobile only) ── */}
+      {/* -- Mobile Brand Header (mobile only) -- */}
       <div className="lg:hidden bg-gradient-to-br from-cyan-500 to-blue-700 px-6 pt-10 pb-8 relative overflow-hidden flex-shrink-0">
         <div className="absolute top-[-50px] right-[-50px] w-40 h-40 bg-white/10 rounded-full pointer-events-none" />
         <div className="absolute bottom-[-30px] left-[-30px] w-28 h-28 bg-white/5 rounded-full pointer-events-none" />
@@ -164,7 +164,7 @@ export default function CustomerLoginPage() {
           </div>
         </div>
       </div>
-      {/* ── Left Panel: Login Form ── */}
+      {/* -- Left Panel: Login Form -- */}
       <div className="flex items-start justify-center w-full lg:w-[430px] lg:min-h-screen bg-card border-r border-border shadow-xl px-8 pt-10 lg:pt-14 pb-10 flex-shrink-0 relative">
 
         {/* Theme Toggle */}
@@ -358,13 +358,13 @@ export default function CustomerLoginPage() {
               href="/admin/login"
               className="text-xs text-muted-foreground hover:text-primary transition-colors"
             >
-              Admin? Masuk di sini →
+              Admin? Masuk di sini &rarr;
             </a>
           </p>
         </div>
       </div>
 
-      {/* ── Right Panel: Brand Info ── */}
+      {/* -- Right Panel: Brand Info -- */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-slate-100 via-white to-cyan-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900 items-center justify-center px-12 py-8 relative overflow-hidden">
         <div className="max-w-lg w-full relative z-10">
           <div className="mb-2">

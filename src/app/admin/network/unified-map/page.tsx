@@ -21,7 +21,7 @@ const AddNodePanel = dynamic(
   { ssr: false, loading: () => null }
 );
 
-// ─── Type labels ────────────────────────────────────────────────────────────
+// --- Type labels ------------------------------------------------------------
 const TYPE_LABEL: Record<string, string> = {
   OLT: 'OLT', OTB: 'OTB', JOINT_CLOSURE: 'JC', ODC: 'ODC', ODP: 'ODP', CUSTOMER: 'Pelanggan',
 };
@@ -51,13 +51,13 @@ export default function UnifiedMapPage() {
   const [initialNodeType, setInitialNodeType] = useState<string | null>(() => searchParams.get('nodeType'));
   const [pendingNodeType, setPendingNodeType] = useState<string | null>(null);
 
-  // ── Connect mode state ─────────────────────────────────────────────────
+  // -- Connect mode state -------------------------------------------------
   const [connectMode, setConnectMode] = useState(false);
   const [connectSource, setConnectSource] = useState<MapEntity | null>(null);
   const [connectTarget, setConnectTarget] = useState<MapEntity | null>(null);
   const [connecting, setConnecting] = useState(false);
 
-  // ── Connection lines state ─────────────────────────────────────────────
+  // -- Connection lines state ---------------------------------------------
   const [connections, setConnections] = useState<ConnectionLine[]>([]);
   const [showConnections, setShowConnections] = useState(true);
 
@@ -83,7 +83,7 @@ export default function UnifiedMapPage() {
     );
   };
 
-  // ── Load entities ──────────────────────────────────────────────────────
+  // -- Load entities ------------------------------------------------------
   const loadEntities = useCallback(async () => {
     try {
       const [nodesRes, customersRes] = await Promise.all([
@@ -111,7 +111,7 @@ export default function UnifiedMapPage() {
 
   useEffect(() => { loadEntities(); }, [loadEntities, refreshKey]);
 
-  // ── Load connections ───────────────────────────────────────────────────
+  // -- Load connections ---------------------------------------------------
   const loadConnections = useCallback(async () => {
     try {
       const res = await fetch('/api/network/connections');
@@ -124,7 +124,7 @@ export default function UnifiedMapPage() {
 
   useEffect(() => { loadConnections(); }, [loadConnections, refreshKey]);
 
-  // ── Statistics ─────────────────────────────────────────────────────────
+  // -- Statistics ---------------------------------------------------------
   const statistics = useMemo(() => {
     const s = { olt: 0, otb: 0, jc: 0, odc: 0, odp: 0, customers: 0, active: 0, issues: 0 };
     entities.forEach(e => {
@@ -140,7 +140,7 @@ export default function UnifiedMapPage() {
     return s;
   }, [entities]);
 
-  // ── Handlers ───────────────────────────────────────────────────────────
+  // -- Handlers -----------------------------------------------------------
   const handleEntityClick = (entity: MapEntity) => {
     if (addMode || connectMode) return;
     setSelectedEntity(entity);
@@ -172,7 +172,7 @@ export default function UnifiedMapPage() {
     setRefreshKey(k => k + 1);
   };
 
-  // ── Connect mode handlers ─────────────────────────────────────────────
+  // -- Connect mode handlers ---------------------------------------------
   const enterConnectMode = () => {
     setConnectMode(true);
     setConnectSource(null);
@@ -194,13 +194,13 @@ export default function UnifiedMapPage() {
     if (entity.type === 'CUSTOMER') return;
 
     if (!connectSource) {
-      // First click → set source
+      // First click &rarr; set source
       setConnectSource(entity);
     } else if (entity.id === connectSource.id) {
-      // Clicked same node → deselect
+      // Clicked same node &rarr; deselect
       setConnectSource(null);
     } else {
-      // Second click → set target → show confirmation
+      // Second click &rarr; set target &rarr; show confirmation
       setConnectTarget(entity);
     }
   };
@@ -338,7 +338,7 @@ export default function UnifiedMapPage() {
             </button>
           </div>
 
-          {/* ── Top-right toolbar ───────────────────────────────────────── */}
+          {/* -- Top-right toolbar ----------------------------------------- */}
           <div className="absolute top-2 right-2 sm:top-4 sm:right-4 z-[600] flex items-center gap-2">
             {/* My Location */}
             <button
@@ -406,7 +406,7 @@ export default function UnifiedMapPage() {
             </div>
           )}
 
-          {/* ── Connect mode hint ──────────────────────────────────────── */}
+          {/* -- Connect mode hint ---------------------------------------- */}
           {connectMode && !connectTarget && (
             <div className="absolute inset-0 z-[500] pointer-events-none">
               <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-amber-500 text-white text-sm px-4 py-2 rounded-full shadow-lg font-medium whitespace-nowrap">
@@ -417,14 +417,14 @@ export default function UnifiedMapPage() {
             </div>
           )}
 
-          {/* ── Connect confirmation drawer (bottom sheet) ────────────── */}
+          {/* -- Connect confirmation drawer (bottom sheet) -------------- */}
           {connectMode && connectTarget && connectSource && (
             <div className="absolute bottom-0 inset-x-0 z-[700] animate-in slide-in-from-bottom duration-300">
               <div className="bg-white dark:bg-gray-800 rounded-t-2xl shadow-2xl border-t border-gray-200 dark:border-gray-700 p-4 sm:p-6 max-w-lg mx-auto">
                 <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-4" />
                 <h3 className="font-bold text-gray-900 dark:text-white text-center mb-4">Hubungkan Device?</h3>
 
-                {/* Source → Target visual */}
+                {/* Source &rarr; Target visual */}
                 <div className="flex items-center justify-center gap-3 mb-4">
                   {/* Source */}
                   <div className="text-center">
@@ -437,7 +437,7 @@ export default function UnifiedMapPage() {
 
                   {/* Arrow */}
                   <div className="flex flex-col items-center">
-                    <div className="text-amber-500 text-xl">→</div>
+                    <div className="text-amber-500 text-xl">&rarr;</div>
                     <span className="text-[10px] text-gray-400 whitespace-nowrap">draw line</span>
                   </div>
 
@@ -466,14 +466,14 @@ export default function UnifiedMapPage() {
                     <p>Kabel drop baru akan dibuat. Default: 2T × 12C = 24 core.</p>
                   )}
                   {connectSource.type === 'ODC' && connectTarget.type === 'ODP' && (
-                    <p>Kabel distribusi ODC → ODP. Default: 2T × 12C = 24 core.</p>
+                    <p>Kabel distribusi ODC &rarr; ODP. Default: 2T × 12C = 24 core.</p>
                   )}
                   {!(
                     (connectSource.type === 'OTB' && connectTarget.type === 'JOINT_CLOSURE') ||
                     (connectSource.type === 'JOINT_CLOSURE') ||
                     (connectSource.type === 'ODC' && connectTarget.type === 'ODP')
                   ) && (
-                    <p>Koneksi {TYPE_LABEL[connectSource.type]} → {TYPE_LABEL[connectTarget.type]}. Kabel baru otomatis dibuat.</p>
+                    <p>Koneksi {TYPE_LABEL[connectSource.type]} &rarr; {TYPE_LABEL[connectTarget.type]}. Kabel baru otomatis dibuat.</p>
                   )}
                 </div>
 
@@ -516,11 +516,11 @@ export default function UnifiedMapPage() {
             )}>
               <div className="px-3 pb-2.5 space-y-1 border-t border-gray-200/60 dark:border-gray-700/60 pt-1.5">
                 {[
-                  ['⬟', 'text-purple-500', 'OLT – Optical Line Terminal'],
-                  ['◆', 'text-violet-500', 'JC – Joint Closure'],
-                  ['◇', 'text-blue-500', 'OTB – Optical Terminal Box'],
-                  ['■', 'text-cyan-500', 'ODC – Optical Distribution Cabinet'],
-                  ['▲', 'text-green-500', 'ODP – Optical Distribution Point'],
+                  ['OLT', 'text-purple-500', 'OLT – Optical Line Terminal'],
+                  ['JC', 'text-violet-500', 'JC – Joint Closure'],
+                  ['OTB', 'text-blue-500', 'OTB – Optical Terminal Box'],
+                  ['ODC', 'text-cyan-500', 'ODC – Optical Distribution Cabinet'],
+                  ['ODP', 'text-green-500', 'ODP – Optical Distribution Point'],
                   ['●', 'text-green-500', 'Active Customer'],
                   ['●', 'text-red-500', 'Isolated Customer'],
                 ].map(([icon, cls, label]) => (
@@ -533,9 +533,9 @@ export default function UnifiedMapPage() {
                 <div className="border-t border-gray-200/60 dark:border-gray-700/60 mt-1.5 pt-1.5">
                   <span className="text-gray-400 dark:text-muted-foreground font-semibold text-[10px] uppercase tracking-wider">Koneksi</span>
                   {[
-                    ['#a855f7', 'OTB → JC (Feeder)'],
-                    ['#8b5cf6', 'JC → JC (Branch)'],
-                    ['#06b6d4', 'JC/ODC → ODP'],
+                    ['#a855f7', 'OTB > JC (Feeder)'],
+                    ['#8b5cf6', 'JC > JC (Branch)'],
+                    ['#06b6d4', 'JC/ODC > ODP'],
                     ['#22c55e', 'Distribusi'],
                   ].map(([color, label]) => (
                     <div key={label} className="flex items-center gap-1.5">

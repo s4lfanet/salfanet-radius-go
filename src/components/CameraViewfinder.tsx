@@ -13,7 +13,7 @@ interface CameraViewfinderProps {
 
 /**
  * Inline live camera viewfinder.
- * - HTTPS / localhost: uses getUserMedia → live video viewfinder in browser
+ * - HTTPS / localhost: uses getUserMedia &rarr; live video viewfinder in browser
  * - HTTP (no HTTPS): falls back to native camera via capture="environment" input
  *   which opens the native camera app directly on mobile
  */
@@ -25,7 +25,7 @@ export function CameraViewfinder({ onCapture, onClose }: CameraViewfinderProps) 
 
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [error, setError] = useState('');
-  // true when getUserMedia is unavailable (HTTP context) → use native capture input
+  // true when getUserMedia is unavailable (HTTP context) &rarr; use native capture input
   const [useNativeCapture, setUseNativeCapture] = useState(false);
 
   const stopStream = useCallback(() => {
@@ -36,7 +36,7 @@ export function CameraViewfinder({ onCapture, onClose }: CameraViewfinderProps) 
   }, []);
 
   const startStream = useCallback(async (facing: 'environment' | 'user') => {
-    // HTTP context: getUserMedia not available → use native capture
+    // HTTP context: getUserMedia not available &rarr; use native capture
     if (!navigator.mediaDevices?.getUserMedia) {
       setUseNativeCapture(true);
       return;

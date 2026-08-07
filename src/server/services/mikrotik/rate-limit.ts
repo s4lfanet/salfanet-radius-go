@@ -4,11 +4,11 @@ import 'server-only'
  *
  * Strategy (in order of preference):
  * 1. RADIUS CoA (radclient) - send Mikrotik-Rate-Limit via CoA-Request to port 3799
- *    → MikroTik immediately applies new rate-limit to the active PPPoE session
+ *    -> MikroTik immediately applies new rate-limit to the active PPPoE session
  * 2. MikroTik RouterOS API - /ppp/active/set rate-limit (RouterOS 7.x)
- *    → Directly sets rate-limit on the active PPP connection, modifies dynamic queue
+ *    -> Directly sets rate-limit on the active PPP connection, modifies dynamic queue
  * 3. MikroTik RouterOS API - /queue/simple/set max-limit on <pppoe-{username}> queue
- *    → Finds the dynamic simple queue by name pattern and sets max-limit
+ *    -> Finds the dynamic simple queue by name pattern and sets max-limit
  * 4. Fallback: disconnect (user reconnects with new rate from RADIUS DB)
  *
  * MikroTik CoA requires:
@@ -61,7 +61,7 @@ async function changeRateLimitViaAPI(
   try {
     await api.connect();
 
-    // ── Approach 1: /ppp/active/set rate-limit (RouterOS 7.x) ──────────────
+    // -- Approach 1: /ppp/active/set rate-limit (RouterOS 7.x) --------------
     // This is the most reliable method — directly modifies the PPP session's
     // rate-limit which automatically updates the dynamic simple queue.
     const activePPP = await api.write('/ppp/active/print');
@@ -86,9 +86,9 @@ async function changeRateLimitViaAPI(
       console.log(`[RateLimit API] No active PPP session found for ${username}`);
     }
 
-    // ── Approach 2: /queue/simple/set max-limit on <pppoe-{username}> ──────
+    // -- Approach 2: /queue/simple/set max-limit on <pppoe-{username}> ------
     // MikroTik PPPoE server creates dynamic queues named <pppoe-{username}>
-    // e.g. user "server" → queue "<pppoe-server>"
+    // e.g. user "server" -> queue "<pppoe-server>"
     const queues = await api.write('/queue/simple/print');
     const expectedQueueName = `<pppoe-${username}>`;
 
@@ -150,7 +150,7 @@ export async function changePPPoERateLimit(
   const coaHost = router.ipAddress; // MikroTik IP (reachable via VPN tunnel)
   console.log(`[RateLimit] Changing rate limit for ${username} to ${newRateLimit} (target: ${coaHost})`);
 
-  // ── Method 1: RADIUS CoA (Mikrotik-Rate-Limit attribute) ─────────────────
+  // -- Method 1: RADIUS CoA (Mikrotik-Rate-Limit attribute) -----------------
   // Send CoA-Request with Mikrotik-Rate-Limit to NAS port 3799.
   // MikroTik immediately applies the rate-limit to the matching active session.
   const coaAvailable = await isRadclientAvailable();
@@ -184,7 +184,7 @@ export async function changePPPoERateLimit(
     console.log('[RateLimit] radclient not available, skipping CoA — trying API methods...');
   }
 
-  // ── Method 2+3: RouterOS API (ppp/active/set → queue/simple/set) ─────────
+  // -- Method 2+3: RouterOS API (ppp/active/set -> queue/simple/set) ---------
   const apiResult = await changeRateLimitViaAPI(router, username, newRateLimit);
   if (apiResult.success) {
     return {
@@ -194,7 +194,7 @@ export async function changePPPoERateLimit(
     };
   }
 
-  // ── Method 4: Fallback — disconnect (user reconnects with new rate) ───────
+  // -- Method 4: Fallback — disconnect (user reconnects with new rate) -------
   if (allowDisconnect) {
     console.log(`[RateLimit] All non-disruptive methods failed. Disconnecting user ${username}...`);
     const disconnectResult = await sendDisconnectRequest(

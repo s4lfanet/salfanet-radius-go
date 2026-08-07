@@ -354,7 +354,7 @@ function DaftarPageInner() {
                       className="flex items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-bold border-2 border-brand-500 text-brand-400 hover:bg-brand-500/10 rounded-xl transition-all"
                     >
                       <MapPin className="w-3.5 h-3.5" />
-                      🗺️ Manual
+                       Manual
                     </button>
                   </div>
 

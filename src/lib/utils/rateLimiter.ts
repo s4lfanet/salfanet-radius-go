@@ -92,7 +92,7 @@ export async function sendWithRateLimit(
         });
         sentCount++;
 
-        console.log(`[RateLimiter] ✅ Sent ${currentIndex + 1}/${messages.length}: ${message.phone}`);
+        console.log(`[RateLimiter] [OK]  Sent ${currentIndex + 1}/${messages.length}: ${message.phone}`);
 
         // Report progress
         if (onProgress) {
@@ -118,7 +118,7 @@ export async function sendWithRateLimit(
         });
         failedCount++;
 
-        console.error(`[RateLimiter] ❌ Failed ${currentIndex + 1}/${messages.length}: ${message.phone}`, error.message);
+        console.error(`[RateLimiter] [FAIL]  Failed ${currentIndex + 1}/${messages.length}: ${message.phone}`, error.message);
       }
     }
 
@@ -129,7 +129,7 @@ export async function sendWithRateLimit(
     }
   }
 
-  console.log(`[RateLimiter] ✅ Completed: ${sentCount} sent, ${failedCount} failed out of ${messages.length}`);
+  console.log(`[RateLimiter] [OK]  Completed: ${sentCount} sent, ${failedCount} failed out of ${messages.length}`);
 
   return {
     success: true,

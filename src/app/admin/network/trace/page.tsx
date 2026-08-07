@@ -16,7 +16,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { PathTracerTool, TraceResultDisplay, ImpactAnalysisPanel } from '@/components/network/FiberTracing';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 interface NetworkNode {
   id: string;
   type: 'OLT' | 'JOINT_CLOSURE' | 'ODC' | 'ODP';
@@ -38,10 +38,10 @@ interface FiberTracePoint {
 }
 interface FiberTraceResult { success: boolean; path: FiberTracePoint[]; totalLength?: number; totalLoss?: number; coreCount: number; spliceCount: number; }
 
-// ─── Tab types ────────────────────────────────────────────────────────────────
+// --- Tab types ----------------------------------------------------------------
 type TabId = 'logical' | 'physical';
 
-// ─── Logical Trace Tab ────────────────────────────────────────────────────────
+// --- Logical Trace Tab --------------------------------------------------------
 function LogicalTraceTab() {
   const { t } = useTranslation();
   const [nodes, setNodes] = React.useState<NetworkNode[]>([]);
@@ -128,7 +128,7 @@ function LogicalTraceTab() {
   );
 }
 
-// ─── Physical Trace Tab ───────────────────────────────────────────────────────
+// --- Physical Trace Tab -------------------------------------------------------
 function PhysicalTraceTab() {
   const [loading, setLoading] = useState(false);
   const [traceResult, setTraceResult] = useState<FiberTraceResult | null>(null);
@@ -305,7 +305,7 @@ function PhysicalTraceTab() {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// --- Main Page ----------------------------------------------------------------
 export default function TracePage() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabId>('logical');

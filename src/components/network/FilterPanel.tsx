@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Search, Filter, X } from 'lucide-react';
+import { Search, Filter, X, Check, Hexagon, Diamond, Square, Triangle, User } from 'lucide-react';
 
 interface FilterPanelProps {
   filters: {
@@ -27,12 +27,12 @@ export default function FilterPanel({ filters, onFilterChange, statistics }: Fil
   const { t } = useTranslation();
 
   const entityTypes = [
-    { value: 'OLT', label: 'OLT', color: 'bg-purple-500', icon: '⬟' },
-    { value: 'OTB', label: 'OTB (Distribution)', color: 'bg-blue-600', icon: '◇' },
-    { value: 'JOINT_CLOSURE', label: 'Joint Closure', color: 'bg-purple-400', icon: '◆' },
-    { value: 'ODC', label: 'ODC', color: 'bg-cyan-500', icon: '■' },
-    { value: 'ODP', label: 'ODP', color: 'bg-green-500', icon: '▲' },
-    { value: 'CUSTOMER', label: 'Customers', color: 'bg-blue-500', icon: '👤' },
+    { value: 'OLT', label: 'OLT', color: 'bg-purple-500', icon: 'OLT' },
+    { value: 'OTB', label: 'OTB (Distribution)', color: 'bg-blue-600', icon: 'OTB' },
+    { value: 'JOINT_CLOSURE', label: 'Joint Closure', color: 'bg-purple-400', icon: 'JC' },
+    { value: 'ODC', label: 'ODC', color: 'bg-cyan-500', icon: 'ODC' },
+    { value: 'ODP', label: 'ODP', color: 'bg-green-500', icon: 'ODP' },
+    { value: 'CUSTOMER', label: 'Customers', color: 'bg-blue-500', icon: 'CUST' },
   ];
 
   const statusOptions = [
@@ -85,37 +85,37 @@ export default function FilterPanel({ filters, onFilterChange, statistics }: Fil
         </h3>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <div className="flex items-center space-x-2">
-            <span className="text-purple-500">⬟</span>
+            <span className="text-purple-500 font-bold text-xs">OLT</span>
             <span className="text-gray-500 dark:text-gray-300">OLT:</span>
             <span className="text-gray-900 dark:text-white font-bold">{statistics.olt}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-blue-500">◇</span>
+            <span className="text-blue-500 font-bold text-xs">OTB</span>
             <span className="text-gray-500 dark:text-gray-300">OTB:</span>
             <span className="text-gray-900 dark:text-white font-bold">{statistics.otb}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-purple-400">◆</span>
+            <span className="text-purple-400 font-bold text-xs">JC</span>
             <span className="text-gray-500 dark:text-gray-300">JC:</span>
             <span className="text-gray-900 dark:text-white font-bold">{statistics.jc}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-cyan-500">■</span>
+            <span className="text-cyan-500 font-bold text-xs">ODC</span>
             <span className="text-gray-500 dark:text-gray-300">ODC:</span>
             <span className="text-gray-900 dark:text-white font-bold">{statistics.odc}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-green-500">▲</span>
+            <span className="text-green-500 font-bold text-xs">ODP</span>
             <span className="text-gray-500 dark:text-gray-300">ODP:</span>
             <span className="text-gray-900 dark:text-white font-bold">{statistics.odp}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-blue-500">👤</span>
+            <User className="w-3 h-3 text-blue-500" />
             <span className="text-gray-500 dark:text-gray-300">Customers:</span>
             <span className="text-gray-900 dark:text-white font-bold">{statistics.customers}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <span className="text-green-500">✓</span>
+            <Check className="w-3 h-3 text-green-500" />
             <span className="text-gray-500 dark:text-gray-300">Active:</span>
             <span className="text-gray-900 dark:text-white font-bold">{statistics.active}</span>
           </div>

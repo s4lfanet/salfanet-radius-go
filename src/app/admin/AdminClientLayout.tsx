@@ -1248,7 +1248,7 @@ function AdminLayoutContent({
   );
 }
 
-// ── Version badge in sidebar footer ───────────────────────
+// -- Version badge in sidebar footer -----------------------
 function AppVersionBadge() {
   const [info, setInfo] = useState<{ version: string; commit: string; hasUpdate: boolean } | null>(null);
 

@@ -216,7 +216,7 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
   return (
     <div className="max-w-4xl mx-auto space-y-4 pb-8">
 
-      {/* ── Header ──────────────────────────────────────────────────────── */}
+      {/* -- Header -------------------------------------------------------- */}
       <div className="flex items-center gap-3">
         <button onClick={() => router.back()} className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-5 h-5" />
@@ -230,7 +230,7 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
         </button>
       </div>
 
-      {/* ── User Info Card ───────────────────────────────────────────────── */}
+      {/* -- User Info Card ------------------------------------------------- */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         {/* Card Header */}
         <div className="px-4 py-3 bg-muted/50 border-b border-border flex items-center justify-between gap-3 flex-wrap">
@@ -420,7 +420,7 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
             href={`/admin/pppoe/users?edit=${user.id}`}
             className="ml-auto px-3 py-1 text-[11px] font-medium rounded border border-primary/30 text-primary bg-primary/10 hover:bg-primary/20 transition-all"
           >
-            Edit Lengkap →
+            Edit Lengkap &rarr;
           </a>
         </div>
 
@@ -472,7 +472,7 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
         </div>
       </div>
 
-      {/* ── Active Session ───────────────────────────────────────────────── */}
+      {/* -- Active Session ------------------------------------------------- */}
       {activeSession ? (
         <div className="bg-card border border-emerald-500/30 rounded-xl overflow-hidden">
           <div className="px-4 py-3 bg-emerald-500/5 border-b border-emerald-500/20 flex items-center gap-2">
@@ -535,7 +535,7 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
         </div>
       )}
 
-      {/* ── Invoice List ─────────────────────────────────────────────────── */}
+      {/* -- Invoice List --------------------------------------------------- */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="px-4 py-3 bg-muted/50 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -618,7 +618,7 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
         )}
       </div>
 
-      {/* ── Session History ──────────────────────────────────────────────── */}
+      {/* -- Session History ------------------------------------------------ */}
       {sessions.length > 0 && (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <button
@@ -649,8 +649,8 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
                     <span className="text-foreground">{s.durationFormatted}</span>
                   </div>
                   <div className="flex gap-3">
-                    <span className="text-blue-400">↓ {s.download}</span>
-                    <span className="text-amber-400">↑ {s.upload}</span>
+                    <span className="text-blue-400">DL  {s.download}</span>
+                    <span className="text-amber-400">UL  {s.upload}</span>
                   </div>
                 </div>
               ))}

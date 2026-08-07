@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, Search, MapPin, ExternalLink, Trash2 } from 'lucide-react';
 import { useTranslation } from '@/hooks/useTranslation';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// --- Types -------------------------------------------------------------------
 
 type TabType = 'OTB' | 'JC' | 'ODC' | 'ODP';
 
@@ -35,7 +35,7 @@ interface ODP {
   network_odcs?: { id: string; name: string };
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// --- Constants ----------------------------------------------------------------
 
 const TABS: { id: TabType; label: string; color: string }[] = [
   { id: 'OTB', label: 'OTB', color: 'blue' },
@@ -79,7 +79,7 @@ function CoordCell({ lat, lng }: { lat: number; lng: number }) {
   );
 }
 
-// ─── OTB Table ────────────────────────────────────────────────────────────────
+// --- OTB Table ----------------------------------------------------------------
 
 function OTBTable({ search }: { search: string }) {
   const { t } = useTranslation();
@@ -163,7 +163,7 @@ function OTBTable({ search }: { search: string }) {
   );
 }
 
-// ─── JC Table ─────────────────────────────────────────────────────────────────
+// --- JC Table -----------------------------------------------------------------
 
 function JCTable({ search }: { search: string }) {
   const { t } = useTranslation();
@@ -237,7 +237,7 @@ function JCTable({ search }: { search: string }) {
   );
 }
 
-// ─── ODC Table ────────────────────────────────────────────────────────────────
+// --- ODC Table ----------------------------------------------------------------
 
 function ODCTable({ search }: { search: string }) {
   const { t } = useTranslation();
@@ -317,7 +317,7 @@ function ODCTable({ search }: { search: string }) {
   );
 }
 
-// ─── ODP Table ────────────────────────────────────────────────────────────────
+// --- ODP Table ----------------------------------------------------------------
 
 function ODPTable({ search }: { search: string }) {
   const { t } = useTranslation();
@@ -399,7 +399,7 @@ function ODPTable({ search }: { search: string }) {
   );
 }
 
-// ─── Shared micro-components ──────────────────────────────────────────────────
+// --- Shared micro-components --------------------------------------------------
 
 function DeleteButton({ onClick, loading, label = 'Delete' }: { onClick: () => void; loading: boolean; label?: string }) {
   return (
@@ -501,7 +501,7 @@ const ADD_TYPE_MAP: Record<TabType, string> = {
   ODP: 'ODP',
 };
 
-// ─── Main page ────────────────────────────────────────────────────────────────
+// --- Main page ----------------------------------------------------------------
 
 export default function InfrastrukturPage() {
   const router = useRouter();

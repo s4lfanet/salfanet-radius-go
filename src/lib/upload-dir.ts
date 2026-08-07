@@ -20,8 +20,8 @@ export const UPLOAD_DIR =
  * Automatically creates the directory if it doesn't exist.
  *
  * Usage:
- *   getUploadDir('payment-proofs')       → /var/data/salfanet/uploads/payment-proofs
- *   getUploadDir('pppoe-customers', 'id-cards') → /var/data/salfanet/uploads/pppoe-customers/id-cards
+ *   getUploadDir('payment-proofs')       -> /var/data/salfanet/uploads/payment-proofs
+ *   getUploadDir('pppoe-customers', 'id-cards') -> /var/data/salfanet/uploads/pppoe-customers/id-cards
  */
 export function getUploadDir(...segments: string[]): string {
   const dir = join(UPLOAD_DIR, ...segments);

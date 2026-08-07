@@ -82,38 +82,38 @@ export default function IsolationDocsPage() {
           <section id="section-2">
             <SectionTitle number={2} title="Alur Kerja Lengkap" />
             <CodeBlock>{`1. CRON JOB (setiap jam)
-   └─► Cek pppoe_users WHERE status='active' AND expiredAt < CURDATE()
+   +-► Cek pppoe_users WHERE status='active' AND expiredAt < CURDATE()
    
 2. UNTUK SETIAP USER EXPIRED:
-   ├─► Update status: active → isolated
-   ├─► Radcheck: Cleartext-Password TETAP ADA (user boleh login!)
-   ├─► Radcheck: HAPUS Auth-Type:Reject
-   ├─► Radusergroup: Pindah ke group 'isolir'
-   ├─► Radreply: HAPUS Framed-IP-Address (IP statis dicopot)
-   ├─► MikroTik API: Disconnect session aktif
-   └─► Notifikasi: WhatsApp/Email ke user
+   +-► Update status: active &rarr; isolated
+   +-► Radcheck: Cleartext-Password TETAP ADA (user boleh login!)
+   +-► Radcheck: HAPUS Auth-Type:Reject
+   +-► Radusergroup: Pindah ke group 'isolir'
+   +-► Radreply: HAPUS Framed-IP-Address (IP statis dicopot)
+   +-► MikroTik API: Disconnect session aktif
+   +-► Notifikasi: WhatsApp/Email ke user
 
 3. USER RECONNECT PPPoE:
-   ├─► FreeRADIUS: Auth sukses (password OK)
-   ├─► FreeRADIUS: Assign PPP profile 'isolir'
-   ├─► MikroTik: Rate-limit 64k/64k
-   └─► MikroTik: IP dari pool-isolir (192.168.200.x)
+   +-► FreeRADIUS: Auth sukses (password OK)
+   +-► FreeRADIUS: Assign PPP profile 'isolir'
+   +-► MikroTik: Rate-limit 64k/64k
+   +-► MikroTik: IP dari pool-isolir (192.168.200.x)
 
 4. USER BUKA BROWSER:
-   ├─► MikroTik NAT: Redirect HTTP(80) & HTTPS(443) ke billing server
-   ├─► Next.js Middleware (proxy.ts): Deteksi IP dari isolation pool
-   └─► Redirect ke /isolated?ip=192.168.200.x
+   +-► MikroTik NAT: Redirect HTTP(80) & HTTPS(443) ke billing server
+   +-► Next.js Middleware (proxy.ts): Deteksi IP dari isolation pool
+   +-► Redirect ke /isolated?ip=192.168.200.x
 
 5. HALAMAN /isolated:
-   ├─► Tampilkan info akun (nama, expired date)
-   ├─► Tampilkan invoice belum dibayar + link pembayaran
-   └─► Tampilkan kontak support
+   +-► Tampilkan info akun (nama, expired date)
+   +-► Tampilkan invoice belum dibayar + link pembayaran
+   +-► Tampilkan kontak support
 
 6. SETELAH PEMBAYARAN:
-   ├─► Invoice status: PENDING → PAID
-   ├─► Status user: isolated → active
-   ├─► Radusergroup: Kembali ke group/profile normal
-   └─► User perlu reconnect PPPoE untuk akses penuh`}</CodeBlock>
+   +-► Invoice status: PENDING &rarr; PAID
+   +-► Status user: isolated &rarr; active
+   +-► Radusergroup: Kembali ke group/profile normal
+   +-► User perlu reconnect PPPoE untuk akses penuh`}</CodeBlock>
           </section>
 
           {/* Section 3 */}
@@ -160,7 +160,7 @@ export default function IsolationDocsPage() {
               <p>Cron job berjalan di <Code>salfanet-cron</Code> (PM2) dan memanggil API endpoint <Code>POST /api/cron</Code> dengan <Code>type: "pppoe_auto_isolir"</Code>.</p>
             </Prose>
             <h3 className="font-semibold text-lg mt-4 mb-2">Yang Dilakukan Per User Expired</h3>
-            <CodeBlock>{`// 1. Update status → 'isolated'
+            <CodeBlock>{`// 1. Update status &rarr; 'isolated'
 // 2. Cleartext-Password tetap di radcheck (allow login!)
 // 3. Hapus Auth-Type:Reject dari radcheck
 // 4. Hapus Reply-Message dari radreply
@@ -181,15 +181,15 @@ curl -X POST http://localhost:3000/api/cron \\
 # Contoh log sukses:
 # [CRON] Running PPPoE Auto Isolir (attempt 1/3)...
 # [PPPoE Auto-Isolir] Found 3 expired user(s) to isolate
-# ✅ [PPPoE Auto-Isolir] User john123 isolated
-# [CRON] PPPoE Auto Isolir completed: ✓ Isolated 3/3 users`}</CodeBlock>
+# [OK]  [PPPoE Auto-Isolir] User john123 isolated
+# [CRON] PPPoE Auto Isolir completed: [OK] Isolated 3/3 users`}</CodeBlock>
           </section>
 
           {/* Section 5 */}
           <section id="section-5">
             <SectionTitle number={5} title="Konfigurasi MikroTik" />
             <InfoBox type="warning">
-              Script lengkap bisa di-generate otomatis dari <strong>Admin Panel → Settings → Isolation → MikroTik Setup</strong>
+              Script lengkap bisa di-generate otomatis dari <strong>Admin Panel &rarr; Settings &rarr; Isolation &rarr; MikroTik Setup</strong>
             </InfoBox>
 
             <h3 className="font-semibold text-lg mt-4 mb-2">Script 1: IP Pool</h3>
@@ -303,10 +303,10 @@ add chain=dstnat src-address=192.168.200.0/24 \\
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {[
-                    ['active', '✅ Ya', '✅ Penuh', 'Berlangganan aktif normal'],
-                    ['isolated', '✅ Ya', '⚠️ Terbatas', 'Expired, redirect ke /isolated. Group: isolir, IP: pool-isolir, BW: 64k/64k'],
-                    ['blocked', '❌ Tidak', '❌ Tidak ada', 'Diblokir manual oleh admin (Auth-Type:Reject)'],
-                    ['stop', '❌ Tidak', '❌ Tidak ada', 'Dihentikan (tagihan lama, Auth-Type:Reject)'],
+                    ['active', '[OK]  Ya', '[OK]  Penuh', 'Berlangganan aktif normal'],
+                    ['isolated', '[OK]  Ya', '  Terbatas', 'Expired, redirect ke /isolated. Group: isolir, IP: pool-isolir, BW: 64k/64k'],
+                    ['blocked', '[FAIL]  Tidak', '[FAIL]  Tidak ada', 'Diblokir manual oleh admin (Auth-Type:Reject)'],
+                    ['stop', '[FAIL]  Tidak', '[FAIL]  Tidak ada', 'Dihentikan (tagihan lama, Auth-Type:Reject)'],
                   ].map(([status, login, akses, ket]) => (
                     <tr key={status} className="bg-white dark:bg-gray-900 hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="px-4 py-2 font-mono font-bold border border-gray-200 dark:border-gray-700">{status}</td>
@@ -355,7 +355,7 @@ https://domain-anda.com/isolated?username=john123`}</CodeBlock>
           {/* Section 9 */}
           <section id="section-9">
             <SectionTitle number={9} title="Pengaturan Isolasi di Admin Panel" />
-            <Prose><p>Lokasi: <strong>Admin Panel → Settings → Isolation</strong></p></Prose>
+            <Prose><p>Lokasi: <strong>Admin Panel &rarr; Settings &rarr; Isolation</strong></p></Prose>
             <div className="overflow-x-auto mt-3">
               <table className="w-full text-sm border-collapse border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                 <thead className="bg-gray-100 dark:bg-gray-800">
@@ -463,17 +463,17 @@ SELECT attribute, value FROM radreply WHERE username = 'USERNAME';
             </InfoBox>
             <CodeBlock>{`ALUR SINGKAT:
 expiredAt < hari ini
-└──► (Cron setiap jam)
-     └──► status = isolated
-          └──► radusergroup = 'isolir'
-               └──► (User reconnect)
-                    └──► IP: 192.168.200.x
-                         └──► (Browser)
-                              └──► MikroTik NAT redirect → /isolated
-                                   └──► User bayar invoice
-                                        └──► status = active
-                                             └──► (Reconnect PPPoE)
-                                                  └──► Internet penuh ✅`}</CodeBlock>
++--► (Cron setiap jam)
+     +--► status = isolated
+          +--► radusergroup = 'isolir'
+               +--► (User reconnect)
+                    +--► IP: 192.168.200.x
+                         +--► (Browser)
+                              +--► MikroTik NAT redirect &rarr; /isolated
+                                   +--► User bayar invoice
+                                        +--► status = active
+                                             +--► (Reconnect PPPoE)
+                                                  +--► Internet penuh [OK] `}</CodeBlock>
           </section>
 
         </div>
@@ -491,7 +491,7 @@ expiredAt < hari ini
   );
 }
 
-// ─── Component helpers ───────────────────────────────────────────────────
+// --- Component helpers ---------------------------------------------------
 
 function SectionTitle({ number, title }: { number: number; title: string }) {
   return (

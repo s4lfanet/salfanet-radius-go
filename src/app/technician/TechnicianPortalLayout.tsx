@@ -90,7 +90,7 @@ const MENU_ITEMS: MenuItem[] = [
   },
 ];
 
-/* ─── Notification Bell ────────────────────────────────────── */
+/* --- Notification Bell -------------------------------------- */
 
 /* --- Sidebar Push Notification Toggle --- */
 function SidebarPushToggle({ techId }: { techId: string }) {
@@ -540,7 +540,7 @@ function TechSidebar({
   );
 }
 
-/* ─── Main Layout Inner ──────────────────────────────────── */
+/* --- Main Layout Inner ------------------------------------ */
 function TechnicianPortalInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -712,7 +712,7 @@ function TechnicianPortalInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-/* ─── Toast Bridge ───────────────────────────────────────── */
+/* --- Toast Bridge ----------------------------------------- */
 function TechToastBridge() {
   const { addToast, confirm } = useToast();
   useEffect(() => {

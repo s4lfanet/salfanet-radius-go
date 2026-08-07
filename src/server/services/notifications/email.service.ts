@@ -226,7 +226,7 @@ export const EmailService = {
           <!-- Header -->
           <tr>
             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">✅ Test Email Berhasil</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">[OK]  Test Email Berhasil</h1>
             </td>
           </tr>
           
@@ -357,7 +357,7 @@ export const EmailService = {
               
               <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
                 <p style="color: #856404; margin: 0; font-size: 14px;">
-                  <strong>⚠️ Penting:</strong> Simpan informasi login ini dengan aman. Jangan bagikan password Anda kepada siapapun.
+                  <strong>  Penting:</strong> Simpan informasi login ini dengan aman. Jangan bagikan password Anda kepada siapapun.
                 </p>
               </div>
               
@@ -409,7 +409,7 @@ export const EmailService = {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <tr>
             <td style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">⏰ Reminder Perpanjangan</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">[TIME] Reminder Perpanjangan</h1>
             </td>
           </tr>
           
@@ -597,7 +597,7 @@ export const EmailService = {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
           <tr>
             <td style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">✅ Pembayaran Berhasil</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">[OK]  Pembayaran Berhasil</h1>
             </td>
           </tr>
           
@@ -647,7 +647,7 @@ export const EmailService = {
               
               <div style="background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 15px; margin: 20px 0; border-radius: 4px; text-align: center;">
                 <p style="color: #2e7d32; margin: 0; font-size: 16px;">
-                  <strong>✨ Layanan Anda telah diperpanjang</strong>
+                  <strong> Layanan Anda telah diperpanjang</strong>
                 </p>
               </div>
               
@@ -788,9 +788,9 @@ export const EmailService = {
 
       const status = isOverdue ? 'overdue' : 'reminder';
       if (result.success) {
-        console.log(`[Email] ✅ Invoice ${status} sent to ${data.email}`);
+        console.log(`[Email] [OK]  Invoice ${status} sent to ${data.email}`);
       } else {
-        console.error(`[Email] ❌ Failed to send invoice ${status} to ${data.email}:`, result.error);
+        console.error(`[Email] [FAIL]  Failed to send invoice ${status} to ${data.email}:`, result.error);
       }
 
       return result;
@@ -851,7 +851,7 @@ export const EmailService = {
         <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
           <tr>
             <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px 30px; text-align: center;">
-              <h1 style="margin: 0; color: #ffffff; font-size: 28px;">✅ Pembayaran Berhasil</h1>
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px;">[OK]  Pembayaran Berhasil</h1>
             </td>
           </tr>
           <tr>
@@ -926,11 +926,11 @@ export const EmailService = {
         await this.send({
           to: data.email,
           toName: data.customerName,
-          subject: '✅ Pembayaran Berhasil Dikonfirmasi',
+          subject: '[OK]  Pembayaran Berhasil Dikonfirmasi',
           html: defaultHtml,
         });
 
-        console.log(`[Email] ✅ Payment confirmation sent to ${data.email} (default template)`);
+        console.log(`[Email] [OK]  Payment confirmation sent to ${data.email} (default template)`);
         return { success: true };
       }
 
@@ -968,9 +968,9 @@ export const EmailService = {
       });
 
       if (result.success) {
-        console.log(`[Email] ✅ Payment confirmation sent to ${data.email}`);
+        console.log(`[Email] [OK]  Payment confirmation sent to ${data.email}`);
       } else {
-        console.error(`[Email] ❌ Failed to send payment confirmation to ${data.email}:`, result.error);
+        console.error(`[Email] [FAIL]  Failed to send payment confirmation to ${data.email}:`, result.error);
       }
 
       return result;
@@ -1044,9 +1044,9 @@ export const EmailService = {
       });
 
       if (result.success) {
-        console.log(`[Email] ✅ Admin create user notification sent to ${data.email}`);
+        console.log(`[Email] [OK]  Admin create user notification sent to ${data.email}`);
       } else {
-        console.error(`[Email] ❌ Failed to send admin create user notification to ${data.email}:`, result.error);
+        console.error(`[Email] [FAIL]  Failed to send admin create user notification to ${data.email}:`, result.error);
       }
 
       return result;
@@ -1151,9 +1151,9 @@ export const EmailService = {
       });
 
       if (result.success) {
-        console.log(`[Email] ✅ Registration approval sent to ${data.toEmail}`);
+        console.log(`[Email] [OK]  Registration approval sent to ${data.toEmail}`);
       } else {
-        console.error(`[Email] ❌ Failed to send registration approval to ${data.toEmail}:`, result.error);
+        console.error(`[Email] [FAIL]  Failed to send registration approval to ${data.toEmail}:`, result.error);
       }
 
       return result;
@@ -1199,7 +1199,7 @@ export const EmailService = {
         <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden;">
           <tr>
             <td style="background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%); padding: 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">✅ Pendaftaran Disetujui</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px;">[OK]  Pendaftaran Disetujui</h1>
             </td>
           </tr>
           <tr>
@@ -1304,9 +1304,9 @@ export async function sendAutoRenewalEmail(data: {
     });
 
     if (result.success) {
-      console.log(`[Email] ✅ Auto-renewal notification sent to ${data.customerEmail}`);
+      console.log(`[Email] [OK]  Auto-renewal notification sent to ${data.customerEmail}`);
     } else {
-      console.error(`[Email] ❌ Failed to send auto-renewal notification to ${data.customerEmail}:`, result.error);
+      console.error(`[Email] [FAIL]  Failed to send auto-renewal notification to ${data.customerEmail}:`, result.error);
     }
 
     return result;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Loader2, MapPin, ChevronLeft, Server, Search, Box, GitBranch, Database, Wifi, Trash2 } from 'lucide-react';
+import { X, Plus, Loader2, MapPin, ChevronLeft, Server, Search, Box, GitBranch, Database, Wifi, Trash2, Check, ArrowRight } from 'lucide-react';
 import Swal from 'sweetalert2';
 
 export type AddNodeType = 'OTB' | 'JOINT_CLOSURE' | 'ODC' | 'ODP' | 'OLT';
@@ -79,7 +79,7 @@ function NodeTypeIcon({ type, className = 'w-5 h-5' }: { type: AddNodeType; clas
   return <Wifi className={className} />;
 }
 
-// ─── OTB Form ─────────────────────────────────────────────────────────────────
+// --- OTB Form -----------------------------------------------------------------
 function OTBForm({ lat, lng, olts, cables, onSubmit, loading }: { lat: number; lng: number; olts: any[]; cables: any[]; onSubmit: (d: any) => void; loading: boolean }) {
   const [data, setData] = useState({ name: '', code: '', address: '', oltId: '', cableType: 'SM' });
   const [feederRows, setFeederRows] = useState<Array<{ cableId: string }>>([]);
@@ -204,7 +204,7 @@ function OTBForm({ lat, lng, olts, cables, onSubmit, loading }: { lat: number; l
   );
 }
 
-// ─── JC Form ──────────────────────────────────────────────────────────────────
+// --- JC Form ------------------------------------------------------------------
 function JCForm({ lat, lng, otbs, cables, odcsList, jcsList, onSubmit, loading }: {
   lat: number; lng: number;
   otbs: any[]; cables: any[]; odcsList: any[]; jcsList: any[];
@@ -231,8 +231,8 @@ function JCForm({ lat, lng, otbs, cables, odcsList, jcsList, onSubmit, loading }
       </FRow>
       <FRow label="Tipe Closure">
         <select value={data.closureType} onChange={e => set('closureType', e.target.value)} className={INPUT}>
-          <option value="BRANCHING">BRANCHING — Percabangan (1 input → N output)</option>
-          <option value="INLINE">INLINE — Transit lurus (1 input → 1 output)</option>
+          <option value="BRANCHING">BRANCHING — Percabangan (1 input &rarr; N output)</option>
+          <option value="INLINE">INLINE — Transit lurus (1 input &rarr; 1 output)</option>
         </select>
       </FRow>
       <FRow label="Tipe Kabel">
@@ -261,7 +261,7 @@ function JCForm({ lat, lng, otbs, cables, odcsList, jcsList, onSubmit, loading }
   );
 }
 
-// ─── ODC Form ─────────────────────────────────────────────────────────────────
+// --- ODC Form -----------------------------------------------------------------
 function ODCForm({ lat, lng, olts, onSubmit, loading }: { lat: number; lng: number; olts: any[]; onSubmit: (d: any) => void; loading: boolean }) {
   const [data, setData] = useState({ name: '', oltId: '', ponPort: '1', portCount: '8' });
   const set = (k: string, v: string) => setData(p => ({ ...p, [k]: v }));
@@ -286,7 +286,7 @@ function ODCForm({ lat, lng, olts, onSubmit, loading }: { lat: number; lng: numb
   );
 }
 
-// ─── ODP Form ─────────────────────────────────────────────────────────────────
+// --- ODP Form -----------------------------------------------------------------
 function ODPForm({ lat, lng, olts, odcs, onSubmit, loading }: { lat: number; lng: number; olts: any[]; odcs: any[]; onSubmit: (d: any) => void; loading: boolean }) {
   const [data, setData] = useState({ name: '', oltId: '', odcId: '', ponPort: '1', portCount: '8', splitterRatio: '1:8' });
   const set = (k: string, v: string) => setData(p => ({ ...p, [k]: v }));
@@ -322,7 +322,7 @@ function ODPForm({ lat, lng, olts, odcs, onSubmit, loading }: { lat: number; lng
   );
 }
 
-// ─── Shared helpers ────────────────────────────────────────────────────────────
+// --- Shared helpers ------------------------------------------------------------
 const INPUT =
   'w-full px-2.5 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md ' +
   'bg-white dark:bg-gray-800 text-gray-900 dark:text-white ' +
@@ -355,7 +355,7 @@ function SubmitBtn({ loading, label = 'Tambah Node' }: { loading: boolean; label
   );
 }
 
-// ─── OLT Form ─────────────────────────────────────────────────────────────────
+// --- OLT Form -----------------------------------------------------------------
 function OLTForm({
   lat, lng, olts, onSubmit, onPlace, loading,
 }: {
@@ -461,11 +461,11 @@ function OLTForm({
 
 
 
-// ─── Tube color map (IEC 60794) ──────────────────────────────────────────────
+// --- Tube color map (IEC 60794) ----------------------------------------------
 const TUBE_COLORS = ['#4B9CD3','#FF6B35','#5CB85C','#FFD700','#808080','#8B4513','#FF69B4','#1E1E1E','#FFCC00','#DC143C','#00CED1','#9370DB'];
 const getTubeColor = (n: number) => TUBE_COLORS[(n - 1) % TUBE_COLORS.length];
 
-// ─── OTB Setup Panel (step after OTB creation) ────────────────────────────────
+// --- OTB Setup Panel (step after OTB creation) --------------------------------
 function OTBSetupPanel({ otbId, jcs, onDone }: {
   otbId: string;
   jcs: any[];
@@ -474,7 +474,7 @@ function OTBSetupPanel({ otbId, jcs, onDone }: {
   // feederGroups: array of { cableName, portFrom, portTo, tubes[] }
   const [feederGroups, setFeederGroups] = useState<Array<{ cableName: string; portFrom: number; portTo: number; tubes: any[] }>>([]);
   const [existing, setExisting] = useState<any[]>([]);
-  const [pendingJC, setPendingJC] = useState<Record<string, string>>({});  // tubeKey → jcId
+  const [pendingJC, setPendingJC] = useState<Record<string, string>>({});  // tubeKey &rarr; jcId
   const [saving, setSaving] = useState<string | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(true);
 
@@ -539,7 +539,7 @@ function OTBSetupPanel({ otbId, jcs, onDone }: {
   return (
     <div className="space-y-3">
       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3 text-xs text-green-700 dark:text-green-300">
-        ✓ OTB berhasil dibuat. Tugaskan setiap tabung ke Joint Closure.
+        <Check className="w-3 h-3 inline" /> OTB berhasil dibuat. Tugaskan setiap tabung ke Joint Closure.
       </div>
 
       {allTubes.length === 0 ? (
@@ -570,7 +570,7 @@ function OTBSetupPanel({ otbId, jcs, onDone }: {
                       </div>
                       {alreadySet ? (
                         <div className="flex items-center gap-2">
-                          <span className="flex-1 text-xs text-green-600 dark:text-green-400 truncate">✓ → {jcName}</span>
+                          <span className="flex-1 text-xs text-green-600 dark:text-green-400 truncate flex items-center gap-1"><Check className="w-3 h-3" /> <ArrowRight className="w-3 h-3" /> {jcName}</span>
                           <button onClick={() => setExisting(prev => prev.filter(s => s.fromPort !== tube.tubeNumber))} className="text-[10px] text-red-400 hover:text-red-600">Ubah</button>
                         </div>
                       ) : (
@@ -606,7 +606,7 @@ function OTBSetupPanel({ otbId, jcs, onDone }: {
   );
 }
 
-// ─── API URL per type ──────────────────────────────────────────────────────────
+// --- API URL per type ----------------------------------------------------------
 function getApiUrl(type: AddNodeType) {
   switch (type) {
     case 'OLT': return '/api/network/olts';
@@ -617,7 +617,7 @@ function getApiUrl(type: AddNodeType) {
   }
 }
 
-// ─── Main component ────────────────────────────────────────────────────────────
+// --- Main component ------------------------------------------------------------
 export default function AddNodePanel({ lat, lng, onClose, onCreated, initialNodeType, onTypeChange }: Props) {
   const [step, setStep] = useState<'type' | 'form' | 'setup'>(initialNodeType ? 'form' : 'type');
   const [selectedType, setSelectedType] = useState<AddNodeType | null>(initialNodeType ?? null);

@@ -16,7 +16,7 @@ interface Toast {
   duration?: number;
 }
 
-// ─── Confirm Dialog Types ──────────────────────────────────────────────────────
+// --- Confirm Dialog Types ------------------------------------------------------
 
 export interface ConfirmOptions {
   title: string;
@@ -33,7 +33,7 @@ type ConfirmState = {
   resolve: ((value: boolean) => void) | null;
 };
 
-// ─── Toast Context ─────────────────────────────────────────────────────────────
+// --- Toast Context -------------------------------------------------------------
 
 interface ToastContextValue {
   toasts: Toast[];
@@ -54,7 +54,7 @@ export function useToast() {
   return context;
 }
 
-// ─── Toast Provider ────────────────────────────────────────────────────────────
+// --- Toast Provider ------------------------------------------------------------
 
 export function CyberToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
@@ -214,7 +214,7 @@ function CyberToastItem({ toast, onClose }: CyberToastItemProps) {
   );
 }
 
-// ─── Confirm Modal ─────────────────────────────────────────────────────────────
+// --- Confirm Modal -------------------------------------------------------------
 
 interface CyberConfirmModalProps {
   options: ConfirmOptions;
@@ -314,7 +314,7 @@ function CyberConfirmModal({ options, onClose }: CyberConfirmModalProps) {
   );
 }
 
-// ─── Standalone Alert Component ───────────────────────────────────────────────
+// --- Standalone Alert Component -----------------------------------------------
 
 // Standalone Alert Component
 interface CyberAlertProps {

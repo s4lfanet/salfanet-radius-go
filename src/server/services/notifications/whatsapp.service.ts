@@ -83,7 +83,7 @@ export class WhatsAppService {
           response: JSON.stringify(result),
         });
         
-        console.log(`[WhatsApp] ✅ Sent via ${provider.name}`);
+        console.log(`[WhatsApp] [OK]  Sent via ${provider.name}`);
         
         attempts.push({
           provider: provider.name,
@@ -101,7 +101,7 @@ export class WhatsAppService {
         
       } catch (error) {
         lastError = error as Error;
-        console.error(`[WhatsApp] ❌ Failed via ${provider.name}:`, error);
+        console.error(`[WhatsApp] [FAIL]  Failed via ${provider.name}:`, error);
         
         attempts.push({
           provider: provider.name,
@@ -695,7 +695,7 @@ export class WhatsAppService {
       const result = await this.sendViaProvider(
         provider as any,
         testPhone.replace(/[^0-9]/g, ''),
-        'Test message from SALFANET RADIUS 📱\n\nJika Anda menerima pesan ini, WhatsApp provider berhasil terhubung!'
+        'Test message from SALFANET RADIUS \n\nJika Anda menerima pesan ini, WhatsApp provider berhasil terhubung!'
       );
 
       return {

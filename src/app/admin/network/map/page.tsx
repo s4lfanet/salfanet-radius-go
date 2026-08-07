@@ -634,7 +634,7 @@ export default function NetworkMapPage() {
     return result;
   }, [customers, customerStatusFilter]);
 
-  // Connection lines (OLT -> ODC -> ODP)
+  // Connection lines (OLT &rarr; ODC &rarr; ODP)
   const connectionLines = useMemo(() => {
     const lines: { positions: [number, number][]; color: string; dashArray?: string }[] = [];
 
@@ -686,7 +686,7 @@ export default function NetworkMapPage() {
     return lines;
   }, [olts, filteredOdcs, filteredOdps, odcs, odps, showOlts, showOdcs, showOdps, showConnections]);
 
-  // Customer cable lines (ODP -> Customer)
+  // Customer cable lines (ODP &rarr; Customer)
   const customerCableLines = useMemo(() => {
     const lines: { positions: [number, number][]; color: string; dashArray?: string }[] = [];
 

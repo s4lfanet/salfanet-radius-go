@@ -281,7 +281,7 @@ export default function TopUpRequestPage() {
         {/* Info panel — 1/3 on desktop, full-width below form on mobile */}
         <div className="lg:col-span-1">
           <div className="bg-brand-500/10 border-2 border-brand-500/30 rounded-xl p-5">
-            <h3 className="text-sm font-bold text-brand-400 mb-3">ℹ️ {t('customer.importantInfo')}:</h3>
+            <h3 className="text-sm font-bold text-brand-400 mb-3"> ️ {t('customer.importantInfo')}:</h3>
             <ul className="text-xs text-muted-foreground/70 space-y-2">
               <li className="flex gap-2"><span className="text-brand-400 shrink-0">•</span>{t('customer.infoProcessTime')}</li>
               <li className="flex gap-2"><span className="text-brand-400 shrink-0">•</span>{t('customer.infoProofClear')}</li>

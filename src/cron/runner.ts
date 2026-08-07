@@ -49,7 +49,7 @@ async function runJob(type: string, description: string): Promise<void> {
     console.log(`[CRON] Starting: ${description}`);
     const result = await job.handler();
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-    console.log(`[CRON] Done: ${description} (${elapsed}s)`, result?.success !== false ? '✓' : '✗');
+    console.log(`[CRON] Done: ${description} (${elapsed}s)`, result?.success !== false ? '[OK]' : '[FAIL]');
   } catch (err: any) {
     const elapsed = ((Date.now() - start) / 1000).toFixed(1);
     console.error(`[CRON] Error: ${description} (${elapsed}s)`, err?.message ?? err);
@@ -115,7 +115,7 @@ async function initSchedules() {
     const schedule = override?.schedule ?? job.schedule;
     const label = override ? `${schedule} (override)` : job.scheduleLabel;
     cron.schedule(schedule, () => runJob(job.type, job.name));
-    console.log(`  ${label.padEnd(30)} → ${job.name}`);
+    console.log(`  ${label.padEnd(30)} -> ${job.name}`);
   }
 
   // Telegram backup/health — schedule diambil dari DB settings saat startup

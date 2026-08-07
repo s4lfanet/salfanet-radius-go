@@ -1,4 +1,4 @@
-﻿/**
+/**
  * sweetalert.ts — CyberToast bridge (replaces SweetAlert2)
  *
  * This module exposes the same API surface as the old Swal helpers but uses the
@@ -7,7 +7,7 @@
  * via `registerGlobalToast` and `registerGlobalConfirm`.
  */
 
-// ─── Global registry ───────────────────────────────────────────────────────────
+// --- Global registry -----------------------------------------------------------
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 type AddToastFn = (opts: {
@@ -31,13 +31,13 @@ let _confirm: ConfirmFn | null = null;
 export function registerGlobalToast(fn: AddToastFn) { _addToast = fn; }
 export function registerGlobalConfirm(fn: ConfirmFn) { _confirm = fn; }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// --- Helpers -------------------------------------------------------------------
 
 const _toast = (type: ToastType, message: string, title: string, duration?: number) => {
   _addToast?.({ type, title, description: message, duration });
 };
 
-// ─── Public API ────────────────────────────────────────────────────────────────
+// --- Public API ----------------------------------------------------------------
 
 export const showSuccess = (message: string, title = 'Berhasil!') =>
   _toast('success', message, title, 4000);

@@ -62,7 +62,7 @@ interface Gateway {
   name: string;
 }
 
-// ─── PG metadata ──────────────────────────────────────────────────────────────
+// --- PG metadata --------------------------------------------------------------
 
 const PG_META: Record<string, { label: string; color: string; border: string; tag: string }> = {
   midtrans: { label: 'Midtrans', color: 'from-[#003d71] to-[#0066cc]', border: 'border-[#0066cc]/50', tag: 'VA / QRIS / Gopay' },
@@ -71,7 +71,7 @@ const PG_META: Record<string, { label: string; color: string; border: string; ta
   tripay:   { label: 'Tripay',   color: 'from-[#4a148c] to-[#6a1b9a]', border: 'border-[#6a1b9a]/50', tag: 'VA / QRIS / Alfamart' },
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 const fmtCurrency = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -104,7 +104,7 @@ function IsolatedContent() {
   const qrisPollingRef = useRef<NodeJS.Timeout | null>(null);
   const qrisCountdownRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ── fetch data ─────────────────────────────────────────────────────────────
+  // -- fetch data -------------------------------------------------------------
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
@@ -138,7 +138,7 @@ function IsolatedContent() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // ── auto-poll every 30 s ───────────────────────────────────────────────────
+  // -- auto-poll every 30 s ---------------------------------------------------
   useEffect(() => {
     if (alreadyActive) return;
     const interval = setInterval(async () => {
@@ -161,7 +161,7 @@ function IsolatedContent() {
     return () => clearInterval(interval);
   }, [username, ip, alreadyActive]);
 
-  // ── QRIS helpers ────────────────────────────────────────────────────────────
+  // -- QRIS helpers ------------------------------------------------------------
   const cleanupQrisPolling = useCallback(() => {
     if (qrisPollingRef.current) { clearInterval(qrisPollingRef.current); qrisPollingRef.current = null; }
     if (qrisCountdownRef.current) { clearInterval(qrisCountdownRef.current); qrisCountdownRef.current = null; }
@@ -196,7 +196,7 @@ function IsolatedContent() {
   const closeQris = () => { cleanupQrisPolling(); setQrisData(null); setQrisStatus('pending'); };
   const fmtCountdown = (s: number) => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
 
-  // ── pay handler ─────────────────────────────────────────────────────────────
+  // -- pay handler -------------------------------------------------------------
   const handlePay = async (invoice: { id: string; invoiceNumber: string; amount: number }, provider: string) => {
     const key = `${invoice.id}:${provider}`;
     setPayingState(prev => ({ ...prev, [key]: true }));
@@ -235,7 +235,7 @@ function IsolatedContent() {
       const label = PG_META[provider]?.label ?? provider;
       setPaidNotice(prev => ({
         ...prev,
-        [invoice.id]: `✓ Halaman ${label} dibuka di tab baru. Halaman ini otomatis aktif setelah pembayaran dikonfirmasi.`,
+        [invoice.id]: `[OK] Halaman ${label} dibuka di tab baru. Halaman ini otomatis aktif setelah pembayaran dikonfirmasi.`,
       }));
       setOpenInvoiceId(null);
     } catch {
@@ -245,7 +245,7 @@ function IsolatedContent() {
     }
   };
 
-  /* ─── loading ─────────────────────────────────────────────────────────────── */
+  /* --- loading --------------------------------------------------------------- */
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)' }}>
@@ -259,7 +259,7 @@ function IsolatedContent() {
     );
   }
 
-  /* ─── isolation lifted ─────────────────────────────────────────────────────── */
+  /* --- isolation lifted ------------------------------------------------------- */
   if (alreadyActive) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ background: 'linear-gradient(135deg, #0f2818 0%, #064e3b 100%)' }}>
@@ -284,7 +284,7 @@ function IsolatedContent() {
     );
   }
 
-  /* ─── main page ────────────────────────────────────────────────────────────── */
+  /* --- main page -------------------------------------------------------------- */
   // Build user info rows — primary (always shown) and secondary (show more)
   const primaryInfoItems = userInfo ? ([
     { label: 'Username',     value: userInfo.username,              mono: true },
@@ -307,7 +307,7 @@ function IsolatedContent() {
       <div style={{ minHeight: '100vh', background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 60%, #0f172a 100%)' }}>
         <div style={{ maxWidth: 540, margin: '0 auto', padding: '10px 12px 20px' }}>
 
-        {/* ── Header ────────────────────────────────────────────────────────── */}
+        {/* -- Header ---------------------------------------------------------- */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, marginBottom: 10 }}>
           {company?.logo ? (
             <div style={{ background: '#fff', borderRadius: 10, padding: 6, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 52, height: 52, boxShadow: '0 2px 10px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
@@ -323,7 +323,7 @@ function IsolatedContent() {
           )}
         </div>
 
-        {/* ── Warning Banner ────────────────────────────────────────────────── */}
+        {/* -- Warning Banner -------------------------------------------------- */}
         <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 12, padding: '10px 14px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(239,68,68,0.2)', border: '1.5px solid rgba(239,68,68,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Shield className="w-5 h-5" style={{ color: '#f87171' }} />
@@ -336,7 +336,7 @@ function IsolatedContent() {
           </div>
         </div>
 
-        {/* ── User Info ────────────────────────────────────────────────────── */}
+        {/* -- User Info ------------------------------------------------------ */}
         {userInfo && (
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: '10px 12px', marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -363,7 +363,7 @@ function IsolatedContent() {
           </div>
         )}
 
-        {/* ── Unpaid Invoices ───────────────────────────────────────────────── */}
+        {/* -- Unpaid Invoices ------------------------------------------------- */}
         {userInfo && userInfo.unpaidInvoices.length > 0 && (
           <div style={{ marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -440,7 +440,7 @@ function IsolatedContent() {
                               <CreditCard className="w-3 h-3" style={{ color: '#6366f1' }} /> Pilih metode pembayaran:
                             </p>
 
-                            {/* ── QRIS Mandiri (tanpa pihak ke-3) ── */}
+                            {/* -- QRIS Mandiri (tanpa pihak ke-3) -- */}
                             {qrisOwn && (() => {
                               const qrisPayKey = `${invoice.id}:qris_own`;
                               const isQrisPaying = payingState[qrisPayKey] ?? false;
@@ -472,7 +472,7 @@ function IsolatedContent() {
                               );
                             })()}
 
-                            {/* ── Third-party gateways ── */}
+                            {/* -- Third-party gateways -- */}
                             {gateways.length > 0 && (
                               <>
                                 {qrisOwn && (
@@ -523,7 +523,7 @@ function IsolatedContent() {
           </div>
         )}
 
-        {/* ── No invoices ───────────────────────────────────────────────────── */}
+        {/* -- No invoices ----------------------------------------------------- */}
         {userInfo && userInfo.unpaidInvoices.length === 0 && (
           <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: '14px 16px', textAlign: 'center', marginBottom: 8 }}>
             <CreditCard className="w-6 h-6 mx-auto mb-2" style={{ color: '#475569' }} />
@@ -532,7 +532,7 @@ function IsolatedContent() {
           </div>
         )}
 
-        {/* ── Steps (collapsible) ───────────────────────────────────────────── */}
+        {/* -- Steps (collapsible) --------------------------------------------- */}
         <div style={{ background: 'rgba(99,102,241,0.07)', border: '1px solid rgba(99,102,241,0.18)', borderRadius: 12, overflow: 'hidden', marginBottom: 8 }}>
           <button
             onClick={() => setShowSteps(v => !v)}
@@ -562,7 +562,7 @@ function IsolatedContent() {
           )}
         </div>
 
-        {/* ── Footer row: contact + clock ───────────────────────────────────── */}
+        {/* -- Footer row: contact + clock ------------------------------------- */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6 }}>
           <div style={{ display: 'flex', gap: 6 }}>
             {company?.phone && (

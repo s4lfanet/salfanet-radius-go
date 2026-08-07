@@ -10,7 +10,7 @@ import {
   Package, Globe, Upload, ImageIcon,
 } from 'lucide-react';
 
-// ─── types ────────────────────────────────────────────────────────────────────
+// --- types --------------------------------------------------------------------
 
 interface EnvStatus {
   ready: boolean;
@@ -31,7 +31,7 @@ interface BuildStatus {
   error?: string;
 }
 
-// ─── constants ────────────────────────────────────────────────────────────────
+// --- constants ----------------------------------------------------------------
 
 const ROLES = [
   {
@@ -82,7 +82,7 @@ const ROLES = [
 
 type RoleKey = typeof ROLES[number]['key'];
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
+// --- helpers -----------------------------------------------------------------
 
 function formatBytes(bytes: number) {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
@@ -94,7 +94,7 @@ function formatTime(iso?: string) {
   return new Date(iso).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
 }
 
-// ─── CopyButton ───────────────────────────────────────────────────────────────
+// --- CopyButton ---------------------------------------------------------------
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -108,7 +108,7 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-// ─── EnvBanner ────────────────────────────────────────────────────────────────
+// --- EnvBanner ----------------------------------------------------------------
 
 function EnvBanner({ env, onRecheck }: { env: EnvStatus; onRecheck: () => void }) {
   const [showSetup, setShowSetup] = useState(!env.ready);
@@ -145,8 +145,8 @@ echo 'Selesai!'`;
         <div className="flex-1">
           <p className="text-sm font-semibold text-amber-300">Build environment belum siap</p>
           <div className="flex gap-4 mt-1 text-xs text-amber-200/70">
-            <span>{env.java ? '✓' : '✗'} Java {env.java ? env.javaVersion : '(tidak ada)'}</span>
-            <span>{env.androidSdk ? '✓' : '✗'} Android SDK</span>
+            <span className="flex items-center gap-1">{env.java ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />} Java {env.java ? env.javaVersion : '(tidak ada)'}</span>
+            <span className="flex items-center gap-1">{env.androidSdk ? <CheckCircle2 className="w-3 h-3 text-green-500" /> : <XCircle className="w-3 h-3 text-red-500" />} Android SDK</span>
           </div>
         </div>
         <button
@@ -175,7 +175,7 @@ echo 'Selesai!'`;
   );
 }
 
-// ─── RoleCard ─────────────────────────────────────────────────────────────────
+// --- RoleCard -----------------------------------------------------------------
 
 function RoleCard({
   role, status, envReady, onBuild, onDownload,
@@ -271,7 +271,7 @@ function RoleCard({
   );
 }
 
-// ─── page ─────────────────────────────────────────────────────────────────────
+// --- page ---------------------------------------------------------------------
 
 export default function DownloadApkPage() {
   const [env, setEnv]           = useState<EnvStatus | null>(null);

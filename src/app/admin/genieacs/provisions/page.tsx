@@ -194,7 +194,7 @@ export default function GenieACSProvisionsPage() {
           <div className="bg-white dark:bg-slate-900 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
             <div className="p-4 border-b dark:border-slate-700 flex items-center justify-between">
               <h2 className="font-semibold">{items.find(x => x._id === editing._id) ? `Edit: ${editing._id}` : 'Provision Baru'}</h2>
-              <button onClick={() => setEditing(null)} className="text-slate-500 hover:text-slate-700">✕</button>
+              <button onClick={() => setEditing(null)} className="text-slate-500 hover:text-slate-700">X</button>
             </div>
             <div className="p-4 space-y-3 overflow-y-auto flex-1">
               <div>

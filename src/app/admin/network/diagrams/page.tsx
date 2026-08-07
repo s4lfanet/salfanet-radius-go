@@ -27,7 +27,7 @@ export default function NetworkDiagramsPage() {
   const [otbDetail, setOtbDetail] = useState<any | null>(null);
   const [otbDetailLoading, setOtbDetailLoading] = useState(false);
 
-  // OTB tube→JC assignment form state
+  // OTB tube->JC assignment form state
   const [jcListAll, setJcListAll] = useState<any[]>([]);
   const [assignTube, setAssignTube] = useState('');
   const [assignJc, setAssignJc] = useState('');
@@ -110,7 +110,7 @@ export default function NetworkDiagramsPage() {
       .finally(() => setJcDetailLoading(false));
   }, [selectedJC]);
 
-  // Save a tube→JC assignment
+  // Save a tube->JC assignment
   const handleAssignTube = async () => {
     if (!assignTube || !assignJc || !selectedOTB) return;
     setAssignSaving(true);
@@ -135,7 +135,7 @@ export default function NetworkDiagramsPage() {
     }
   };
 
-  // Remove a tube→JC assignment
+  // Remove a tube->JC assignment
   const handleRemoveSegment = async (segmentId: string) => {
     if (!confirm('Hapus penugasan tabung ini?')) return;
     try {
@@ -464,7 +464,7 @@ export default function NetworkDiagramsPage() {
 
             {/* Selector + Diagram */}
             <div className="space-y-4">
-              {/* ── OTB Tab ─────────────────────────────────────────────── */}
+              {/* -- OTB Tab ----------------------------------------------- */}
               {selectedTab === 'otb' && (
                 <>
                   {otbList.length === 0 ? (
@@ -567,9 +567,9 @@ export default function NetworkDiagramsPage() {
                         )}
                       </div>
 
-                      {/* Right: tube→JC assignment panel */}
+                      {/* Right: tube->JC assignment panel */}
                       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 space-y-4">
-                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Penugasan Tabung → JC</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Penugasan Tabung &rarr; JC</h3>
 
                         {/* Assignment table */}
                         {otbDetail?.outputSegments?.length > 0 ? (
@@ -604,7 +604,7 @@ export default function NetworkDiagramsPage() {
                                         onClick={() => handleRemoveSegment(seg.id)}
                                         className="text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors"
                                         title="Hapus penugasan"
-                                      >✕</button>
+                                      >X</button>
                                     </td>
                                   </tr>
                                 ))}

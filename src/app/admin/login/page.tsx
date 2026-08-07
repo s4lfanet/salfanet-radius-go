@@ -27,7 +27,7 @@ function LoginForm() {
   const { data: session, status } = useSession();
   const { t } = useTranslation();
 
-  // ── UI state ──────────────────────────────────────────────────────────
+  // -- UI state ----------------------------------------------------------
   const [step, setStep] = useState<Step>('credentials');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -38,7 +38,7 @@ function LoginForm() {
   const [footerText, setFooterText] = useState('');
   const [brandLoaded, setBrandLoaded] = useState(false);
 
-  // ── Form data ─────────────────────────────────────────────────────────
+  // -- Form data ---------------------------------------------------------
   const [formData, setFormData] = useState({ username: '', password: '' });
   const [tfaToken, setTfaToken] = useState('');
   const [tfaCode, setTfaCode] = useState('');
@@ -86,7 +86,7 @@ function LoginForm() {
     }
   }, [step]);
 
-  // ── Step 1: Check credentials + 2FA requirement ───────────────────────
+  // -- Step 1: Check credentials + 2FA requirement -----------------------
   const handleCredentialsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -139,7 +139,7 @@ function LoginForm() {
     }
   };
 
-  // ── Step 2: Submit 2FA TOTP code ──────────────────────────────────────
+  // -- Step 2: Submit 2FA TOTP code --------------------------------------
   const handleTwoFactorSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanCode = tfaCode.replace(/\s/g, '');
@@ -193,7 +193,7 @@ function LoginForm() {
 
   return (
     <main className="min-h-screen flex flex-col lg:flex-row bg-background">
-      {/* ── Mobile Brand Header (mobile only) ── */}
+      {/* -- Mobile Brand Header (mobile only) -- */}
       <div className="lg:hidden bg-gradient-to-br from-blue-600 to-indigo-600 px-6 pt-10 pb-8 relative overflow-hidden flex-shrink-0">
         <div className="absolute top-[-50px] right-[-50px] w-40 h-40 bg-white/10 rounded-full pointer-events-none" />
         <div className="absolute bottom-[-30px] left-[-30px] w-28 h-28 bg-white/5 rounded-full pointer-events-none" />
@@ -212,7 +212,7 @@ function LoginForm() {
           </div>
         </div>
       </div>
-      {/* ── Left Panel: Login Form ── */}
+      {/* -- Left Panel: Login Form -- */}
       <div className="flex items-start justify-center w-full lg:w-[430px] lg:min-h-screen bg-card border-r border-border shadow-xl px-8 pt-10 lg:pt-14 pb-10 flex-shrink-0">
         <div className="w-full max-w-[320px]">
 
@@ -254,7 +254,7 @@ function LoginForm() {
             </div>
           )}
 
-          {/* ── STEP 1: Credentials ── */}
+          {/* -- STEP 1: Credentials -- */}
           {step === 'credentials' && (
             <form onSubmit={handleCredentialsSubmit} className="space-y-4">
               <div className="flex rounded-lg overflow-hidden border border-gray-300 dark:border-slate-600 focus-within:border-blue-500 dark:focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-200 dark:focus-within:ring-blue-800/50 transition-all">
@@ -308,7 +308,7 @@ function LoginForm() {
             </form>
           )}
 
-          {/* ── STEP 2: 2FA ── */}
+          {/* -- STEP 2: 2FA -- */}
           {step === 'twoFactor' && (
             <form onSubmit={handleTwoFactorSubmit} className="space-y-4">
               <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700/50 rounded-xl">
@@ -369,7 +369,7 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* ── Right Panel: Brand Info ── */}
+      {/* -- Right Panel: Brand Info -- */}
       <div className="hidden lg:flex flex-1 bg-gradient-to-br from-slate-100 via-white to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900 items-center justify-center px-12 py-8 relative overflow-hidden">
         {/* Decorative blobs */}
         <div className="max-w-lg w-full relative z-10">

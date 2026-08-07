@@ -89,7 +89,7 @@ export function JointClosureDiagramV2({
     switch (type) {
       case 'INLINE': return '━━━';
       case 'BRANCHING': return '╋';
-      case 'DOME': return '⬭';
+      case 'DOME': return '';
       case 'HORIZONTAL': return '▬';
       default: return '○';
     }
@@ -165,7 +165,7 @@ export function JointClosureDiagramV2({
           <div>
             <p className="text-xs text-gray-500 dark:text-gray-400">Cables</p>
             <p className="font-medium text-gray-900 dark:text-white">
-              {upstreamCables.length} ↓ / {downstreamCables.length} ↑
+              {upstreamCables.length} DL  / {downstreamCables.length} UL 
             </p>
           </div>
           <div>
@@ -195,7 +195,7 @@ export function JointClosureDiagramV2({
           {/* Upstream Cables */}
           <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <span className="text-blue-500">↓</span> Upstream Cables (Input)
+              <span className="text-blue-500">DL </span> Upstream Cables (Input)
             </h4>
             {upstreamCables.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">No upstream cables configured</p>
@@ -243,7 +243,7 @@ export function JointClosureDiagramV2({
           {/* Downstream Cables */}
           <div className="bg-white dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
-              <span className="text-green-500">↑</span> Downstream Cables (Output)
+              <span className="text-green-500">UL </span> Downstream Cables (Output)
             </h4>
             {downstreamCables.length === 0 ? (
               <p className="text-sm text-gray-500 dark:text-gray-400">No downstream cables configured</p>

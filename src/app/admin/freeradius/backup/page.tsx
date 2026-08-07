@@ -193,7 +193,7 @@ export default function FreeRADIUSBackupPage() {
         }
     };
 
-    const isDone = log.includes('BACKUP_FILE:') || log.includes('not found') || log.includes('ERROR') || log.includes('✘');
+    const isDone = log.includes('BACKUP_FILE:') || log.includes('not found') || log.includes('ERROR') || log.includes('X');
     const isSuccess = log.includes('BACKUP_FILE:');
 
     return (
@@ -357,7 +357,7 @@ export default function FreeRADIUSBackupPage() {
                         <p className="text-xs text-muted-foreground">
                             Ukuran: {formatBytes(uploadFile.size)}
                             {uploadFile.size > 10 * 1024 * 1024 && (
-                                <span className="ml-2 text-red-500 font-medium">⚠ Melebihi batas 10MB</span>
+                                <span className="ml-2 text-red-500 font-medium">  Melebihi batas 10MB</span>
                             )}
                         </p>
                     )}

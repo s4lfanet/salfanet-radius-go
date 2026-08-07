@@ -1,5 +1,5 @@
 /**
- * QRIS Utility — Konversi QRIS Statis → Dinamis
+ * QRIS Utility — Konversi QRIS Statis -> Dinamis
  * 
  * Format QRIS mengikuti standar EMVCo QR Code.
  * Setiap field menggunakan TLV (Tag-Length-Value):
@@ -18,7 +18,7 @@
  *   63 = CRC (CRC-16/CCITT-FALSE)
  */
 
-// ─── TLV Parser ───────────────────────────────────────────────────────────────
+// --- TLV Parser ---------------------------------------------------------------
 
 interface TLVField {
   tag: string;
@@ -45,7 +45,7 @@ function buildTLV(fields: TLVField[]): string {
     .join('');
 }
 
-// ─── CRC-16/CCITT-FALSE ──────────────────────────────────────────────────────
+// --- CRC-16/CCITT-FALSE ------------------------------------------------------
 
 function crc16ccitt(data: string): string {
   let crc = 0xFFFF;
@@ -63,7 +63,7 @@ function crc16ccitt(data: string): string {
   return crc.toString(16).toUpperCase().padStart(4, '0');
 }
 
-// ─── Validate QRIS ───────────────────────────────────────────────────────────
+// --- Validate QRIS -----------------------------------------------------------
 
 /**
  * Validate a QRIS string by checking its CRC.
@@ -81,7 +81,7 @@ export function validateQris(qrisString: string): boolean {
   return calculated === existingCrc;
 }
 
-// ─── Static → Dynamic Conversion ─────────────────────────────────────────────
+// --- Static -> Dynamic Conversion ---------------------------------------------
 
 /**
  * Convert a static QRIS string to a dynamic one with a specific amount.
@@ -118,7 +118,7 @@ export function staticToDynamic(staticQris: string, amount: number): string {
 
   for (const field of fieldsWithoutCrc) {
     if (field.tag === '01') {
-      // Change Point of Initiation Method: 11 (static) → 12 (dynamic)
+      // Change Point of Initiation Method: 11 (static) -> 12 (dynamic)
       updatedFields.push({ tag: '01', value: '12' });
       hasTag01 = true;
     } else if (field.tag === '54') {
@@ -154,7 +154,7 @@ export function staticToDynamic(staticQris: string, amount: number): string {
   return withCrcHeader + crc;
 }
 
-// ─── Extract Merchant Info ────────────────────────────────────────────────────
+// --- Extract Merchant Info ----------------------------------------------------
 
 /**
  * Extract merchant info from a QRIS string for display purposes.

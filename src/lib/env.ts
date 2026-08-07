@@ -17,7 +17,7 @@ function requireEnv(key: string): string {
   if (!val) {
     throw new Error(
       `[env] Missing required environment variable: ${key}\n` +
-      `  → Tambahkan ke file .env atau environment VPS sebelum menjalankan app.`
+      `  -> Tambahkan ke file .env atau environment VPS sebelum menjalankan app.`
     )
   }
   return val
@@ -27,9 +27,9 @@ function optionalEnv(key: string, defaultValue = ''): string {
   return process.env[key] ?? defaultValue
 }
 
-// ─────────────────────────────────────────────
+// ---------------------------------------------
 // REQUIRED — app tidak bisa berjalan tanpa ini
-// ─────────────────────────────────────────────
+// ---------------------------------------------
 const _required = {
   /** MySQL connection string (Prisma) */
   DATABASE_URL: requireEnv('DATABASE_URL'),
@@ -39,9 +39,9 @@ const _required = {
   NEXTAUTH_URL: requireEnv('NEXTAUTH_URL'),
 }
 
-// ─────────────────────────────────────────────
+// ---------------------------------------------
 // SERVER-ONLY OPTIONAL — fitur tertentu tidak aktif tanpa ini
-// ─────────────────────────────────────────────
+// ---------------------------------------------
 const _server = {
   /** Secret untuk endpoint /api/cron — generate: crypto.randomBytes(32).toString('hex') */
   CRON_SECRET: optionalEnv('CRON_SECRET'),
@@ -69,10 +69,10 @@ const _server = {
   NODE_ENV: optionalEnv('NODE_ENV', 'development') as 'development' | 'production' | 'test',
 }
 
-// ─────────────────────────────────────────────
+// ---------------------------------------------
 // PUBLIC — aman diakses di client via process.env langsung
 // (disertakan di sini hanya untuk referensi & type safety server-side)
-// ─────────────────────────────────────────────
+// ---------------------------------------------
 const _public = {
   /** Public URL aplikasi (exposed ke browser) */
   APP_URL: optionalEnv('NEXT_PUBLIC_APP_URL', optionalEnv('NEXT_PUBLIC_BASE_URL', 'http://localhost:3000')),
@@ -82,9 +82,9 @@ const _public = {
   VAPID_PUBLIC_KEY: optionalEnv('NEXT_PUBLIC_VAPID_PUBLIC_KEY'),
 }
 
-// ─────────────────────────────────────────────
+// ---------------------------------------------
 // EXPORT
-// ─────────────────────────────────────────────
+// ---------------------------------------------
 export const env = {
   ..._required,
   ..._server,

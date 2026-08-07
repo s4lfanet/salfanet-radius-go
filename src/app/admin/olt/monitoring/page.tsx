@@ -334,7 +334,7 @@ export default function OLTMonitoringPage() {
           <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
             {searchTerm || statusFilter !== 'all'
               ? 'Coba ubah filter pencarian'
-              : 'Tambah OLT dari menu Network → OLT, lalu aktifkan monitoring'}
+              : 'Tambah OLT dari menu Network > OLT, lalu aktifkan monitoring'}
           </p>
           <Link href="/admin/network/olts" className="mt-4 inline-flex items-center px-3 py-1.5 text-xs bg-teal-600 hover:bg-teal-700 text-white rounded">
             <Server className="h-3 w-3 mr-1" />
@@ -383,7 +383,7 @@ export default function OLTMonitoringPage() {
                     {olt.unresolvedAlerts > 0 && (
                       <Link href="/admin/olt/alerts">
                         <span className="px-1.5 py-0.5 text-[9px] bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 rounded font-bold cursor-pointer hover:bg-red-200">
-                          {olt.unresolvedAlerts}⚠
+                          {olt.unresolvedAlerts} 
                         </span>
                       </Link>
                     )}

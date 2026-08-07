@@ -12,7 +12,7 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { WIB_TIMEZONE } from '@/lib/timezone';
 import type { Session } from 'next-auth';
 
-// ─── Code generation helpers ──────────────────────────────────────────────────
+// --- Code generation helpers --------------------------------------------------
 
 export const CODE_TYPES: Record<string, { name: string; chars: string }> = {
   'alpha-upper': { name: 'ABCDEFGHJKLMN', chars: 'ABCDEFGHJKLMNPQRSTUVWXYZ' },
@@ -68,7 +68,7 @@ function generateBatchCode(): string {
   return `BATCH-${year}${month}${day}-${time}`;
 }
 
-// ─── List ─────────────────────────────────────────────────────────────────────
+// --- List ---------------------------------------------------------------------
 
 export interface ListVouchersParams {
   profileId?: string | null;
@@ -177,7 +177,7 @@ export async function listVouchers(params: ListVouchersParams) {
   };
 }
 
-// ─── Generate ─────────────────────────────────────────────────────────────────
+// --- Generate -----------------------------------------------------------------
 
 export interface GenerateVouchersInput {
   quantity: number;
@@ -335,7 +335,7 @@ export async function generateVouchers(data: GenerateVouchersInput, session: Ses
   return { count: result.count, batchCode, syncCount };
 }
 
-// ─── Delete ───────────────────────────────────────────────────────────────────
+// --- Delete -------------------------------------------------------------------
 
 export async function deleteVouchers(params: { id?: string; batchCode?: string }) {
   const { id, batchCode } = params;
@@ -423,7 +423,7 @@ export async function deleteVouchers(params: { id?: string; batchCode?: string }
   throw Object.assign(new Error('Voucher ID or Batch Code required'), { code: 'VALIDATION' });
 }
 
-// ─── Patch (bulk update) ──────────────────────────────────────────────────────
+// --- Patch (bulk update) ------------------------------------------------------
 
 export async function patchVouchers(
   ids: string[],

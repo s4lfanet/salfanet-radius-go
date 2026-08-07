@@ -697,7 +697,7 @@ export function getPublicVapidKey() {
   return getVapidPublicKey();
 }
 
-// ─── Per-role targeted send helpers ─────────────────────────────────────────
+// --- Per-role targeted send helpers -----------------------------------------
 
 /**
  * Send web push to a specific technician by technicianId

@@ -20,7 +20,7 @@ const cyberButtonVariants = cva(
           'active:scale-[0.98]',
         ].join(' '),
 
-        // Cyan → mapped to Blue-400
+        // Cyan &rarr; mapped to Blue-400
         cyan: [
           'bg-blue-500 text-white',
           'border border-blue-500',
@@ -29,7 +29,7 @@ const cyberButtonVariants = cva(
           'active:scale-[0.98]',
         ].join(' '),
 
-        // Magenta → Violet
+        // Magenta &rarr; Violet
         magenta: [
           'bg-violet-500 text-white',
           'border border-violet-500',
@@ -38,7 +38,7 @@ const cyberButtonVariants = cva(
           'active:scale-[0.98]',
         ].join(' '),
 
-        // Purple → Indigo
+        // Purple &rarr; Indigo
         purple: [
           'bg-indigo-600 text-white',
           'border border-indigo-600',

@@ -508,7 +508,7 @@ export default function BalanceManagementPage() {
               <ModalTextarea value={topUpData.note} onChange={(e) => setTopUpData({ ...topUpData, note: e.target.value })} placeholder={t('pppoe.additionalNote')} rows={3} />
             </div>
             <div className="bg-[#00f7ff]/10 border border-[#00f7ff]/30 rounded-lg p-3">
-              <p className="text-xs text-[#00f7ff]">ℹ️ {t('pppoe.balanceInfo')}</p>
+              <p className="text-xs text-[#00f7ff]"> ️ {t('pppoe.balanceInfo')}</p>
             </div>
           </ModalBody>
           <ModalFooter>

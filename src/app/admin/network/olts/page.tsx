@@ -10,7 +10,7 @@ import {
 import MapPicker from '@/components/MapPicker';
 import Link from 'next/link';
 
-// Vendor → available models (aligned with backend vendor libs + OIDs)
+// Vendor &rarr; available models (aligned with backend vendor libs + OIDs)
 const VENDOR_MODELS: Record<string, Array<{ value: string; label: string; ponType: string }>> = {
   zte: [
     { value: 'C320', label: 'ZTE C320 (GPON, 2-slot compact)', ponType: 'GPON' },
@@ -288,7 +288,7 @@ export default function OLTsPage() {
 
       const formatTests = (r: any) =>
         (r?.results?.tests || []).map((test: any) =>
-          `${test.method}: ${test.success ? '✓' : '✗'} ${test.message} (${test.time}ms)`
+          `${test.method}: ${test.success ? '[OK]' : '[FAIL]'} ${test.message} (${test.time}ms)`
         ).join('\n') || r?.message || 'No details available';
 
       if (result.success) {
@@ -647,7 +647,7 @@ export default function OLTsPage() {
                           )}
                         </div>
                       ) : (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600">⚪ Checking</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600"> Checking</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-xs text-gray-500 hidden lg:table-cell">
@@ -663,7 +663,7 @@ export default function OLTsPage() {
                     </td>
                     <td className="px-3 py-2 hidden xl:table-cell">
                       {olt.followRoad ? (
-                        <span className="px-1.5 py-0.5 text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 rounded font-medium">✓ Yes</span>
+                        <span className="px-1.5 py-0.5 text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 rounded font-medium">[OK] Yes</span>
                       ) : (
                         <span className="px-1.5 py-0.5 text-[10px] bg-gray-100 text-gray-600 dark:bg-gray-800 rounded">No</span>
                       )}
@@ -725,7 +725,7 @@ export default function OLTsPage() {
                                 className="text-[9px] px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded font-medium hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors cursor-pointer inline-flex items-center gap-0.5"
                                 title="View dying gasp ONUs"
                               >
-                                ⚠️ {olt.onu_stats.dying_gasp} Dying Gasp
+                                  {olt.onu_stats.dying_gasp} Dying Gasp
                               </Link>
                             )}
                             {olt.onu_stats.los > 0 && (
@@ -831,7 +831,7 @@ export default function OLTsPage() {
                       <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">🔴</span>
                     )
                   ) : (
-                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-600">⚪</span>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-medium bg-gray-100 text-gray-600"></span>
                   )}
                   <span
                     className={`px-1.5 py-0.5 text-[9px] rounded font-medium ${
@@ -941,7 +941,7 @@ export default function OLTsPage() {
                         className="text-[9px] px-1.5 py-0.5 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400 rounded font-medium hover:bg-yellow-200 dark:hover:bg-yellow-900/50 transition-colors cursor-pointer"
                         title="View dying gasp ONUs"
                       >
-                        ⚠️ {olt.onu_stats.dying_gasp} Dying Gasp
+                          {olt.onu_stats.dying_gasp} Dying Gasp
                       </Link>
                     )}
                     {olt.onu_stats.los > 0 && (
@@ -1461,7 +1461,7 @@ export default function OLTsPage() {
 
               <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded p-3">
                 <p className="text-[10px] text-yellow-800 dark:text-yellow-200 font-medium mb-1">
-                  ⚠️ Important Notes:
+                    Important Notes:
                 </p>
                 <ul className="text-[10px] text-yellow-700 dark:text-yellow-300 space-y-1 list-disc list-inside">
                   <li>Type must be: huawei, zte, fiberhome, nokia, or other</li>

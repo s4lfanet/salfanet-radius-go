@@ -65,7 +65,7 @@ interface UnifiedNetworkMapProps {
   onPinMoved?: (lat: number, lng: number) => void;
   /** Increment to trigger a full entity re-fetch (e.g. after add/delete/update). */
   refreshSignal?: number;
-  /** Connect mode: click source → click target to draw a connection */
+  /** Connect mode: click source &rarr; click target to draw a connection */
   connectMode?: boolean;
   /** Source node selected in connect mode */
   connectSource?: MapEntity | null;
@@ -97,7 +97,7 @@ function FlyToController({ location }: { location: { lat: number; lng: number } 
   return null;
 }
 
-// ─── Node type accent colors (mirror AddNodePanel) ────────────────────────────
+// --- Node type accent colors (mirror AddNodePanel) ----------------------------
 const PENDING_PIN_COLORS: Record<string, string> = {
   OLT: '#8b5cf6',           // purple
   OTB: '#3B82F6',           // blue
@@ -169,23 +169,23 @@ const createCustomIcon = (type: string, status: string) => {
   switch (type) {
     case 'OLT':
       color = '#8b5cf6'; // Purple
-      iconSymbol = '⬟';
+      iconSymbol = 'OLT';
       break;
     case 'OTB':
       color = '#3B82F6'; // Blue
-      iconSymbol = '◇';
+      iconSymbol = 'OTB';
       break;
     case 'JOINT_CLOSURE':
       color = '#a855f7'; // Light purple
-      iconSymbol = '◆';
+      iconSymbol = 'JC';
       break;
     case 'ODC':
       color = '#06b6d4'; // Cyan
-      iconSymbol = '■';
+      iconSymbol = 'ODC';
       break;
     case 'ODP':
       color = '#10b981'; // Green
-      iconSymbol = '▲';
+      iconSymbol = 'ODP';
       break;
     case 'CUSTOMER':
       // Customer colors based on status
@@ -505,7 +505,7 @@ export default function UnifiedNetworkMap({
         />
       )}
 
-      {/* ── Connection polylines ────────────────────────────────────────── */}
+      {/* -- Connection polylines ------------------------------------------ */}
       {showConnections && connections && connections.map(conn => (
         <Polyline
           key={conn.id}
@@ -520,7 +520,7 @@ export default function UnifiedNetworkMap({
           <Popup>
             <div className="p-2 min-w-[180px] text-sm">
               <p className="font-bold text-gray-900 mb-1">{conn.cableName}</p>
-              <p className="text-gray-600">{conn.from.name} → {conn.to.name}</p>
+              <p className="text-gray-600">{conn.from.name} &rarr; {conn.to.name}</p>
               <p className="text-gray-500">{conn.tubeCount}T × {conn.coresPerTube}C = {conn.totalCores} core</p>
               {conn.lengthMeters > 0 && <p className="text-gray-400">≈{conn.lengthMeters}m</p>}
               <p className="text-gray-400">{conn.segmentCount} segment(s)</p>
@@ -529,7 +529,7 @@ export default function UnifiedNetworkMap({
         </Polyline>
       ))}
 
-      {/* ── Connect mode: highlight source node with pulsing ring ───── */}
+      {/* -- Connect mode: highlight source node with pulsing ring ----- */}
       {connectMode && connectSource && (
         <Marker
           position={[connectSource.latitude, connectSource.longitude]}

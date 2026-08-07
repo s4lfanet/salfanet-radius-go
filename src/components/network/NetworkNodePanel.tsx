@@ -22,7 +22,7 @@ interface Props {
   onUpdated: (entity: MapEntity) => void;
 }
 
-// ─── API helpers ───────────────────────────────────────────────────────────────
+// --- API helpers ---------------------------------------------------------------
 function getApiBase(type: MapEntity['type']): string {
   switch (type) {
     case 'OLT': return '/api/network/olts';
@@ -42,13 +42,13 @@ const STATUS_OPTIONS = ['active', 'inactive', 'maintenance', 'damaged'];
 const OTB_TYPES = ['patch_panel', 'splice_tray', 'fdt', 'odf'];
 const JC_TYPES = ['dome', 'inline', 'vertical', 'horizontal', 'wall_mount'];
 
-// ─── Status badge ──────────────────────────────────────────────────────────────
+// --- Status badge --------------------------------------------------------------
 function StatusBadge({ status }: { status: string }) {
   const color = status === 'active' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : status === 'maintenance' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' : status === 'damaged' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400';
   return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${color}`}>{status.toUpperCase()}</span>;
 }
 
-// ─── Type icon ─────────────────────────────────────────────────────────────────
+// --- Type icon -----------------------------------------------------------------
 function TypeIcon({ type }: { type: MapEntity['type'] }) {
   const props = { className: 'w-5 h-5' };
   if (type === 'OLT') return <Server {...props} />;
@@ -66,7 +66,7 @@ const TYPE_COLORS: Record<string, string> = {
   CUSTOMER: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700',
 };
 
-// ─── Detail label/value row ────────────────────────────────────────────────────
+// --- Detail label/value row ----------------------------------------------------
 function DetailRow({ label, value, mono = false }: { label: string; value?: string | number | null; mono?: boolean }) {
   if (value == null || value === '') return null;
   return (
@@ -77,7 +77,7 @@ function DetailRow({ label, value, mono = false }: { label: string; value?: stri
   );
 }
 
-// ─── Field input ──────────────────────────────────────────────────────────────
+// --- Field input --------------------------------------------------------------
 function FieldInput({ label, name, value, onChange, type = 'text', required = false, children }: {
   label: string; name: string; value: string | number; onChange: (n: string, v: string) => void;
   type?: string; required?: boolean; children?: React.ReactNode;
@@ -93,7 +93,7 @@ function FieldInput({ label, name, value, onChange, type = 'text', required = fa
   );
 }
 
-// ─── Select input ─────────────────────────────────────────────────────────────
+// --- Select input -------------------------------------------------------------
 function FieldSelect({ label, name, value, onChange, options }: {
   label: string; name: string; value: string; onChange: (n: string, v: string) => void; options: string[];
 }) {
@@ -108,7 +108,7 @@ function FieldSelect({ label, name, value, onChange, options }: {
   );
 }
 
-// ─── Edit forms per type ──────────────────────────────────────────────────────
+// --- Edit forms per type ------------------------------------------------------
 function OLTEditForm({ data, onChange }: { data: any; onChange: (n: string, v: string) => void }) {
   return (
     <div className="space-y-3">
@@ -202,7 +202,7 @@ function ODPEditForm({ data, onChange, odcs }: { data: any; onChange: (n: string
   );
 }
 
-// ─── Detail views per type ────────────────────────────────────────────────────
+// --- Detail views per type ----------------------------------------------------
 function NodeDetails({ detail, type }: { detail: any; type: MapEntity['type'] }) {
   if (!detail) return null;
   if (type === 'OLT') return (<>
@@ -254,7 +254,7 @@ function NodeDetails({ detail, type }: { detail: any; type: MapEntity['type'] })
   return null;
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// --- Main component -----------------------------------------------------------
 export default function NetworkNodePanel({ entity, onClose, onDeleted, onUpdated }: Props) {
   const [mode, setMode] = useState<'view' | 'edit'>('view');
   const [detail, setDetail] = useState<any>(null);

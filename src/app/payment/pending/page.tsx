@@ -82,7 +82,7 @@ function PaymentPendingContent() {
       
       <div className="relative z-10 max-w-sm w-full bg-secondary/80 backdrop-blur-xl rounded-xl border-2 border-[#ff4466]/50 p-6 text-center shadow-[0_0_40px_rgba(255,68,102,0.2)]">
         <div className="w-12 h-12 bg-[#ff4466]/20 rounded-full flex items-center justify-center mx-auto mb-3 border-2 border-[#ff4466]/50">
-          <span className="text-xl">❌</span>
+          <span className="text-xl">[FAIL] </span>
         </div>
         <h1 className="text-base font-bold text-white mb-1">Oops!</h1>
         <p className="text-xs text-muted-foreground/70 mb-4">{error}</p>

@@ -151,7 +151,7 @@ export default function CompanySettingsPage() {
           addToast({ type: 'success', title: t('settings.servicesRestarting') || 'Services Restarting', description: t('settings.pageWillReload') || 'Page will reload in 5 seconds...', duration: 5000 });
           setTimeout(() => { window.location.reload(); }, 5000);
         } else {
-          addToast({ type: 'success', title: 'Timezone Updated! ✅', description: t('settings.timezoneApplied') || 'Timezone applied. Page will reload.', duration: 4000 });
+          addToast({ type: 'success', title: 'Timezone Updated! [OK] ', description: t('settings.timezoneApplied') || 'Timezone applied. Page will reload.', duration: 4000 });
           setTimeout(() => { window.location.reload(); }, 4000);
         }
       } else {
@@ -430,7 +430,7 @@ export default function CompanySettingsPage() {
               {/* Prefix ID Pelanggan */}
               <div>
                 <label className="flex items-center gap-1.5 text-[11px] font-medium text-foreground mb-1">
-                  🏷️ Prefix ID Pelanggan
+                  🏷 Prefix ID Pelanggan
                 </label>
                 <input
                   type="text"
@@ -440,13 +440,13 @@ export default function CompanySettingsPage() {
                   placeholder="Contoh: SF- atau ISP"
                   maxLength={8}
                 />
-                <p className="mt-1 text-[10px] text-muted-foreground">Awalan yang ditambahkan di depan ID pelanggan baru. Kosongkan untuk tanpa prefix. Contoh prefix "SF-" → ID menjadi SF-12345678</p>
+                <p className="mt-1 text-[10px] text-muted-foreground">Awalan yang ditambahkan di depan ID pelanggan baru. Kosongkan untuk tanpa prefix. Contoh prefix "SF-" &rarr; ID menjadi SF-12345678</p>
               </div>
 
               {/* Powered By / Support by Invoice */}
               <div>
                 <label className="flex items-center gap-1.5 text-[11px] font-medium text-foreground mb-1">
-                  ⚡ Powered By (Footer Invoice)
+                   Powered By (Footer Invoice)
                 </label>
                 <input
                   type="text"
@@ -497,7 +497,7 @@ export default function CompanySettingsPage() {
                 </select>
                 <div className="mt-1.5 p-2 bg-warning/10 border border-warning/30 rounded-lg">
                   <p className="text-[10px] text-warning">
-                    ⚠️ <strong>{t('settings.timezoneWarningTitle')}</strong> {t('settings.timezoneWarning1')}
+                      <strong>{t('settings.timezoneWarningTitle')}</strong> {t('settings.timezoneWarning1')}
                   </p>
                   <ul className="mt-1 ml-4 text-[10px] text-warning/80 list-disc space-y-0.5">
                     <li>{t('settings.timezoneWarning1')}</li>
@@ -509,7 +509,7 @@ export default function CompanySettingsPage() {
                 </div>
               </div>
 
-              {/* ── QRIS Mandiri ─────────────────────────────────────── */}
+              {/* -- QRIS Mandiri --------------------------------------- */}
               <div className="border border-border rounded-lg p-3 bg-card/50">
                 <div className="flex items-center justify-between mb-2">
                   <label className="flex items-center gap-1.5 text-[11px] font-medium text-foreground">
@@ -543,7 +543,7 @@ export default function CompanySettingsPage() {
                         placeholder="Paste kode QRIS statis dari aplikasi bank Anda (string panjang dimulai 00020101...)"
                       />
                       <p className="mt-1 text-[9px] text-muted-foreground">
-                        Cara mendapatkan: Buka aplikasi mobile banking → Menu QRIS Merchant → Tampilkan QR → Salin teks QR / Screenshot lalu decode.
+                        Cara mendapatkan: Buka aplikasi mobile banking &rarr; Menu QRIS Merchant &rarr; Tampilkan QR &rarr; Salin teks QR / Screenshot lalu decode.
                       </p>
                     </div>
                     <div>

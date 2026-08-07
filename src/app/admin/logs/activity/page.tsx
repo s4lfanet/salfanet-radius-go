@@ -175,7 +175,7 @@ export default function ActivityLogsPage() {
               onClick={() => { setSearchInput(''); setSearch(''); setPage(0); }}
               className="text-muted-foreground hover:text-foreground text-xs"
             >
-              ✕
+              X
             </button>
           )}
         </div>
@@ -265,7 +265,7 @@ export default function ActivityLogsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[log.status] || STATUS_STYLES.success}`}>
-                          {log.status === 'success' ? '✓' : log.status === 'warning' ? '⚠' : '✗'} {log.status}
+                          {log.status === 'success' ? '[OK]' : log.status === 'warning' ? ' ' : '[FAIL]'} {log.status}
                         </span>
                       </td>
                       <td className="px-4 py-3">

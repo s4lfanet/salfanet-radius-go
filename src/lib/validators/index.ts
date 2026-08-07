@@ -39,7 +39,7 @@ export const searchQuerySchema = paginationSchema.extend({
 })
 
 // ----- Helpers -----
-/** Strip empty string values → undefined (useful for optional fields) */
+/** Strip empty string values -> undefined (useful for optional fields) */
 export function emptyStringToUndefined<T extends z.ZodTypeAny>(schema: T) {
   return z.preprocess((val) => (val === '' ? undefined : val), schema)
 }

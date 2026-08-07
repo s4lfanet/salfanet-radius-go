@@ -2,12 +2,10 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"crypto/tls"
 	"encoding/csv"
 	"fmt"
 	"io"
-	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -28,102 +26,13 @@ func NewPppoeExtHandler(db *gorm.DB) *PppoeExtHandler {
 
 // dialMikrotik connects to a MikroTik router API, automatically using TLS for
 // port 8729 (SSL API) and plain TCP for port 8728 (non-SSL API).
-//
-// MikroTik's SSL API (port 8729) often uses ADH-AES256-SHA (anonymous
-// Diffie-Hellman) with TLS 1.0 — a cipher suite that Go's crypto/tls does NOT
-// implement.  When the native TLS handshake fails we fall back to spawning
-// `openssl s_client` as a subprocess, which supports the full cipher range.
 func dialMikrotik(addr, username, password string, timeout time.Duration) (*ros.Client, error) {
-	// Non-SSL port — plain TCP
-	if !strings.HasSuffix(addr, ":8729") {
-		return ros.DialTimeout(addr, username, password, timeout)
+	// Detect SSL port: 8729 is the default MikroTik SSL API port
+	if strings.HasSuffix(addr, ":8729") {
+		tlsConfig := &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+		return ros.DialTLSTimeout(addr, username, password, tlsConfig, timeout)
 	}
-
-	// SSL port — try Go native TLS first
-	tlsConfig := &tls.Config{ //nolint:gosec
-		InsecureSkipVerify: true,
-		MinVersion:         tls.VersionTLS10,
-		MaxVersion:         tls.VersionTLS12,
-	}
-	client, err := ros.DialTLSTimeout(addr, username, password, tlsConfig, timeout)
-	if err == nil {
-		return client, nil
-	}
-
-	// Native TLS failed (likely ADH cipher) — fall back to openssl s_client
-	return dialMikrotikOpenSSL(addr, username, password, timeout)
-}
-
-// opensslConn wraps an openssl s_client subprocess as an io.ReadWriteCloser.
-type opensslConn struct {
-	stdin  io.WriteCloser
-	stdout io.ReadCloser
-	cmd    *exec.Cmd
-}
-
-func (c *opensslConn) Read(p []byte) (int, error)  { return c.stdout.Read(p) }
-func (c *opensslConn) Write(p []byte) (int, error) { return c.stdin.Write(p) }
-func (c *opensslConn) Close() error {
-	c.stdin.Close()
-	_ = c.cmd.Process.Kill()
-	return nil
-}
-
-// dialMikrotikOpenSSL spawns `openssl s_client` to handle cipher suites that
-// Go's crypto/tls does not support (e.g. ADH-AES256-SHA on MikroTik SSL API).
-func dialMikrotikOpenSSL(addr, username, password string, timeout time.Duration) (*ros.Client, error) {
-	cmd := exec.Command("openssl", "s_client",
-		"-connect", addr,
-		"-cipher", "ALL:@SECLEVEL=0",
-		"-tls1",
-		"-quiet",
-		"-no_ign_eof",
-	)
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, fmt.Errorf("openssl stdin pipe: %w", err)
-	}
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, fmt.Errorf("openssl stdout pipe: %w", err)
-	}
-	cmd.Stderr = nil // suppress openssl diagnostics
-
-	if err := cmd.Start(); err != nil {
-		return nil, fmt.Errorf("openssl s_client start: %w", err)
-	}
-
-	conn := &opensslConn{stdin: stdin, stdout: stdout, cmd: cmd}
-
-	// Wrap with a deadline goroutine
-	done := make(chan struct{})
-	go func() {
-		select {
-		case <-time.After(timeout):
-			conn.Close()
-		case <-done:
-		}
-	}()
-
-	client, err := ros.NewClient(conn)
-	if err != nil {
-		close(done)
-		conn.Close()
-		return nil, fmt.Errorf("openssl newclient: %w", err)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	if err := client.LoginContext(ctx, username, password); err != nil {
-		close(done)
-		client.Close()
-		conn.Close()
-		return nil, fmt.Errorf("could not login: %w", err)
-	}
-
-	close(done)
-	return client, nil
+	return ros.DialTimeout(addr, username, password, timeout)
 }
 
 // writeXLSX creates a proper .xlsx file from column headers and data rows.

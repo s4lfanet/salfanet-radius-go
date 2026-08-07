@@ -458,7 +458,7 @@ export default function DeviceParametersPage({ params }: { params: Promise<{ dev
   );
 }
 
-/* ──────────── Sub-components ──────────── */
+/* ------------ Sub-components ------------ */
 
 interface GroupRowsProps {
   group: string;

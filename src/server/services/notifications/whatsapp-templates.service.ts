@@ -130,9 +130,9 @@ export async function sendRegistrationConfirmation(data: {
       message,
     });
 
-    console.log(`[WA] ✅ Registration confirmation sent to ${data.customerPhone}`);
+    console.log(`[WA] [OK]  Registration confirmation sent to ${data.customerPhone}`);
   } catch (error) {
-    console.error(`[WA] ❌ Failed to send registration confirmation:`, error);
+    console.error(`[WA] [FAIL]  Failed to send registration confirmation:`, error);
   }
 }
 
@@ -198,9 +198,9 @@ export async function sendRegistrationApproval(data: {
       message,
     });
 
-    console.log(`[WA] ✅ Approval notification sent to ${data.customerPhone}`);
+    console.log(`[WA] [OK]  Approval notification sent to ${data.customerPhone}`);
   } catch (error) {
-    console.error(`[WA] ❌ Failed to send approval notification:`, error);
+    console.error(`[WA] [FAIL]  Failed to send approval notification:`, error);
     // Don't throw - notification failure shouldn't break the flow
   }
 }
@@ -260,9 +260,9 @@ export async function sendInstallationInvoice(data: {
       message,
     });
 
-    console.log(`[WA] ✅ Invoice notification sent to ${data.customerPhone}`);
+    console.log(`[WA] [OK]  Invoice notification sent to ${data.customerPhone}`);
   } catch (error) {
-    console.error(`[WA] ❌ Failed to send invoice notification:`, error);
+    console.error(`[WA] [FAIL]  Failed to send invoice notification:`, error);
   }
 }
 
@@ -318,9 +318,9 @@ export async function sendAdminCreateUser(data: {
       message,
     });
 
-    console.log(`[WA] ✅ Admin create user notification sent to ${data.customerPhone}`);
+    console.log(`[WA] [OK]  Admin create user notification sent to ${data.customerPhone}`);
   } catch (error) {
-    console.error(`[WA] ❌ Failed to send admin create user notification:`, error);
+    console.error(`[WA] [FAIL]  Failed to send admin create user notification:`, error);
     // Don't throw - notification failure shouldn't break the flow
   }
 }
@@ -413,9 +413,9 @@ export async function sendInvoiceReminder(data: {
     });
 
     const status = isOverdue ? 'overdue' : 'reminder';
-    console.log(`[WA] ✅ Invoice ${status} sent to ${data.phone}`);
+    console.log(`[WA] [OK]  Invoice ${status} sent to ${data.phone}`);
   } catch (error) {
-    console.error(`[WA] ❌ Failed to send invoice reminder:`, error);
+    console.error(`[WA] [FAIL]  Failed to send invoice reminder:`, error);
     throw error; // Re-throw to let cron handle it
   }
 }
@@ -481,9 +481,9 @@ export async function sendPaymentSuccess(data: {
       message,
     });
 
-    console.log(`[WA] ✅ Payment success notification sent to ${data.customerPhone}`);
+    console.log(`[WA] [OK]  Payment success notification sent to ${data.customerPhone}`);
   } catch (error) {
-    console.error(`[WA] ❌ Failed to send payment success notification:`, error);
+    console.error(`[WA] [FAIL]  Failed to send payment success notification:`, error);
   }
 }
 
@@ -540,9 +540,9 @@ export async function sendVoucherPurchaseSuccess(data: {
       message,
     });
 
-    console.log(`[WA] ✅ Voucher purchase notification sent to ${data.customerPhone}`);
+    console.log(`[WA] [OK]  Voucher purchase notification sent to ${data.customerPhone}`);
   } catch (error) {
-    console.error(`[WA] ❌ Failed to send voucher purchase notification:`, error);
+    console.error(`[WA] [FAIL]  Failed to send voucher purchase notification:`, error);
   }
 }
 
@@ -603,8 +603,8 @@ export async function sendAutoRenewalSuccess(data: {
       message,
     });
 
-    console.log(`[WA] ✅ Auto-renewal notification sent to ${data.customerPhone}`);
+    console.log(`[WA] [OK]  Auto-renewal notification sent to ${data.customerPhone}`);
   } catch (error) {
-    console.error(`[WA] ❌ Failed to send auto-renewal notification:`, error);
+    console.error(`[WA] [FAIL]  Failed to send auto-renewal notification:`, error);
   }
 }

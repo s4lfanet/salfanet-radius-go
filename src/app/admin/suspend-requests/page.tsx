@@ -191,7 +191,7 @@ export default function AdminSuspendRequestsPage() {
                   <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
                     <div>
                       <span className="text-muted-foreground">Periode:</span>
-                      <p className="font-medium">{fmt(row.startDate)} → {fmt(row.endDate)}</p>
+                      <p className="font-medium">{fmt(row.startDate)} &rarr; {fmt(row.endDate)}</p>
                       <p className="text-[10px] text-muted-foreground">({Math.ceil((new Date(row.endDate).getTime() - new Date(row.startDate).getTime()) / 86400000)} {t('suspendRequests.days')})</p>
                     </div>
                     <div>
@@ -261,7 +261,7 @@ export default function AdminSuspendRequestsPage() {
                     <TableCell>
                       <div className="text-sm">
                         <p>{fmt(row.startDate)}</p>
-                        <p className="text-gray-400">→ {fmt(row.endDate)}</p>
+                        <p className="text-gray-400">&rarr; {fmt(row.endDate)}</p>
                         <p className="text-xs text-muted-foreground">({Math.ceil((new Date(row.endDate).getTime() - new Date(row.startDate).getTime()) / 86400000)} {t('suspendRequests.days')})</p>
                       </div>
                     </TableCell>

@@ -39,7 +39,7 @@ interface NotifEvent {
   timestamp: string;
 }
 
-// ─── Inner layout ────────────────────────────────────────────────────────────
+// --- Inner layout ------------------------------------------------------------
 function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -69,7 +69,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
     return () => clearInterval(tick);
   }, []);
 
-  // ── Persist notifications to localStorage ──────────────────────────────
+  // -- Persist notifications to localStorage ------------------------------
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
@@ -247,7 +247,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {/* ── DESKTOP SIDEBAR ─────────────────────────────── */}
+      {/* -- DESKTOP SIDEBAR ------------------------------- */}
       <aside
         className={cn(
           'fixed top-0 left-0 h-full z-50 transition-all duration-300 ease-in-out',
@@ -334,7 +334,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT ────────────────────────────────── */}
+      {/* -- MAIN CONTENT ---------------------------------- */}
       <div className="lg:ml-64 flex flex-col min-h-screen">
         {/* Desktop Header */}
         <header className="hidden lg:flex sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border items-center justify-between px-6 py-3">
@@ -586,7 +586,7 @@ function CustomerLayoutInner({ children }: { children: React.ReactNode }) {
   );
 }
 
-// ─── Bridge for global showSuccess/showError helpers ─────────────────────────
+// --- Bridge for global showSuccess/showError helpers -------------------------
 function CustomerToastBridge() {
   const { addToast, confirm } = useToast();
   useEffect(() => {
@@ -596,7 +596,7 @@ function CustomerToastBridge() {
   return null;
 }
 
-// ─── Root export: wrap with CyberToastProvider ───────────────────────────────
+// --- Root export: wrap with CyberToastProvider -------------------------------
 export default function CustomerLayout({ children }: { children: React.ReactNode }) {
   return (
     <CyberToastProvider>

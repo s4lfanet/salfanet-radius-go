@@ -6,7 +6,7 @@ import { Loader2, Download, FileText, Users, CreditCard, Filter, RefreshCw, File
 import { useTranslation } from '@/hooks/useTranslation';
 import { formatWIB, todayWIBStr, firstOfMonthWIBStr } from '@/lib/timezone';
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// -- Types --------------------------------------------------------------------
 type ReportType = 'invoice' | 'payment' | 'customer';
 
 interface Summary {
@@ -22,7 +22,7 @@ interface Summary {
   paidAmount?: number;
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// -- Helpers ------------------------------------------------------------------
 function formatRupiah(n: number): string {
   return `Rp ${n.toLocaleString('id-ID')}`;
 }
@@ -35,7 +35,7 @@ function firstOfMonthStr(): string {
   return firstOfMonthWIBStr();
 }
 
-// ── Main Component ───────────────────────────────────────────────────────────
+// -- Main Component -----------------------------------------------------------
 export default function LaporanPage() {
   const { t } = useTranslation();
 
@@ -72,7 +72,7 @@ export default function LaporanPage() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState('');
 
-  // ── Fetch data from API ──────────────────────────────────────────────────
+  // -- Fetch data from API --------------------------------------------------
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -102,7 +102,7 @@ export default function LaporanPage() {
     }
   }, [reportType, dateFrom, dateTo, status]);
 
-  // ── Export Excel ─────────────────────────────────────────────────────────
+  // -- Export Excel ---------------------------------------------------------
   const exportExcel = async () => {
     if (!rows.length) return;
     setExporting('excel');
@@ -127,7 +127,7 @@ export default function LaporanPage() {
     }
   };
 
-  // ── Export PDF ───────────────────────────────────────────────────────────
+  // -- Export PDF -----------------------------------------------------------
   const exportPdf = async () => {
     if (!rows.length) return;
     setExporting('pdf');
@@ -179,7 +179,7 @@ export default function LaporanPage() {
     }
   };
 
-  // ── Column keys to display in preview table ──────────────────────────────
+  // -- Column keys to display in preview table ------------------------------
   const previewColumns = rows.length
     ? Object.keys(rows[0]).filter(k => k !== 'Jumlah' && k !== 'Harga')
     : [];
@@ -188,7 +188,7 @@ export default function LaporanPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* ── Header ── */}
+      {/* -- Header -- */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-3">
@@ -206,7 +206,7 @@ export default function LaporanPage() {
         </Link>
       </div>
 
-      {/* ── Filter Card ── */}
+      {/* -- Filter Card -- */}
       <div className="bg-card/80 dark:bg-slate-800/60 backdrop-blur border border-brand-600/30 rounded-xl p-6 shadow-[0_0_30px_rgba(122, 90, 248,0.1)]">
         <div className="flex items-center gap-2 mb-5">
           <Filter className="w-4 h-4 text-brand-600" />
@@ -321,14 +321,14 @@ export default function LaporanPage() {
         </div>
       </div>
 
-      {/* ── Error ── */}
+      {/* -- Error -- */}
       {error && (
         <div className="p-4 bg-red-500/10 border border-red-500/40 rounded-xl text-sm text-red-400">
           {error}
         </div>
       )}
 
-      {/* ── Summary Cards ── */}
+      {/* -- Summary Cards -- */}
       {loaded && summary && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {reportType === 'invoice' && (
@@ -356,7 +356,7 @@ export default function LaporanPage() {
         </div>
       )}
 
-      {/* ── Data Preview Table ── */}
+      {/* -- Data Preview Table -- */}
       {loaded && rows.length > 0 && (
         <div className="bg-card/80 dark:bg-slate-800/60 backdrop-blur border border-border/50 dark:border-slate-700/50 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-border/50 dark:border-slate-700/50 flex items-center justify-between">
@@ -399,7 +399,7 @@ export default function LaporanPage() {
         </div>
       )}
 
-      {/* ── Empty state ── */}
+      {/* -- Empty state -- */}
       {loaded && rows.length === 0 && (
         <div className="text-center py-16 text-slate-500">
           <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
@@ -407,7 +407,7 @@ export default function LaporanPage() {
         </div>
       )}
 
-      {/* ── Initial state ── */}
+      {/* -- Initial state -- */}
       {!loaded && !loading && (
         <div className="text-center py-16 text-slate-500">
           <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
@@ -418,7 +418,7 @@ export default function LaporanPage() {
   );
 }
 
-// ── Summary Card Component ───────────────────────────────────────────────────
+// -- Summary Card Component ---------------------------------------------------
 function SummaryCard({ label, value, icon, color }: { label: string; value: any; icon: React.ReactNode; color: string }) {
   const colorMap: Record<string, string> = {
     cyan:   'text-brand-400 border-brand-500/30 shadow-[0_0_15px_rgba(70, 95, 255,0.1)]',
@@ -438,7 +438,7 @@ function SummaryCard({ label, value, icon, color }: { label: string; value: any;
   );
 }
 
-// ── Status helpers ────────────────────────────────────────────────────────────
+// -- Status helpers ------------------------------------------------------------
 function getStatusClass(s: string): string { return ''; }
 function getStatusBadge(s: string): string {
   const map: Record<string, string> = {

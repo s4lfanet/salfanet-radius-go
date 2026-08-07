@@ -1,4 +1,4 @@
-﻿import { getToken } from 'next-auth/jwt';
+import { getToken } from 'next-auth/jwt';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getIsolationSettings, isIpInIsolationPool } from '@/server/services/isolation.service';
@@ -44,7 +44,7 @@ const BLOCKED_PATHS = [
 // Suspicious User-Agent substrings
 const BLOCKED_UA_PATTERNS = ['sqlmap', 'nikto', 'masscan', 'nmap', 'hydra', 'medusa'];
 
-// Subdomain → path mapping
+// Subdomain -> path mapping
 const SUBDOMAIN_MAP: Record<string, string> = {
   'customer': '/customer',
   'pelanggan': '/customer',
@@ -61,10 +61,10 @@ export default async function proxy(req: NextRequest) {
   // ============================================
   // 0. SUBDOMAIN ROUTING
   // Map subdomains to portal paths:
-  //   customer.domain.com  → /customer
-  //   agent.domain.com     → /agent
-  //   teknisi.domain.com   → /technician
-  //   admin.domain.com     → /admin
+  //   customer.domain.com  -> /customer
+  //   agent.domain.com     -> /agent
+  //   teknisi.domain.com   -> /technician
+  //   admin.domain.com     -> /admin
   // ============================================
   const host = req.headers.get('host') || '';
   const hostname = host.split(':')[0]; // strip port

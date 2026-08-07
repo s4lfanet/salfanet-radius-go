@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import { useTranslation } from '@/hooks/useTranslation';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 interface MonthlyDataPoint {
   month: string;
@@ -58,7 +58,7 @@ interface AnalyticsData {
   summary: AnalyticsSummary;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 const fmtIDR = (n: number | undefined | null): string => {
   const v = n ?? 0;
@@ -70,14 +70,14 @@ const fmtIDR = (n: number | undefined | null): string => {
 const fmtIDRFull = (n: number | undefined | null): string =>
   `Rp ${(n ?? 0).toLocaleString('id-ID')}`;
 
-// ─── Chart colors ─────────────────────────────────────────────────────────────
+// --- Chart colors -------------------------------------------------------------
 
 const PIE_COLORS = ['#0d9488', '#6366f1', '#f59e0b', '#ef4444', '#22c55e', '#8b5cf6', '#ec4899', '#14b8a6'];
 
-// ─── Period selector config ───────────────────────────────────────────────────
+// --- Period selector config ---------------------------------------------------
 const PERIOD_VALUES = ['3', '6', '12', '24'];
 
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
+// --- KPI Card -----------------------------------------------------------------
 
 function KpiCard({
   label, value, sub, icon: Icon, color, trend
@@ -104,7 +104,7 @@ function KpiCard({
   );
 }
 
-// ─── Custom chart tooltip ─────────────────────────────────────────────────────
+// --- Custom chart tooltip -----------------------------------------------------
 
 function CustomTooltip({ active, payload, label, isCurrency }: {
   active?: boolean; payload?: any[]; label?: string; isCurrency?: boolean;
@@ -126,7 +126,7 @@ function CustomTooltip({ active, payload, label, isCurrency }: {
   );
 }
 
-// ─── Chart section wrapper ────────────────────────────────────────────────────
+// --- Chart section wrapper ----------------------------------------------------
 
 function ChartSection({ title, subtitle, children }: {
   title: string; subtitle?: string; children: React.ReactNode;
@@ -142,7 +142,7 @@ function ChartSection({ title, subtitle, children }: {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// --- Main Page ----------------------------------------------------------------
 
 export default function LaporanAnalitikPage() {
   const router = useRouter();
@@ -179,7 +179,7 @@ export default function LaporanAnalitikPage() {
     loadAnalytics(period);
   }, [period, loadAnalytics]);
 
-  // ── Loading state ────────────────────────────────────────────────────────
+  // -- Loading state --------------------------------------------------------
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">

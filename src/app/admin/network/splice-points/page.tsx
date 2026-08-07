@@ -571,15 +571,15 @@ export default function SplicePointsPage() {
         <div className="flex flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span className="text-[10px] text-muted-foreground">≤0.05 dB = Excellent</span>
+            <span className="text-[10px] text-muted-foreground">&lt;=0.05 dB = Excellent</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-            <span className="text-[10px] text-muted-foreground">≤0.10 dB = Good</span>
+            <span className="text-[10px] text-muted-foreground">&lt;=0.10 dB = Good</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <span className="text-[10px] text-muted-foreground">≤0.20 dB = Fair</span>
+            <span className="text-[10px] text-muted-foreground">&lt;=0.20 dB = Fair</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-red-500"></div>

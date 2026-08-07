@@ -142,7 +142,7 @@ export default function SecuritySettingsPage() {
         </div>
       )}
 
-      {/* ────────── STATUS PHASE ────────── */}
+      {/* ---------- STATUS PHASE ---------- */}
       {phase === 'status' && (
         <div className="bg-card/80 dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900/60 border border-brand-600/30 rounded-xl p-6">
           <div className="flex items-start gap-4">
@@ -198,7 +198,7 @@ export default function SecuritySettingsPage() {
         </div>
       )}
 
-      {/* ────────── SETUP QR PHASE ────────── */}
+      {/* ---------- SETUP QR PHASE ---------- */}
       {phase === 'setup-qr' && (
         <div className="bg-card dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900/60 border border-border dark:border-brand-600/30 rounded-xl p-6 space-y-5">
           <div className="flex items-center justify-between">
@@ -235,12 +235,12 @@ export default function SecuritySettingsPage() {
             onClick={() => { setPhase('setup-verify'); setError(''); }}
             className="w-full bg-primary text-primary-foreground font-bold py-3 rounded-xl transition-all shadow-md hover:bg-primary/90 dark:bg-gradient-to-r dark:from-brand-600 dark:to-brand-400 dark:text-white dark:shadow-[0_0_20px_rgba(122, 90, 248,0.3)] dark:hover:opacity-90"
           >
-            I&apos;ve Scanned the Code →
+            I&apos;ve Scanned the Code &rarr;
           </button>
         </div>
       )}
 
-      {/* ────────── SETUP VERIFY PHASE ────────── */}
+      {/* ---------- SETUP VERIFY PHASE ---------- */}
       {phase === 'setup-verify' && (
         <div className="bg-card dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900/60 border border-border dark:border-brand-600/30 rounded-xl p-6 space-y-5">
           <div className="flex items-center justify-between">
@@ -294,7 +294,7 @@ export default function SecuritySettingsPage() {
         </div>
       )}
 
-      {/* ────────── DISABLE CONFIRM PHASE ────────── */}
+      {/* ---------- DISABLE CONFIRM PHASE ---------- */}
       {phase === 'disable-confirm' && (
         <div className="bg-card dark:bg-gradient-to-br dark:from-slate-800/60 dark:to-slate-900/60 border border-destructive/30 dark:border-red-500/30 rounded-xl p-6 space-y-5">
           <div className="flex items-center justify-between">
@@ -307,7 +307,7 @@ export default function SecuritySettingsPage() {
 
           <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
             <p className="text-sm text-red-400">
-              ⚠️ Disabling 2FA will make your account less secure. You will only need your password to log in.
+                Disabling 2FA will make your account less secure. You will only need your password to log in.
             </p>
           </div>
 

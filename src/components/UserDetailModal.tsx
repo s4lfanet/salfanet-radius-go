@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2, CheckCircle2, XCircle, Clock, Eye, EyeOff, MapPin, Map, Camera, ImageIcon, ZoomIn } from 'lucide-react';
+import { X, Loader2, CheckCircle2, XCircle, Clock, Eye, EyeOff, MapPin, Map, Camera, ImageIcon, ZoomIn, Zap } from 'lucide-react';
 import { formatWIB, formatLocalDate } from '@/lib/timezone';
 import { useTranslation } from '@/hooks/useTranslation';
 import { showSuccess, showError, showWarning } from '@/lib/sweetalert';
@@ -543,7 +543,7 @@ export default function UserDetailModal({
                         className="w-4 h-4 accent-primary dark:accent-[brand-600] border-border dark:border-brand-600/50 focus:ring-primary dark:focus:ring-[brand-600]"
                       />
                       <div className="ml-3 flex-1">
-                        <div className="text-sm font-medium text-foreground dark:text-muted-foreground">⏰ {t('userModal.prepaid')}</div>
+                        <div className="text-sm font-medium text-foreground dark:text-muted-foreground">[TIME] {t('userModal.prepaid')}</div>
                         <div className="text-xs text-muted-foreground dark:text-muted-foreground/50">Bayar dimuka, validitas terbatas</div>
                       </div>
                     </label>
@@ -579,7 +579,7 @@ export default function UserDetailModal({
                       ))}
                     </select>
                     <p className="text-xs text-muted-foreground dark:text-muted-foreground/50 mt-1">
-                      Tanggal jatuh tempo bulanan. Ubah tanggal → otomatis update expired ke bulan depan.
+                      Tanggal jatuh tempo bulanan. Ubah tanggal lalu otomatis update expired ke bulan depan.
                     </p>
                   </div>
                 )}
@@ -626,7 +626,7 @@ export default function UserDetailModal({
 
                 {/* Aksi Jatuh Tempo */}
                 <div className="col-span-2">
-                  <label className={labelCls}>⚡ Aksi Jatuh Tempo</label>
+                  <label className={labelCls}><Zap className="w-3 h-3 inline mr-1" />Aksi Jatuh Tempo</label>
                   <select
                     value={formData.autoIsolationEnabled ? 'isolate' : 'keep'}
                     onChange={(e) => setFormData({ ...formData, autoIsolationEnabled: e.target.value === 'isolate' })}
@@ -791,8 +791,8 @@ export default function UserDetailModal({
                           )}
                         </div>
                         <div className="text-right text-xs text-gray-500">
-                          <div>↓ {session.download}</div>
-                          <div>↑ {session.upload}</div>
+                          <div>DL {session.download}</div>
+                          <div>UL {session.upload}</div>
                           <div className="font-medium text-gray-900 dark:text-white">
                             Total: {session.total}
                           </div>

@@ -318,12 +318,12 @@ export function ODPDiagram({
                   {/* Status icon */}
                   {port.status === 'ASSIGNED' && (
                     <text x={x + portRadius - 2} y={y - portRadius + 4} fontSize="10">
-                      ✓
+                      OK
                     </text>
                   )}
                   {port.status === 'DAMAGED' && (
                     <text x={x + portRadius - 2} y={y - portRadius + 4} fontSize="10">
-                      ⚠
+                      !
                     </text>
                   )}
                 </>
@@ -341,7 +341,7 @@ export function ODPDiagram({
           fill="#059669"
           fontWeight="600"
         >
-          ↓ TO CUSTOMER PREMISES
+          DL  TO CUSTOMER PREMISES
         </text>
 
         {/* Color legend for fiber colors */}

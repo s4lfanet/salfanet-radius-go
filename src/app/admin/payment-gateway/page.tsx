@@ -306,7 +306,7 @@ export default function PaymentGatewayPage() {
             {copied === 'webhook' ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
           </button>
         </div>
-        <p className="text-[10px] text-info mt-1">ℹ️ {t('paymentGateway.webhookNote')}</p>
+        <p className="text-[10px] text-info mt-1">  {t('paymentGateway.webhookNote')}</p>
       </div>
 
       {/* Tabs */}
@@ -674,7 +674,7 @@ export default function PaymentGatewayPage() {
               </div>
 
               <div className="p-2.5 bg-info/10 border border-info/20 rounded-lg">
-                <p className="text-[10px] text-info">ℹ️ Sistem akan otomatis mengkonversi QRIS statis dari bank Anda menjadi QRIS dinamis dengan nominal tagihan pelanggan. Uang masuk langsung ke rekening bank Anda tanpa perantara.</p>
+                <p className="text-[10px] text-info">  Sistem akan otomatis mengkonversi QRIS statis dari bank Anda menjadi QRIS dinamis dengan nominal tagihan pelanggan. Uang masuk langsung ke rekening bank Anda tanpa perantara.</p>
               </div>
 
               <div>
@@ -687,7 +687,7 @@ export default function PaymentGatewayPage() {
                   placeholder="Paste kode QRIS statis dari aplikasi bank Anda (dimulai dengan 00020101...)"
                 />
                 <p className="mt-1 text-[9px] text-muted-foreground">
-                  Cara mendapatkan: Mobile Banking → Menu QRIS Merchant → Tampilkan QR → Salin teks QR / Screenshot lalu decode dengan QR scanner.
+                  Cara mendapatkan: Mobile Banking &rarr; Menu QRIS Merchant &rarr; Tampilkan QR &rarr; Salin teks QR / Screenshot lalu decode dengan QR scanner.
                 </p>
               </div>
 
@@ -736,18 +736,18 @@ export default function PaymentGatewayPage() {
 
               {qrisForm.deviceKey ? (
                 <div className="p-2.5 bg-success/10 border border-success/20 rounded-lg">
-                  <p className="text-[10px] text-success">✅ Android Listener aktif. Pembayaran QRIS akan terdeteksi otomatis saat notifikasi e-wallet (DANA, GoPay, BRImo, dll) masuk ke HP listener.</p>
+                  <p className="text-[10px] text-success">[OK]  Android Listener aktif. Pembayaran QRIS akan terdeteksi otomatis saat notifikasi e-wallet (DANA, GoPay, BRImo, dll) masuk ke HP listener.</p>
                   <p className="text-[9px] text-muted-foreground mt-1">Webhook URL Android: <code className="bg-muted px-1 rounded">{typeof window !== 'undefined' ? window.location.origin : ''}/api/payment/qris-notify</code></p>
                 </div>
               ) : (
                 <div className="p-2 bg-warning/10 border border-warning/20 rounded-lg">
-                  <p className="text-[10px] text-warning">⚠️ Tanpa Device Key, konfirmasi pembayaran QRIS dilakukan manual oleh admin. Isi Device Key di atas lalu install app Android QrisListener untuk deteksi otomatis.</p>
+                  <p className="text-[10px] text-warning">  Tanpa Device Key, konfirmasi pembayaran QRIS dilakukan manual oleh admin. Isi Device Key di atas lalu install app Android QrisListener untuk deteksi otomatis.</p>
                 </div>
               )}
 
               {/* Download & Install Android APK */}
               <div className="p-2.5 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
-                <p className="text-[11px] font-semibold text-primary">📱 Download & Install Aplikasi Android</p>
+                <p className="text-[11px] font-semibold text-primary"> Download & Install Aplikasi Android</p>
                 <p className="text-[10px] text-muted-foreground">Pasang di HP Android yang selalu online. Aktifkan permission <strong>Notification Access</strong>, lalu isi Server URL dan Device Key di atas.</p>
                 <div className="flex gap-2 flex-wrap">
                   <a
@@ -755,12 +755,12 @@ export default function PaymentGatewayPage() {
                     download
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground text-xs font-medium rounded-lg hover:bg-primary/90"
                   >
-                    ⬇️ Download APK
+                    Download APK
                   </a>
                 </div>
                 <div className="space-y-1 pt-1">
                   <p className="text-[9px] font-medium text-foreground/70">Cara install:</p>
-                  {['Izinkan "Install dari sumber tidak dikenal" di Pengaturan HP', 'Buka file APK yang sudah didownload → Install', 'Buka app → Izinkan "Notification Access" di pengaturan HP', 'Isi Server URL dan Device Key (dari atas) → Aktifkan toggle', 'Notifikasi suara + TTS akan berbunyi setiap ada transaksi masuk'].map((step, i) => (
+                  {['Izinkan "Install dari sumber tidak dikenal" di Pengaturan HP', 'Buka file APK yang sudah didownload > Install', 'Buka app > Izinkan "Notification Access" di pengaturan HP', 'Isi Server URL dan Device Key (dari atas) > Aktifkan toggle', 'Notifikasi suara + TTS akan berbunyi setiap ada transaksi masuk'].map((step, i) => (
                     <div key={i} className="flex items-start gap-1.5">
                       <span className="text-[9px] font-bold text-primary mt-0.5">{i + 1}.</span>
                       <p className="text-[9px] text-muted-foreground">{step}</p>
@@ -833,7 +833,7 @@ export default function PaymentGatewayPage() {
                 <div><span className="text-[10px] text-muted-foreground block">{t('paymentGateway.transactionIdLabel')}</span><span className="font-mono text-[10px]">{selectedLog.transactionId || '-'}</span></div>
                 <div><span className="text-[10px] text-muted-foreground block">Status</span><span className="font-medium">{selectedLog.status}</span></div>
                 <div><span className="text-[10px] text-muted-foreground block">{t('paymentGateway.amountLabel')}</span><span className="font-medium">{formatAmount(selectedLog.amount)}</span></div>
-                <div><span className="text-[10px] text-muted-foreground block">{t('paymentGateway.successLabel')}</span><span className="font-medium">{selectedLog.success ? '✅ Yes' : '❌ No'}</span></div>
+                <div><span className="text-[10px] text-muted-foreground block">{t('paymentGateway.successLabel')}</span><span className="font-medium">{selectedLog.success ? '[OK]  Yes' : '[FAIL]  No'}</span></div>
                 {selectedLog.errorMessage && <div className="col-span-2"><span className="text-[10px] text-destructive block">{t('paymentGateway.errorLabel')}</span><span className="text-destructive text-[10px]">{selectedLog.errorMessage}</span></div>}
               </div>
               {selectedLog.payload && (

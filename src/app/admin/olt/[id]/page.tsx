@@ -74,9 +74,9 @@ interface OLTDetail {
   routers: { id: string; routerId: string; router: { id: string; name: string; ipAddress: string } }[];
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 // ZTE C320 Realistic Chassis Diagram
-// ─────────────────────────────────────────────────────────────────────────────
+// -----------------------------------------------------------------------------
 
 /** Card type visual metadata */
 const CARD_META: Record<string, { label: string; color: string; portRows: number; portCols: number }> = {
@@ -122,7 +122,7 @@ interface ApiChassisSlot {
   description?: string;
 }
 
-// ── Uplink Port Detail Modal ─────────────────────────────────────────────────
+// -- Uplink Port Detail Modal -------------------------------------------------
 function UplinkPortModal({ oltId, port, onClose }: { oltId: string; port: string; onClose: () => void }) {
   const [activeTab, setActiveTab] = useState<'status' | 'vlan' | 'config' | 'optical'>('status');
   const [tabData, setTabData] = useState<{ raw: string; parsed: Record<string, string> } | null>(null);
@@ -155,7 +155,7 @@ function UplinkPortModal({ oltId, port, onClose }: { oltId: string; port: string
         body: JSON.stringify({ port, action, ...extra }),
       });
       const json = await res.json();
-      setActionMsg(json.success ? '✓ Success' : `Error: ${json.error}`);
+      setActionMsg(json.success ? '[OK] Success' : `Error: ${json.error}`);
       if (json.success) fetchTab(activeTab);
     } catch (e: any) { setActionMsg(`Error: ${e.message}`); }
     finally { setActionLoading(false); }
@@ -349,7 +349,7 @@ function UplinkPortModal({ oltId, port, onClose }: { oltId: string; port: string
             </>
           )}
           {actionMsg && (
-            <div className={`mt-3 text-xs p-2 rounded ${actionMsg.startsWith('✓') ? 'bg-green-950/40 text-green-400 border border-green-900' : 'bg-red-950/40 text-red-400 border border-red-900'}`}>
+            <div className={`mt-3 text-xs p-2 rounded ${actionMsg.startsWith('[OK]') ? 'bg-green-950/40 text-green-400 border border-green-900' : 'bg-red-950/40 text-red-400 border border-red-900'}`}>
               {actionMsg}
             </div>
           )}
@@ -359,7 +359,7 @@ function UplinkPortModal({ oltId, port, onClose }: { oltId: string; port: string
   );
 }
 
-// ── PON Port Stat types ───────────────────────────────────────────────────────
+// -- PON Port Stat types -------------------------------------------------------
 interface PONPortStat {
   slot: number;
   port: number;
@@ -378,7 +378,7 @@ interface PONPortStat {
   biasCurrent?: number;
 }
 
-// ── ZTE Chassis View ─────────────────────────────────────────────────────────
+// -- ZTE Chassis View ---------------------------------------------------------
 function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetail; onus?: ONU[]; onuLastRefresh?: Date | null }) {
   const [chassisSlots, setChassisSlots] = useState<ApiChassisSlot[]>([]);
   const [selectedUplinkPort, setSelectedUplinkPort] = useState<string | null>(null);
@@ -448,7 +448,7 @@ function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetai
     }
   }, [olt.id, refreshPONStat]);
 
-  // ── Port stats from ONU list ──────────────────────────────────────────────
+  // -- Port stats from ONU list ----------------------------------------------
   // Prefer live ONU data (auto-refreshes every 15s) over stale olt.onuStatuses
   const onusForPortMap = onusProp ?? olt.onuStatuses;
   const portStats: Record<string, { total: number; online: number; offline: number; los: number; dyingGasp: number; unregistered: number; rxPowers: number[] }> = {};
@@ -464,7 +464,7 @@ function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetai
     if (onu.rxPower !== null) portStats[key].rxPowers.push(onu.rxPower);
   }
 
-  // ── Build visible slot list ───────────────────────────────────────────────
+  // -- Build visible slot list -----------------------------------------------
   let visibleSlots: ApiChassisSlot[];
   if (chassisSlots.length > 0) {
     visibleSlots = chassisSlots;
@@ -700,7 +700,7 @@ function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetai
           />
         )}
 
-        {/* ── Main rack panel ── */}
+        {/* -- Main rack panel -- */}
         <div className="rounded-xl overflow-hidden shadow-xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
 
           {/* Header */}
@@ -783,7 +783,7 @@ function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetai
           </div>
         </div>
 
-        {/* ── Per-port detail table ── */}
+        {/* -- Per-port detail table -- */}
         {Object.keys(portStats).length > 0 && (
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <h3 className="text-sm font-semibold mb-3 text-gray-800 dark:text-gray-200">Detail Per Port PON</h3>
@@ -828,7 +828,7 @@ function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetai
                             <span className={`text-[10px] font-bold ${pct === 100 ? 'text-green-600' : pct === 0 ? 'text-red-600' : 'text-orange-500'}`}>
                               {s.online}/{s.total} ONU
                             </span>
-                            <span className="text-[9px] text-gray-400">{isExpanded ? '▲' : '▼'}</span>
+                            <span className="text-[9px] text-gray-400">{isExpanded ? 'ODP' : '▼'}</span>
                           </div>
                         </div>
                         <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-1.5 mb-1">
@@ -882,7 +882,7 @@ function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetai
                               {/* Traffic stats */}
                               <div className="grid grid-cols-2 gap-1.5">
                                 <div className="bg-white dark:bg-gray-900 rounded p-1.5">
-                                  <div className="text-[9px] text-gray-400 mb-0.5">↑ Upstream</div>
+                                  <div className="text-[9px] text-gray-400 mb-0.5">UL  Upstream</div>
                                   <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
                                     {fmtBps(stat.inputBps)}
                                   </div>
@@ -891,7 +891,7 @@ function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetai
                                   )}
                                 </div>
                                 <div className="bg-white dark:bg-gray-900 rounded p-1.5">
-                                  <div className="text-[9px] text-gray-400 mb-0.5">↓ Downstream</div>
+                                  <div className="text-[9px] text-gray-400 mb-0.5">DL  Downstream</div>
                                   <div className="text-xs font-semibold text-gray-800 dark:text-gray-200">
                                     {fmtBps(stat.outputBps)}
                                   </div>
@@ -927,7 +927,7 @@ function ZTEChassisView({ olt, onus: onusProp, onuLastRefresh }: { olt: OLTDetai
                                     onClick={() => setEditingPONDesc(null)}
                                     className="text-[9px] px-1.5 py-0.5 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300"
                                   >
-                                    ✕
+                                    X
                                   </button>
                                 </div>
                               ) : (
@@ -1292,7 +1292,7 @@ function ONURegisterModal({ oltId, onu, vendor, onClose, onSuccess }: RegisterMo
             )}
           </div>
 
-          {/* ── ZTE-only fields ── */}
+          {/* -- ZTE-only fields -- */}
           {isZTE && (<>
             <div>
               <Label className="text-xs text-gray-500">Config Template</Label>
@@ -1560,7 +1560,7 @@ function ONURegisterModal({ oltId, onu, vendor, onClose, onSuccess }: RegisterMo
             </div>
           )}
 
-          {/* ── Huawei-only fields ── */}
+          {/* -- Huawei-only fields -- */}
           {isHuawei && (<>
             <div>
               <Label className="text-xs text-gray-500">ONT Line Profile ID</Label>
@@ -1578,7 +1578,7 @@ function ONURegisterModal({ oltId, onu, vendor, onClose, onSuccess }: RegisterMo
             </div>
           </>)}
 
-          {/* ── FiberHome-only fields ── */}
+          {/* -- FiberHome-only fields -- */}
           {isFiberHome && (<>
             <div>
               <Label className="text-xs text-gray-500">ONU Type</Label>
@@ -1637,7 +1637,7 @@ function ONURegisterModal({ oltId, onu, vendor, onClose, onSuccess }: RegisterMo
             <div className={`px-3 py-2 rounded-md text-sm ${result.ok
               ? 'bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400'
               : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-400'}`}>
-              {result.ok ? '✓ ' : '✗ '}{result.msg}
+              {result.ok ? '[OK] ' : '[FAIL] '}{result.msg}
             </div>
           )}
         </div>
@@ -1706,8 +1706,8 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
     ['Config', parsed['Config state'] ?? 'N/A'],
     ['Distance', parsed['ONU Distance'] ?? (onu.distance !== null ? `${onu.distance}m` : 'N/A')],
     ['Online Duration', parsed['Online Duration'] ?? 'N/A'],
-    ['RX Power (OLT→ONU)', onu.rxPower !== null ? `${onu.rxPower.toFixed(2)} dBm` : (parsed['Rx optical power'] ?? 'N/A')],
-    ['TX Power (ONU→OLT)', onu.txPower !== null ? `${onu.txPower.toFixed(2)} dBm` : (parsed['Tx optical power'] ?? 'N/A')],
+    ['RX Power (OLT->ONU)', onu.rxPower !== null ? `${onu.rxPower.toFixed(2)} dBm` : (parsed['Rx optical power'] ?? 'N/A')],
+    ['TX Power (ONU->OLT)', onu.txPower !== null ? `${onu.txPower.toFixed(2)} dBm` : (parsed['Tx optical power'] ?? 'N/A')],
   ];
   const technicalItems = [
     ['Auth Mode', detailSummary.authenticationMode || 'N/A'],
@@ -2023,7 +2023,7 @@ function ONUDetailModal({ oltId, onu, onClose }: { oltId: string; onu: ONU; onCl
                 ) : (
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <span className="inline-block w-2 h-2 rounded-full bg-gray-400"></span>
-                    GenieACS belum dikonfigurasi — fitur TR-069 memerlukan konfigurasi ACS di halaman Settings → GenieACS.
+                    GenieACS belum dikonfigurasi — fitur TR-069 memerlukan konfigurasi ACS di halaman Settings &rarr; GenieACS.
                   </div>
                 )}
               </div>
@@ -2714,7 +2714,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                 <div className="mt-3 max-h-32 overflow-y-auto space-y-0.5">
                   {batchProgress.results.map((r, i) => (
                     <div key={i} className={`text-xs py-0.5 ${r.success ? 'text-green-700' : 'text-red-700'}`}>
-                      {r.success ? '✓' : '✗'} {r.serialNumber}{r.error && `: ${r.error}`}
+                      {r.success ? '[OK]' : '[FAIL]'} {r.serialNumber}{r.error && `: ${r.error}`}
                     </div>
                   ))}
                 </div>
@@ -3296,7 +3296,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
   );
 }
 
-// ─── ONUEditModal ────────────────────────────────────────────────────────────
+// --- ONUEditModal ------------------------------------------------------------
 
 function ONUEditModal({
   oltId, onu, onClose, onSuccess,
@@ -3365,7 +3365,7 @@ function ONUEditModal({
   );
 }
 
-// ─── PONPortModal ─────────────────────────────────────────────────────────────
+// --- PONPortModal -------------------------------------------------------------
 
 function PONPortModal({
   oltId, slot, port, stat, loadingStat, acting, portStats, onAction, onRefresh, onClose,
@@ -3454,7 +3454,7 @@ function PONPortModal({
           {/* Warning when disabling */}
           {isEnabled && (
             <p className="text-[11px] text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 rounded px-3 py-2">
-              ⚠ Mematikan port PON akan memutus semua ONU di port ini.
+                Mematikan port PON akan memutus semua ONU di port ini.
             </p>
           )}
         </div>
@@ -3498,7 +3498,7 @@ function PONPortModal({
   );
 }
 
-// ─── ONUOdpAssignModal ────────────────────────────────────────────────────────
+// --- ONUOdpAssignModal --------------------------------------------------------
 
 function ONUOdpAssignModal({
   oltId, onu, onClose, onSuccess,

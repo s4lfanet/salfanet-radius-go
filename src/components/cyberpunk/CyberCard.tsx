@@ -216,7 +216,7 @@ function CyberStatsCard({
               'text-xs mt-1 font-medium',
               change.type === 'increase' ? 'text-green-400' : 'text-red-400'
             )}>
-              {change.type === 'increase' ? '↑' : '↓'} {Math.abs(change.value)}%
+              {change.type === 'increase' ? 'UL ' : 'DL '} {Math.abs(change.value)}%
             </p>
           )}
         </div>

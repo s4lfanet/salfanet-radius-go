@@ -242,11 +242,11 @@ export default function TechnicianMonitorPage() {
                       <span className="text-slate-500 dark:text-slate-400 truncate ml-1">{s.routerName ?? s.nasIp}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">↓ DL:</span>
+                      <span className="text-slate-400">DL  DL:</span>
                       <span className="font-semibold text-green-600 dark:text-green-400">{s.download}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-slate-400">↑ UL:</span>
+                      <span className="text-slate-400">UL  UL:</span>
                       <span className="font-semibold text-blue-600 dark:text-blue-400">{s.upload}</span>
                     </div>
                     {s.areaName && (

@@ -74,7 +74,7 @@ export async function syncNasClients(): Promise<boolean> {
     ];
 
     // Track VPN server gateways to generate gateway client entries.
-    // gatewaySecrets maps serverId → Set of unique NAS secrets.
+    // gatewaySecrets maps serverId -> Set of unique NAS secrets.
     const vpnGateways = new Map<string, { gatewayIp: string; secrets: Set<string>; serverName: string }>();
 
     for (const nas of nasEntries) {
@@ -92,7 +92,7 @@ export async function syncNasClients(): Promise<boolean> {
       // Collect VPN server gateway info (skip the VPS itself = isRadiusServer)
       if (nas.vpnClientId && nas.vpnServerId && !nas.isRadiusServer) {
         if (!vpnGateways.has(nas.vpnServerId)) {
-          // Derive gateway IP: subnet "10.20.30.0/24" → gateway "10.20.30.1"
+          // Derive gateway IP: subnet "10.20.30.0/24" -> gateway "10.20.30.1"
           const subnetBase = (nas.vpnServerSubnet || '').split('/')[0]; // "10.20.30.0"
           const parts = subnetBase.split('.');
           parts[3] = '1';

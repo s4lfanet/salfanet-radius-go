@@ -232,7 +232,7 @@ add chain=forward \\
   const paymentGatewayScript = `/ip firewall address-list
 # ============================================
 # PAYMENT GATEWAY ADDRESS LIST
-# RouterOS akan auto-resolve domain -> IP saat add
+# RouterOS akan auto-resolve domain &rarr; IP saat add
 # Jalankan ulang jika IP berubah (CDN/load-balance)
 # ============================================
 

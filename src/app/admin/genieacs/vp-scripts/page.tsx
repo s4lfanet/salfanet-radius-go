@@ -275,10 +275,10 @@ export default function VpScriptsPage() {
         <div className="flex items-start gap-2">
           <Zap className="w-4 h-4 mt-0.5 flex-shrink-0" />
           <div>
-            <strong>Generate VP otomatis dari parameter device:</strong> Buka halaman detail device → klik <strong>Parameters</strong> → centang parameter yang diinginkan → klik tombol <strong>"Generate VP"</strong>. Script akan otomatis tersimpan ke sini dan sync ke GenieACS.
+            <strong>Generate VP otomatis dari parameter device:</strong> Buka halaman detail device &rarr; klik <strong>Parameters</strong> &rarr; centang parameter yang diinginkan &rarr; klik tombol <strong>"Generate VP"</strong>. Script akan otomatis tersimpan ke sini dan sync ke GenieACS.
             <br />
             <Link href="/admin/genieacs/devices" className="underline mt-1 inline-block">
-              Buka daftar device →
+              Buka daftar device &rarr;
             </Link>
           </div>
         </div>

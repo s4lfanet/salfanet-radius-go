@@ -12,7 +12,7 @@ import { SNMPConfig, snmpGet, snmpWalk } from '../snmp';
 import { TelnetConfig, executeCommand } from '../telnet';
 import { SSHConfig, executeCommand as sshExecute } from '../ssh';
 
-// ── ZTE C320 V2.1.0 OID Profile (base: 1.3.6.1.4.1.3902.1012) ──────────────
+// -- ZTE C320 V2.1.0 OID Profile (base: 1.3.6.1.4.1.3902.1012) --------------
 // OIDs verified against real ZTE C320 V2.1.0 via live SNMP walk.
 // Uses zxAnGponOnuCfgTable (3.28.1.1) and zxAnGponOnuRegTable (3.50.12.1.1).
 const V21 = {
@@ -37,7 +37,7 @@ const V21 = {
 // VERIFIED: returns INTEGER: 2 for both registered (onuId=1) and unregistered (onuId=2).
 const ZTE_V21_SEEN_ONU_TABLE = '1.3.6.1.4.1.3902.1012.3.27.4.1.1';
 
-// ── ZTE C320 V2.2+ OID Profile (base: 1.3.6.1.4.1.3902.1082) ───────────────
+// -- ZTE C320 V2.2+ OID Profile (base: 1.3.6.1.4.1.3902.1082) ---------------
 const V22 = {
   base: '1.3.6.1.4.1.3902.1082',
   onuName:    '.500.10.2.3.3.1.2',  // ONU name
@@ -50,15 +50,15 @@ const V22 = {
   idIncrement: 1,              typeIncrement: 256,
 };
 
-// ── PON Port Discovery Table (V2.1) ─────────────────────────────────────────
+// -- PON Port Discovery Table (V2.1) -----------------------------------------
 // Walking this OID returns one entry per provisioned PON port (indexed by ponIndex).
 // Allows dynamic port count discovery instead of hardcoding 2 boards × 8 ports.
 const ZTE_V21_PON_TABLE = '1.3.6.1.4.1.3902.1012.3.11.3.1.1';
 
-// ── ZTE Performance OIDs (tried in order) ───────────────────────────────────
+// -- ZTE Performance OIDs (tried in order) -----------------------------------
 // C320 V2.1: temperature/CPU/memory not accessible via SNMP community "public".
 // All known OIDs return "No Such Object" on ZTE C320 V2.1.0 firmware.
-// getTemperature/getCpuUsage/getMemoryUsage will return null → UI shows N/A.
+// getTemperature/getCpuUsage/getMemoryUsage will return null -> UI shows N/A.
 const C320_TEMP_V21     = '1.3.6.1.4.1.3902.1012.3.36.1.1.4';  // board temp table (likely unavailable)
 const C320_CPU_V21      = '1.3.6.1.4.1.3902.1012.3.38.1.1.4';  // board CPU table (likely unavailable)
 const C320_MEM_V21      = '1.3.6.1.4.1.3902.1012.3.38.1.1.3';  // board memory table (likely unavailable)
@@ -73,7 +73,7 @@ const ZTE_OIDS = {
   memoryUsage: '1.3.6.1.4.1.3902.1015.1015.6.1.1.1.6.0',
 };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// -- Helpers ------------------------------------------------------------------
 
 function isV22(fw?: string | null): boolean {
   return !!fw && /v?2\.2/i.test(fw);
@@ -139,7 +139,7 @@ function parseSerialFromDetail(output: string): string | null {
   return normalizeSerialNumber(match?.[1]);
 }
 
-// ── SNMP Performance Metrics ─────────────────────────────────────────────────
+// -- SNMP Performance Metrics -------------------------------------------------
 
 /** Walk a table OID and return the first numeric value found, optionally filtered */
 async function walkFirstNumber(
@@ -196,7 +196,7 @@ export async function getMemoryUsage(config: SNMPConfig): Promise<number | null>
   return null;
 }
 
-// ── Telnet-based System Metrics (best-effort) ─────────────────────────────────
+// -- Telnet-based System Metrics (best-effort) ---------------------------------
 // ZTE C320 V2.1 does NOT expose CPU/memory/temp via Telnet CLI either
 // (confirmed by oltc320_v2.1.1_linux CHANGELOG: "Removed unsupported monitoring").
 // This function tries common ZTE CLI commands and parses what is available.
@@ -242,7 +242,7 @@ export async function getSystemMetricsTelnet(
   return result;
 }
 
-// ── Dynamic PON Port Discovery (V2.1) ───────────────────────────────────────
+// -- Dynamic PON Port Discovery (V2.1) ---------------------------------------
 
 /**
  * Walk the ZTE C320 V2.1 PON port table to discover all provisioned PON ports.
@@ -287,7 +287,7 @@ async function discoverPONPortsV21(config: SNMPConfig): Promise<Array<{board: nu
   return fallback;
 }
 
-// ── SNMP ONU Discovery — V2.1 ────────────────────────────────────────────────
+// -- SNMP ONU Discovery — V2.1 ------------------------------------------------
 
 async function discoverPonV21(
   config: SNMPConfig,
@@ -358,7 +358,7 @@ async function discoverPonV21(
       const distRaw = parseInt(distMap.get(slotIdKey) ?? '0', 10);
       if (!isNaN(distRaw) && distRaw > 0 && distRaw < 100000) distance = distRaw;
 
-      // Serial (hex bytes → ASCII). If SNMP hex can't be parsed, leave null.
+      // Serial (hex bytes -> ASCII). If SNMP hex can't be parsed, leave null.
       // Do NOT fallback to per-ONU Telnet `show gpon onu detail-info` during polling —
       // that would spawn N concurrent Telnet sessions (one per ONU with bad serial),
       // which saturates the OLT's concurrent session limit and is the root cause of
@@ -508,7 +508,7 @@ function mergePonPortsFromUncfgMap(
   return ports.sort((a, b) => a.board !== b.board ? a.board - b.board : a.pon - b.pon);
 }
 
-// ── SNMP ONU Discovery — V2.2 ────────────────────────────────────────────────
+// -- SNMP ONU Discovery — V2.2 ------------------------------------------------
 
 async function discoverPonV22(config: SNMPConfig, board: number, pon: number): Promise<any[]> {
   const { idSuffix, typeSuffix } = ponSuffixV22(board, pon);
@@ -546,7 +546,7 @@ async function discoverPonV22(config: SNMPConfig, board: number, pon: number): P
   return onus;
 }
 
-// ── Public: SNMP-based ONU Discovery ─────────────────────────────────────────
+// -- Public: SNMP-based ONU Discovery -----------------------------------------
 
 /**
  * Discover all ONUs via SNMP — primary method for ZTE C320.
@@ -590,8 +590,8 @@ export async function discoverONUsSNMP(
                 const cliPort = parseInt(portMatch[3]);
                 const displayPort = cliPort > 0 ? cliPort - 1 : cliPort;
                 const onuId = portMatch[4] ? parseInt(portMatch[4], 10) : undefined;
-                // gpon-onu_ format: "Index  SN  State" → SN at parts[1]
-                // gpon-olt_ format: "Index  Type  SN  State" → SN at parts[2]
+                // gpon-onu_ format: "Index  SN  State" -> SN at parts[1]
+                // gpon-olt_ format: "Index  Type  SN  State" -> SN at parts[2]
                 const isOnuFmt = /gpon[_-]onu[_-]/i.test(parts[0]);
                 const sn = isOnuFmt ? parts[1] : parts[2];
                 if (sn && sn !== 'N/A' && /^[A-Z0-9]{8,16}$/i.test(sn)) {
@@ -628,7 +628,7 @@ export async function discoverONUsSNMP(
   return onus;
 }
 
-// ── Telnet/SSH ONU Discovery (fallback) ──────────────────────────────────────
+// -- Telnet/SSH ONU Discovery (fallback) --------------------------------------
 
 function parseOnuInfo(output: string, frame: number, slot: number, port: number): any[] {
   const onus: any[] = [];

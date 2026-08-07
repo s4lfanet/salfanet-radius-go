@@ -281,7 +281,7 @@ export function OLTDiagram({
                             y={portY + 4}
                             className="text-xs fill-cyan-400 pointer-events-none"
                           >
-                            → {port.metadata.downstreamNode}
+                            &rarr; {port.metadata.downstreamNode}
                           </text>
                         )}
                       </>

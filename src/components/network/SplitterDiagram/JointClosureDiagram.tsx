@@ -155,7 +155,7 @@ export function JointClosureDiagram({
               fill={DEFAULT_COLORS.upstream}
               fontWeight="600"
             >
-              ↑ {t('network.common.from')} {node.upstreamNode.type}: {node.upstreamNode.code}
+              UL  {t('network.common.from')} {node.upstreamNode.type}: {node.upstreamNode.code}
             </text>
           </g>
         )}
@@ -315,7 +315,7 @@ export function JointClosureDiagram({
           fill={DEFAULT_COLORS.downstream}
           fontWeight="600"
         >
-          ↓ {t('network.common.to')} ODC / ODP {t('network.common.nodes')}
+          DL  {t('network.common.to')} ODC / ODP {t('network.common.nodes')}
         </text>
       </svg>
 
@@ -359,7 +359,7 @@ export function JointClosureDiagram({
                 className="flex items-center justify-between text-xs p-2 bg-gray-50 dark:bg-gray-700 rounded border border-gray-200 dark:border-gray-600"
               >
                 <span className="text-gray-700 dark:text-gray-300">
-                  {t('network.common.port')} {conn.from} → {conn.to}
+                  {t('network.common.port')} {conn.from} &rarr; {conn.to}
                 </span>
                 <span className="text-gray-500 dark:text-gray-400">
                   {conn.type} {conn.length ? `(${conn.length}m)` : ''}

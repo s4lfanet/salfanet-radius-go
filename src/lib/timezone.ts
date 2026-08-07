@@ -109,7 +109,7 @@ export function getTimezoneOffsetMs(): number {
  */
 export function parseDateAsWIB(dateStr: string): Date {
   if (!dateStr.includes('T')) {
-    // Date only: "2026-03-01" → midnight WIB
+    // Date only: "2026-03-01" -> midnight WIB
     return new Date(dateStr + 'T00:00:00.000Z');
   }
   if (!dateStr.endsWith('Z') && !dateStr.includes('+')) {

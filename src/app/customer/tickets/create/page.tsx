@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -158,7 +158,7 @@ export default function CreateTicketPage() {
         }
         if (formData.latitude && formData.longitude) {
           finalDescription += `\n🌐 Koordinat: ${formData.latitude}, ${formData.longitude}`;
-          finalDescription += `\n🗺️ Maps: https://maps.google.com/?q=${formData.latitude},${formData.longitude}`;
+          finalDescription += `\n Maps: https://maps.google.com/?q=${formData.latitude},${formData.longitude}`;
         }
       }
 

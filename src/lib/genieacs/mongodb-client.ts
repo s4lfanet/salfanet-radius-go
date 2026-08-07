@@ -46,7 +46,7 @@ export async function getCollection<T extends object>(name: string): Promise<Col
   return db.collection<T>(name);
 }
 
-/* ─── Convenience helpers ─────────────────────────────────────────────── */
+/* --- Convenience helpers ----------------------------------------------- */
 
 /** Close connection (call on process exit if needed). */
 export async function closeConnection(): Promise<void> {
@@ -57,7 +57,7 @@ export async function closeConnection(): Promise<void> {
   }
 }
 
-/* ─── Devices ─────────────────────────────────────────────────────────── */
+/* --- Devices ----------------------------------------------------------- */
 
 export async function mongoGetDevices(
   filter: object = {},
@@ -80,7 +80,7 @@ export async function mongoCountDevices(filter: object = {}): Promise<number> {
   return col.countDocuments(filter);
 }
 
-/* ─── Tasks ───────────────────────────────────────────────────────────── */
+/* --- Tasks ------------------------------------------------------------- */
 
 export async function mongoGetTasks(
   filter: object = {},
@@ -90,7 +90,7 @@ export async function mongoGetTasks(
   return col.find(filter, { limit }).toArray() as unknown as GenieTask[];
 }
 
-/* ─── Faults ──────────────────────────────────────────────────────────── */
+/* --- Faults ------------------------------------------------------------ */
 
 export async function mongoGetFaults(filter: object = {}): Promise<GenieFault[]> {
   const col = await getCollection<GenieFault>('faults');
@@ -102,7 +102,7 @@ export async function mongoDeleteFault(id: string): Promise<void> {
   await col.deleteOne({ _id: id } as Parameters<typeof col.deleteOne>[0]);
 }
 
-/* ─── Presets ─────────────────────────────────────────────────────────── */
+/* --- Presets ----------------------------------------------------------- */
 
 export async function mongoGetPresets(): Promise<GeniePreset[]> {
   const col = await getCollection<GeniePreset>('presets');
@@ -120,7 +120,7 @@ export async function mongoDeletePreset(id: string): Promise<void> {
   await col.deleteOne({ _id: id } as Parameters<typeof col.deleteOne>[0]);
 }
 
-/* ─── Provisions ─────────────────────────────────────────────────────── */
+/* --- Provisions ------------------------------------------------------- */
 
 export async function mongoGetProvisions(): Promise<GenieProvision[]> {
   const col = await getCollection<GenieProvision>('provisions');
@@ -133,21 +133,21 @@ export async function mongoUpsertProvision(id: string, script: string): Promise<
   await col.replaceOne(filter, { _id: id, script } as unknown as GenieProvision, { upsert: true });
 }
 
-/* ─── Virtual Parameters ─────────────────────────────────────────────── */
+/* --- Virtual Parameters ----------------------------------------------- */
 
 export async function mongoGetVirtualParameters(): Promise<GenieVirtualParameter[]> {
   const col = await getCollection<GenieVirtualParameter>('virtualParameters');
   return col.find({}).toArray() as unknown as GenieVirtualParameter[];
 }
 
-/* ─── Config ─────────────────────────────────────────────────────────── */
+/* --- Config ----------------------------------------------------------- */
 
 export async function mongoGetConfigs(): Promise<GenieConfig[]> {
   const col = await getCollection<GenieConfig>('config');
   return col.find({}).toArray() as unknown as GenieConfig[];
 }
 
-/* ─── Files ─────────────────────────────────────────────────────────── */
+/* --- Files ----------------------------------------------------------- */
 
 export async function mongoGetFiles(): Promise<GenieFile[]> {
   const col = await getCollection<GenieFile>('fs.files');

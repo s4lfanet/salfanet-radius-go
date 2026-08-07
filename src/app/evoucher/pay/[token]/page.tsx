@@ -131,7 +131,7 @@ export default function EVoucherPaymentPage() {
               <div className="space-y-2">{paymentGateways.map((gateway) => (
                 <button key={gateway.id} onClick={() => handlePayment(gateway.provider)} disabled={processing} className="w-full flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-teal-500 dark:hover:border-teal-500 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all disabled:opacity-50">
                   <div className="flex items-center gap-2.5"><div className="w-8 h-8 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-lg flex items-center justify-center"><CreditCard className="w-4 h-4 text-white" /></div><span className="text-xs font-semibold text-gray-900 dark:text-white">{gateway.name}</span></div>
-                  {processing ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-[10px] text-gray-500">Bayar →</span>}
+                  {processing ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" /> : <span className="text-[10px] text-gray-500">Bayar &rarr;</span>}
                 </button>
               ))}</div>
             )}

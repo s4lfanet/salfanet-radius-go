@@ -321,7 +321,7 @@ export function ODPDiagramV2({
               className="w-10 h-10 rounded-lg flex items-center justify-center"
               style={{ backgroundColor: `${getHierarchyColor('PARENT')}20` }}
             >
-              <span style={{ color: getHierarchyColor('PARENT') }}>⬆</span>
+              <span style={{ color: getHierarchyColor('PARENT') }}></span>
             </div>
             <div>
               <p className="font-medium text-gray-900 dark:text-white">

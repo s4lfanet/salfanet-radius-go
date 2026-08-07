@@ -13,7 +13,7 @@ import { randomBytes } from 'crypto';
 import type { NextRequest } from 'next/server';
 import type { Session } from 'next-auth';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// --- Types --------------------------------------------------------------------
 
 export interface CreatePppoeUserInput {
   username: string;
@@ -73,7 +73,7 @@ export interface UpdatePppoeUserInput {
   registeredAt?: string;
 }
 
-// ─── List ─────────────────────────────────────────────────────────────────────
+// --- List ---------------------------------------------------------------------
 
 export async function listPppoeUsers(params: { status?: string | null }) {
   const whereClause: Record<string, unknown> = {};
@@ -108,7 +108,7 @@ export async function listPppoeUsers(params: { status?: string | null }) {
   return users.map(user => ({ ...user, isOnline: onlineSet.has(user.username) }));
 }
 
-// ─── Get one ──────────────────────────────────────────────────────────────────
+// --- Get one ------------------------------------------------------------------
 
 export async function getPppoeUserById(id: string) {
   const user = await prisma.pppoeUser.findUnique({
@@ -140,7 +140,7 @@ export async function getPppoeUserById(id: string) {
   return { user, activeSession };
 }
 
-// ─── Create ───────────────────────────────────────────────────────────────────
+// --- Create -------------------------------------------------------------------
 
 export async function createPppoeUser(
   data: CreatePppoeUserInput & { noPppoeAccount?: boolean },
@@ -414,7 +414,7 @@ export async function createPppoeUser(
   return { user: { ...user, syncedToRadius: radiusSynced }, radiusSynced };
 }
 
-// ─── Update ───────────────────────────────────────────────────────────────────
+// --- Update -------------------------------------------------------------------
 
 export async function updatePppoeUser(
   data: UpdatePppoeUserInput,
@@ -472,7 +472,7 @@ export async function updatePppoeUser(
       ...(data.billingDay !== undefined && { billingDay: Math.min(Math.max(parseInt(String(data.billingDay)), 1), 28) }),
       // expiredAt: if explicitly provided, save it directly with correct timezone handling.
       // Date-only string (YYYY-MM-DD) ? end of day WIB (23:59:59 WIB = 16:59:59 UTC).
-      // No longer auto-recalculate expiredAt from billingDay on every edit �
+      // No longer auto-recalculate expiredAt from billingDay on every edit -
       // that was the bug causing expiredAt to silently reset to "next month" on any save.
       ...(data.expiredAt && (() => {
         const expStr = String(data.expiredAt);
@@ -514,9 +514,9 @@ export async function updatePppoeUser(
       // RADIUS re-sync must respect the user's effective status:
       // - active: full sync (password, profile group, static IP)
       // - isolated: allow auth but use isolir group, no static IP
-      // - blocked/stop: keep RADIUS tables empty � user must remain unreachable
+      // - blocked/stop: keep RADIUS tables empty - user must remain unreachable
       if (effectiveStatus === 'blocked' || effectiveStatus === 'stop') {
-        // Tables already cleared by deleteMany above � do NOT re-add any entries
+        // Tables already cleared by deleteMany above - do NOT re-add any entries
       } else if (effectiveStatus === 'isolated') {
         // Keep login allowed but restrict to isolir group
         await prisma.radcheck.create({
@@ -526,7 +526,7 @@ export async function updatePppoeUser(
         await prisma.radusergroup.create({
           data: { username: newUsername, groupname: 'isolir', priority: 1 },
         });
-        // No Framed-IP-Address � isolated users get IP from pool-isolir
+        // No Framed-IP-Address - isolated users get IP from pool-isolir
       } else {
         // active (default): full sync
         await prisma.radcheck.create({
@@ -636,7 +636,7 @@ export async function updatePppoeUser(
   return user;
 }
 
-// ─── Delete ───────────────────────────────────────────────────────────────────
+// --- Delete -------------------------------------------------------------------
 
 export async function deletePppoeUser(
   id: string,

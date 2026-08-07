@@ -232,7 +232,7 @@ export function OTBDiagramV2({
                         backgroundColor: getCoreStatusColor(core.status),
                         border: `1px solid ${core.colorHex}`,
                       }}
-                      title={`Core ${core.coreNumber}: ${core.status}${core.assignedTo ? ` → ${core.assignedTo}` : ''}`}
+                      title={`Core ${core.coreNumber}: ${core.status}${core.assignedTo ? ` &rarr; ${core.assignedTo}` : ''}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleCoreClick(core, tube);
@@ -266,7 +266,7 @@ export function OTBDiagramV2({
                   </span>
                   {hoveredCore.assignedTo && (
                     <span className="text-gray-600 dark:text-gray-400">
-                      → {hoveredCore.assignedTo}
+                      &rarr; {hoveredCore.assignedTo}
                     </span>
                   )}
                 </div>
@@ -337,7 +337,7 @@ export function OTBDiagramV2({
                   Patchcord (1 core)
                 </text>
                 <text x={70} y={70} textAnchor="middle" className="text-[10px] fill-gray-500 dark:fill-gray-400">
-                  per port → kabel feeder
+                  per port &rarr; kabel feeder
                 </text>
               </g>
 
@@ -376,7 +376,7 @@ export function OTBDiagramV2({
                       <g key={seg.id || i}>
                         <line x1={0} y1={50} x2={40} y2={20 + yOff} stroke="#f59e0b" strokeWidth="2" />
                         <text x={45} y={24 + yOff} className="text-[10px] fill-amber-600 dark:fill-amber-400">
-                          T{seg.fromPort} → {seg.toDevice?.name || seg.toDevice?.code || 'JC'}
+                          T{seg.fromPort} &rarr; {seg.toDevice?.name || seg.toDevice?.code || 'JC'}
                         </text>
                       </g>
                     );

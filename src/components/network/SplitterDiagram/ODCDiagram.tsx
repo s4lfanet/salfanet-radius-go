@@ -333,7 +333,7 @@ export function ODCDiagram({
           fill={DEFAULT_COLORS.downstream}
           fontWeight="600"
         >
-          ↓ TO ODP / Customer Premises
+          DL  TO ODP / Customer Premises
         </text>
 
         {/* Legend */}

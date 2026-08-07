@@ -18,7 +18,7 @@
 import { SNMPConfig, snmpGet, snmpWalk } from '../snmp';
 import { TelnetConfig, executeCommand } from '../telnet';
 
-// ─── OID Definitions ─────────────────────────────────────────────────────────
+// --- OID Definitions ---------------------------------------------------------
 
 // Shared across HIOSO_C, HIOSO_B2, HIOSO_VX (all use .25355.3.2.6)
 const HIOSO_EPON_OIDS = {
@@ -68,7 +68,7 @@ const STD_OIDS = {
   ramUsed:         '1.3.6.1.2.1.25.2.3.1.6.1',
 };
 
-// ─── Profile Detection ───────────────────────────────────────────────────────
+// --- Profile Detection -------------------------------------------------------
 
 type HiosoProfile = 'HIOSO_C' | 'HIOSO_B2' | 'HIOSO_VX' | 'HIOSO_B' | 'HIOSO_GPON';
 
@@ -93,7 +93,7 @@ function getProfileOids(profile: HiosoProfile) {
   return HIOSO_EPON_OIDS; // HIOSO_C, HIOSO_B2, HIOSO_VX all use same OIDs
 }
 
-// ─── Signal / Power Parsing ───────────────────────────────────────────────────
+// --- Signal / Power Parsing ---------------------------------------------------
 
 /**
  * Parse optical power value from SNMP.
@@ -111,16 +111,16 @@ function parsePower(rawValue: string, profile: HiosoProfile): number | null {
 
   // Auto-scale by magnitude (HIOSO_B, HIOSO_GPON)
   const abs = Math.abs(num);
-  if (abs > 500) return Math.round(num / 100 * 100) / 100; // e.g. -1227 → -12.27
-  if (abs > 50)  return Math.round(num / 10  * 100) / 100; // e.g. -122  → -12.20
-  return Math.round(num * 100) / 100;                       // e.g. -12   → -12.00
+  if (abs > 500) return Math.round(num / 100 * 100) / 100; // e.g. -1227 -> -12.27
+  if (abs > 50)  return Math.round(num / 10  * 100) / 100; // e.g. -122  -> -12.20
+  return Math.round(num * 100) / 100;                       // e.g. -12   -> -12.00
 }
 
 /**
  * Classify signal quality from Rx power dBm.
  *   critical : rxDbm < -27.0
- *   warn     : -27.0 ≤ rxDbm < -25.0
- *   ok       : rxDbm ≥ -25.0
+ *   warn     : -27.0 <= rxDbm < -25.0
+ *   ok       : rxDbm >= -25.0
  */
 export function signalLevel(rxDbm: number | null): 'ok' | 'warn' | 'critical' | 'unknown' {
   if (rxDbm === null) return 'unknown';
@@ -129,7 +129,7 @@ export function signalLevel(rxDbm: number | null): 'ok' | 'warn' | 'critical' | 
   return 'ok';
 }
 
-// ─── ONU Index Parsing ────────────────────────────────────────────────────────
+// --- ONU Index Parsing --------------------------------------------------------
 
 /**
  * Extract ONU list from snmpwalk results of the status OID.
@@ -163,7 +163,7 @@ function parseOnuStatusWalk(
   return onus;
 }
 
-// ─── Temperature ─────────────────────────────────────────────────────────────
+// --- Temperature -------------------------------------------------------------
 
 /**
  * Get OLT chassis temperature.
@@ -182,7 +182,7 @@ export async function getTemperature(config: SNMPConfig): Promise<number | null>
   return null;
 }
 
-// ─── CPU / Memory ─────────────────────────────────────────────────────────────
+// --- CPU / Memory -------------------------------------------------------------
 
 /**
  * Get CPU load % — only available on HIOSO_B2 via HOST-RESOURCES-MIB.
@@ -214,7 +214,7 @@ export async function getMemoryUsage(config: SNMPConfig): Promise<number | null>
   return null;
 }
 
-// ─── ONU Discovery via SNMP ───────────────────────────────────────────────────
+// --- ONU Discovery via SNMP ---------------------------------------------------
 
 /**
  * Discover all ONUs via SNMP walk.
@@ -281,7 +281,7 @@ export async function discoverONUsSNMP(
   return onus;
 }
 
-/** Walk distance OID and return map of suffix → distance (meters) */
+/** Walk distance OID and return map of suffix -> distance (meters) */
 export async function getOnuDistances(
   config: SNMPConfig,
   model?: string | null,
@@ -302,7 +302,7 @@ export async function getOnuDistances(
   return result;
 }
 
-// ─── ONU Discovery via Telnet ─────────────────────────────────────────────────
+// --- ONU Discovery via Telnet -------------------------------------------------
 
 function parseOnuTelnet(output: string, board: number, pon: number): any[] {
   const onus: any[] = [];
@@ -344,7 +344,7 @@ export async function discoverONUsSSH(config: any): Promise<any[]> {
   return []; // Hioso does not support SSH polling in standard config
 }
 
-// ─── Traffic Stats ────────────────────────────────────────────────────────────
+// --- Traffic Stats ------------------------------------------------------------
 
 export async function getTrafficStats(config: SNMPConfig): Promise<{
   rxBytes?: bigint; txBytes?: bigint;
@@ -371,7 +371,7 @@ export async function getTrafficStats(config: SNMPConfig): Promise<{
   };
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// --- Helpers ------------------------------------------------------------------
 
 /** Find a value from a walk result map where the OID ends with the given suffix */
 function findBySuffix(map: Record<string, string>, suffix: string): string | undefined {

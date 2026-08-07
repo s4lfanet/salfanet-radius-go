@@ -57,7 +57,7 @@ export function SimpleModal({
     // Without this, every parent re-render (e.g. notification polling every 30s,
     // or setFormData on each keystroke) creates a new onClose reference, causing the
     // Escape-key effect to teardown/setup on EVERY render. On mobile this rapid
-    // event-listener churn interferes with virtual-keyboard focus → keyboard dismisses.
+    // event-listener churn interferes with virtual-keyboard focus &rarr; keyboard dismisses.
     const onCloseRef = React.useRef(onClose);
     React.useLayoutEffect(() => { onCloseRef.current = onClose; });
 

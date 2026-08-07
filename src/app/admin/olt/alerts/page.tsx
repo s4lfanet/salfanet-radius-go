@@ -279,7 +279,7 @@ export default function OLTAlertsPage() {
                         </span>
                         {alert.isResolved && (
                           <span className="px-1.5 py-0.5 text-[9px] rounded bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
-                            ✓ Selesai
+                            [OK] Selesai
                           </span>
                         )}
                       </div>
