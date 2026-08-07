@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, use, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import {
   ArrowLeft,
   RefreshCw,
@@ -186,7 +187,7 @@ export default function DeviceParametersPage({ params }: { params: Promise<{ dev
   }
 
   async function copyPath(path: string) {
-    await navigator.clipboard.writeText(path);
+    await copyText(path);
     setCopiedPath(path);
     setTimeout(() => setCopiedPath(null), 1500);
   }
@@ -234,7 +235,7 @@ export default function DeviceParametersPage({ params }: { params: Promise<{ dev
   }
 
   async function copyScript() {
-    await navigator.clipboard.writeText(modal.script);
+    await copyText(modal.script);
     addToast({ type: 'success', title: 'Copied', description: 'Script copied to clipboard', duration: 1500 });
   }
 

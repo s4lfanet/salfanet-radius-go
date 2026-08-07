@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useTranslation } from '@/hooks/useTranslation';
+
 import { formatWIB } from '@/lib/timezone';
 import {
   Shield, Users, Wifi, WifiOff, DollarSign, RefreshCw, Search, Download,
@@ -85,7 +88,7 @@ export default function IsolatedUsersMonitorPage() {
   }, [fetchData]);
 
   const copyLink = (link: string, id: string) => {
-    navigator.clipboard.writeText(link);
+    copyText(link);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };

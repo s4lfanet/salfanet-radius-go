@@ -1,6 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { createPortal } from 'react-dom';
+
 import { useTranslation } from '@/hooks/useTranslation';
 import { showSuccess, showError, showConfirm, showToast } from '@/lib/sweetalert';
 import { formatWIB } from '@/lib/timezone';
@@ -220,7 +223,7 @@ export default function PaymentGatewayPage() {
   const copyWebhookUrl = async () => {
     const webhookUrl = `${window.location.origin}/api/payment/webhook`;
     try {
-      await navigator.clipboard.writeText(webhookUrl);
+      await copyText(webhookUrl);
       setCopied('webhook');
       await showToast(t('paymentGateway.webhookCopied'), 'success');
       setTimeout(() => setCopied(null), 2000);

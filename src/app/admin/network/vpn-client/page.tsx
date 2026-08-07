@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Shield, Plus, Trash2, Eye, Loader2, Users, Server, Copy, CheckCircle, XCircle, Wifi, Radio, Terminal, ChevronDown, ChevronUp, Route, Zap, Info, Key, Settings } from 'lucide-react';
 
@@ -844,7 +845,7 @@ ${vpnCmd}
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await copyText(text);
       showSuccess(t('network.copiedToClipboard'), t('network.copied'));
     } catch (error) {
       showError(t('network.failedCopy'), t('network.copyFailed'));

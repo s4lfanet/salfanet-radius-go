@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useToast } from '@/components/cyberpunk/CyberToast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Shield, Server, Plus, Pencil, Trash2, Zap, Activity, CheckCircle, XCircle, Settings, Terminal, RefreshCw, FileText, X, Wifi, ChevronDown, ChevronUp, Info } from 'lucide-react';
@@ -805,7 +806,7 @@ export default function VpnServerPage() {
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setShowVpnScriptModal(false)}>
           <div className="bg-[secondary] border border-brand-600/40 rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-brand-600/20">
-              <h2 className="font-bold text-brand-400">?? Manual Setup Script</h2>
+              <h2 className="font-bold text-brand-400">Manual Setup Script</h2>
               <button onClick={() => setShowVpnScriptModal(false)}><X className="w-5 h-5 text-muted-foreground hover:text-foreground" /></button>
             </div>
             <div className="p-4 overflow-y-auto flex-1">
@@ -815,11 +816,11 @@ export default function VpnServerPage() {
                 <button id="vpnbtn-ros6" className="px-3 py-1.5 bg-orange-500/30 border border-orange-500/50 text-orange-300 rounded-lg text-xs font-bold" onClick={() => { document.getElementById('vpnscript-ros6')?.classList.remove('hidden'); document.getElementById('vpnscript-ros7')?.classList.add('hidden'); }}>RouterOS 6</button>
               </div>
               <div id="vpnscript-ros7">
-                <div className="flex justify-between items-center mb-1"><span className="text-xs text-teal-400 font-bold">RouterOS 7</span><button className="text-xs text-brand-400 bg-muted dark:bg-slate-800 px-2 py-1 rounded" onClick={() => { navigator.clipboard.writeText(vpnScriptData.ros7); addToast({ type: 'success', title: 'Script ROS7 disalin!' }); }}>Copy</button></div>
+                <div className="flex justify-between items-center mb-1"><span className="text-xs text-teal-400 font-bold">RouterOS 7</span><button className="text-xs text-brand-400 bg-muted dark:bg-slate-800 px-2 py-1 rounded" onClick={() => { copyText(vpnScriptData.ros7); addToast({ type: 'success', title: 'Script ROS7 disalin!' }); }}>Copy</button></div>
                 <pre className="bg-gray-100 dark:bg-slate-900 text-green-700 dark:text-green-300 p-3 rounded-lg text-xs overflow-auto max-h-64 whitespace-pre font-mono border border-teal-500/20">{vpnScriptData.ros7}</pre>
               </div>
               <div id="vpnscript-ros6" className="hidden">
-                <div className="flex justify-between items-center mb-1"><span className="text-xs text-orange-400 font-bold">RouterOS 6</span><button className="text-xs text-brand-400 bg-muted dark:bg-slate-800 px-2 py-1 rounded" onClick={() => { navigator.clipboard.writeText(vpnScriptData.ros6); addToast({ type: 'success', title: 'Script ROS6 disalin!' }); }}>Copy</button></div>
+                <div className="flex justify-between items-center mb-1"><span className="text-xs text-orange-400 font-bold">RouterOS 6</span><button className="text-xs text-brand-400 bg-muted dark:bg-slate-800 px-2 py-1 rounded" onClick={() => { copyText(vpnScriptData.ros6); addToast({ type: 'success', title: 'Script ROS6 disalin!' }); }}>Copy</button></div>
                 <pre className="bg-gray-100 dark:bg-slate-900 text-yellow-700 dark:text-yellow-300 p-3 rounded-lg text-xs overflow-auto max-h-64 whitespace-pre font-mono border border-orange-500/20">{vpnScriptData.ros6}</pre>
               </div>
             </div>
@@ -1406,7 +1407,7 @@ export default function VpnServerPage() {
                     <p className="text-xs text-teal-400 mb-1">Server Public Key (untuk config NAS)</p>
                     <div className="flex items-center gap-2">
                       <code className="text-xs font-mono text-green-300 flex-1 break-all">{wgServerInfo.publicKey}</code>
-                      <button onClick={() => { navigator.clipboard.writeText(wgServerInfo.publicKey); addToast({ type: 'success', title: 'Public key disalin' }); }} className="text-xs text-brand-400 bg-muted px-2 py-1 rounded shrink-0">Copy</button>
+                      <button onClick={() => { copyText(wgServerInfo.publicKey); addToast({ type: 'success', title: 'Public key disalin' }); }} className="text-xs text-brand-400 bg-muted px-2 py-1 rounded shrink-0">Copy</button>
                     </div>
                   </div>
 
@@ -1462,7 +1463,7 @@ export default function VpnServerPage() {
                     <div className="mt-4 p-4 rounded-xl bg-slate-900 border border-teal-500/30">
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-sm font-bold text-teal-300">Script RouterOS 7 — Copy ke Winbox Terminal</p>
-                        <button onClick={() => { navigator.clipboard.writeText(wgGeneratedScript); addToast({ type: 'success', title: 'Script disalin!' }); }} className="text-xs text-brand-400 bg-muted px-2 py-1 rounded">Copy</button>
+                        <button onClick={() => { copyText(wgGeneratedScript); addToast({ type: 'success', title: 'Script disalin!' }); }} className="text-xs text-brand-400 bg-muted px-2 py-1 rounded">Copy</button>
                       </div>
                       <pre className="text-xs font-mono text-green-300 whitespace-pre overflow-x-auto max-h-64">{wgGeneratedScript}</pre>
                     </div>

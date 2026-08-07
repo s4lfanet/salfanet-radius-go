@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useToast } from '@/components/cyberpunk/CyberToast';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Server, Plus, Trash2, Edit, CheckCircle, XCircle, Copy, Loader2, Shield, Radio, Wifi, Activity, RefreshCw, Settings, X, ChevronDown, ChevronUp, Info } from 'lucide-react';
@@ -394,7 +395,7 @@ export default function RouterPage() {
   }
 
   const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text)
+    copyText(text);
     showSuccess(t('network.copiedToClipboard').replace('{label}', label))
   }
 
@@ -464,7 +465,7 @@ export default function RouterPage() {
                 const toCopy = scriptRosTab === 6 && scriptModalData.scriptRos6
                   ? scriptModalData.scriptRos6
                   : (scriptModalData.scriptRos7 || scriptModalData.script);
-                navigator.clipboard.writeText(toCopy);
+                copyToClipboard(toCopy, `Script ROS ${scriptRosTab}.x`);
                 addToast({ type: 'success', title: `Script ROS ${scriptRosTab}.x disalin!` });
               }} className="flex-1 px-4 py-2 text-sm font-bold bg-brand-500 text-[secondary] rounded-lg">{t('network.copyScript')} (ROS {scriptRosTab})</button>
             </div>

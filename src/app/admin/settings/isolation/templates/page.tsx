@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useTranslation } from '@/hooks/useTranslation';
+
 import { 
   FileText, 
   Mail, 
@@ -407,7 +410,7 @@ export default function TemplatesPage() {
                     key={variable.key}
                     className="p-2 bg-muted rounded border border-border cursor-pointer hover:bg-muted transition-colors"
                     onClick={() => {
-                      navigator.clipboard.writeText(`{{${variable.key}}}`);
+                      copyText(`{{${variable.key}}}`);
                       addToast({ type: 'success', title: t('common.copied'), description: `{{${variable.key}}} ${t('common.copied')}`, duration: 1500 });
                     }}
                     title={t('common.copy')}

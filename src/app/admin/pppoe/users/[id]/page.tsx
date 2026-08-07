@@ -3,6 +3,7 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatWIB } from '@/lib/timezone';
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import {
   ArrowLeft, User, Wifi, WifiOff, Shield, ShieldOff, Ban, CheckCircle2,
   Phone, Mail, MapPin, Calendar, CreditCard, Copy, ExternalLink, RefreshCw,
@@ -158,7 +159,7 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
   };
 
   const copyLink = (link: string, key: string) => {
-    navigator.clipboard.writeText(link);
+    copyText(link);
     setCopiedId(key);
     setTimeout(() => setCopiedId(null), 2000);
   };

@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useTranslation } from '@/hooks/useTranslation';
+
 import { showSuccess, showError } from '@/lib/sweetalert';
 import { formatWIB } from '@/lib/timezone';
 import { Loader2 } from 'lucide-react';
@@ -231,7 +234,7 @@ export default function WhatsAppTemplatesPage() {
   };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    copyText(text);
     showSuccess(t('whatsapp.templateCopied'));
   };
 

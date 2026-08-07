@@ -1,7 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useTranslation } from '@/hooks/useTranslation';
+
 import {
     Play, Loader2, CheckCircle, XCircle, Key, User, Server,
     Shield, RefreshCw, Terminal, Copy, Clock
@@ -67,7 +70,7 @@ export default function RadTestPage() {
 
     const copyRawOutput = () => {
         if (result?.rawOutput) {
-            navigator.clipboard.writeText(result.rawOutput);
+            copyText(result.rawOutput);
             addToast({ type: 'success', title: 'Copied!', duration: 1500 });
         }
     };

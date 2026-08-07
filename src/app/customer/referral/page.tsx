@@ -1,7 +1,10 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useRouter } from 'next/navigation';
+
 import { formatWIB } from '@/lib/timezone';
 import { 
   Gift, Copy, Share2, Users, Wallet, Clock, CheckCircle, 
@@ -136,7 +139,7 @@ export default function CustomerReferralPage() {
 
   const copyCode = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await copyText(text);
       addToast({ type: 'success', title: 'Tersalin!', description: 'Berhasil disalin ke clipboard' });
     } catch {
       // Fallback

@@ -1,6 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useToast } from '@/components/cyberpunk/CyberToast';
+
 import { Globe, Copy, CheckCircle, AlertCircle, Info, Wifi, Shield } from 'lucide-react';
 
 interface CompanySettings {
@@ -11,7 +14,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      await copyText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {

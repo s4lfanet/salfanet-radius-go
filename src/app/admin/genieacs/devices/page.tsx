@@ -1,7 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { useState, useEffect, useCallback } from 'react';
+
 import { createPortal } from 'react-dom';
 import { useTranslation } from '@/hooks/useTranslation';
 import { Server, RefreshCw, Wifi, WifiOff, Search, Loader2, Power, Trash2, Eye, Settings2, CheckCircle, XCircle, RotateCcw, X, Globe, Network, Activity, Smartphone, Monitor, Radio, Edit, Save, Lock, Signal, Thermometer, Info, Shield, List, Copy, ChevronDown, ChevronRight, Zap, Code2, Square, CheckSquare } from 'lucide-react';
@@ -1742,7 +1745,7 @@ export default function GenieACSDevicesPage() {
                               <span className="flex-1">{p.value || <span className="text-muted-foreground italic">empty</span>}</span>
                               {p.value && (
                                 <button
-                                  onClick={() => { navigator.clipboard.writeText(p.value); }}
+                                  onClick={() => { copyText(p.value); }}
                                   className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-primary transition-opacity shrink-0"
                                   title="Copy value"
                                 >

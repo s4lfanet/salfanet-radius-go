@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import {
   Cloud,
   Terminal,
@@ -29,7 +31,7 @@ interface TunnelConfig {
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
   const copy = async () => {
-    await navigator.clipboard.writeText(text);
+    await copyText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };

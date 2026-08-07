@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { BarChart3, Download, RefreshCw, Filter, ChevronLeft, ChevronRight, X, Copy, CheckCheck } from 'lucide-react';
+
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface RekapVoucher {
@@ -202,7 +205,7 @@ export default function RekapVoucherPage() {
   };
 
   const copyCode = async (code: string) => {
-    await navigator.clipboard.writeText(code);
+    await copyText(code);
     setVoucherModal(prev => ({ ...prev, copiedCode: code }));
     setTimeout(() => setVoucherModal(prev => ({ ...prev, copiedCode: null })), 1500);
   };

@@ -1,6 +1,9 @@
 'use client';
 import { showSuccess, showError, showConfirm } from '@/lib/sweetalert';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { formatWIB } from '@/lib/timezone';
+
 import { useTranslation } from '@/hooks/useTranslation';
 
 import { useState, useEffect } from 'react';
@@ -830,7 +833,7 @@ export default function AgentDashboardPage() {
                     </div>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(v.code);
+                        copyText(v.code);
                         showSuccess(t('agent.portal.codeCopied'));
                       }}
                       className="p-2 hover:bg-cyan-50 dark:hover:bg-cyan-500/10 rounded-lg transition"
@@ -846,7 +849,7 @@ export default function AgentDashboardPage() {
               <button
                 onClick={() => {
                   const all = generatedVouchers.map(v => v.code).join('\n');
-                  navigator.clipboard.writeText(all);
+                  copyText(all);
                   showSuccess(t('agent.portal.codeCopied'));
                 }}
                 className="px-4 py-2 text-sm font-bold bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-500/10 dark:hover:bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border border-cyan-200 dark:border-cyan-500/30 rounded-xl transition"

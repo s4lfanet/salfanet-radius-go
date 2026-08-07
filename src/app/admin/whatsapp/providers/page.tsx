@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import Image from 'next/image';
+
 import { useTranslation } from '@/hooks/useTranslation';
 import { useToast } from '@/components/cyberpunk/CyberToast';
 import {
@@ -57,7 +60,7 @@ export default function WhatsAppProvidersPage() {
   const copyWebhookUrl = async () => {
     const webhookUrl = `${window.location.origin}/api/whatsapp/webhook`;
     try {
-      await navigator.clipboard.writeText(webhookUrl);
+      await copyText(webhookUrl);
       setCopiedWebhook(true);
       setTimeout(() => setCopiedWebhook(false), 2000);
     } catch {

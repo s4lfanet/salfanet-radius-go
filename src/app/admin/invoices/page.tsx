@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import { Button } from '@/components/ui/button';
+
 import { Badge } from '@/components/ui/badge';
 import { showSuccess, showError, showConfirm, showToast } from '@/lib/sweetalert';
 import { formatWIB } from '@/lib/timezone';
@@ -198,7 +201,7 @@ export default function InvoicesPage() {
   const handleCopyPaymentLink = async (invoice: Invoice) => {
     if (!invoice.paymentLink) return;
     try {
-      await navigator.clipboard.writeText(invoice.paymentLink);
+      await copyText(invoice.paymentLink);
       setCopiedId(invoice.id);
       setTimeout(() => setCopiedId(null), 2000);
       showToast(t('invoices.paymentLinkCopied'), 'success');

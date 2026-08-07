@@ -1,11 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+
+import { copyToClipboard as copyText } from '@/lib/clipboard';
 import {
   RefreshCw, GitBranch, Package, Server, Cpu, Clock,
   AlertCircle, Terminal, Info, Download, CheckCircle2, Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
 import { useTranslation } from '@/hooks/useTranslation';
 
 interface SystemInfo {
@@ -52,7 +55,7 @@ function CmdBlock({ children }: { children: string }) {
         {children}
       </pre>
       <button
-        onClick={() => { navigator.clipboard.writeText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+        onClick={() => { copyText(children); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
         className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-all opacity-0 group-hover:opacity-100"
       >
         {copied ? '✔ copied' : 'copy'}
