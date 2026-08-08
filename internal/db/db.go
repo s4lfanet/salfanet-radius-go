@@ -330,6 +330,9 @@ func runMigrations(db *gorm.DB) error {
 			INDEX idx_pp_date (promiseDate)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
+		// ─── Add missing qrisDeviceKey column to companies table (Go model has it, Prisma schema doesn't) ───
+		`ALTER TABLE companies ADD COLUMN qrisDeviceKey VARCHAR(100) NULL`,
+
 		// ─── Link pppoe_areas to territories (collector area assignment uses existing area data) ───
 		`ALTER TABLE pppoe_areas ADD COLUMN territoryId VARCHAR(191) NULL`,
 		`ALTER TABLE pppoe_areas ADD INDEX idx_pppoe_areas_territoryId (territoryId)`,

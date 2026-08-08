@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
@@ -107,9 +108,15 @@ func (h *CompanyHandler) UpdateCompany(c fiber.Ctx) error {
 
 	if company.ID == "" {
 		company.ID = uuid.New().String()
-		h.db.Create(&company)
+		if err := h.db.Create(&company).Error; err != nil {
+			log.Error().Err(err).Msg("company: failed to create")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save company: " + err.Error()})
+		}
 	} else {
-		h.db.Save(&company)
+		if err := h.db.Save(&company).Error; err != nil {
+			log.Error().Err(err).Msg("company: failed to save")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save company: " + err.Error()})
+		}
 	}
 	return c.JSON(buildCompanyResp(company))
 }
