@@ -6,6 +6,20 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.27] — 2026-08-08
+### Fixed — Footer Login, Cronjob Emoji, GenieACS Test Connection
+- **Footer Login not saving** (`internal/db/models/models.go`) — Root cause: Go `Company` struct was missing `footerAdmin`, `footerCustomer`, `footerTechnician`, `footerAgent` fields. These fields exist in Prisma schema and MySQL table, but were absent from the Go model. When the frontend sent footer values via `POST /api/company`, `json.Unmarshal` silently dropped them and `db.Save` never persisted them to the database. Added the 4 missing fields with proper GORM column tags.
+- **Cronjob emoji not rendering** (`internal/db/db.go`) — Root cause: `cron_history` table may have been created with `utf8` charset instead of `utf8mb4`, causing 4-byte emoji characters to be corrupted. Added `ALTER TABLE cron_history CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci` migration. Also added same conversion for `companies` table (footer text may contain emoji).
+- **GenieACS test connection always failing** (`internal/api/handlers/settings_genieacs.go`) — Root cause: `TestConnection` handler was a stub that always returned `{"success": false, "message": "GenieACS connection test not configured"}`. Implemented real connection test: makes HTTP GET to `{host}/devices` with Basic Auth, parses response to count devices, returns success with device count.
+- **Missing qrisDeviceKey migration** (`internal/db/db.go`) — Added `ALTER TABLE companies ADD COLUMN qrisDeviceKey VARCHAR(100) NULL` migration that was referenced in v2.54.26 changelog but not actually added to db.go.
+
+### Files
+- `internal/db/models/models.go` — **EDIT** — Added FooterAdmin, FooterCustomer, FooterTechnician, FooterAgent fields to Company struct
+- `internal/db/db.go` — **EDIT** — Added utf8mb4 conversion migrations for cron_history and companies, qrisDeviceKey column migration
+- `internal/api/handlers/settings_genieacs.go` — **EDIT** — Implemented real TestConnection handler with HTTP request to GenieACS NBI API
+
+---
+
 ## [2.54.26] — 2026-08-08
 ### Fixed — Settings Silent Failure Audit
 - **Company settings not saving** (`internal/api/handlers/company.go`) — Root cause: Go model `Company` had `QrisDeviceKey` field but DB table `companies` lacked the `qrisDeviceKey` column. GORM `Create`/`Save` silently failed with "Unknown column" error. Added error checking on `db.Create` and `db.Save` calls with proper 500 response + `log.Error()` logging.
