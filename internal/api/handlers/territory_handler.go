@@ -62,9 +62,10 @@ func (h *TerritoryHandler) GetTerritory(c fiber.Ctx) error {
 // POST /api/territories — create territory
 func (h *TerritoryHandler) CreateTerritory(c fiber.Ctx) error {
 	var body struct {
-		Name        string  `json:"name"`
-		Description *string `json:"description"`
-		CollectorID *string `json:"collectorId"`
+		Name        string   `json:"name"`
+		Description *string  `json:"description"`
+		CollectorID *string  `json:"collectorId"`
+		AreaIDs     []string `json:"areaIds"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
@@ -85,6 +86,13 @@ func (h *TerritoryHandler) CreateTerritory(c fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	// Assign areas to this territory
+	for _, areaID := range body.AreaIDs {
+		h.db.Model(&models.PppoeArea{}).Where("id = ? AND (territoryId IS NULL OR territoryId = '')", areaID).Update("territoryId", territory.ID)
+	}
+
+	// Reload with areas
+	h.db.Preload("Areas").First(&territory, "id = ?", territory.ID)
 	return c.Status(201).JSON(territory)
 }
 
@@ -97,10 +105,11 @@ func (h *TerritoryHandler) UpdateTerritory(c fiber.Ctx) error {
 	}
 
 	var body struct {
-		Name        *string `json:"name"`
-		Description *string `json:"description"`
-		CollectorID *string `json:"collectorId"`
-		IsActive    *bool   `json:"isActive"`
+		Name        *string  `json:"name"`
+		Description *string  `json:"description"`
+		CollectorID *string  `json:"collectorId"`
+		IsActive    *bool    `json:"isActive"`
+		AreaIDs     []string `json:"areaIds"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
@@ -124,6 +133,27 @@ func (h *TerritoryHandler) UpdateTerritory(c fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	// Sync area assignments if areaIds is provided in the request
+	if body.AreaIDs != nil {
+		selectedSet := make(map[string]bool)
+		for _, aid := range body.AreaIDs {
+			selectedSet[aid] = true
+		}
+		// Unassign areas that were previously assigned but not in the new list
+		var currentAreas []models.PppoeArea
+		h.db.Where("territoryId = ?", id).Find(&currentAreas)
+		for _, ca := range currentAreas {
+			if !selectedSet[ca.ID] {
+				h.db.Model(&ca).Update("territoryId", nil)
+			}
+		}
+		// Assign new areas that are in the list but not yet assigned (or assigned to another territory)
+		for _, aid := range body.AreaIDs {
+			h.db.Model(&models.PppoeArea{}).Where("id = ?", aid).Update("territoryId", id)
+		}
+	}
+
+	h.db.Preload("Areas").First(&territory, "id = ?", id)
 	return c.JSON(territory)
 }
 

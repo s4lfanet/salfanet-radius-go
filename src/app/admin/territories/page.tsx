@@ -60,6 +60,8 @@ export default function TerritoriesPage() {
     isActive: true,
   });
   const [availableAreas, setAvailableAreas] = useState<PppoeArea[]>([]);
+  const [allAreas, setAllAreas] = useState<PppoeArea[]>([]);
+  const [selectedAreaIds, setSelectedAreaIds] = useState<string[]>([]);
   const [selectedAreaId, setSelectedAreaId] = useState('');
 
   useEffect(() => {
@@ -68,17 +70,19 @@ export default function TerritoriesPage() {
 
   const loadData = async () => {
     try {
-      const [terrRes, collRes, areasRes] = await Promise.all([
+      const [terrRes, collRes, allAreasRes] = await Promise.all([
         fetch('/api/territories'),
         fetch('/api/territories/collectors'),
-        fetch('/api/territories/available-areas'),
+        fetch('/api/territories/all-areas'),
       ]);
       const terrData = await terrRes.json();
       const collData = await collRes.json();
-      const areasData = await areasRes.json();
+      const allAreasData = await allAreasRes.json();
       setTerritories(terrData.data || []);
       setCollectors(collData.data || []);
-      setAvailableAreas(areasData.data || []);
+      setAllAreas(allAreasData.data || []);
+      // Available areas = areas without territoryId
+      setAvailableAreas((allAreasData.data || []).filter((a: PppoeArea) => !a.territoryId));
     } catch (error) {
       console.error('Load territories error:', error);
     } finally {
@@ -95,9 +99,11 @@ export default function TerritoriesPage() {
         collectorId: territory.collectorId || '',
         isActive: territory.isActive,
       });
+      setSelectedAreaIds(territory.areas?.map((a) => a.id) || []);
     } else {
       setEditingTerritory(null);
       setFormData({ name: '', description: '', collectorId: '', isActive: true });
+      setSelectedAreaIds([]);
     }
     setIsDialogOpen(true);
   };
@@ -110,6 +116,7 @@ export default function TerritoriesPage() {
         description: formData.description || null,
         collectorId: formData.collectorId || null,
         isActive: formData.isActive,
+        areaIds: selectedAreaIds,
       };
 
       if (editingTerritory) {
@@ -164,10 +171,11 @@ export default function TerritoriesPage() {
       showSuccess('Area berhasil ditambahkan ke wilayah');
       setSelectedAreaId('');
       loadTerritoryDetail(selectedTerritory.id);
-      // Refresh available areas
-      const areasRes = await fetch('/api/territories/available-areas');
+      // Refresh all areas
+      const areasRes = await fetch('/api/territories/all-areas');
       const areasData = await areasRes.json();
-      setAvailableAreas(areasData.data || []);
+      setAllAreas(areasData.data || []);
+      setAvailableAreas((areasData.data || []).filter((a: PppoeArea) => !a.territoryId));
     } catch (error) {
       showError(error instanceof Error ? error.message : 'Gagal menambahkan area');
     }
@@ -182,10 +190,11 @@ export default function TerritoriesPage() {
       if (!res.ok) throw new Error('Failed to remove area');
       showSuccess('Area dilepaskan dari wilayah');
       loadTerritoryDetail(selectedTerritory.id);
-      // Refresh available areas
-      const areasRes = await fetch('/api/territories/available-areas');
+      // Refresh all areas
+      const areasRes = await fetch('/api/territories/all-areas');
       const areasData = await areasRes.json();
-      setAvailableAreas(areasData.data || []);
+      setAllAreas(areasData.data || []);
+      setAvailableAreas((areasData.data || []).filter((a: PppoeArea) => !a.territoryId));
     } catch (error) {
       showError('Gagal melepaskan area');
     }
@@ -385,6 +394,49 @@ export default function TerritoriesPage() {
                 />
                 <span className="text-sm text-gray-300">Aktif</span>
               </label>
+              {/* Area multi-select from pppoe_areas (Kelola Area) */}
+              <div>
+                <ModalLabel>Area (dari Kelola Area)</ModalLabel>
+                <p className="text-xs text-gray-500 mb-2">Pilih area yang sudah diinput di menu Kelola Area untuk wilayah ini.</p>
+                <div className="max-h-40 overflow-y-auto rounded-lg border border-gray-700 bg-gray-900 p-2 space-y-1">
+                  {allAreas.length === 0 ? (
+                    <p className="text-xs text-gray-500 text-center py-2">
+                      Belum ada area. Tambah area di menu <a href="/admin/pppoe/areas" className="text-cyan-400 hover:underline">Kelola Area</a>.
+                    </p>
+                  ) : (
+                    allAreas.map((area) => {
+                      const isAssignedToOther = area.territoryId && area.territoryId !== editingTerritory?.id;
+                      const isChecked = selectedAreaIds.includes(area.id);
+                      return (
+                        <label
+                          key={area.id}
+                          className={`flex items-center gap-2 rounded px-2 py-1 text-sm ${isAssignedToOther && !isChecked ? 'opacity-40' : 'hover:bg-gray-800'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            disabled={isAssignedToOther && !isChecked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedAreaIds([...selectedAreaIds, area.id]);
+                              } else {
+                                setSelectedAreaIds(selectedAreaIds.filter((id) => id !== area.id));
+                              }
+                            }}
+                            className="rounded border-gray-700"
+                          />
+                          <span className="text-gray-300">{area.name}</span>
+                          {area.description && <span className="text-xs text-gray-500">- {area.description}</span>}
+                          {isAssignedToOther && !isChecked && <span className="text-xs text-gray-600 ml-auto">(wilayah lain)</span>}
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+                {selectedAreaIds.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-1">{selectedAreaIds.length} area dipilih</p>
+                )}
+              </div>
             </div>
           </ModalBody>
           <ModalFooter>
