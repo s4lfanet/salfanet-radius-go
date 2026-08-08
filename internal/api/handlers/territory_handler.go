@@ -209,10 +209,10 @@ func (h *TerritoryHandler) RemoveArea(c fiber.Ctx) error {
 
 // ─── Collector List ──────────────────────────────────────────────────────────
 
-// GET /api/territories/collectors — list all users with COLLECTOR role
+// GET /api/territories/collectors — list all admin users with COLLECTOR role
 func (h *TerritoryHandler) ListCollectors(c fiber.Ctx) error {
-	var collectors []models.User
-	if err := h.db.Where("role = ?", models.RoleCollector).Order("name ASC").Find(&collectors).Error; err != nil {
+	var collectors []models.AdminUser
+	if err := h.db.Where("role = ? AND isActive = ?", "COLLECTOR", true).Order("name ASC").Find(&collectors).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"data": collectors})

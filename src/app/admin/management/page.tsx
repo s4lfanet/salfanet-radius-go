@@ -42,6 +42,7 @@ const ROLES = [
   { value: 'FINANCE', translationKey: 'finance' },
   { value: 'CUSTOMER_SERVICE', translationKey: 'customerService' },
   { value: 'MARKETING', translationKey: 'marketing' },
+  { value: 'COLLECTOR', translationKey: 'collector' },
   { value: 'VIEWER', translationKey: 'viewer' },
 ];
 

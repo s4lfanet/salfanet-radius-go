@@ -95,7 +95,6 @@ const menuGroups: MenuGroup[] = [
         children: [
           { titleKey: 'nav.users', href: '/admin/pppoe/users', requiredPermission: 'customers.view' },
           { titleKey: 'nav.profiles', href: '/admin/pppoe/profiles', requiredPermission: 'customers.view' },
-          { titleKey: 'nav.manageAreas', href: '/admin/pppoe/areas', requiredPermission: 'customers.view' },
           { titleKey: 'nav.stopSubscription', href: '/admin/pppoe/stopped', requiredPermission: 'customers.view' },
           { titleKey: 'nav.registrations', href: '/admin/pppoe/registrations', badge: 'pending', requiredPermission: 'registrations.view' },
           { titleKey: 'nav.suspendRequests', href: '/admin/suspend-requests', requiredPermission: 'customers.view' },
@@ -107,6 +106,7 @@ const menuGroups: MenuGroup[] = [
         requiredPermission: 'customers.view',
         children: [
           { titleKey: 'nav.territoryManage', href: '/admin/territories', requiredPermission: 'customers.view' },
+          { titleKey: 'nav.manageAreas', href: '/admin/pppoe/areas', requiredPermission: 'customers.view' },
           { titleKey: 'nav.settlements', href: '/admin/settlements', requiredPermission: 'invoices.view' },
         ],
       },

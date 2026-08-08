@@ -13,7 +13,7 @@ type Territory struct {
 	CreatedAt   time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
 	UpdatedAt   time.Time `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
 
-	Collector *User       `gorm:"foreignKey:CollectorID" json:"collector,omitempty"`
+	Collector *AdminUser  `gorm:"foreignKey:CollectorID" json:"collector,omitempty"`
 	Areas     []PppoeArea `gorm:"foreignKey:TerritoryID" json:"areas,omitempty"`
 }
 
