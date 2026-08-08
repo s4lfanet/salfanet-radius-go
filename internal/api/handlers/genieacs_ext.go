@@ -156,16 +156,23 @@ func (h *GenieacsHandler) GetDeviceTasks(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	q := `[["device","=","` + deviceID + `"]]`
-	result, status, err := h.proxyGET(host+"/tasks?query="+url.QueryEscape(q), auth)
+	result, status, err := h.proxyGET(host+"/tasks", auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	tasks, _ := result.([]interface{})
-	if tasks == nil {
-		tasks = []interface{}{}
+	allTasks, _ := result.([]interface{})
+	var filtered []interface{}
+	for _, t := range allTasks {
+		if m, ok := t.(map[string]interface{}); ok {
+			if dev, ok := m["device"].(string); ok && dev == deviceID {
+				filtered = append(filtered, t)
+			}
+		}
 	}
-	return c.Status(status).JSON(fiber.Map{"data": tasks})
+	if filtered == nil {
+		filtered = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"data": filtered})
 }
 
 // POST /api/genieacs/devices/:deviceId/tasks
