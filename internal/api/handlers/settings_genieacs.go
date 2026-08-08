@@ -227,14 +227,18 @@ func (h *SettingsGenieacsHandler) GetDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID)+"&projection=_id,_lastInform,_lastBoot,_registered,_deviceId,VirtualParameters", auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
 	if status != 200 {
 		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
 	}
-	dev, ok := result.(map[string]interface{})
+	devs, ok := result.([]interface{})
+	if !ok || len(devs) == 0 {
+		return c.JSON(fiber.Map{"success": false, "error": "device not found"})
+	}
+	dev, ok := devs[0].(map[string]interface{})
 	if !ok {
 		return c.JSON(fiber.Map{"success": false, "error": "unexpected response format"})
 	}
@@ -248,7 +252,7 @@ func (h *SettingsGenieacsHandler) DeleteDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	req, err := http.NewRequest("DELETE", host+"/devices/"+url.PathEscape(deviceID), nil)
+	req, err := http.NewRequest("DELETE", host+"/devices/?_id="+url.QueryEscape(deviceID), nil)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -271,14 +275,18 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
 	if status != 200 {
 		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
 	}
-	dev, ok := result.(map[string]interface{})
+	devs, ok := result.([]interface{})
+	if !ok || len(devs) == 0 {
+		return c.JSON(fiber.Map{"success": false, "error": "device not found"})
+	}
+	dev, ok := devs[0].(map[string]interface{})
 	if !ok {
 		return c.JSON(fiber.Map{"success": false, "error": "unexpected response format"})
 	}
@@ -331,20 +339,24 @@ func (h *SettingsGenieacsHandler) DeviceParameters(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID)+"/all-parameters", auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
 	if status != 200 {
-		// Fallback: try getting device itself
-		result2, status2, err2 := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
-		if err2 != nil || status2 != 200 {
-			return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
-		}
-		result = result2
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
+	}
+	// Response is an array of devices; take the first one
+	devs, ok := result.([]interface{})
+	if !ok || len(devs) == 0 {
+		return c.JSON(fiber.Map{"success": false, "error": "device not found"})
+	}
+	dev, ok := devs[0].(map[string]interface{})
+	if !ok {
+		return c.JSON(fiber.Map{"success": false, "error": "unexpected response format"})
 	}
 	// Flatten the parameter tree into a list of {path, value, type} objects
-	parameters := flattenParameters(result, "")
+	parameters := flattenParameters(dev, "")
 	return c.JSON(fiber.Map{"success": true, "parameters": parameters})
 }
 
