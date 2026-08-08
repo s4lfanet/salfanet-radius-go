@@ -36,7 +36,11 @@ func (h *GenieacsHandler) ListDevices(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
 }
 
 // GET /api/genieacs/devices/:deviceId
@@ -46,11 +50,15 @@ func (h *GenieacsHandler) GetDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	devs, ok := result.([]interface{})
+	if !ok || len(devs) == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "device not found"})
+	}
+	return c.Status(status).JSON(fiber.Map{"data": devs[0]})
 }
 
 // DELETE /api/genieacs/devices/:deviceId
@@ -60,7 +68,7 @@ func (h *GenieacsHandler) DeleteDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	status, err := h.proxyDELETE(host+"/devices/"+url.PathEscape(deviceID), auth)
+	status, err := h.proxyDELETE(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -74,11 +82,20 @@ func (h *GenieacsHandler) DeviceAllParameters(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID)+"/all-parameters", auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	devs, ok := result.([]interface{})
+	if !ok || len(devs) == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "device not found"})
+	}
+	dev, ok := devs[0].(map[string]interface{})
+	if !ok {
+		return c.Status(500).JSON(fiber.Map{"error": "unexpected response format"})
+	}
+	parameters := flattenParameters(dev, "")
+	return c.Status(status).JSON(fiber.Map{"data": parameters})
 }
 
 // POST /api/genieacs/devices/:deviceId/download
@@ -104,11 +121,15 @@ func (h *GenieacsHandler) GetDeviceParameters(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	devs, ok := result.([]interface{})
+	if !ok || len(devs) == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "device not found"})
+	}
+	return c.Status(status).JSON(fiber.Map{"data": devs[0]})
 }
 
 // POST /api/genieacs/devices/:deviceId/parameters
@@ -135,12 +156,16 @@ func (h *GenieacsHandler) GetDeviceTasks(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	q := `[["deviceId","=","` + deviceID + `"]]`
+	q := `[["device","=","` + deviceID + `"]]`
 	result, status, err := h.proxyGET(host+"/tasks?query="+url.QueryEscape(q), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	tasks, _ := result.([]interface{})
+	if tasks == nil {
+		tasks = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"data": tasks})
 }
 
 // POST /api/genieacs/devices/:deviceId/tasks
@@ -183,11 +208,15 @@ func (h *GenieacsHandler) GetDeviceWifi(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	devs, ok := result.([]interface{})
+	if !ok || len(devs) == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "device not found"})
+	}
+	return c.Status(status).JSON(fiber.Map{"data": devs[0]})
 }
 
 // POST /api/genieacs/devices/:deviceId/reboot
@@ -263,7 +292,11 @@ func (h *GenieacsHandler) ListPresets(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
 }
 
 // POST /api/genieacs/presets
@@ -288,11 +321,16 @@ func (h *GenieacsHandler) GetPreset(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/presets/"+url.PathEscape(presetID), auth)
+	q := `[["_id","=","` + presetID + `"]]`
+	result, status, err := h.proxyGET(host+"/presets?query="+url.QueryEscape(q), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, ok := result.([]interface{})
+	if !ok || len(items) == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "preset not found"})
+	}
+	return c.Status(status).JSON(fiber.Map{"data": items[0]})
 }
 
 // PUT /api/genieacs/presets/:presetId
@@ -333,7 +371,11 @@ func (h *GenieacsHandler) ListProvisions(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
 }
 
 // POST /api/genieacs/provisions
@@ -358,11 +400,16 @@ func (h *GenieacsHandler) GetProvision(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/provisions/"+url.PathEscape(provID), auth)
+	q := `[["_id","=","` + provID + `"]]`
+	result, status, err := h.proxyGET(host+"/provisions?query="+url.QueryEscape(q), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, ok := result.([]interface{})
+	if !ok || len(items) == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "provision not found"})
+	}
+	return c.Status(status).JSON(fiber.Map{"data": items[0]})
 }
 
 // PUT /api/genieacs/provisions/:provisionId
@@ -403,7 +450,11 @@ func (h *GenieacsHandler) ListVirtualParameters(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
 }
 
 // POST /api/genieacs/virtual-parameters
@@ -428,11 +479,16 @@ func (h *GenieacsHandler) GetVirtualParameter(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/virtual-parameters/"+url.PathEscape(vpID), auth)
+	q := `[["_id","=","` + vpID + `"]]`
+	result, status, err := h.proxyGET(host+"/virtual-parameters?query="+url.QueryEscape(q), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, ok := result.([]interface{})
+	if !ok || len(items) == 0 {
+		return c.Status(404).JSON(fiber.Map{"error": "virtual parameter not found"})
+	}
+	return c.Status(status).JSON(fiber.Map{"data": items[0]})
 }
 
 // PUT /api/genieacs/virtual-parameters/:vpId
@@ -473,7 +529,11 @@ func (h *GenieacsHandler) ListFiles(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
 }
 
 // POST /api/genieacs/files — multipart upload
@@ -499,20 +559,28 @@ func (h *GenieacsHandler) UploadFile(c fiber.Ctx) error {
 	return c.Status(resp.StatusCode).Send(body)
 }
 
-// DELETE /api/genieacs/files — delete by filename query param
+// DELETE /api/genieacs/files — delete by filename from query param or body {fileName}
 func (h *GenieacsHandler) DeleteFile(c fiber.Ctx) error {
 	filename := c.Query("filename")
+	if filename == "" {
+		var body struct {
+			FileName string `json:"fileName"`
+		}
+		if err := c.Bind().JSON(&body); err == nil {
+			filename = body.FileName
+		}
+	}
+	if filename == "" {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "filename required"})
+	}
 	host, auth, err := h.getCredentials()
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	u := host + "/files"
-	if filename != "" {
-		u += "/" + url.PathEscape(filename)
-	}
+	u := host + "/files/" + url.PathEscape(filename)
 	status, err := h.proxyDELETE(u, auth)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
 	return c.Status(status).JSON(fiber.Map{"success": status < 400})
 }
@@ -525,28 +593,44 @@ func (h *GenieacsHandler) ListFaults(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	q := c.Query("query", "")
+	deviceFilter := c.Query("device", "")
 	u := host + "/faults"
-	if q != "" {
+	if deviceFilter != "" {
+		q := `[["device","=","` + deviceFilter + `"]]`
 		u += "?query=" + url.QueryEscape(q)
 	}
 	result, status, err := h.proxyGET(u, auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
 }
 
-// DELETE /api/genieacs/faults/:faultId
+// DELETE /api/genieacs/faults/:faultId  OR  DELETE /api/genieacs/faults (body {id})
 func (h *GenieacsHandler) DeleteFault(c fiber.Ctx) error {
 	faultID := c.Params("faultId")
+	if faultID == "" {
+		var body struct {
+			ID string `json:"id"`
+		}
+		if err := c.Bind().JSON(&body); err == nil {
+			faultID = body.ID
+		}
+	}
+	if faultID == "" {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "fault id required"})
+	}
 	host, auth, err := h.getCredentials()
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
 	status, err := h.proxyDELETE(host+"/faults/"+url.PathEscape(faultID), auth)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
 	return c.Status(status).JSON(fiber.Map{"success": status < 400})
 }
@@ -584,7 +668,11 @@ func (h *GenieacsHandler) ListConfig(c fiber.Ctx) error {
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
 }
 
 // PUT /api/genieacs/config
@@ -598,20 +686,28 @@ func (h *GenieacsHandler) UpdateConfig(c fiber.Ctx) error {
 	return h.proxyPUT(c, host+"/config", auth, body)
 }
 
-// DELETE /api/genieacs/config
+// DELETE /api/genieacs/config — delete by key from query param or body {id}
 func (h *GenieacsHandler) DeleteConfig(c fiber.Ctx) error {
 	key := c.Query("key")
+	if key == "" {
+		var body struct {
+			ID string `json:"id"`
+		}
+		if err := c.Bind().JSON(&body); err == nil {
+			key = body.ID
+		}
+	}
+	if key == "" {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "config key required"})
+	}
 	host, auth, err := h.getCredentials()
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	u := host + "/config"
-	if key != "" {
-		u += "/" + url.PathEscape(key)
-	}
+	u := host + "/config/" + url.PathEscape(key)
 	status, err := h.proxyDELETE(u, auth)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
 	return c.Status(status).JSON(fiber.Map{"success": status < 400})
 }
@@ -652,11 +748,15 @@ func (h *GenieacsHandler) ListAutoProvision(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/provisions?type=auto", auth)
+	result, status, err := h.proxyGET(host+"/provisions", auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": fiber.Map{"provisions": items}})
 }
 
 // POST /api/genieacs/auto-provision

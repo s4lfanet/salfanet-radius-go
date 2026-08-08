@@ -1030,6 +1030,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	genieacs.Delete("/files", genieacsH.DeleteFile)
 	// Faults
 	genieacs.Get("/faults", genieacsH.ListFaults)
+	genieacs.Delete("/faults", genieacsH.DeleteFault)
 	genieacs.Delete("/faults/:faultId", genieacsH.DeleteFault)
 	// Config
 	genieacs.Get("/config", genieacsH.ListConfig)

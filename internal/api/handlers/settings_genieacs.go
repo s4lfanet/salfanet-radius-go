@@ -156,12 +156,12 @@ func mapDevice(dev map[string]interface{}) fiber.Map {
 		serialNumber = serialFromDeviceID
 	}
 
-	// Derive status from lastInform — if within last 10 minutes, consider online
-	status := "offline"
+	// Derive status from lastInform — if within last 15 minutes, consider online
+	status := "Offline"
 	if lastInform != "" {
 		if t, err := time.Parse(time.RFC3339, lastInform); err == nil {
-			if time.Since(t) < 10*time.Minute {
-				status = "online"
+			if time.Since(t) < 15*time.Minute {
+				status = "Online"
 			}
 		}
 	}
@@ -687,7 +687,7 @@ func (h *SettingsGenieacsHandler) SSEVoucherUpdates(c fiber.Ctx) error {
 var _ = strconv.Itoa
 
 // flattenParameters recursively walks a GenieACS parameter tree and returns a flat list
-// of {path, value, type} objects for the frontend parameter browser.
+// of {path, value, type, writable, object, timestamp} objects for the frontend parameter browser.
 func flattenParameters(node interface{}, prefix string) []fiber.Map {
 	var params []fiber.Map
 	m, ok := node.(map[string]interface{})
@@ -705,10 +705,25 @@ func flattenParameters(node interface{}, prefix string) []fiber.Map {
 			if _, hasValue := child["_value"]; hasValue {
 				val := fmt.Sprintf("%v", child["_value"])
 				paramType, _ := child["_type"].(string)
+				writable := false
+				if w, ok := child["_writable"].(bool); ok {
+					writable = w
+				}
+				isObject := false
+				if o, ok := child["_object"].(bool); ok {
+					isObject = o
+				}
+				var timestamp interface{}
+				if ts, ok := child["_timestamp"]; ok {
+					timestamp = ts
+				}
 				params = append(params, fiber.Map{
-					"path":  path,
-					"value": val,
-					"type":  paramType,
+					"path":      path,
+					"value":     val,
+					"type":      paramType,
+					"writable":  writable,
+					"object":    isObject,
+					"timestamp": timestamp,
 				})
 			}
 			// Recurse into children
