@@ -280,7 +280,7 @@ export default function GenieACSDevicesPage() {
 
   const handleRefreshParameters = async (deviceId: string, serialNumber: string) => {
     if (!await confirm({
-      title: t('genieacs.refreshParameters'),
+      title: t('genieacs.refreshParameters') + '?',
       message: t('genieacs.refreshParametersConfirm').replace('{serial}', serialNumber),
       confirmText: t('common.yesRefresh'),
       cancelText: t('common.cancel'),

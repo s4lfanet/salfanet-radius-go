@@ -2365,7 +2365,7 @@
     "deleteDeviceWarning": "Device akan dihapus dari GenieACS. Data tidak dapat dikembalikan.",
     "deviceDeleted": "Device dihapus",
     "failedDeleteDevice": "Gagal menghapus device",
-    "refreshParameters": "Refresh Parameters?",
+    "refreshParameters": "Refresh Parameters",
     "refreshParametersConfirm": "Refresh semua parameter dari device {serial}?",
     "sendingRefreshTask": "Mengirim task refresh ke device",
     "refreshTaskSent": "Refresh parameters task terkirim",
