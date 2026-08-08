@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -150,7 +151,7 @@ func (h *GenieacsHandler) DeleteTask(c fiber.Ctx) error {
 		return h.notConfiguredErr(c)
 	}
 
-	statusCode, err := h.proxyDELETE(host+"/tasks/"+taskID, auth)
+	statusCode, err := h.proxyDELETE(host+"/tasks/"+url.PathEscape(taskID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -174,8 +175,8 @@ func (h *GenieacsHandler) ConnectionRequest(c fiber.Ctx) error {
 		"parameterNames": []string{"InternetGatewayDevice.DeviceInfo.SoftwareVersion"},
 	}
 
-	url := fmt.Sprintf("%s/devices/%s/tasks?connection_request", host, deviceID)
-	result, statusCode, err := h.proxyPOST(url, auth, task)
+	reqURL := fmt.Sprintf("%s/devices/%s/tasks?connection_request", host, url.PathEscape(deviceID))
+	result, statusCode, err := h.proxyPOST(reqURL, auth, task)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -265,8 +266,8 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 		"parameterValues": params,
 	}
 
-	url := fmt.Sprintf("%s/devices/%s/tasks?connection_request", host, deviceID)
-	result, statusCode, err := h.proxyPOST(url, auth, task)
+	reqURL := fmt.Sprintf("%s/devices/%s/tasks?connection_request", host, url.PathEscape(deviceID))
+	result, statusCode, err := h.proxyPOST(reqURL, auth, task)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}

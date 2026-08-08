@@ -783,7 +783,7 @@ export default function GenieACSDevicesPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground truncate">{device.serialNumber || '-'}</p>
-                        <p className="text-[10px] text-muted-foreground">{device.manufacturer || '-'} &middot; {device.model || '-'}</p>
+                        <p className="text-[10px] text-muted-foreground">{device.manufacturer || '-'} · {device.model || '-'}</p>
                       </div>
                       <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] font-medium rounded ml-2 ${
                         device.status === 'Online'
@@ -1167,13 +1167,13 @@ export default function GenieACSDevicesPage() {
                                     <div>
                                       <p className="text-xs font-medium text-foreground">{wlan.ssid || '-'}</p>
                                       <p className="text-[10px] text-muted-foreground">
-                                        {wlan.band} * Ch {wlan.channel !== '-' ? wlan.channel : t('common.auto')} * {wlan.security || t('common.open')}
+                                        {wlan.band} · Ch {wlan.channel !== '-' ? wlan.channel : t('common.auto')} · {wlan.security || t('common.open')}
                                       </p>
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2">
                                     <div className="text-right">
-                                      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${wlan.enabled ? 'bg-success/20 text-success dark:bg-green-900/30 dark:text-success' : 'bg-gray-200 text-muted-foreground dark:bg-inputdark:text-muted-foreground'}`}>
+                                      <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${wlan.enabled ? 'bg-success/20 text-success dark:bg-green-900/30 dark:text-success' : 'bg-gray-200 text-muted-foreground dark:bg-input dark:text-muted-foreground'}`}>
                                         {wlan.enabled ? t('common.on') : t('common.off')}
                                       </span>
                                       {wlan.totalAssociations > 0 && (
@@ -1227,8 +1227,8 @@ export default function GenieACSDevicesPage() {
                                       </div>
                                       <p className="text-[10px] text-muted-foreground mt-0.5">
                                         {wan.username && wan.username !== '-' ? `User: ${wan.username}` : ''}
-                                        {wan.externalIPAddress && wan.externalIPAddress !== '-' ? (wan.username && wan.username !== '-' ? ` * ` : '') + `IP: ${wan.externalIPAddress}` : ''}
-                                        {wan.connectionStatus && wan.connectionStatus !== '-' ? ` * ${wan.connectionStatus}` : ''}
+                                        {wan.externalIPAddress && wan.externalIPAddress !== '-' ? (wan.username && wan.username !== '-' ? ' · ' : '') + `IP: ${wan.externalIPAddress}` : ''}
+                                        {wan.connectionStatus && wan.connectionStatus !== '-' ? ` · ${wan.connectionStatus}` : ''}
                                       </p>
                                       <p className="text-[10px] text-muted-foreground font-mono break-all mt-0.5 opacity-60">{wan.path}</p>
                                     </div>
@@ -1302,7 +1302,7 @@ export default function GenieACSDevicesPage() {
                                           ) : '-'}
                                         </td>
                                         <td className="py-1.5 px-2 text-center">
-                                          <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${host.active ? 'bg-success/20 text-success dark:bg-green-900/30 dark:text-success' : 'bg-gray-200 text-muted-foreground dark:bg-inputdark:text-muted-foreground'}`}>
+                                          <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${host.active ? 'bg-success/20 text-success dark:bg-green-900/30 dark:text-success' : 'bg-gray-200 text-muted-foreground dark:bg-input dark:text-muted-foreground'}`}>
                                             {host.active ? t('common.online') : t('common.offline')}
                                           </span>
                                         </td>

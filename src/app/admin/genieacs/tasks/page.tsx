@@ -39,13 +39,17 @@ export default function GenieACSTasksPage() {
         return;
       }
       setNotConfigured(false);
+      if (data.success === false) {
+        addToast({ type: 'error', title: t('common.error'), description: data.error || t('genieacs.failedLoadTasks') });
+      }
       setTasks(data.tasks || []);
     } catch (error) {
       console.error('Error fetching tasks:', error);
+      addToast({ type: 'error', title: t('common.error'), description: t('genieacs.failedLoadTasks') });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addToast, t]);
 
   // Initial fetch
   useEffect(() => {
@@ -85,7 +89,7 @@ export default function GenieACSTasksPage() {
           method: 'DELETE' 
         });
         if (response.ok) {
-          setTasks(tasks.filter(t => t._id !== taskId));
+          setTasks(tasks.filter(task => task._id !== taskId));
           addToast({ type: 'success', title: t('common.success'), description: t('common.taskDeleted'), duration: 2000 });
         } else {
           throw new Error(t('genieacs.failedDeleteTask'));
@@ -101,14 +105,16 @@ export default function GenieACSTasksPage() {
       const response = await fetch(`/api/genieacs/tasks/${encodeURIComponent(taskId)}/retry`, { 
         method: 'POST' 
       });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
         addToast({ type: 'success', title: t('common.success'), description: t('genieacs.taskWillBeRetried'), duration: 2000 });
         handleRefresh();
       } else {
-        throw new Error(t('genieacs.failedRetryTask'));
+        throw new Error(data.error || t('genieacs.failedRetryTask'));
       }
     } catch (error) {
-      addToast({ type: 'error', title: t('common.error'), description: t('genieacs.failedRetryTask') });
+      const msg = error instanceof Error ? error.message : t('genieacs.failedRetryTask');
+      addToast({ type: 'error', title: t('common.error'), description: msg });
     }
   };
 
@@ -317,7 +323,7 @@ export default function GenieACSTasksPage() {
           </div>
           {pendingCount > 0 && autoRefresh && (
             <p className="text-[10px] text-primary mt-2">
-              ?? {t('genieacs.autoRefreshInfo')}
+              {t('genieacs.autoRefreshInfo')}
             </p>
           )}
         </div>
@@ -469,11 +475,11 @@ export default function GenieACSTasksPage() {
             <div className="text-xs text-warning">
               <p className="font-medium mb-1">{t('genieacs.tasksPending').replace('{count}', String(pendingCount))}</p>
               <ul className="space-y-0.5 text-[11px]">
-                <li>* {t('genieacs.taskWillExecute')}</li>
-                <li>* {t('genieacs.informInterval')}</li>
-                <li>* {t('genieacs.alternative1')}</li>
-                <li>* {t('genieacs.alternative2')}</li>
-                <li className="text-muted-foreground">* {t('genieacs.connectionRequestNote')}</li>
+                <li>• {t('genieacs.taskWillExecute')}</li>
+                <li>• {t('genieacs.informInterval')}</li>
+                <li>• {t('genieacs.alternative1')}</li>
+                <li>• {t('genieacs.alternative2')}</li>
+                <li className="text-muted-foreground">• {t('genieacs.connectionRequestNote')}</li>
               </ul>
             </div>
           </div>
@@ -487,10 +493,10 @@ export default function GenieACSTasksPage() {
           <div className="text-xs text-primary">
             <p className="font-medium mb-1">{t('genieacs.aboutTasks')}</p>
             <ul className="space-y-0.5 text-[11px]">
-              <li>* {t('genieacs.taskDescription')}</li>
-              <li>* {t('genieacs.pendingTaskExec')}</li>
-              <li>* {t('genieacs.useForceSyncTip')}</li>
-              <li>* {t('genieacs.faultTaskRetry')}</li>
+              <li>• {t('genieacs.taskDescription')}</li>
+              <li>• {t('genieacs.pendingTaskExec')}</li>
+              <li>• {t('genieacs.useForceSyncTip')}</li>
+              <li>• {t('genieacs.faultTaskRetry')}</li>
             </ul>
           </div>
         </div>

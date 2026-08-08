@@ -2468,6 +2468,7 @@
     "taskWillRetry": "Task akan di-retry",
     "taskWillBeRetried": "Task akan di-retry",
     "failedRetryTask": "Gagal retry task",
+    "failedLoadTasks": "Gagal memuat daftar task",
     "paramConfigTitle": "Konfigurasi Tampilan Parameter",
     "paramConfigSubtitle": "Sesuaikan parameter GenieACS mana yang ditampilkan dan bagaimana tampilannya",
     "saveOrder": "Simpan Urutan",

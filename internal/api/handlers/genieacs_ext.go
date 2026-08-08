@@ -7,12 +7,14 @@
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/rs/zerolog/log"
 )
 
 // ─── Device routes ────────────────────────────────────────────────────────────
@@ -109,9 +111,12 @@ func (h *GenieacsHandler) DeviceDownload(c fiber.Ctx) error {
 	_ = c.Bind().JSON(&body)
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, body)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	if status >= 400 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
 }
 
 // GET /api/genieacs/devices/:deviceId/parameters
@@ -123,13 +128,13 @@ func (h *GenieacsHandler) GetDeviceParameters(c fiber.Ctx) error {
 	}
 	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
 	devs, ok := result.([]interface{})
 	if !ok || len(devs) == 0 {
-		return c.Status(404).JSON(fiber.Map{"error": "device not found"})
+		return c.Status(404).JSON(fiber.Map{"success": false, "error": "device not found"})
 	}
-	return c.Status(status).JSON(fiber.Map{"data": devs[0]})
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": devs[0]})
 }
 
 // POST /api/genieacs/devices/:deviceId/parameters
@@ -144,9 +149,12 @@ func (h *GenieacsHandler) SetDeviceParameters(c fiber.Ctx) error {
 	task := fiber.Map{"name": "setParameterValues", "parameterValues": body}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	if status >= 400 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
 }
 
 // GET /api/genieacs/devices/:deviceId/tasks
@@ -186,9 +194,12 @@ func (h *GenieacsHandler) CreateDeviceTask(c fiber.Ctx) error {
 	_ = c.Bind().JSON(&body)
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, body)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	if status >= 400 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
 }
 
 // POST /api/genieacs/devices/:deviceId/wan
@@ -203,9 +214,12 @@ func (h *GenieacsHandler) DeviceWAN(c fiber.Ctx) error {
 	task := fiber.Map{"name": "setParameterValues", "parameterValues": body}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	if status >= 400 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
 }
 
 // GET /api/genieacs/devices/:deviceId/wifi
@@ -236,9 +250,15 @@ func (h *GenieacsHandler) RebootDevice(c fiber.Ctx) error {
 	task := fiber.Map{"name": "reboot"}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		log.Error().Err(err).Str("device", deviceID).Str("task", "reboot").Msg("genieacs: reboot task failed")
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	if status >= 400 {
+		log.Error().Int("status", status).Str("device", deviceID).Str("task", "reboot").Msg("genieacs: reboot task error")
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	log.Info().Str("device", deviceID).Str("task", "reboot").Msg("genieacs: reboot task queued")
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
 }
 
 // POST /api/genieacs/devices/:deviceId/refresh
@@ -251,9 +271,15 @@ func (h *GenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.", "Device."}}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		log.Error().Err(err).Str("device", deviceID).Str("task", "refresh").Msg("genieacs: refresh task failed")
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	if status >= 400 {
+		log.Error().Int("status", status).Str("device", deviceID).Str("task", "refresh").Msg("genieacs: refresh task error")
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	log.Info().Str("device", deviceID).Str("task", "refresh").Msg("genieacs: refresh task queued")
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
 }
 
 // POST /api/genieacs/devices/:deviceId/factory-reset
@@ -266,9 +292,15 @@ func (h *GenieacsHandler) FactoryResetDevice(c fiber.Ctx) error {
 	task := fiber.Map{"name": "factoryReset"}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		log.Error().Err(err).Str("device", deviceID).Str("task", "factoryReset").Msg("genieacs: factory-reset task failed")
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	if status >= 400 {
+		log.Error().Int("status", status).Str("device", deviceID).Str("task", "factoryReset").Msg("genieacs: factory-reset task error")
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	log.Info().Str("device", deviceID).Str("task", "factoryReset").Msg("genieacs: factory-reset task queued")
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
 }
 
 // ─── Tasks ────────────────────────────────────────────────────────────────────
@@ -280,11 +312,17 @@ func (h *GenieacsHandler) RetryTask(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyPOST(host+"/tasks/"+taskID+"/retry", auth, nil)
+	result, status, err := h.proxyPOST(host+"/tasks/"+url.PathEscape(taskID)+"/retry", auth, nil)
 	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+		log.Error().Err(err).Str("task", taskID).Msg("genieacs: retry task failed")
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	return c.Status(status).JSON(result)
+	if status >= 400 {
+		log.Error().Int("status", status).Str("task", taskID).Msg("genieacs: retry task error")
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	log.Info().Str("task", taskID).Msg("genieacs: task retry queued")
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
 }
 
 // ─── Presets ─────────────────────────────────────────────────────────────────
