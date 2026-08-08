@@ -189,7 +189,7 @@ func (h *SettingsGenieacsHandler) ListDevices(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices", auth)
+	result, status, err := h.proxyGET(host+"/devices/?projection=_id,_lastInform,_lastBoot,_registered,_deviceId,VirtualParameters", auth)
 	if err != nil {
 		log.Error().Err(err).Msg("genieacs settings: failed to fetch devices")
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
