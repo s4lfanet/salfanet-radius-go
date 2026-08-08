@@ -79,7 +79,7 @@ func (h *PermissionsHandler) UpdateRolePermissions(c fiber.Ctx) error {
 
 // GetRoleTemplates GET /api/permissions/role-templates — all roles' permissions
 func (h *PermissionsHandler) GetRoleTemplates(c fiber.Ctx) error {
-	roles := []string{"SUPER_ADMIN", "FINANCE", "CUSTOMER_SERVICE", "TECHNICIAN", "MARKETING", "VIEWER"}
+	roles := []string{"SUPER_ADMIN", "FINANCE", "CUSTOMER_SERVICE", "TECHNICIAN", "MARKETING", "COLLECTOR", "VIEWER"}
 
 	var rolePerms []models.RolePermission
 	h.db.Preload("Permission").Find(&rolePerms)

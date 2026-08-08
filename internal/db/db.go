@@ -334,6 +334,18 @@ func runMigrations(db *gorm.DB) error {
 		`ALTER TABLE pppoe_areas ADD COLUMN territoryId VARCHAR(191) NULL`,
 		`ALTER TABLE pppoe_areas ADD INDEX idx_pppoe_areas_territoryId (territoryId)`,
 
+		// ─── Seed COLLECTOR role permissions (view customers, dashboard, invoices, sessions, notifications) ───
+		`INSERT IGNORE INTO role_permissions (id, role, permissionId, createdAt)
+		 SELECT UUID(), 'COLLECTOR', id, NOW(3) FROM permissions WHERE name = 'View Customers'`,
+		`INSERT IGNORE INTO role_permissions (id, role, permissionId, createdAt)
+		 SELECT UUID(), 'COLLECTOR', id, NOW(3) FROM permissions WHERE name = 'View Dashboard'`,
+		`INSERT IGNORE INTO role_permissions (id, role, permissionId, createdAt)
+		 SELECT UUID(), 'COLLECTOR', id, NOW(3) FROM permissions WHERE name = 'View Invoices'`,
+		`INSERT IGNORE INTO role_permissions (id, role, permissionId, createdAt)
+		 SELECT UUID(), 'COLLECTOR', id, NOW(3) FROM permissions WHERE name = 'View Sessions'`,
+		`INSERT IGNORE INTO role_permissions (id, role, permissionId, createdAt)
+		 SELECT UUID(), 'COLLECTOR', id, NOW(3) FROM permissions WHERE name = 'View Notifications'`,
+
 		// ─── Remaining roadmap items: payment method edit count, API keys, PSB deadline, profile overrides, waiting list ───
 		`ALTER TABLE payments ADD COLUMN paymentMethodEditCount INT NOT NULL DEFAULT 0`,
 
