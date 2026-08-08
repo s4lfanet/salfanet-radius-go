@@ -758,6 +758,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// GenieACS settings
 	api.Get("/settings/genieacs/devices", settingsGnH.ListDevices)
 	api.Get("/settings/genieacs/devices/:deviceId", settingsGnH.GetDevice)
+	api.Delete("/settings/genieacs/devices/:deviceId", settingsGnH.DeleteDevice)
 	api.Get("/settings/genieacs/devices/:deviceId/detail", settingsGnH.DeviceDetail)
 	api.Get("/settings/genieacs/devices/:deviceId/parameters", settingsGnH.DeviceParameters)
 	api.Post("/settings/genieacs/devices/:deviceId/reboot", settingsGnH.RebootDevice)

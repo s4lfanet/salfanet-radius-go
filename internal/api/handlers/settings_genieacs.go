@@ -7,57 +7,398 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os/exec"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/rs/zerolog/log"
 	"github.com/valyala/fasthttp"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 )
 
-type SettingsGenieacsHandler struct{ db *gorm.DB }
-
-func NewSettingsGenieacsHandler(db *gorm.DB) *SettingsGenieacsHandler {
-	return &SettingsGenieacsHandler{db: db}
+type SettingsGenieacsHandler struct {
+	db         *gorm.DB
+	httpClient *http.Client
 }
 
-// GET /api/settings/genieacs/devices — proxy device list to GenieACS (stub)
+func NewSettingsGenieacsHandler(db *gorm.DB) *SettingsGenieacsHandler {
+	return &SettingsGenieacsHandler{
+		db:         db,
+		httpClient: &http.Client{Timeout: 30 * time.Second},
+	}
+}
+
+// getCredentials returns GenieACS host + basic auth header from DB
+func (h *SettingsGenieacsHandler) getCredentials() (host, authHeader string, err error) {
+	var s models.GenieacsSettings
+	if err = h.db.Where("isActive = ?", true).First(&s).Error; err != nil {
+		return "", "", fmt.Errorf("GenieACS belum dikonfigurasi")
+	}
+	if s.Host == "" {
+		return "", "", fmt.Errorf("GenieACS host tidak dikonfigurasi")
+	}
+	auth := base64.StdEncoding.EncodeToString([]byte(s.Username + ":" + s.Password))
+	return s.Host, "Basic " + auth, nil
+}
+
+// notConfiguredErr returns HTTP 200 with notConfigured:true
+func (h *SettingsGenieacsHandler) notConfiguredErr(c fiber.Ctx) error {
+	return c.Status(200).JSON(fiber.Map{
+		"success":       false,
+		"notConfigured": true,
+		"error":         "GenieACS belum dikonfigurasi",
+	})
+}
+
+// proxyGET sends a GET to GenieACS and returns the parsed JSON body
+func (h *SettingsGenieacsHandler) proxyGET(targetURL, authHeader string) (interface{}, int, error) {
+	req, err := http.NewRequest("GET", targetURL, nil)
+	if err != nil {
+		return nil, 500, err
+	}
+	req.Header.Set("Authorization", authHeader)
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return nil, 502, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 500, err
+	}
+	var result interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return string(body), resp.StatusCode, nil
+	}
+	return result, resp.StatusCode, nil
+}
+
+// proxyPOST sends a POST to GenieACS with JSON body
+func (h *SettingsGenieacsHandler) proxyPOST(targetURL, authHeader string, payload interface{}) (interface{}, int, error) {
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return nil, 500, err
+	}
+	req, err := http.NewRequest("POST", targetURL, strings.NewReader(string(b)))
+	if err != nil {
+		return nil, 500, err
+	}
+	req.Header.Set("Authorization", authHeader)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return nil, 502, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 500, err
+	}
+	var result interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return string(body), resp.StatusCode, nil
+	}
+	return result, resp.StatusCode, nil
+}
+
+// vpValue extracts _value from a VirtualParameters entry (which may be a dict or a raw value)
+func vpValue(vp map[string]interface{}, key string) string {
+	if vp == nil {
+		return ""
+	}
+	v, ok := vp[key]
+	if !ok {
+		return ""
+	}
+	if m, ok := v.(map[string]interface{}); ok {
+		if val, ok := m["_value"]; ok {
+			return fmt.Sprintf("%v", val)
+		}
+		return ""
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+// mapDevice maps a raw GenieACS device object to the flat structure the frontend expects
+func mapDevice(dev map[string]interface{}) fiber.Map {
+	deviceID, _ := dev["_id"].(string)
+	lastInform, _ := dev["_lastInform"].(string)
+
+	vp, _ := dev["VirtualParameters"].(map[string]interface{})
+	deviceIDObj, _ := dev["_deviceId"].(map[string]interface{})
+
+	manufacturer := ""
+	oui := ""
+	productClass := ""
+	serialFromDeviceID := ""
+	if deviceIDObj != nil {
+		if v, ok := deviceIDObj["_Manufacturer"].(string); ok {
+			manufacturer = v
+		}
+		if v, ok := deviceIDObj["_OUI"].(string); ok {
+			oui = v
+		}
+		if v, ok := deviceIDObj["_ProductClass"].(string); ok {
+			productClass = v
+		}
+		if v, ok := deviceIDObj["_SerialNumber"].(string); ok {
+			serialFromDeviceID = v
+		}
+	}
+
+	serialNumber := vpValue(vp, "getSerialNumber")
+	if serialNumber == "" {
+		serialNumber = serialFromDeviceID
+	}
+
+	// Derive status from lastInform — if within last 10 minutes, consider online
+	status := "offline"
+	if lastInform != "" {
+		if t, err := time.Parse(time.RFC3339, lastInform); err == nil {
+			if time.Since(t) < 10*time.Minute {
+				status = "online"
+			}
+		}
+	}
+
+	return fiber.Map{
+		"_id":           deviceID,
+		"serialNumber":  serialNumber,
+		"manufacturer":  manufacturer,
+		"model":         productClass,
+		"oui":           oui,
+		"pppoeUsername": vpValue(vp, "pppoeUsername"),
+		"pppoeIP":       vpValue(vp, "pppoeIP"),
+		"tr069IP":       vpValue(vp, "IPTR069"),
+		"rxPower":       vpValue(vp, "RXPower"),
+		"ponMode":       vpValue(vp, "getponmode"),
+		"uptime":        vpValue(vp, "getdeviceuptime"),
+		"status":        status,
+		"lastInform":    lastInform,
+	}
+}
+
+// GET /api/settings/genieacs/devices — fetch real device list from GenieACS
 func (h *SettingsGenieacsHandler) ListDevices(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "devices": []fiber.Map{}, "total": 0})
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	result, status, err := h.proxyGET(host+"/devices", auth)
+	if err != nil {
+		log.Error().Err(err).Msg("genieacs settings: failed to fetch devices")
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	if status != 200 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
+	}
+
+	// GenieACS returns a flat array of device objects
+	rawDevices, ok := result.([]interface{})
+	if !ok {
+		return c.JSON(fiber.Map{"success": true, "devices": []fiber.Map{}, "total": 0})
+	}
+
+	devices := make([]fiber.Map, 0, len(rawDevices))
+	for _, raw := range rawDevices {
+		dev, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		devices = append(devices, mapDevice(dev))
+	}
+
+	return c.JSON(fiber.Map{
+		"success": true,
+		"devices": devices,
+		"total":   len(devices),
+	})
 }
 
 // GET /api/settings/genieacs/devices/:deviceId
 func (h *SettingsGenieacsHandler) GetDevice(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "device": nil, "message": "GenieACS not configured"})
+	deviceID := c.Params("deviceId")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	if status != 200 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
+	}
+	dev, ok := result.(map[string]interface{})
+	if !ok {
+		return c.JSON(fiber.Map{"success": false, "error": "unexpected response format"})
+	}
+	return c.JSON(fiber.Map{"success": true, "device": mapDevice(dev)})
 }
 
-// GET /api/settings/genieacs/devices/:deviceId/detail
+// DELETE /api/settings/genieacs/devices/:deviceId
+func (h *SettingsGenieacsHandler) DeleteDevice(c fiber.Ctx) error {
+	deviceID := c.Params("deviceId")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	req, err := http.NewRequest("DELETE", host+"/devices/"+url.PathEscape(deviceID), nil)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	req.Header.Set("Authorization", auth)
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return c.Status(resp.StatusCode).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", resp.StatusCode)})
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "Device deleted"})
+}
+
+// GET /api/settings/genieacs/devices/:deviceId/detail — full device detail with nested params
 func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "detail": nil})
+	deviceID := c.Params("deviceId")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	if status != 200 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
+	}
+	dev, ok := result.(map[string]interface{})
+	if !ok {
+		return c.JSON(fiber.Map{"success": false, "error": "unexpected response format"})
+	}
+
+	// Build flat device info from mapDevice, then add extra detail fields
+	base := mapDevice(dev)
+	vp, _ := dev["VirtualParameters"].(map[string]interface{})
+	deviceIDObj, _ := dev["_deviceId"].(map[string]interface{})
+
+	// Extra fields for detail view
+	base["txPower"] = ""
+	base["macAddress"] = vpValue(vp, "PonMac")
+	base["softwareVersion"] = ""
+	base["hardwareVersion"] = ""
+	base["temp"] = vpValue(vp, "gettemp")
+	base["voltage"] = ""
+	base["biasCurrent"] = ""
+	base["lanIP"] = ""
+	base["lanSubnet"] = ""
+	base["dhcpEnabled"] = ""
+	base["dhcpStart"] = ""
+	base["dhcpEnd"] = ""
+	base["dns1"] = ""
+	base["memoryFree"] = ""
+	base["memoryTotal"] = ""
+	base["cpuUsage"] = ""
+	base["wlanConfigs"] = []interface{}{}
+	base["wanConnections"] = []interface{}{}
+	base["connectedDevices"] = []interface{}{}
+	base["totalConnected"] = 0
+	base["isDualBand"] = false
+	base["tags"] = []string{}
+
+	// Try to extract from InternetGatewayDevice tree for deeper info
+	if igd, ok := dev["InternetGatewayDevice"].(map[string]interface{}); ok {
+		base["_raw"] = igd // pass raw tree for frontend to parse if needed
+	}
+
+	if deviceIDObj != nil {
+		base["oui"] = deviceIDObj["_OUI"]
+	}
+
+	return c.JSON(fiber.Map{"success": true, "device": base})
 }
 
-// GET /api/settings/genieacs/devices/:deviceId/parameters
+// GET /api/settings/genieacs/devices/:deviceId/parameters — fetch all parameters
 func (h *SettingsGenieacsHandler) DeviceParameters(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "parameters": []fiber.Map{}})
+	deviceID := c.Params("deviceId")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	result, status, err := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID)+"/all-parameters", auth)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	if status != 200 {
+		// Fallback: try getting device itself
+		result2, status2, err2 := h.proxyGET(host+"/devices/"+url.PathEscape(deviceID), auth)
+		if err2 != nil || status2 != 200 {
+			return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
+		}
+		result = result2
+	}
+	// Flatten the parameter tree into a list of {path, value, type} objects
+	parameters := flattenParameters(result, "")
+	return c.JSON(fiber.Map{"success": true, "parameters": parameters})
 }
 
 // POST /api/settings/genieacs/devices/:deviceId/reboot
 func (h *SettingsGenieacsHandler) RebootDevice(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "message": "reboot task queued"})
+	deviceID := c.Params("deviceId")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	task := fiber.Map{"name": "reboot"}
+	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	if status >= 400 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "reboot task queued", "data": result})
 }
 
 // POST /api/settings/genieacs/devices/:deviceId/refresh
 func (h *SettingsGenieacsHandler) RefreshDevice(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "message": "refresh task queued"})
+	deviceID := c.Params("deviceId")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.", "Device."}}
+	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	if status >= 400 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "refresh task queued", "data": result})
 }
 
-// GET /api/settings/genieacs/tasks
+// GET /api/settings/genieacs/tasks — fetch real tasks from GenieACS
 func (h *SettingsGenieacsHandler) ListTasks(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "tasks": []fiber.Map{}})
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	result, status, err := h.proxyGET(host+"/tasks", auth)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	tasks, _ := result.([]interface{})
+	if tasks == nil {
+		tasks = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "tasks": tasks})
 }
 
 // POST /api/settings/genieacs/test
@@ -332,3 +673,35 @@ func (h *SettingsGenieacsHandler) SSEVoucherUpdates(c fiber.Ctx) error {
 
 // suppress unused import
 var _ = strconv.Itoa
+
+// flattenParameters recursively walks a GenieACS parameter tree and returns a flat list
+// of {path, value, type} objects for the frontend parameter browser.
+func flattenParameters(node interface{}, prefix string) []fiber.Map {
+	var params []fiber.Map
+	m, ok := node.(map[string]interface{})
+	if !ok {
+		return params
+	}
+	for k, v := range m {
+		// Skip metadata keys
+		if k == "_object" || k == "_timestamp" || k == "_writable" || k == "_type" || k == "_value" {
+			continue
+		}
+		path := prefix + k
+		if child, ok := v.(map[string]interface{}); ok {
+			// Check if this is a leaf parameter (has _value)
+			if _, hasValue := child["_value"]; hasValue {
+				val := fmt.Sprintf("%v", child["_value"])
+				paramType, _ := child["_type"].(string)
+				params = append(params, fiber.Map{
+					"path":  path,
+					"value": val,
+					"type":  paramType,
+				})
+			}
+			// Recurse into children
+			params = append(params, flattenParameters(child, path+".")...)
+		}
+	}
+	return params
+}
