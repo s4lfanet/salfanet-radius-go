@@ -268,7 +268,7 @@ func (h *GenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.DeviceInfo.", "InternetGatewayDevice.WANDevice.", "InternetGatewayDevice.LANDevice.", "InternetGatewayDevice.X_HW_Debug."}}
+	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.DeviceInfo.SerialNumber", "InternetGatewayDevice.DeviceInfo.Manufacturer", "InternetGatewayDevice.DeviceInfo.ModelName", "InternetGatewayDevice.DeviceInfo.SoftwareVersion", "InternetGatewayDevice.ManagementServer.ConnectionRequestURL", "InternetGatewayDevice.ManagementServer.PeriodicInformInterval", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ConnectionStatus"}}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
 	if err != nil {
 		log.Error().Err(err).Str("device", deviceID).Str("task", "refresh").Msg("genieacs: refresh task failed")
