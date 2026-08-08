@@ -349,15 +349,23 @@ export default function TerritoriesPage() {
           <ModalBody>
             <div className="space-y-4">
               <div>
-                <ModalLabel>Nama Kolektor</ModalLabel>
-                <ModalInput
-                  value={formData.name}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  placeholder="contoh: Kolektor Utara"
+                <ModalLabel>Pilih User Kolektor</ModalLabel>
+                <select
+                  value={formData.collectorId}
+                  onChange={(e) => {
+                    const selected = collectors.find((c) => c.id === e.target.value);
+                    setFormData({ ...formData, collectorId: e.target.value, name: selected?.name || '' });
+                  }}
+                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
                   required
-                />
+                >
+                  <option value="">-- Pilih Kolektor --</option>
+                  {collectors.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} ({c.email})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <ModalLabel>Deskripsi</ModalLabel>
@@ -369,21 +377,6 @@ export default function TerritoriesPage() {
                   placeholder="Deskripsi kolektor (opsional)"
                   rows={2}
                 />
-              </div>
-              <div>
-                <ModalLabel>Kolektor</ModalLabel>
-                <select
-                  value={formData.collectorId}
-                  onChange={(e) => setFormData({ ...formData, collectorId: e.target.value })}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
-                >
-                  <option value="">-- Pilih Kolektor --</option>
-                  {collectors.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name} ({c.email})
-                    </option>
-                  ))}
-                </select>
               </div>
               <label className="flex items-center gap-2">
                 <input
