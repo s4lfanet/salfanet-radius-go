@@ -169,3 +169,8 @@ google-services-desktop.json
 *-adminsdk-*.json
 GoogleService-Info.plist
 
+test_focused.sh
+test_cfg.sh
+.gitignore
+.gitignore
+test_status2.sh
