@@ -335,6 +335,12 @@ func runMigrations(db *gorm.DB) error {
 		`ALTER TABLE pppoe_areas ADD INDEX idx_pppoe_areas_territoryId (territoryId)`,
 
 		// ─── Seed COLLECTOR role permissions (view customers, dashboard, invoices, sessions, notifications) ───
+		// First, add COLLECTOR to the role ENUM in both tables (Prisma created them without COLLECTOR)
+		`ALTER TABLE admin_users MODIFY COLUMN role ENUM('SUPER_ADMIN','FINANCE','CUSTOMER_SERVICE','TECHNICIAN','MARKETING','COLLECTOR','VIEWER') NOT NULL DEFAULT 'CUSTOMER_SERVICE'`,
+		`ALTER TABLE role_permissions MODIFY COLUMN role ENUM('SUPER_ADMIN','FINANCE','CUSTOMER_SERVICE','TECHNICIAN','MARKETING','COLLECTOR','VIEWER') NOT NULL`,
+		// Delete any bad rows with empty role (from previous failed inserts)
+		`DELETE FROM role_permissions WHERE role = ''`,
+		// Insert COLLECTOR permissions using INSERT IGNORE for idempotency
 		`INSERT IGNORE INTO role_permissions (id, role, permissionId, createdAt)
 		 SELECT UUID(), 'COLLECTOR', id, NOW(3) FROM permissions WHERE name = 'View Customers'`,
 		`INSERT IGNORE INTO role_permissions (id, role, permissionId, createdAt)
