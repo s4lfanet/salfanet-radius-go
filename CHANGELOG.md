@@ -6,6 +6,31 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.25] — 2026-08-08
+### Changed — Collector Area Management Refactor
+- **Menu rename** (`src/locales/id.json`, `src/app/admin/territories/page.tsx`) — "Manajemen Wilayah" → "Manajemen Kolektor". All UI labels updated: page title, modal title, buttons, search placeholder, detail modal.
+- **Auto-populate collector name** (`src/app/admin/territories/page.tsx`) — Removed manual name input field. Collector name auto-fills from dropdown selection. Dropdown is now required.
+- **Area multi-select in modal** (`src/app/admin/territories/page.tsx`) — Added checkbox list for area selection directly in create/edit collector modal. Fetches all areas from `GET /api/territories/all-areas`. Areas assigned to other collectors shown greyed out with "(wilayah lain)" label. Empty state links to Kelola Area page.
+- **Backend: areaIds in create/update** (`internal/api/handlers/territory_handler.go`) — `CreateTerritory` and `UpdateTerritory` now accept `areaIds[]` in request body. Areas are assigned/unassigned by updating `territoryId` on `pppoe_areas` in a single request. Removed need for separate area assignment calls.
+
+### Added
+- **COLLECTOR role permissions** (`internal/api/handlers/permissions.go`) — Added "COLLECTOR" to `GetRoleTemplates` role list. Role permissions now auto-generate when COLLECTOR role is selected in user management.
+- **Database migration** (`internal/db/db.go`) — `ALTER TABLE pppoe_areas ADD COLUMN territoryId VARCHAR(191) NULL` + index. Links areas to territories. `ALTER TABLE admin_users MODIFY COLUMN role ENUM(..., 'COLLECTOR')` — adds COLLECTOR to role enum.
+- **API endpoint** — `GET /api/territories/all-areas` — Returns all areas (assigned + unassigned) for multi-select UI.
+- **Upload: BodyLimit** (`internal/api/router.go`) — Set Fiber BodyLimit to 10MB (default 4MB) to support file uploads.
+- **Upload: file types** (`internal/api/handlers/upload.go`) — Added `.gif` and `.avif` support to match frontend accept types. Added error logging for debugging 500 errors.
+
+### Files
+- `internal/api/handlers/territory_handler.go` — **EDIT** — CreateTerritory & UpdateTerritory accept areaIds
+- `internal/api/handlers/permissions.go` — **EDIT** — Add COLLECTOR to GetRoleTemplates
+- `internal/db/db.go` — **EDIT** — Migration: territoryId column, COLLECTOR role enum
+- `internal/api/router.go` — **EDIT** — BodyLimit 10MB
+- `internal/api/handlers/upload.go` — **EDIT** — Error logging, .gif/.avif support
+- `src/app/admin/territories/page.tsx` — **EDIT** — Rename to Manajemen Kolektor, auto-fill name, area multi-select
+- `src/locales/id.json` — **EDIT** — nav.territoryManage: "Manajemen Kolektor"
+
+---
+
 ## [2.54.24] — 2026-07-30
 ### Changed — UI/UX Consistency Audit
 - **Theme tokens** — Replaced all hardcoded neon hex colors (`#00f7ff`, `#bc13fe`, `#0a0520`, `#1a0f35`, `#e0d0ff`, `#ff44cc`, `#00ff88`, `#ff4466`, `#ff6b8a`, `#ff8c00`, `#1e1b2e`, `#0f0a1e`) with CSS variable tokens (`brand-400`, `brand-600`, `input`, `secondary`, `muted-foreground`, `accent-foreground`, `success`, `destructive`, etc.) across all 124 TSX files.

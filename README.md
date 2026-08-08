@@ -2,7 +2,7 @@
 
 Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with FreeRADIUS integration supporting PPPoE and Hotspot authentication.
 
-> **Latest:** v2.54.24 — UI/UX consistency audit: replace all hardcoded neon hex colors with theme tokens, standardize border radius, remove decorative glow blobs, clean up ~630 lines of redundant CSS overrides (Jul 30, 2026)
+> **Latest:** v2.54.25 — Collector Area Management refactor: rename Manajemen Wilayah → Manajemen Kolektor, auto-populate collector name from dropdown, area multi-select from Kelola Area data, COLLECTOR role permissions (Aug 8, 2026)
 
 ---
 
@@ -29,7 +29,7 @@ Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with Free
 | **GenieACS TR-069** | CPE/ONT management, WiFi config (SSID/password), device status & uptime |
 | **Isolation** | Auto-isolate expired customers, customizable WhatsApp/Email/HTML landing page templates |
 | **Cron Jobs** | 16 automated background jobs (tsx runner via PM2 fork), history, distributed locking, manual trigger |
-| **Roles & Permissions** | 53 permissions, 5 portals (Admin/Customer/Agent/Technician + SuperAdmin) |
+| **Roles & Permissions** | 53 permissions, 6 roles (SUPER_ADMIN/FINANCE/CUSTOMER_SERVICE/TECHNICIAN/MARKETING/VIEWER/COLLECTOR), 5 portals (Admin/Customer/Agent/Technician + SuperAdmin) |
 | **Activity Log** | Audit trail with auto-cleanup (30 days) |
 | **Security** | Session timeout 30 min, idle warning, RBAC, HTTPS/SSL |
 | **Bahasa** | Bahasa Indonesia (full) |
@@ -37,6 +37,8 @@ Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with Free
 | **Web Push** | VAPID-based browser push notifications, subscribe/unsubscribe toggle, admin broadcast |
 | **System Update** | Update via SSH menggunakan `updater.sh`, tidak ada web-based update |
 | **Mobile App** | Flutter customer portal (WiFi control, invoice, payment) |
+| **Captive Portal** | IP-based identification, invoice display, payment redirect |
+| **Collector Management** | Territory/collector assignment, area multi-select from Kelola Area, settlement reports |
 | **WhatsApp Baileys** | Native WhatsApp gateway built-in VPS via `@whiskeysockets/baileys`, PM2 proses terpisah, scan QR langsung di admin panel, auto-reconnect |
 
 ---
@@ -481,7 +483,7 @@ For WITA (UTC+8) or WIT (UTC+9): change `TZ` in `.env`, `ecosystem.config.js`, a
 
 Dashboard · PPPoE · Hotspot · Agent · Invoice · Payment · Keuangan · Sessions · WhatsApp · Network (OLT/ODC/ODP) · GenieACS · Settings
 
-**Roles:** SUPER_ADMIN · FINANCE · CUSTOMER_SERVICE · TECHNICIAN · MARKETING · VIEWER
+**Roles:** SUPER_ADMIN · FINANCE · CUSTOMER_SERVICE · TECHNICIAN · MARKETING · VIEWER · COLLECTOR
 
 ---
 
@@ -490,6 +492,30 @@ Dashboard · PPPoE · Hotspot · Agent · Invoice · Payment · Keuangan · Sess
 Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di GitHub.
 
 <!-- AUTO-CHANGELOG:START -->
+
+### v2.54.25 — 2026-08-08
+
+### Changed — Collector Area Management Refactor
+- **Menu rename** — "Manajemen Wilayah" → "Manajemen Kolektor". All UI labels updated.
+- **Auto-populate collector name** — Removed manual name input. Collector name auto-fills from dropdown selection.
+- **Area multi-select in modal** — Checkbox list for area selection directly in create/edit collector modal. Areas from Kelola Area (`pppoe_areas`). Areas assigned to other collectors shown greyed out.
+- **Backend: areaIds in create/update** — `CreateTerritory` and `UpdateTerritory` now accept `areaIds[]` in request body. Single-request area assignment.
+
+### Added
+- **COLLECTOR role permissions** — Added "COLLECTOR" to `GetRoleTemplates` role list. Permissions auto-generate when role selected.
+- **Database migration** — `pppoe_areas.territoryId` column + index. `admin_users.role` ENUM includes COLLECTOR.
+- **API endpoint** — `GET /api/territories/all-areas` — all areas (assigned + unassigned).
+- **Upload: BodyLimit** — Fiber BodyLimit set to 10MB.
+- **Upload: file types** — Added `.gif` and `.avif` support.
+
+### Files
+- `internal/api/handlers/territory_handler.go` — CreateTerritory & UpdateTerritory accept areaIds
+- `internal/api/handlers/permissions.go` — Add COLLECTOR to GetRoleTemplates
+- `internal/db/db.go` — Migration: territoryId column, COLLECTOR role enum
+- `internal/api/router.go` — BodyLimit 10MB
+- `internal/api/handlers/upload.go` — Error logging, .gif/.avif support
+- `src/app/admin/territories/page.tsx` — Rename to Manajemen Kolektor, auto-fill name, area multi-select
+- `src/locales/id.json` — nav.territoryManage: "Manajemen Kolektor"
 
 ### v2.54.24 — 2026-07-30
 
