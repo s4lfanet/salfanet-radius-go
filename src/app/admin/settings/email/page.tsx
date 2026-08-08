@@ -558,7 +558,7 @@ export default function EmailSettingsPage() {
                       <div className="flex gap-2">
                         <Info className="w-4 h-4 text-warning dark:text-warning flex-shrink-0 mt-0.5" />
                         <div className="text-xs text-yellow-800 dark:text-yellow-200">
-                          <p className="font-medium mb-1">?? Catatan Penting:</p>
+                          <p className="font-medium mb-1">Catatan Penting:</p>
                           <ul className="list-disc pl-4 space-y-1">
                             <li>Gunakan App Password, bukan password Gmail biasa</li>
                             <li>Port 587 untuk TLS, Port 465 untuk SSL</li>
@@ -919,7 +919,7 @@ function TemplatesTab({
       '{{baseUrl}}': 'https://example.com',
       '{{bankAccounts}}': `
         <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
-          <h3 style="color: #333; font-size: 16px; margin: 0 0 15px 0;">?? Rekening Bank untuk Transfer Manual:</h3>
+          <h3 style="color: #333; font-size: 16px; margin: 0 0 15px 0;">Rekening Bank untuk Transfer Manual:</h3>
           <div style="background-color: white; border-left: 4px solid #4facfe; padding: 12px; margin: 10px 0; border-radius: 4px;">
             <div style="color: #666; font-size: 13px; margin-bottom: 5px;">Rekening 1</div>
             <div style="color: #333; font-size: 15px; font-weight: bold; margin-bottom: 3px;">Bank BCA</div>

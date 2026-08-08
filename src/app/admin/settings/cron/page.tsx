@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
-import { Clock, Play, RefreshCw, CheckCircle, XCircle, Loader2, Activity, Settings2, RotateCcw, Pencil, X } from 'lucide-react';
+import { Clock, Play, RefreshCw, CheckCircle, XCircle, Loader2, Activity, Settings2, RotateCcw, Pencil, X, AlertTriangle, CircleCheck, CircleX, Info } from 'lucide-react';
 import { useToast } from '@/components/cyberpunk/CyberToast';
 import { formatWIB } from '@/lib/timezone';
 
@@ -282,9 +282,9 @@ export default function CronSettingsPage() {
   const getHealthBadge = (health: string, enabled: boolean) => {
     if (!enabled) return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground rounded">{t('settings.disabled')}</span>;
     switch (health) {
-      case 'healthy': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-success/10 text-success rounded">?? Active</span>;
-      case 'degraded': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-warning/20 text-warning rounded">?? Degraded</span>;
-      case 'error': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive rounded">?? Error</span>;
+      case 'healthy': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-success/10 text-success rounded"><CircleCheck className="w-3 h-3" /> Active</span>;
+      case 'degraded': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-warning/20 text-warning rounded"><AlertTriangle className="w-3 h-3" /> Degraded</span>;
+      case 'error': return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive rounded"><CircleX className="w-3 h-3" /> Error</span>;
       default: return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground rounded">-</span>;
     }
   };
@@ -426,7 +426,8 @@ export default function CronSettingsPage() {
             </div>
 
             <div className="p-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 text-xs text-amber-700 dark:text-amber-400 flex items-center gap-2 px-6 py-2.5">
-              <span className="font-semibold">? Catatan:</span>
+              <Info className="w-4 h-4 flex-shrink-0" />
+              <span className="font-semibold">Catatan:</span>
               Perubahan jadwal disimpan ke database. Cron runner membaca jadwal saat startup -- jalankan
               <code className="mx-1 bg-amber-100 dark:bg-amber-900/40 px-1.5 py-0.5 rounded font-mono">pm2 restart salfanet-cron</code>
               di VPS untuk menerapkan jadwal baru.
@@ -466,8 +467,8 @@ export default function CronSettingsPage() {
                       </td>
                       <td className="px-6 py-3">
                         {s.enabled
-                          ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-success/10 text-success rounded">?? Enabled</span>
-                          : <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded">? Disabled</span>
+                          ? <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-success/10 text-success rounded"><CircleCheck className="w-3 h-3" /> Enabled</span>
+                          : <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded"><CircleX className="w-3 h-3" /> Disabled</span>
                         }
                       </td>
                       <td className="px-6 py-3">
@@ -506,8 +507,8 @@ export default function CronSettingsPage() {
                       <div className="text-xs text-muted-foreground">{s.jobType}</div>
                     </div>
                     {s.enabled
-                      ? <span className="text-xs bg-success/10 text-success px-2 py-0.5 rounded">?? On</span>
-                      : <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">? Off</span>
+                      ? <span className="text-xs bg-success/10 text-success px-2 py-0.5 rounded">On</span>
+                      : <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded">Off</span>
                     }
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-xs">

@@ -623,7 +623,7 @@ ${firewallNatScript}
 
         {/* Tips */}
         <div className="mt-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-          <h3 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">?? {t('isolation.tipsTitle')}</h3>
+          <h3 className="font-semibold text-amber-800 dark:text-amber-300 mb-2">{t('isolation.tipsTitle')}</h3>
           <ul className="text-sm text-amber-700 dark:text-amber-400 space-y-1 list-disc list-inside">
             <li>{t('isolation.tipBackup')}</li>
             <li>{t('isolation.tipTestFirst')}</li>
