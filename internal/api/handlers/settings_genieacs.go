@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"bufio"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -59,7 +62,75 @@ func (h *SettingsGenieacsHandler) ListTasks(c fiber.Ctx) error {
 
 // POST /api/settings/genieacs/test
 func (h *SettingsGenieacsHandler) TestConnection(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": false, "message": "GenieACS connection test not configured"})
+	var body struct {
+		Host     string `json:"host"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
+	}
+
+	if body.Host == "" {
+		return c.JSON(fiber.Map{"success": false, "error": "Host URL is required"})
+	}
+
+	// If password is empty, try to use saved credentials from DB
+	password := body.Password
+	if password == "" {
+		var s models.GenieacsSettings
+		if err := h.db.Where("isActive = ?", true).First(&s).Error; err == nil {
+			password = s.Password
+		}
+	}
+
+	// Build GenieACS NBI API URL — try /devices endpoint
+	host := strings.TrimRight(body.Host, "/")
+	testURL := host + "/devices"
+
+	// Create HTTP client with timeout
+	client := &http.Client{Timeout: 15 * time.Second}
+
+	req, err := http.NewRequest("GET", testURL, nil)
+	if err != nil {
+		return c.JSON(fiber.Map{"success": false, "error": "Invalid URL: " + err.Error()})
+	}
+
+	// Set Basic Auth
+	auth := base64.StdEncoding.EncodeToString([]byte(body.Username + ":" + password))
+	req.Header.Set("Authorization", "Basic "+auth)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return c.JSON(fiber.Map{"success": false, "error": "Connection failed: " + err.Error()})
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return c.JSON(fiber.Map{"success": false, "error": "Failed to read response: " + err.Error()})
+	}
+
+	// GenieACS NBI returns 200 on success
+	if resp.StatusCode == 200 {
+		// Try to parse as JSON array to count devices
+		deviceCount := 0
+		var devices []interface{}
+		if err := json.Unmarshal(bodyBytes, &devices); err == nil {
+			deviceCount = len(devices)
+		}
+		return c.JSON(fiber.Map{
+			"success":     true,
+			"message":     "Connection successful",
+			"deviceCount": deviceCount,
+		})
+	}
+
+	// Non-200 response
+	return c.JSON(fiber.Map{
+		"success": false,
+		"error":   fmt.Sprintf("GenieACS returned HTTP %d: %s", resp.StatusCode, string(bodyBytes[:min(len(bodyBytes), 200)])),
+	})
 }
 
 // GET /api/settings/genieacs/parameter-display

@@ -251,6 +251,10 @@ type Company struct {
 	Timezone                *string `gorm:"default:Asia/Jakarta" json:"timezone"`
 	PoweredBy               *string `gorm:"default:SALFANET RADIUS;column:poweredBy" json:"poweredBy"`
 	CustomerIDPrefix        *string `gorm:"type:varchar(10);column:customerIdPrefix" json:"customerIdPrefix"`
+	FooterAdmin             *string `gorm:"type:text;column:footerAdmin" json:"footerAdmin"`
+	FooterCustomer          *string `gorm:"type:text;column:footerCustomer" json:"footerCustomer"`
+	FooterTechnician        *string `gorm:"type:text;column:footerTechnician" json:"footerTechnician"`
+	FooterAgent             *string `gorm:"type:text;column:footerAgent" json:"footerAgent"`
 	InvoiceGenerateDays     *int    `gorm:"default:7;column:invoiceGenerateDays" json:"invoiceGenerateDays"`
 	GracePeriodDays         *int    `gorm:"default:0;column:gracePeriodDays" json:"gracePeriodDays"`
 	IsolationEnabled        *bool   `gorm:"default:true;column:isolationEnabled" json:"isolationEnabled"`

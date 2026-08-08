@@ -442,6 +442,15 @@ func runMigrations(db *gorm.DB) error {
 			INDEX idx_ort_status (status),
 			INDEX idx_ort_assigned (assignedTo)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		// Add qrisDeviceKey column to companies table (if not exists)
+		`ALTER TABLE companies ADD COLUMN qrisDeviceKey VARCHAR(100) NULL`,
+
+		// Ensure cron_history uses utf8mb4 for emoji support
+		`ALTER TABLE cron_history CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+
+		// Ensure companies table uses utf8mb4 for emoji in footer text
+		`ALTER TABLE companies CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
 	}
 	for _, stmt := range statements {
 		if _, err := sqlDB.Exec(stmt); err != nil {
