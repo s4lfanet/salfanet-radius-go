@@ -641,6 +641,18 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### Changed
 - **Pattern fix across all settings handlers** — All GORM `Create`/`Save`/`Updates` calls in settings handlers now check `.Error` and return HTTP 500 with error message on failure. Previously, these calls silently failed, returning HTTP 200 with unsaved data to the frontend, causing the "data reverts to empty" bug.
 
+### Files
+- `internal/api/handlers/company.go` — **EDIT** — Error checking on Create/Save
+- `internal/api/handlers/settings.go` — **EDIT** — Error checking on Updates (email settings)
+- `internal/api/handlers/telegram_handler.go` — **EDIT** — Error checking on Create/Updates
+- `internal/api/handlers/backup_handler.go` — **EDIT** — Error checking on Create/Updates
+- `internal/api/handlers/whatsapp.go` — **EDIT** — Error checking on Create/Save
+- `internal/api/handlers/admin_misc_handler.go` — **EDIT** — Error checking on Updates (cloudflare + map)
+- `internal/api/handlers/admin_vpn_handler.go` — **EDIT** — Error checking on Updates
+- `internal/api/handlers/genieacs.go` — **EDIT** — Error checking on Create/Updates
+- `internal/api/handlers/misc_handler.go` — **EDIT** — Error checking on Create/Save (payment gateway)
+- `internal/db/db.go` — **EDIT** — Migration: qrisDeviceKey column
+
 ### v2.54.25 — 2026-08-08
 
 ### Changed — Collector Area Management Refactor
@@ -696,19 +708,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Added
 - **`.env.production.example`** — Added missing Go backend env vars (`JWT_SECRET`, `PORT`, `CORS_ORIGINS`, `APP_BASE_URL`, `APP_TIMEZONE`, `WA_SERVICE_URL`, `UPLOAD_DIR`, `GO_API_URL`, Tripay/Duitku/Xendit keys, VAPID keys for Go backend).
-
-### v2.54.21 — 2026-07-30
-
-### Fixed
-- **Security: Admin RBAC** (`internal/api/middleware/auth.go`) — Added `AdminPathGuard` middleware on the `api` group to enforce `RequireAdmin` on all `/admin/`, `/cron/`, `/backup/` paths. Updated `RequireAdmin` to accept both `ADMIN` and `SUPER_ADMIN` roles. Added generic `RequireRole` middleware.
-- **Security: Rate limiting** (`internal/api/middleware/auth.go`) — Added `LoginRateLimit` middleware (10 attempts per 15 min per IP) on `/api/auth` and `/api/technician/auth` groups to prevent brute-force attacks.
-- **Security: Password masking** (`internal/api/handlers/network_ext.go`) — `GetRouter` now returns `hasPassword`/`hasSecret` booleans instead of raw values. `UpdateRouter` skips empty password/secret to preserve existing values.
-- **Duplicate route** (`internal/api/router.go`) — Removed duplicate `/api/cron/status` route registration.
-- **Hardcoded API URL** (`src/app/*/layout.tsx`) — Replaced hardcoded `127.0.0.1:8080` with `GO_API_URL` env var in admin, customer, agent, and technician layouts.
-- **Menu placement** (`src/app/admin/AdminClientLayout.tsx`) — Moved "Permintaan Top Up" from PPPoE to Hotspot category (it's for hotspot agents, not PPPoE).
-
-### Added
-- **Env var** (`.env.example`) — Added `GO_API_URL` for Next.js → Go backend communication.
 
 <!-- AUTO-CHANGELOG:END -->
 
