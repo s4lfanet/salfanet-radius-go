@@ -4,7 +4,7 @@ import { differenceInMinutes } from 'date-fns';
 
 interface Props {
   lastInform?: string;
-  /** Minutes threshold for "online". Default: 15 */
+  /** Minutes threshold for "online". Default: 60 */
   thresholdMinutes?: number;
 }
 
@@ -13,7 +13,7 @@ interface Props {
  * - Green (Online): lastInform within thresholdMinutes
  * - Red (Offline): older or missing
  */
-export function DeviceStatusBadge({ lastInform, thresholdMinutes = 15 }: Props) {
+export function DeviceStatusBadge({ lastInform, thresholdMinutes = 60 }: Props) {
   if (!lastInform) {
     return (
       <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">

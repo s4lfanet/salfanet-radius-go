@@ -156,11 +156,13 @@ func mapDevice(dev map[string]interface{}) fiber.Map {
 		serialNumber = serialFromDeviceID
 	}
 
-	// Derive status from lastInform — if within last 15 minutes, consider online
+	// Derive status from lastInform — if within last 60 minutes, consider online
+	// Uses a generous threshold to account for GenieACS server restarts, NAT timeouts,
+	// and network delays. GenieACS UI uses a similar lenient threshold.
 	status := "Offline"
 	if lastInform != "" {
 		if t, err := time.Parse(time.RFC3339, lastInform); err == nil {
-			if time.Since(t) < 15*time.Minute {
+			if time.Since(t) < 60*time.Minute {
 				status = "Online"
 			}
 		}
