@@ -87,6 +87,12 @@ prisma/*.db-journal
 
 # Reference folder — not part of production
 billing-radius/
+billing.pmynet.id-main/
+
+# Progress reports — internal only, not for GitHub
+docs/phase*-progress-report.md
+docs/roadmap-remaining-progress.md
+docs/billing-pmynet-analysis.md
 
 # OLT management tool — standalone CLI, not part of this repo
 oltc320_v2.1.1_linux/

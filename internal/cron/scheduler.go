@@ -93,8 +93,15 @@ func (s *Scheduler) Start() {
 	// Voucher transaction reconciliation — daily 4 AM
 	s.cron.AddFunc("0 0 4 * * *", s.jobReconcileVoucherTransactions)
 
+	// ── Phase 4: Automation ────────────────────────────────────────────────────
+	// PSB 24-jam deadline check — every 30 minutes
+	s.cron.AddFunc("0 */30 * * * *", s.jobPsbDeadline)
+
+	// Payment promise check — daily 8 AM WIB
+	s.cron.AddFunc("0 0 8 * * *", s.jobPaymentPromiseCheck)
+
 	s.cron.Start()
-	log.Info().Msg("cron: scheduler started (17 jobs registered)")
+	log.Info().Msg("cron: scheduler started (19 jobs registered)")
 }
 
 func (s *Scheduler) Stop() {
@@ -263,56 +270,6 @@ func (s *Scheduler) jobSendReminders() {
 	}
 
 	s.finishHistory(h, fmt.Sprintf("Sent %d reminders", total))
-}
-
-func (s *Scheduler) jobAutoIsolate() {
-	h := s.startHistory("isolate_expired")
-	defer func() { s.completeHistory(h, recover()) }()
-
-	var company models.Company
-	_ = s.db.First(&company)
-
-	grace := 0
-	if company.GracePeriodDays != nil {
-		grace = *company.GracePeriodDays
-	}
-
-	cutoff := time.Now().AddDate(0, 0, -grace)
-
-	var users []models.PppoeUser
-	s.db.Where(`subscriptionType = 'POSTPAID' AND status = 'active' 
-		AND autoIsolationEnabled = true
-		AND expiredAt IS NOT NULL AND expiredAt < ?`, cutoff).
-		Find(&users)
-
-	count := 0
-	for _, u := range users {
-		// Isolate in FreeRADIUS
-		if err := s.radius.Isolate(u.Username); err != nil {
-			log.Error().Err(err).Str("user", u.Username).Msg("cron: radius isolate error")
-			continue
-		}
-
-		// Update status in DB
-		s.db.Model(&u).Update("status", "isolated")
-
-		// Notify customer
-		_ = notify.SendIsolationNotice(u.Phone, u.Name)
-		count++
-	}
-
-	s.finishHistory(h, fmt.Sprintf("Isolated %d users", count))
-	log.Info().Int("count", count).Msg("cron: isolate_expired done")
-}
-
-func (s *Scheduler) jobSyncVoucherExpiry() {
-	now := time.Now()
-	result := s.db.Model(&models.HotspotVoucher{}).
-		Where("status = 'ACTIVE' AND expiresAt IS NOT NULL AND expiresAt < ?", now).
-		Update("status", "EXPIRED")
-	if result.Error != nil {
-		log.Error().Err(result.Error).Msg("cron: voucher sync error")
-	}
 }
 
 // ─── History helpers ─────────────────────────────────────────────────────────

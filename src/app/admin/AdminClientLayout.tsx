@@ -45,6 +45,9 @@ import {
   Smartphone,
   Cloud,
   UserCog,
+  MapPin,
+  Zap,
+  Gauge,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAppStore } from '@/lib/store';
@@ -74,8 +77,11 @@ interface MenuGroup {
 const dashboardMenuItem: MenuItem = {
   titleKey: 'nav.dashboard',
   icon: <LayoutDashboard className="w-4 h-4" />,
-  href: '/admin',
   requiredPermission: 'dashboard.view',
+  children: [
+    { titleKey: 'nav.dashboardOverview', href: '/admin', requiredPermission: 'dashboard.view' },
+    { titleKey: 'nav.realtimeDashboard', href: '/admin/realtime-dashboard', requiredPermission: 'dashboard.view' },
+  ],
 };
 
 const menuGroups: MenuGroup[] = [
@@ -93,6 +99,15 @@ const menuGroups: MenuGroup[] = [
           { titleKey: 'nav.stopSubscription', href: '/admin/pppoe/stopped', requiredPermission: 'customers.view' },
           { titleKey: 'nav.registrations', href: '/admin/pppoe/registrations', badge: 'pending', requiredPermission: 'registrations.view' },
           { titleKey: 'nav.suspendRequests', href: '/admin/suspend-requests', requiredPermission: 'customers.view' },
+        ],
+      },
+      {
+        titleKey: 'nav.territory',
+        icon: <MapPin className="w-4 h-4" />,
+        requiredPermission: 'customers.view',
+        children: [
+          { titleKey: 'nav.territoryManage', href: '/admin/territories', requiredPermission: 'customers.view' },
+          { titleKey: 'nav.settlements', href: '/admin/settlements', requiredPermission: 'invoices.view' },
         ],
       },
       {
@@ -209,6 +224,7 @@ const menuGroups: MenuGroup[] = [
           { titleKey: 'nav.oltManagement', href: '/admin/network/olts', requiredPermission: 'network.view' },
           { titleKey: 'nav.oltMonitoring', href: '/admin/olt/monitoring', requiredPermission: 'network.view' },
           { titleKey: 'nav.oltAlerts', href: '/admin/olt/alerts', requiredPermission: 'network.view' },
+          { titleKey: 'nav.rxPower', href: '/admin/olt/rx-power', requiredPermission: 'network.view' },
         ],
       },
       {
@@ -348,7 +364,19 @@ const menuGroups: MenuGroup[] = [
       {
         titleKey: 'nav.activityLogs',
         icon: <Activity className="w-4 h-4" />,
-        href: '/admin/logs/activity',
+        href: '/admin/activity-logs',
+        requiredPermission: 'settings.view',
+      },
+      {
+        titleKey: 'nav.automation',
+        icon: <Zap className="w-4 h-4" />,
+        href: '/admin/automation',
+        requiredPermission: 'settings.view',
+      },
+      {
+        titleKey: 'nav.systemMonitor',
+        icon: <Gauge className="w-4 h-4" />,
+        href: '/admin/system-monitor',
         requiredPermission: 'settings.view',
       },
       {

@@ -7,9 +7,10 @@ import "time"
 type UsersRole string
 
 const (
-	RoleAdmin UsersRole = "ADMIN"
-	RoleAgent UsersRole = "AGENT"
-	RoleUser  UsersRole = "USER"
+	RoleAdmin     UsersRole = "ADMIN"
+	RoleAgent     UsersRole = "AGENT"
+	RoleUser      UsersRole = "USER"
+	RoleCollector UsersRole = "COLLECTOR"
 )
 
 type InvoiceStatus string
@@ -127,39 +128,44 @@ func (PppoeCustomer) TableName() string { return "pppoe_customers" }
 // ─── PppoeUser ───────────────────────────────────────────────────────────────
 
 type PppoeUser struct {
-	ID                   string           `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Username             string           `gorm:"uniqueIndex;not null" json:"username"`
-	CustomerID           *string          `gorm:"uniqueIndex;column:customer_id;type:varchar(20)" json:"customerId"`
-	PppoeCustomerID      *string          `gorm:"column:pppoe_customer_id;index" json:"pppoeCustomerId"`
-	Password             string           `gorm:"not null" json:"-"`
-	ProfileID            string           `gorm:"index;column:profileId" json:"profileId"`
-	AreaID               *string          `gorm:"index;column:areaId" json:"areaId"`
-	Status               string           `gorm:"default:active;index" json:"status"`
-	IPAddress            *string          `gorm:"column:ipAddress" json:"ipAddress"`
-	MACAddress           *string          `gorm:"column:macAddress" json:"macAddress"`
-	Comment              *string          `json:"comment"`
-	CreatedAt            time.Time        `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
-	UpdatedAt            time.Time        `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
-	ExpiredAt            *time.Time       `gorm:"index;column:expiredAt" json:"expiredAt"`
-	Address              *string          `json:"address"`
-	Latitude             *float64         `json:"latitude"`
-	Longitude            *float64         `json:"longitude"`
-	Email                *string          `json:"email"`
-	Name                 string           `json:"name"`
-	Phone                string           `gorm:"index" json:"phone"`
-	RouterID             *string          `gorm:"index;column:routerId" json:"routerId"`
-	SubscriptionType     SubscriptionType `gorm:"default:POSTPAID;index;column:subscriptionType" json:"subscriptionType"`
-	LastPaymentDate      *time.Time       `gorm:"column:lastPaymentDate" json:"lastPaymentDate"`
-	BillingDay           *int             `gorm:"default:1;column:billingDay" json:"billingDay"`
-	AutoIsolationEnabled bool             `gorm:"default:true;column:autoIsolationEnabled" json:"autoIsolationEnabled"`
-	Balance              int              `gorm:"default:0" json:"balance"`
-	AutoRenewal          bool             `gorm:"default:false;column:autoRenewal" json:"autoRenewal"`
-	ConnectionType       ConnectionType   `gorm:"default:PPPOE;column:connectionType" json:"connectionType"`
-	ReferralCode         *string          `gorm:"uniqueIndex;type:varchar(10);column:referralCode" json:"referralCode"`
-	ReferredByID         *string          `gorm:"column:referred_by_id" json:"referredById"`
-	SyncedToRadius       bool             `gorm:"default:false;column:syncedToRadius" json:"syncedToRadius"`
+	ID                    string           `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Username              string           `gorm:"uniqueIndex;not null" json:"username"`
+	CustomerID            *string          `gorm:"uniqueIndex;column:customer_id;type:varchar(20)" json:"customerId"`
+	PppoeCustomerID       *string          `gorm:"column:pppoe_customer_id;index" json:"pppoeCustomerId"`
+	Password              string           `gorm:"not null" json:"-"`
+	ProfileID             string           `gorm:"index;column:profileId" json:"profileId"`
+	AreaID                *string          `gorm:"index;column:areaId" json:"areaId"`
+	Status                string           `gorm:"default:active;index" json:"status"`
+	IPAddress             *string          `gorm:"column:ipAddress" json:"ipAddress"`
+	MACAddress            *string          `gorm:"column:macAddress" json:"macAddress"`
+	Comment               *string          `json:"comment"`
+	CreatedAt             time.Time        `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	UpdatedAt             time.Time        `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
+	ExpiredAt             *time.Time       `gorm:"index;column:expiredAt" json:"expiredAt"`
+	Address               *string          `json:"address"`
+	Latitude              *float64         `json:"latitude"`
+	Longitude             *float64         `json:"longitude"`
+	Email                 *string          `json:"email"`
+	Name                  string           `json:"name"`
+	Phone                 string           `gorm:"index" json:"phone"`
+	RouterID              *string          `gorm:"index;column:routerId" json:"routerId"`
+	SubscriptionType      SubscriptionType `gorm:"default:POSTPAID;index;column:subscriptionType" json:"subscriptionType"`
+	LastPaymentDate       *time.Time       `gorm:"column:lastPaymentDate" json:"lastPaymentDate"`
+	BillingDay            *int             `gorm:"default:1;column:billingDay" json:"billingDay"`
+	AutoIsolationEnabled  bool             `gorm:"default:true;column:autoIsolationEnabled" json:"autoIsolationEnabled"`
+	Balance               int              `gorm:"default:0" json:"balance"`
+	AutoRenewal           bool             `gorm:"default:false;column:autoRenewal" json:"autoRenewal"`
+	ConnectionType        ConnectionType   `gorm:"default:PPPOE;column:connectionType" json:"connectionType"`
+	ReferralCode          *string          `gorm:"uniqueIndex;type:varchar(10);column:referralCode" json:"referralCode"`
+	ReferredByID          *string          `gorm:"column:referred_by_id" json:"referredById"`
+	SyncedToRadius        bool             `gorm:"default:false;column:syncedToRadius" json:"syncedToRadius"`
+	TerritoryID           *string          `gorm:"index;column:territoryId" json:"territoryId"`
+	TerritoryAreaID       *string          `gorm:"index;column:territoryAreaId" json:"territoryAreaId"`
+	InitialPaymentPending bool             `gorm:"default:false;column:initialPaymentPending" json:"initialPaymentPending"`
+	PsbDeadlineAt         *time.Time       `gorm:"index;column:psbDeadlineAt" json:"psbDeadlineAt"`
 
 	Profile       PppoeProfile           `gorm:"foreignKey:ProfileID" json:"profile,omitempty"`
+	Territory     *Territory             `gorm:"foreignKey:TerritoryID" json:"territory,omitempty"`
 	Area          *PppoeArea             `gorm:"foreignKey:AreaID" json:"area,omitempty"`
 	Router        *Router                `gorm:"foreignKey:RouterID" json:"router,omitempty"`
 	ODPAssignment *OdpCustomerAssignment `gorm:"foreignKey:CustomerID;references:ID" json:"odpAssignment,omitempty"`
@@ -190,6 +196,12 @@ type Invoice struct {
 	Notes            *string       `gorm:"type:text" json:"notes"`
 	InvoiceType      InvoiceType   `gorm:"default:MONTHLY;index;column:invoiceType" json:"invoiceType"`
 	BaseAmount       *int          `gorm:"column:baseAmount" json:"baseAmount"`
+	DiscountAmount   *int          `gorm:"column:discountAmount" json:"discountAmount"`
+	DiscountReason   *string       `gorm:"type:text;column:discountReason" json:"discountReason"`
+	OriginalAmount   *int          `gorm:"column:originalAmount" json:"originalAmount"`
+	CancelledAt      *time.Time    `gorm:"column:cancelledAt" json:"cancelledAt"`
+	CancelledBy      *string       `gorm:"column:cancelledBy" json:"cancelledBy"`
+	CancelReason     *string       `gorm:"type:text;column:cancelReason" json:"cancelReason"`
 
 	User *PppoeUser `gorm:"foreignKey:UserID" json:"user,omitempty"`
 }
@@ -439,15 +451,16 @@ func (ManualPayment) TableName() string { return "manual_payments" }
 // ─── Payment (gateway payments table) ────────────────────────────────────────
 
 type Payment struct {
-	ID        string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	InvoiceID string    `gorm:"index;column:invoiceId" json:"invoiceId"`
-	Amount    int       `json:"amount"`
-	Method    string    `json:"method"`
-	GatewayID *string   `gorm:"index;column:gatewayId" json:"gatewayId"`
-	Status    string    `gorm:"default:PENDING;index" json:"status"`
-	Notes     *string   `gorm:"type:text" json:"notes"`
-	PaidAt    time.Time `gorm:"column:paidAt" json:"paidAt"`
-	CreatedAt time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	ID                     string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	InvoiceID              string    `gorm:"index;column:invoiceId" json:"invoiceId"`
+	Amount                 int       `json:"amount"`
+	Method                 string    `json:"method"`
+	GatewayID              *string   `gorm:"index;column:gatewayId" json:"gatewayId"`
+	Status                 string    `gorm:"default:PENDING;index" json:"status"`
+	Notes                  *string   `gorm:"type:text" json:"notes"`
+	PaymentMethodEditCount int       `gorm:"default:0;column:paymentMethodEditCount" json:"paymentMethodEditCount"`
+	PaidAt                 time.Time `gorm:"column:paidAt" json:"paidAt"`
+	CreatedAt              time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
 
 	Invoice *Invoice `gorm:"foreignKey:InvoiceID" json:"invoice,omitempty"`
 }

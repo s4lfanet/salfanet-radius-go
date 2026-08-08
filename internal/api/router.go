@@ -14,9 +14,12 @@ import (
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/api/handlers"
 	"github.com/s4lfanet/salfanet-radius-go/internal/api/middleware"
+	"github.com/s4lfanet/salfanet-radius-go/internal/cache"
 	"github.com/s4lfanet/salfanet-radius-go/internal/config"
 	"github.com/s4lfanet/salfanet-radius-go/internal/cron"
+	"github.com/s4lfanet/salfanet-radius-go/internal/eventbus"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/poller"
+	"github.com/s4lfanet/salfanet-radius-go/internal/queue"
 	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 	"github.com/s4lfanet/salfanet-radius-go/internal/ws"
 )
@@ -121,6 +124,15 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 11 handlers ───────────────────────────────────────────────────
 	adminMiscH := handlers.NewAdminMiscHandler(db)
 	networkVPNH := handlers.NewNetworkVPNHandler(db)
+	territoryH := handlers.NewTerritoryHandler(db)
+	billingExtH := handlers.NewBillingExtHandler(db)
+	integrationH := handlers.NewIntegrationHandler(db)
+	eventBus := eventbus.New()
+	automationH := handlers.NewAutomationHandler(db, eventBus)
+	memCache := cache.New()
+	jobQueue := queue.New(4)
+	scalingH := handlers.NewScalingHandler(db, memCache, jobQueue)
+	roadmapH := handlers.NewRoadmapHandler(db)
 	// NOTE: networkInfraH is instantiated near batch 12 routes (after olt group)
 
 	// ─── Public routes (NO auth — must be before the api group) ──────────────
@@ -1340,6 +1352,104 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/pppoe/customers/bulk", pppoeExtH.BulkCreateCustomers)
 	// PUT /api/admin/suspend-requests/:id (unified action: APPROVE | REJECT)
 	admin.Put("/suspend-requests/:id", adminH.SuspendRequestAction)
+
+	// ─── Phase 1: Territory & Collector Management ────────────────────────────
+	territory := api.Group("/territories")
+	territory.Get("/", territoryH.ListTerritories)
+	territory.Post("/", territoryH.CreateTerritory)
+	territory.Get("/collectors", territoryH.ListCollectors)
+	territory.Get("/:id", territoryH.GetTerritory)
+	territory.Put("/:id", territoryH.UpdateTerritory)
+	territory.Delete("/:id", territoryH.DeleteTerritory)
+	territory.Get("/:id/areas", territoryH.ListAreas)
+	territory.Post("/:id/areas", territoryH.AddArea)
+	territory.Delete("/:id/areas/:areaId", territoryH.RemoveArea)
+
+	// ─── Phase 1: Settlement Report ───────────────────────────────────────────
+	api.Get("/settlements", territoryH.GetSettlement)
+	api.Get("/settlements/range", territoryH.GetSettlementRange)
+	api.Get("/settlements/list", territoryH.ListSettlements)
+	api.Post("/settlements/confirm", territoryH.ConfirmSettlement)
+
+	// ─── Phase 2: Billing Core — Invoice Discount & Cancel ─────────────────────
+	billing.Put("/invoices/:id/discount", billingExtH.ApplyDiscount)
+	billing.Delete("/invoices/:id/discount", billingExtH.RemoveDiscount)
+	billing.Post("/invoices/:id/cancel", billingExtH.CancelInvoice)
+
+	// ─── Phase 2: Package Change Logs ──────────────────────────────────────────
+	api.Get("/package-change-logs", billingExtH.ListAllPackageChangeLogs)
+	pppoe.Get("/users/:id/package-logs", billingExtH.ListPackageChangeLogs)
+
+	// ─── Phase 2: Installation Logs ────────────────────────────────────────────
+	api.Get("/installation-logs", billingExtH.ListInstallationLogs)
+	api.Get("/installation-logs/:id", billingExtH.GetInstallationLog)
+	pppoe.Get("/users/:id/installation-log", billingExtH.GetUserInstallationLog)
+
+	// ─── Phase 3: Integration — ONU ↔ Customer, RX Power, Dashboard ────────────
+	integration := api.Group("/integration")
+	integration.Get("/onu/unlinked", integrationH.ListUnlinkedONUs)
+	integration.Post("/onu/:onuId/link-customer", integrationH.LinkONUToCustomer)
+	integration.Post("/onu/auto-link", integrationH.AutoLinkONUs)
+	integration.Post("/onu/provision", integrationH.ProvisionONU)
+	integration.Get("/onu/customer/:customerId", integrationH.GetCustomerONU)
+	integration.Get("/rx-power/summary", integrationH.RxPowerSummary)
+	integration.Get("/rx-power/onu/:onuId", integrationH.RxPowerHistory)
+	integration.Get("/rx-power/degraded", integrationH.ListDegradedONUs)
+	integration.Get("/dashboard", integrationH.Dashboard)
+	integration.Get("/dashboard/trends", integrationH.DashboardTrends)
+
+	// ─── Phase 4: Automation — Event-Driven Notifications, Auto-Activation, Alert Rules ──
+	automation := api.Group("/automation")
+	automation.Get("/notification-templates", automationH.ListNotificationTemplates)
+	automation.Put("/notification-templates/:id", automationH.UpdateNotificationTemplate)
+	automation.Post("/notification-templates/seed", automationH.SeedNotificationTemplates)
+	automation.Get("/alert-rules", automationH.ListAlertRules)
+	automation.Post("/alert-rules", automationH.CreateAlertRule)
+	automation.Put("/alert-rules/:id", automationH.UpdateAlertRule)
+	automation.Delete("/alert-rules/:id", automationH.DeleteAlertRule)
+	automation.Post("/alert-rules/seed", automationH.SeedAlertRules)
+	automation.Get("/payment-promises", automationH.ListPaymentPromises)
+	automation.Post("/payment-promises", automationH.CreatePaymentPromise)
+	automation.Post("/payment-promises/:id/fulfill", automationH.FulfillPaymentPromise)
+	automation.Post("/auto-activate/:userId", automationH.AutoActivate)
+	automation.Get("/provisioning-status/:userId", automationH.GetProvisioningStatus)
+	automation.Post("/provisioning/:userId/retry", automationH.RetryProvisioningStep)
+	automation.Post("/events/publish", automationH.PublishEvent)
+	automation.Get("/events/types", automationH.ListEventTypes)
+
+	// ─── Phase 5: Scaling — Cache, Job Queue, Captive Portal, Rate Limiting ──
+	scaling := api.Group("/scaling")
+	scaling.Get("/cache/stats", scalingH.CacheStats)
+	scaling.Post("/cache/flush", scalingH.CacheFlush)
+	scaling.Post("/cache/invalidate/:prefix", scalingH.CacheInvalidate)
+	scaling.Get("/queue/stats", scalingH.QueueStats)
+	scaling.Get("/rate-limit/status", scalingH.RateLimitStatus)
+
+	// Captive Portal (public — no auth required)
+	app.Get("/api/captive/identify", scalingH.CaptiveIdentify)
+
+	// External API (public — API key auth via X-API-Key header)
+	app.Get("/api/external/users/status", roadmapH.ExternalUserStatus)
+
+	// ─── Remaining Roadmap Items: Edit Payment, API Keys, Profile Overrides, Waiting List, ONT Removal ──
+	roadmap := api.Group("/roadmap")
+	roadmap.Put("/payments/:id/method", roadmapH.EditPaymentMethod)
+	roadmap.Get("/api-keys", roadmapH.ListAPIKeys)
+	roadmap.Post("/api-keys", roadmapH.CreateAPIKey)
+	roadmap.Delete("/api-keys/:id", roadmapH.RevokeAPIKey)
+	roadmap.Get("/profiles/:id/overrides", roadmapH.ListProfileOverrides)
+	roadmap.Put("/profiles/:id/overrides", roadmapH.SetProfileOverride)
+	roadmap.Delete("/profiles/:id/overrides/:overrideId", roadmapH.DeleteProfileOverride)
+	roadmap.Get("/waiting-list", roadmapH.ListWaitingList)
+	roadmap.Post("/waiting-list", roadmapH.CreateWaitingList)
+	roadmap.Put("/waiting-list/:id", roadmapH.UpdateWaitingList)
+	roadmap.Post("/waiting-list/:id/assign", roadmapH.AssignWaitingList)
+	roadmap.Post("/waiting-list/:id/convert", roadmapH.ConvertWaitingList)
+	roadmap.Get("/ont-removal-tasks", roadmapH.ListOntRemovalTasks)
+	roadmap.Post("/ont-removal-tasks", roadmapH.CreateOntRemovalTask)
+	roadmap.Post("/ont-removal-tasks/:id/complete", roadmapH.CompleteOntRemovalTask)
+	roadmap.Post("/ont-removal-tasks/:id/confirm", roadmapH.ConfirmOntRemovalTask)
+	roadmap.Post("/ont-removal-tasks/:id/cancel", roadmapH.CancelOntRemovalTask)
 
 	// ─────────────────────────────────────────────────────────────────────────
 

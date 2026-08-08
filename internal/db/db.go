@@ -174,6 +174,249 @@ func runMigrations(db *gorm.DB) error {
 			INDEX idx_topup_requests_userId (userId),
 			INDEX idx_topup_requests_status (status)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		// territories: ISP territory/collector management (Go-managed)
+		`CREATE TABLE IF NOT EXISTS territories (
+			id             VARCHAR(191) NOT NULL,
+			name           VARCHAR(150) NOT NULL,
+			description    TEXT         NULL,
+			collectorId    VARCHAR(191) NULL,
+			isActive       TINYINT(1)   NOT NULL DEFAULT 1,
+			createdAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updatedAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			UNIQUE KEY territories_name_key (name),
+			INDEX idx_territories_collectorId (collectorId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		// territory_areas: kelurahan/dusun within a territory (Go-managed)
+		`CREATE TABLE IF NOT EXISTS territory_areas (
+			id             VARCHAR(191) NOT NULL,
+			territoryId    VARCHAR(191) NOT NULL,
+			kelurahanKode  VARCHAR(20)  NULL,
+			kelurahanNama  VARCHAR(150) NULL,
+			kecamatanNama  VARCHAR(150) NULL,
+			kabupatenNama  VARCHAR(150) NULL,
+			provinsiNama   VARCHAR(150) NULL,
+			dusunNama      VARCHAR(150) NULL,
+			collectorId    VARCHAR(191) NULL,
+			createdAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_territory_areas_territoryId (territoryId),
+			INDEX idx_territory_areas_kelurahanKode (kelurahanKode),
+			INDEX idx_territory_areas_collectorId (collectorId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		// settlements: collector settlement reports (Go-managed)
+		`CREATE TABLE IF NOT EXISTS settlements (
+			id             VARCHAR(191) NOT NULL,
+			collectorId    VARCHAR(191) NOT NULL,
+			periodDate     DATE         NOT NULL,
+			totalAmount    INT          NOT NULL DEFAULT 0,
+			invoiceCount   INT          NOT NULL DEFAULT 0,
+			status         VARCHAR(50)  NOT NULL DEFAULT 'pending',
+			confirmedBy    VARCHAR(191) NULL,
+			confirmedAt    DATETIME(3)  NULL,
+			createdAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_settlements_collectorId (collectorId),
+			INDEX idx_settlements_periodDate (periodDate),
+			INDEX idx_settlements_status (status),
+			UNIQUE KEY uniq_settlement_collector_date (collectorId, periodDate)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		// Add territoryId and territoryAreaId columns to pppoe_users (Prisma-managed table, Go adds columns)
+		`ALTER TABLE pppoe_users ADD COLUMN IF NOT EXISTS territoryId VARCHAR(191) NULL`,
+		`ALTER TABLE pppoe_users ADD COLUMN IF NOT EXISTS territoryAreaId VARCHAR(191) NULL`,
+		`ALTER TABLE pppoe_users ADD INDEX IF NOT EXISTS idx_pppoe_users_territoryId (territoryId)`,
+		`ALTER TABLE pppoe_users ADD INDEX IF NOT EXISTS idx_pppoe_users_territoryAreaId (territoryAreaId)`,
+		// Phase 2: Invoice discount & cancel columns
+		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS discountAmount INT NULL`,
+		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS discountReason TEXT NULL`,
+		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS originalAmount INT NULL`,
+		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cancelledAt DATETIME(3) NULL`,
+		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cancelledBy VARCHAR(191) NULL`,
+		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cancelReason TEXT NULL`,
+		// Phase 2: Package change logs
+		`CREATE TABLE IF NOT EXISTS package_change_logs (
+			id             VARCHAR(191) NOT NULL,
+			userId         VARCHAR(191) NOT NULL,
+			username       VARCHAR(191) NOT NULL,
+			oldProfileId   VARCHAR(191) NULL,
+			oldProfileName VARCHAR(100) NULL,
+			newProfileId   VARCHAR(191) NULL,
+			newProfileName VARCHAR(100) NULL,
+			changedBy      VARCHAR(191) NOT NULL,
+			changedByName  VARCHAR(150) NULL,
+			reason         TEXT         NULL,
+			changedAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_pcl_user (userId),
+			INDEX idx_pcl_date (changedAt)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		// Phase 2: Installation logs
+		`CREATE TABLE IF NOT EXISTS installation_logs (
+			id             VARCHAR(191) NOT NULL,
+			userId         VARCHAR(191) NOT NULL,
+			username       VARCHAR(191) NOT NULL,
+			customerId     VARCHAR(20)  NULL,
+			fullname       VARCHAR(150) NULL,
+			phone          VARCHAR(20)  NULL,
+			address        TEXT         NULL,
+			identityNumber VARCHAR(50)  NULL,
+			profileName    VARCHAR(100) NULL,
+			territoryName  VARCHAR(150) NULL,
+			installerId    VARCHAR(191) NOT NULL,
+			installerName  VARCHAR(150) NULL,
+			installDate    DATE         NOT NULL,
+			latitude       DECIMAL(10,7) NULL,
+			longitude      DECIMAL(10,7) NULL,
+			createdAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_il_user (userId),
+			INDEX idx_il_date (installDate),
+			INDEX idx_il_installer (installerId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		// ─── Phase 4: Automation — notification templates, provisioning status, alert rules, payment promises ───
+		`CREATE TABLE IF NOT EXISTS notification_templates (
+			id          VARCHAR(191) NOT NULL,
+			eventType   VARCHAR(50)  NOT NULL,
+			channel     VARCHAR(20)  NOT NULL,
+			template    TEXT         NOT NULL,
+			isEnabled   BOOLEAN      NOT NULL DEFAULT TRUE,
+			createdAt   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updatedAt   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			UNIQUE KEY uniq_nt_event_channel (eventType, channel)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		`CREATE TABLE IF NOT EXISTS provisioning_status (
+			id          VARCHAR(191) NOT NULL,
+			userId      VARCHAR(191) NOT NULL,
+			step        VARCHAR(50)  NOT NULL,
+			status      VARCHAR(20)  NOT NULL DEFAULT 'pending',
+			error       TEXT         NULL,
+			startedAt   DATETIME(3)  NULL,
+			completedAt DATETIME(3)  NULL,
+			createdAt   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_ps_user (userId),
+			INDEX idx_ps_status (status)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		`CREATE TABLE IF NOT EXISTS alert_rules (
+			id            VARCHAR(191) NOT NULL,
+			name          VARCHAR(100) NOT NULL,
+			triggerEvent  VARCHAR(50)  NOT NULL,
+			conditions    JSON         NOT NULL,
+			actions       JSON         NOT NULL,
+			isEnabled     BOOLEAN      NOT NULL DEFAULT TRUE,
+			priority      INT          NOT NULL DEFAULT 0,
+			createdAt     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updatedAt     DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		`CREATE TABLE IF NOT EXISTS payment_promises (
+			id             VARCHAR(191) NOT NULL,
+			userId         VARCHAR(191) NOT NULL,
+			username       VARCHAR(191) NOT NULL,
+			promiseDate    DATE         NOT NULL,
+			status         VARCHAR(20)  NOT NULL DEFAULT 'active',
+			createdBy      VARCHAR(191) NOT NULL,
+			createdByName  VARCHAR(150) NULL,
+			notes          TEXT         NULL,
+			createdAt      DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_pp_user (userId),
+			INDEX idx_pp_status (status),
+			INDEX idx_pp_date (promiseDate)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		// ─── Remaining roadmap items: payment method edit count, API keys, PSB deadline, profile overrides, waiting list ───
+		`ALTER TABLE payments ADD COLUMN IF NOT EXISTS paymentMethodEditCount INT NOT NULL DEFAULT 0`,
+
+		`ALTER TABLE pppoe_users ADD COLUMN IF NOT EXISTS initialPaymentPending BOOLEAN NOT NULL DEFAULT FALSE`,
+		`ALTER TABLE pppoe_users ADD COLUMN IF NOT EXISTS psbDeadlineAt DATETIME(3) NULL`,
+		`ALTER TABLE pppoe_users ADD INDEX IF NOT EXISTS idx_psb_deadline (psbDeadlineAt)`,
+
+		`CREATE TABLE IF NOT EXISTS api_keys (
+			id          VARCHAR(191) NOT NULL,
+			keyHash     VARCHAR(255) NOT NULL,
+			label       VARCHAR(100) NOT NULL,
+			isActive    BOOLEAN      NOT NULL DEFAULT TRUE,
+			createdAt   DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			lastUsedAt  DATETIME(3)  NULL,
+			PRIMARY KEY (id),
+			INDEX idx_ak_hash (keyHash(255))
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		`CREATE TABLE IF NOT EXISTS profile_router_map (
+			id              VARCHAR(191) NOT NULL,
+			profileId       VARCHAR(191) NOT NULL,
+			routerId        VARCHAR(191) NOT NULL,
+			mikrotikProfile VARCHAR(100) NOT NULL,
+			createdAt       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			UNIQUE KEY uniq_prm_profile_router (profileId, routerId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		`CREATE TABLE IF NOT EXISTS waiting_list (
+			id              VARCHAR(191) NOT NULL,
+			fullname        VARCHAR(150) NOT NULL,
+			phone           VARCHAR(20)  NULL,
+			address         TEXT         NULL,
+			identityNumber  VARCHAR(50)  NULL,
+			ktpPhoto        TEXT         NULL,
+			notes           TEXT         NULL,
+			territoryId     VARCHAR(191) NULL,
+			territoryAreaId VARCHAR(191) NULL,
+			kelurahanKode   VARCHAR(20)  NULL,
+			profileId       VARCHAR(191) NULL,
+			sales           VARCHAR(100) NULL,
+			latitude        DECIMAL(10,7) NULL,
+			longitude       DECIMAL(10,7) NULL,
+			status          VARCHAR(20)  NOT NULL DEFAULT 'waiting',
+			createdBy       VARCHAR(191) NOT NULL,
+			createdAt       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updatedAt       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_wl_status (status),
+			INDEX idx_wl_territory (territoryId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		`CREATE TABLE IF NOT EXISTS waiting_list_assignments (
+			id                  VARCHAR(191) NOT NULL,
+			waitingListId       VARCHAR(191) NOT NULL,
+			technicianUsername  VARCHAR(191) NOT NULL,
+			assignedBy          VARCHAR(191) NOT NULL,
+			assignedAt          DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_wla_wl (waitingListId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
+		`CREATE TABLE IF NOT EXISTS ont_removal_tasks (
+			id              VARCHAR(191) NOT NULL,
+			userId          VARCHAR(191) NOT NULL,
+			username        VARCHAR(191) NOT NULL,
+			customerId      VARCHAR(20)  NULL,
+			fullname        VARCHAR(150) NULL,
+			address         TEXT         NULL,
+			territoryName   VARCHAR(150) NULL,
+			latitude        DECIMAL(10,7) NULL,
+			longitude       DECIMAL(10,7) NULL,
+			assignedTo      VARCHAR(191) NOT NULL,
+			assignedBy      VARCHAR(191) NOT NULL,
+			status          VARCHAR(20)  NOT NULL DEFAULT 'pending',
+			proofPhoto      TEXT         NULL,
+			notes           TEXT         NULL,
+			cancelReason    TEXT         NULL,
+			cancelledBy     VARCHAR(191) NULL,
+			cancelledAt     DATETIME(3)  NULL,
+			confirmedBy     VARCHAR(191) NULL,
+			confirmedAt     DATETIME(3)  NULL,
+			createdAt       DATETIME(3)  NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			PRIMARY KEY (id),
+			INDEX idx_ort_status (status),
+			INDEX idx_ort_assigned (assignedTo)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 	}
 	for _, stmt := range statements {
 		if _, err := sqlDB.Exec(stmt); err != nil {

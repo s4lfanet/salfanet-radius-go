@@ -43,6 +43,11 @@ interface Invoice {
   paymentToken: string | null;
   paymentLink: string | null;
   createdAt: string;
+  discountAmount: number | null;
+  discountReason: string | null;
+  originalAmount: number | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
   user: {
     customerId: string | null;  // ID Pelanggan
     name: string;
@@ -294,6 +299,59 @@ export default function InvoicesPage() {
     } finally {
       setBroadcasting(false);
     }
+  };
+
+  const [discountModal, setDiscountModal] = useState<Invoice | null>(null);
+  const [discountAmount, setDiscountAmount] = useState('');
+  const [discountReason, setDiscountReason] = useState('');
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
+
+  const handleApplyDiscount = async () => {
+    if (!discountModal) return;
+    const amt = parseInt(discountAmount);
+    if (!amt || amt <= 0) { showError('Jumlah diskon tidak valid'); return; }
+    if (amt > discountModal.amount) { showError('Diskon tidak boleh melebihi jumlah tagihan'); return; }
+    setApplyingDiscount(true);
+    try {
+      const res = await fetch(`/api/billing/invoices/${discountModal.id}/discount`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: amt, reason: discountReason }),
+      });
+      if (!res.ok) { const d = await res.json(); showError(d.error || 'Gagal menerapkan diskon'); return; }
+      showSuccess('Diskon berhasil diterapkan');
+      setDiscountModal(null);
+      setDiscountAmount('');
+      setDiscountReason('');
+      loadInvoices();
+    } catch { showError('Gagal menerapkan diskon'); }
+    finally { setApplyingDiscount(false); }
+  };
+
+  const handleRemoveDiscount = async (invoice: Invoice) => {
+    const confirmed = await showConfirm('Hapus diskon dari invoice ini?');
+    if (!confirmed) return;
+    try {
+      const res = await fetch(`/api/billing/invoices/${invoice.id}/discount`, { method: 'DELETE' });
+      if (!res.ok) { showError('Gagal menghapus diskon'); return; }
+      showSuccess('Diskon dihapus');
+      loadInvoices();
+    } catch { showError('Gagal menghapus diskon'); }
+  };
+
+  const handleCancelInvoice = async (invoice: Invoice) => {
+    const reason = prompt('Alasan pembatalan invoice?');
+    if (reason === null) return;
+    try {
+      const res = await fetch(`/api/billing/invoices/${invoice.id}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+      if (!res.ok) { const d = await res.json(); showError(d.error || 'Gagal membatalkan invoice'); return; }
+      showSuccess('Invoice dibatalkan');
+      loadInvoices();
+    } catch { showError('Gagal membatalkan invoice'); }
   };
 
   const handleDeleteInvoice = async (invoice: Invoice) => {
@@ -1021,6 +1079,21 @@ export default function InvoicesPage() {
                               {t('invoices.markAsPaid')}
                             </button>
                           )}
+                          {(invoice.status === 'PENDING' || invoice.status === 'OVERDUE') && !invoice.discountAmount && (
+                            <button onClick={() => { setDiscountModal(invoice); setDiscountAmount(''); setDiscountReason(''); }} className="p-1 hover:bg-muted rounded" title="Diskon">
+                              <DollarSign className="h-3 w-3 text-muted-foreground" />
+                            </button>
+                          )}
+                          {invoice.discountAmount && (
+                            <button onClick={() => handleRemoveDiscount(invoice)} className="p-1 hover:bg-muted rounded" title="Hapus Diskon">
+                              <span className="text-[10px] text-green-600">-{formatCurrency(invoice.discountAmount)}</span>
+                            </button>
+                          )}
+                          {(invoice.status === 'PENDING' || invoice.status === 'OVERDUE') && (
+                            <button onClick={() => handleCancelInvoice(invoice)} className="p-1 hover:bg-destructive/10 rounded text-destructive" title="Batalkan">
+                              <AlertCircle className="h-3 w-3" />
+                            </button>
+                          )}
                           <button onClick={() => handleDeleteInvoice(invoice)} disabled={deleting === invoice.id} className="p-1 hover:bg-destructive/10 rounded text-destructive" title="Hapus">
                             {deleting === invoice.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
                           </button>
@@ -1486,6 +1559,55 @@ export default function InvoicesPage() {
                 </div>
               )}
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Discount Modal */}
+        <Dialog open={!!discountModal} onOpenChange={(o) => !o && setDiscountModal(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Diskon Invoice</DialogTitle>
+              <DialogDescription>
+                {discountModal?.invoiceNumber} — {discountModal?.customerName || discountModal?.customerUsername}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="text-sm text-muted-foreground">
+                Jumlah Tagihan: <span className="font-medium text-foreground">{discountModal ? formatCurrency(discountModal.amount) : ''}</span>
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">Jumlah Diskon (Rp)</label>
+                <input
+                  type="number"
+                  value={discountAmount}
+                  onChange={(e) => setDiscountAmount(e.target.value)}
+                  placeholder="contoh: 25000"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">Alasan Diskon (opsional)</label>
+                <input
+                  type="text"
+                  value={discountReason}
+                  onChange={(e) => setDiscountReason(e.target.value)}
+                  placeholder="contoh: Kompensasi downtime"
+                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                />
+              </div>
+              {discountModal && discountAmount && parseInt(discountAmount) > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  Jumlah Setelah Diskon: <span className="font-medium text-green-600">{formatCurrency(discountModal.amount - parseInt(discountAmount))}</span>
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setDiscountModal(null)}>Batal</Button>
+              <Button onClick={handleApplyDiscount} disabled={applyingDiscount}>
+                {applyingDiscount ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
+                Terapkan Diskon
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>

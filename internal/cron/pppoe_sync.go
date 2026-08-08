@@ -37,6 +37,14 @@ func (s *Scheduler) jobPPPoEAutoIsolir() {
 	h := s.startHistory("pppoe_auto_isolir")
 	defer func() { s.completeHistory(h, recover()) }()
 
+	// Skip Sunday (Minggu) — no auto-isolir on Sundays
+	now := time.Now()
+	if now.Weekday() == time.Sunday {
+		s.finishHistory(h, "Skipped: Sunday (no auto-isolir)")
+		log.Info().Msg("cron: pppoe_auto_isolir skipped — Sunday")
+		return
+	}
+
 	// Get grace period from company settings
 	var company models.Company
 	_ = s.db.First(&company)
