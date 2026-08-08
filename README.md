@@ -2,7 +2,7 @@
 
 Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with FreeRADIUS integration supporting PPPoE and Hotspot authentication.
 
-> **Latest:** v2.54.25 — Collector Area Management refactor: rename Manajemen Wilayah → Manajemen Kolektor, auto-populate collector name from dropdown, area multi-select from Kelola Area data, COLLECTOR role permissions (Aug 8, 2026)
+> **Latest:** v2.54.26 — Settings silent failure audit: fixed GORM Create/Save/Updates calls across 10 settings handlers that silently failed and returned HTTP 200 with unsaved data. Added missing `qrisDeviceKey` column migration. (Aug 8, 2026)
 
 ---
 
@@ -86,12 +86,63 @@ Session WhatsApp tersimpan di `/var/data/salfanet/baileys_auth/` dan persist mes
 | Framework | Next.js 16 (App Router, standalone output) |
 | Language | TypeScript + Go |
 | Styling | Tailwind CSS |
-| Database | MySQL 8.0 + Prisma ORM |
+| Database | MySQL 8.0 + Prisma ORM (frontend) + GORM (Go backend) |
 | RADIUS | FreeRADIUS 3.0.26 |
 | API Backend | Go (Fiber) — port 8080, systemd `salfanet-api.service` |
 | Process Manager | PM2 (fork mode, 3 processes) + systemd |
 | Session Tracking | FreeRADIUS radacct (real-time) |
 | Maps | Leaflet / OpenStreetMap |
+
+---
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│  Browser     │────▶│   Nginx      │────▶│  Next.js    │
+│  (Admin/     │     │  (reverse    │     │  (port 3000)│
+│   Customer/  │     │   proxy)     │     │  PM2 fork   │
+│   Agent/     │     │              │     └──────┬──────┘
+│   Technician)│     │              │            │
+└─────────────┘     │              │     ┌──────▼──────┐
+                     │              │────▶│  Go API     │
+                     │              │     │  (port 8080)│
+                     │              │     │  systemd    │
+                     │              │     └──────┬──────┘
+                     │              │            │
+                     │              │     ┌──────▼──────┐
+                     │              │     │  MySQL 8.0  │
+                     │              │     │  (Prisma +  │
+                     │              │     │   GORM)     │
+                     │              │     └─────────────┘
+                     │              │            │
+                     │              │     ┌──────▼──────┐
+                     │              │────▶│ FreeRADIUS  │
+                     │              │     │  (port 1812)│
+                     └──────────────┘     └─────────────┘
+                                          ┌─────────────┐
+                                          │  WA Service │
+                                          │  (Baileys)  │
+                                          │  PM2 fork   │
+                                          └─────────────┘
+```
+
+### Dual ORM Architecture
+
+The project uses **two ORMs** that share the same MySQL database:
+
+- **Prisma** (Node.js/TypeScript) — manages schema migrations via `npx prisma db push`. Owns most tables (users, customers, invoices, etc.).
+- **GORM** (Go) — manages Go-specific tables via `runMigrations()` in `internal/db/db.go`. These are tables not covered by Prisma (cron history, backup history, telegram settings, etc.).
+
+**Important:** When adding a new field to a Go model, ensure the corresponding column exists in the database. GORM does not auto-migrate — you must add an `ALTER TABLE` statement to `internal/db/db.go`.
+
+### Authentication
+
+The Go API uses `CombinedAuthMiddleware` which supports two auth methods:
+1. **JWT Bearer token** — for mobile/API clients
+2. **NextAuth session cookie** — for admin panel browser requests (validated by calling Next.js `/api/auth/session` internally)
+
+This allows Nginx to route all `/api/` traffic to the Go backend without the frontend needing to change how it authenticates.
 
 ---
 
@@ -125,6 +176,17 @@ salfanet-radius/
 ---
 
 ## ⚙️ Installation
+
+### Prerequisites
+
+- Ubuntu 22.04+ / Debian 12+ VPS
+- Root access
+- 2GB RAM minimum (4GB recommended)
+- 20GB disk space
+- Go 1.23+ (for building API binary)
+- Node.js 20+ (for building Next.js frontend)
+- MySQL 8.0
+- FreeRADIUS 3.0.26
 
 ### Metode 1 — Git Clone (Recommended)
 
@@ -190,6 +252,74 @@ bash vps-install/vps-installer.sh --env lxc --ip 192.168.1.50
 ```
 
 ---
+
+### Environment Configuration (.env)
+
+The project uses two `.env` files:
+
+| File | Location | Purpose |
+|------|----------|---------|
+| `.env` (root) | `/var/www/salfanet-radius/.env` | Next.js frontend (Prisma, NextAuth, WA service) |
+| `.env` (Go) | `/var/www/salfanet-radius/.env` | Go API (shared with root .env) |
+
+Key environment variables:
+
+```bash
+# Database
+DATABASE_URL="mysql://salfanet_user:PASSWORD@localhost:3306/salfanet_radius"
+
+# Go API
+PORT=8080
+JWT_SECRET=your-secret-key
+CORS_ORIGINS=http://localhost:3000
+APP_BASE_URL=http://localhost:3000
+APP_TIMEZONE=Asia/Jakarta
+UPLOAD_DIR=/var/data/salfanet/uploads
+
+# NextAuth
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000
+
+# WhatsApp Service
+WA_SERVICE_URL=http://127.0.0.1:4000
+
+# Payment Gateways (optional)
+MIDTRANS_SERVER_KEY=
+XENDIT_API_KEY=
+DUITKU_API_KEY=
+TRIPAY_API_KEY=
+TRIPAY_PRIVATE_KEY=
+
+# Web Push (optional)
+VAPID_PUBLIC_KEY=
+VAPID_PRIVATE_KEY=
+```
+
+### Database Setup
+
+The database uses **dual migration systems**:
+
+1. **Prisma migrations** (frontend-managed tables):
+```bash
+cd /var/www/salfanet-radius
+npx prisma db push
+```
+
+2. **Go migrations** (Go-managed tables) — run automatically on API startup:
+- Tables: `cron_history`, `backup_history`, `telegram_backup_settings`, `payment_gateways`, `cloudflare_settings`, `map_settings`, `promise_payments`, `installation_logs`, etc.
+- Schema additions: `ALTER TABLE` statements for columns needed by Go models but not in Prisma schema (e.g., `qrisDeviceKey` on `companies`, `territoryId` on `pppoe_areas`).
+- Migrations are idempotent — duplicate column/key errors are silently ignored.
+
+### Services & Workers
+
+| Service | Manager | Port | Purpose |
+|---------|---------|------|---------|
+| `salfanet-radius` | PM2 | 3000 | Next.js frontend |
+| `salfanet-api` | systemd | 8080 | Go API backend |
+| `salfanet-wa` | PM2 | 4000 | WhatsApp Baileys service |
+| `salfanet-cron` | PM2 | — | Background cron jobs |
+| `nginx` | systemd | 80/443 | Reverse proxy |
+| `freeradius` | systemd | 1812/1813 | RADIUS authentication |
 
 ### Updating Existing Installation
 
@@ -493,6 +623,24 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.26 — 2026-08-08
+
+### Fixed — Settings Silent Failure Audit
+- **Company settings not saving** (`internal/api/handlers/company.go`) — Root cause: Go model `Company` had `QrisDeviceKey` field but DB table `companies` lacked the `qrisDeviceKey` column. GORM `Create`/`Save` silently failed with "Unknown column" error. Added error checking on `db.Create` and `db.Save` calls with proper 500 response + `log.Error()` logging.
+- **Database migration** (`internal/db/db.go`) — `ALTER TABLE companies ADD COLUMN qrisDeviceKey VARCHAR(100) NULL` — adds missing column referenced by Go model.
+- **Email settings silent save** (`internal/api/handlers/settings.go`) — `UpdateEmailSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
+- **Telegram settings silent save** (`internal/api/handlers/telegram_handler.go`) — `UpdateSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
+- **Backup Telegram settings silent save** (`internal/api/handlers/backup_handler.go`) — `UpdateTelegramSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
+- **WhatsApp reminder settings silent save** (`internal/api/handlers/whatsapp.go`) — `UpdateReminderSettings`: `db.Create()` and `db.Save()` had no error check. Added error handling + logging.
+- **Cloudflare tunnel settings silent save** (`internal/api/handlers/admin_misc_handler.go`) — `UpdateCloudflareTunnel`: `db.Model().Updates()` had no error check. Added error handling + logging.
+- **Map settings silent save** (`internal/api/handlers/admin_misc_handler.go`) — `UpdateMapSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
+- **VPN settings silent save** (`internal/api/handlers/admin_vpn_handler.go`) — `UpdateSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
+- **GenieACS settings silent save** (`internal/api/handlers/genieacs.go`) — `SaveSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
+- **Payment gateway settings silent save** (`internal/api/handlers/misc_handler.go`) — `UpdatePaymentGateway`: `db.Create()` and `db.Save()` had no error check. Added error handling + logging.
+
+### Changed
+- **Pattern fix across all settings handlers** — All GORM `Create`/`Save`/`Updates` calls in settings handlers now check `.Error` and return HTTP 500 with error message on failure. Previously, these calls silently failed, returning HTTP 200 with unsaved data to the frontend, causing the "data reverts to empty" bug.
+
 ### v2.54.25 — 2026-08-08
 
 ### Changed — Collector Area Management Refactor
@@ -565,6 +713,19 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 <!-- AUTO-CHANGELOG:END -->
 
 See full changelog: [docs/getting-started/CHANGELOG.md](docs/getting-started/CHANGELOG.md)
+
+---
+
+## ⚠️ Known Issues
+
+| Issue | Status | Workaround |
+|-------|--------|------------|
+| **Go model ↔ DB schema drift** | Fixed (v2.54.26) | GORM migrations in `internal/db/db.go` now run on startup. Always add `ALTER TABLE` when adding new Go model fields. |
+| **Silent GORM failures** | Fixed (v2.54.26) | All settings handlers now check `.Error` on GORM operations and return HTTP 500 on failure. |
+| **Dual ORM complexity** | Monitored | Prisma and GORM share the same MySQL DB. Prisma owns most tables; GORM manages Go-specific tables. Coordinate schema changes carefully. |
+| **Upload directory missing** | Fixed | systemd service `ReadWritePaths` requires `/var/www/salfanet-radius/uploads` to exist. Created by installer/updater. |
+
+---
 
 ## 📚 Documentation
 

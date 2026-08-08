@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
@@ -58,7 +59,10 @@ func (h *SettingsHandler) UpdateEmailSettings(c fiber.Ctx) error {
 
 	var existing models.EmailSetting
 	if err := h.db.First(&existing).Error; err == nil {
-		h.db.Model(&existing).Updates(updates)
+		if err := h.db.Model(&existing).Updates(updates).Error; err != nil {
+			log.Error().Err(err).Msg("settings: failed to update email settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save email settings: " + err.Error()})
+		}
 		existing.SmtpPassword = "********"
 		return c.JSON(fiber.Map{"success": true, "settings": existing})
 	}

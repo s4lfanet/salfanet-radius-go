@@ -17,6 +17,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
@@ -683,9 +684,15 @@ func (h *MiscHandler) PaymentGatewaySaveConfig(c fiber.Ctx) error {
 	}
 
 	if result.Error != nil {
-		h.db.Create(&gw)
+		if err := h.db.Create(&gw).Error; err != nil {
+			log.Error().Err(err).Msg("payment-gateway: failed to create settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+		}
 	} else {
-		h.db.Save(&gw)
+		if err := h.db.Save(&gw).Error; err != nil {
+			log.Error().Err(err).Msg("payment-gateway: failed to save settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+		}
 	}
 	return c.JSON(gw)
 }

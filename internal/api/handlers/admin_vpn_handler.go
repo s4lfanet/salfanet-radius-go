@@ -14,6 +14,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -217,7 +218,10 @@ func (h *AdminVPNHandler) UpdateSettings(c fiber.Ctx) error {
 	body["updatedAt"] = time.Now()
 	var settings vpnSettings
 	h.db.FirstOrCreate(&settings)
-	h.db.Model(&settings).Updates(body)
+	if err := h.db.Model(&settings).Updates(body).Error; err != nil {
+		log.Error().Err(err).Msg("vpn: failed to update settings")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+	}
 	return c.JSON(fiber.Map{"success": true, "settings": settings})
 }
 

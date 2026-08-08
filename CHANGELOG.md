@@ -6,6 +6,37 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.26] — 2026-08-08
+### Fixed — Settings Silent Failure Audit
+- **Company settings not saving** (`internal/api/handlers/company.go`) — Root cause: Go model `Company` had `QrisDeviceKey` field but DB table `companies` lacked the `qrisDeviceKey` column. GORM `Create`/`Save` silently failed with "Unknown column" error. Added error checking on `db.Create` and `db.Save` calls with proper 500 response + `log.Error()` logging.
+- **Database migration** (`internal/db/db.go`) — `ALTER TABLE companies ADD COLUMN qrisDeviceKey VARCHAR(100) NULL` — adds missing column referenced by Go model.
+- **Email settings silent save** (`internal/api/handlers/settings.go`) — `UpdateEmailSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
+- **Telegram settings silent save** (`internal/api/handlers/telegram_handler.go`) — `UpdateSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
+- **Backup Telegram settings silent save** (`internal/api/handlers/backup_handler.go`) — `UpdateTelegramSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
+- **WhatsApp reminder settings silent save** (`internal/api/handlers/whatsapp.go`) — `UpdateReminderSettings`: `db.Create()` and `db.Save()` had no error check. Added error handling + logging.
+- **Cloudflare tunnel settings silent save** (`internal/api/handlers/admin_misc_handler.go`) — `UpdateCloudflareTunnel`: `db.Model().Updates()` had no error check. Added error handling + logging.
+- **Map settings silent save** (`internal/api/handlers/admin_misc_handler.go`) — `UpdateMapSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
+- **VPN settings silent save** (`internal/api/handlers/admin_vpn_handler.go`) — `UpdateSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
+- **GenieACS settings silent save** (`internal/api/handlers/genieacs.go`) — `SaveSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
+- **Payment gateway settings silent save** (`internal/api/handlers/misc_handler.go`) — `UpdatePaymentGateway`: `db.Create()` and `db.Save()` had no error check. Added error handling + logging.
+
+### Changed
+- **Pattern fix across all settings handlers** — All GORM `Create`/`Save`/`Updates` calls in settings handlers now check `.Error` and return HTTP 500 with error message on failure. Previously, these calls silently failed, returning HTTP 200 with unsaved data to the frontend, causing the "data reverts to empty" bug.
+
+### Files
+- `internal/api/handlers/company.go` — **EDIT** — Error checking on Create/Save
+- `internal/api/handlers/settings.go` — **EDIT** — Error checking on Updates (email settings)
+- `internal/api/handlers/telegram_handler.go` — **EDIT** — Error checking on Create/Updates
+- `internal/api/handlers/backup_handler.go` — **EDIT** — Error checking on Create/Updates
+- `internal/api/handlers/whatsapp.go` — **EDIT** — Error checking on Create/Save
+- `internal/api/handlers/admin_misc_handler.go` — **EDIT** — Error checking on Updates (cloudflare + map)
+- `internal/api/handlers/admin_vpn_handler.go` — **EDIT** — Error checking on Updates
+- `internal/api/handlers/genieacs.go` — **EDIT** — Error checking on Create/Updates
+- `internal/api/handlers/misc_handler.go` — **EDIT** — Error checking on Create/Save (payment gateway)
+- `internal/db/db.go` — **EDIT** — Migration: qrisDeviceKey column
+
+---
+
 ## [2.54.25] — 2026-08-08
 ### Changed — Collector Area Management Refactor
 - **Menu rename** (`src/locales/id.json`, `src/app/admin/territories/page.tsx`) — "Manajemen Wilayah" → "Manajemen Kolektor". All UI labels updated: page title, modal title, buttons, search placeholder, detail modal.

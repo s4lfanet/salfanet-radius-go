@@ -15,6 +15,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -148,7 +149,10 @@ func (h *AdminMiscHandler) UpdateCloudflareTunnel(c fiber.Ctx) error {
 	body["updatedAt"] = time.Now()
 	var settings cloudflareSettings
 	h.db.FirstOrCreate(&settings, cloudflareSettings{ID: "default"})
-	h.db.Model(&settings).Updates(body)
+	if err := h.db.Model(&settings).Updates(body).Error; err != nil {
+		log.Error().Err(err).Msg("cloudflare: failed to update settings")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+	}
 	return c.JSON(fiber.Map{"success": true, "message": "Cloudflare settings updated"})
 }
 
@@ -516,8 +520,11 @@ func (h *AdminMiscHandler) UpdateMapSettings(c fiber.Ctx) error {
 	}
 	body["updatedAt"] = time.Now()
 	var settings mapSettings
-	h.db.FirstOrCreate(&settings, mapSettings{ID: "default"})
-	h.db.Model(&settings).Updates(body)
+	h.db.FirstOrCreate(&settings, mapSettings{ID: "default", Zoom: 12})
+	if err := h.db.Model(&settings).Updates(body).Error; err != nil {
+		log.Error().Err(err).Msg("map: failed to update settings")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+	}
 	return c.JSON(fiber.Map{"success": true, "message": "Map settings updated"})
 }
 

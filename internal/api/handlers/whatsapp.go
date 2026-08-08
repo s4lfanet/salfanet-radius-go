@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/config"
@@ -253,7 +254,10 @@ func (h *WhatsappHandler) UpdateReminderSettings(c fiber.Ctx) error {
 			BatchDelay:   body.BatchDelay,
 			Randomize:    body.Randomize,
 		}
-		h.db.Create(&gs)
+		if err := h.db.Create(&gs).Error; err != nil {
+			log.Error().Err(err).Msg("whatsapp: failed to create reminder settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+		}
 	} else {
 		gs.Enabled = body.Enabled
 		gs.ReminderDays = string(daysJSON)
@@ -263,7 +267,10 @@ func (h *WhatsappHandler) UpdateReminderSettings(c fiber.Ctx) error {
 		gs.BatchSize = body.BatchSize
 		gs.BatchDelay = body.BatchDelay
 		gs.Randomize = body.Randomize
-		h.db.Save(&gs)
+		if err := h.db.Save(&gs).Error; err != nil {
+			log.Error().Err(err).Msg("whatsapp: failed to save reminder settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+		}
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "saved"})
 }

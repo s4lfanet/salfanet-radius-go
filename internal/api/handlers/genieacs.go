@@ -11,6 +11,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 	"gorm.io/gorm"
 )
@@ -330,7 +331,10 @@ func (h *GenieacsHandler) SaveSettings(c fiber.Ctx) error {
 		if body.Password != "" && body.Password != "********" {
 			updates["password"] = body.Password
 		}
-		h.db.Model(&existing).Updates(updates)
+		if err := h.db.Model(&existing).Updates(updates).Error; err != nil {
+			log.Error().Err(err).Msg("genieacs: failed to update settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+		}
 		return c.JSON(fiber.Map{"success": true, "message": "Settings updated"})
 	}
 
@@ -343,6 +347,9 @@ func (h *GenieacsHandler) SaveSettings(c fiber.Ctx) error {
 		CreatedAt: now,
 		UpdatedAt: now,
 	}
-	h.db.Create(&s)
+	if err := h.db.Create(&s).Error; err != nil {
+		log.Error().Err(err).Msg("genieacs: failed to create settings")
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+	}
 	return c.Status(201).JSON(fiber.Map{"success": true, "message": "Settings created"})
 }

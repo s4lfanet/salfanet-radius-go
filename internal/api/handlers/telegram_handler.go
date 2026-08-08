@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
@@ -79,9 +80,12 @@ func (h *TelegramHandler) UpdateSettings(c fiber.Ctx) error {
 			BackupTopicId: body.BackupTopicId,
 			HealthTopicId: body.HealthTopicId,
 		}
-		h.db.Create(&tgs)
+		if err := h.db.Create(&tgs).Error; err != nil {
+			log.Error().Err(err).Msg("telegram: failed to create settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+		}
 	} else {
-		h.db.Model(&tgs).Updates(map[string]interface{}{
+		if err := h.db.Model(&tgs).Updates(map[string]interface{}{
 			"botToken":      body.BotToken,
 			"chatId":        body.ChatId,
 			"enabled":       body.Enabled,
@@ -90,7 +94,10 @@ func (h *TelegramHandler) UpdateSettings(c fiber.Ctx) error {
 			"keepLastN":     body.KeepLastN,
 			"backupTopicId": body.BackupTopicId,
 			"healthTopicId": body.HealthTopicId,
-		})
+		}).Error; err != nil {
+			log.Error().Err(err).Msg("telegram: failed to update settings")
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save settings: " + err.Error()})
+		}
 	}
 	return c.JSON(fiber.Map{"success": true, "message": "settings saved"})
 }
