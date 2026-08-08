@@ -37,6 +37,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 		IdleTimeout:  150 * time.Second, // must be > nginx keepalive_timeout (120s) to avoid race with Cloudflare
 		ReadTimeout:  60 * time.Second,
 		WriteTimeout: 60 * time.Second,
+		BodyLimit:    10 * 1024 * 1024, // 10MB for file uploads (logos, payment proofs, etc.)
 	})
 
 	// Global middleware

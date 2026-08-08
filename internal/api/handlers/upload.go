@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/config"
@@ -27,6 +28,8 @@ var contentTypes = map[string]string{
 	".png":  "image/png",
 	".webp": "image/webp",
 	".svg":  "image/svg+xml",
+	".gif":  "image/gif",
+	".avif": "image/avif",
 }
 
 var validFilenameRe = regexp.MustCompile(`^[a-zA-Z0-9._-]+$`)
@@ -39,7 +42,7 @@ func (h *UploadHandler) UploadLogo(c fiber.Ctx) error {
 	}
 
 	ext := strings.ToLower(filepath.Ext(file.Filename))
-	allowed := map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".svg": true}
+	allowed := map[string]bool{".png": true, ".jpg": true, ".jpeg": true, ".webp": true, ".svg": true, ".gif": true, ".avif": true}
 	if !allowed[ext] {
 		return c.Status(400).JSON(fiber.Map{"error": "unsupported file type"})
 	}
@@ -49,20 +52,24 @@ func (h *UploadHandler) UploadLogo(c fiber.Ctx) error {
 
 	src, err := file.Open()
 	if err != nil {
+		log.Error().Err(err).Msg("upload: failed to open uploaded file")
 		return c.Status(500).JSON(fiber.Map{"error": "failed to open upload"})
 	}
 	defer src.Close()
 
 	if err2 := os.MkdirAll(filepath.Dir(dest), 0755); err2 != nil {
+		log.Error().Err(err2).Str("dest", dest).Msg("upload: failed to create directory")
 		return c.Status(500).JSON(fiber.Map{"error": "failed to create directory"})
 	}
 	dst, err := os.Create(dest)
 	if err != nil {
+		log.Error().Err(err).Str("dest", dest).Msg("upload: failed to create file")
 		return c.Status(500).JSON(fiber.Map{"error": "failed to create file"})
 	}
 	defer dst.Close()
 
 	if _, err3 := io.Copy(dst, src); err3 != nil {
+		log.Error().Err(err3).Str("dest", dest).Msg("upload: failed to write file")
 		return c.Status(500).JSON(fiber.Map{"error": "failed to write file"})
 	}
 
