@@ -496,26 +496,26 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 ### v2.54.25 — 2026-08-08
 
 ### Changed — Collector Area Management Refactor
-- **Menu rename** — "Manajemen Wilayah" → "Manajemen Kolektor". All UI labels updated.
-- **Auto-populate collector name** — Removed manual name input. Collector name auto-fills from dropdown selection.
-- **Area multi-select in modal** — Checkbox list for area selection directly in create/edit collector modal. Areas from Kelola Area (`pppoe_areas`). Areas assigned to other collectors shown greyed out.
-- **Backend: areaIds in create/update** — `CreateTerritory` and `UpdateTerritory` now accept `areaIds[]` in request body. Single-request area assignment.
+- **Menu rename** (`src/locales/id.json`, `src/app/admin/territories/page.tsx`) — "Manajemen Wilayah" → "Manajemen Kolektor". All UI labels updated: page title, modal title, buttons, search placeholder, detail modal.
+- **Auto-populate collector name** (`src/app/admin/territories/page.tsx`) — Removed manual name input field. Collector name auto-fills from dropdown selection. Dropdown is now required.
+- **Area multi-select in modal** (`src/app/admin/territories/page.tsx`) — Added checkbox list for area selection directly in create/edit collector modal. Fetches all areas from `GET /api/territories/all-areas`. Areas assigned to other collectors shown greyed out with "(wilayah lain)" label. Empty state links to Kelola Area page.
+- **Backend: areaIds in create/update** (`internal/api/handlers/territory_handler.go`) — `CreateTerritory` and `UpdateTerritory` now accept `areaIds[]` in request body. Areas are assigned/unassigned by updating `territoryId` on `pppoe_areas` in a single request. Removed need for separate area assignment calls.
 
 ### Added
-- **COLLECTOR role permissions** — Added "COLLECTOR" to `GetRoleTemplates` role list. Permissions auto-generate when role selected.
-- **Database migration** — `pppoe_areas.territoryId` column + index. `admin_users.role` ENUM includes COLLECTOR.
-- **API endpoint** — `GET /api/territories/all-areas` — all areas (assigned + unassigned).
-- **Upload: BodyLimit** — Fiber BodyLimit set to 10MB.
-- **Upload: file types** — Added `.gif` and `.avif` support.
+- **COLLECTOR role permissions** (`internal/api/handlers/permissions.go`) — Added "COLLECTOR" to `GetRoleTemplates` role list. Role permissions now auto-generate when COLLECTOR role is selected in user management.
+- **Database migration** (`internal/db/db.go`) — `ALTER TABLE pppoe_areas ADD COLUMN territoryId VARCHAR(191) NULL` + index. Links areas to territories. `ALTER TABLE admin_users MODIFY COLUMN role ENUM(..., 'COLLECTOR')` — adds COLLECTOR to role enum.
+- **API endpoint** — `GET /api/territories/all-areas` — Returns all areas (assigned + unassigned) for multi-select UI.
+- **Upload: BodyLimit** (`internal/api/router.go`) — Set Fiber BodyLimit to 10MB (default 4MB) to support file uploads.
+- **Upload: file types** (`internal/api/handlers/upload.go`) — Added `.gif` and `.avif` support to match frontend accept types. Added error logging for debugging 500 errors.
 
 ### Files
-- `internal/api/handlers/territory_handler.go` — CreateTerritory & UpdateTerritory accept areaIds
-- `internal/api/handlers/permissions.go` — Add COLLECTOR to GetRoleTemplates
-- `internal/db/db.go` — Migration: territoryId column, COLLECTOR role enum
-- `internal/api/router.go` — BodyLimit 10MB
-- `internal/api/handlers/upload.go` — Error logging, .gif/.avif support
-- `src/app/admin/territories/page.tsx` — Rename to Manajemen Kolektor, auto-fill name, area multi-select
-- `src/locales/id.json` — nav.territoryManage: "Manajemen Kolektor"
+- `internal/api/handlers/territory_handler.go` — **EDIT** — CreateTerritory & UpdateTerritory accept areaIds
+- `internal/api/handlers/permissions.go` — **EDIT** — Add COLLECTOR to GetRoleTemplates
+- `internal/db/db.go` — **EDIT** — Migration: territoryId column, COLLECTOR role enum
+- `internal/api/router.go` — **EDIT** — BodyLimit 10MB
+- `internal/api/handlers/upload.go` — **EDIT** — Error logging, .gif/.avif support
+- `src/app/admin/territories/page.tsx` — **EDIT** — Rename to Manajemen Kolektor, auto-fill name, area multi-select
+- `src/locales/id.json` — **EDIT** — nav.territoryManage: "Manajemen Kolektor"
 
 ### v2.54.24 — 2026-07-30
 
@@ -561,47 +561,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 ### Added
 - **Env var** (`.env.example`) — Added `GO_API_URL` for Next.js → Go backend communication.
-
-### v2.54.20 — 2026-07-30
-
-### Added
-- **Cron: hotspot-sync** (`internal/cron/hotspot_sync.go`) — Full hotspot voucher lifecycle: WAITING→ACTIVE on first login detection, ACTIVE→EXPIRED on validity/usage duration expiry, Phase 3 cleanup of stale EXPIRED vouchers from RADIUS tables (radcheck, radreply, radusergroup, radgroupreply). Agent notifications on activation and expiry. MikroTik API disconnect with CoA fallback.
-- **Cron: notification_check** (`internal/cron/notification_check.go`) — Every 6h: creates in-app notifications for overdue invoices, users expiring today, and pending registrations. Deduplication by type/link/time-window.
-- **Cron: voucher_reconcile** (`internal/cron/voucher_reconcile.go`) — Daily 4 AM: creates financial transactions for used vouchers without orders (manually sold), plus agent commission expenses for vouchers with reseller fee.
-- **Cron: auto-renewal** (`internal/cron/auto_renewal.go`) — Daily 8 AM WIB: auto-renew prepaid users with sufficient balance.
-- **Cron: pppoe-sync** (`internal/cron/pppoe_sync.go`) — Enhanced auto-isolir for expired PPPoE users with grace period support.
-- **Cron: telegram-cron** (`internal/cron/telegram_cron.go`) — Telegram backup (dynamic schedule from DB settings) + health check (hourly).
-- **Cron: invoice-status-updater + cleanup + suspend-check** (`internal/cron/invoice_status.go`, `cleanup_jobs.go`, `suspend_check.go`) — Invoice overdue updates, activity log cleanup, webhook log cleanup, suspended user checking.
-- **Service: isolation** (`internal/isolation/isolation.go`) — Isolation settings with 5-min cache, IP pool CIDR checking, CIDR range calculation for MikroTik pool config.
-- **Service: push-notification** (`internal/push/push.go`) — Full Web Push service using `SherClockHolmes/webpush-go` with VAPID auth. Per-role sends (customer/agent/technician/admin), broadcast with target filtering (all/active/expired/area/selected), expired subscription auto-deactivation, dashboard stats.
-- **Model: AgentNotification** — For voucher activation/expiry agent notifications.
-- **Model: AdminPushSubscription** — Admin push subscription support.
-- **Extended push subscription models** — Added `isActive`, `userAgent`, `expirationTime`, `lastUsedAt` fields to `PushSubscription`, `AgentPushSubscription`, `TechnicianPushSubscription`.
-
-### Changed
-- **Scheduler** (`internal/cron/scheduler.go`) — 17 jobs registered. Replaced basic `jobSyncVoucherExpiry` with enhanced `jobHotspotSync`. All jobs have manual trigger support via `TriggerJob`.
-- **Push handler** (`internal/api/handlers/push_handler.go`) — Now uses `push.SendBroadcast` for actual Web Push delivery instead of just recording a notification. Stats endpoint uses `push.GetDashboardStats`.
-
-### Fixed
-- **Inefficient string concatenation** in `admin_misc_handler.go` and `misc_handler.go` — Replaced `WriteString` with `+` concatenation to `fmt.Fprintf` with format verbs.
-
-### Files
-- `internal/cron/hotspot_sync.go` — **NEW** hotspot voucher lifecycle cron
-- `internal/cron/notification_check.go` — **NEW** notification check cron
-- `internal/cron/voucher_reconcile.go` — **NEW** voucher transaction reconciliation cron
-- `internal/cron/auto_renewal.go` — **NEW** auto-renewal cron
-- `internal/cron/pppoe_sync.go` — **NEW** PPPoE sync + auto-isolir cron
-- `internal/cron/telegram_cron.go` — **NEW** Telegram backup + health cron
-- `internal/cron/invoice_status.go` — **NEW** invoice status updater cron
-- `internal/cron/cleanup_jobs.go` — **NEW** activity log + webhook log cleanup cron
-- `internal/cron/suspend_check.go` — **NEW** suspend check cron
-- `internal/isolation/isolation.go` — **NEW** isolation service
-- `internal/push/push.go` — **NEW** Web Push notification service
-- `internal/cron/scheduler.go` — Updated with all new cron registrations
-- `internal/db/models/extra.go` — New models + extended push subscription fields
-- `internal/api/handlers/push_handler.go` — Updated to use push service
-- `internal/api/handlers/admin_misc_handler.go` — Lint fixes
-- `internal/api/handlers/misc_handler.go` — Lint fixes
 
 <!-- AUTO-CHANGELOG:END -->
 
