@@ -731,13 +731,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - 124 files changed, 2,912 insertions, 3,787 deletions
 - `globals.css` reduced from ~2,481 to 1,850 lines
 
-### v2.54.23 — 2026-07-30
-
-### Fixed
-- **VPS installer: DB passwords** (`vps-install/common.sh`) — Replaced hardcoded default passwords with random generated ones.
-- **VPS installer: CORS_ORIGINS** (`vps-install/install-app.sh`) — Fixed malformed `.env` output from shell conditional inside heredoc.
-- **VPS installer: DATABASE_URL** (`vps-install/install-go.sh`) — Fixed standalone `.env` template to use proper `mysql://` URL format.
-
 <!-- AUTO-CHANGELOG:END -->
 
 See full changelog: [docs/getting-started/CHANGELOG.md](docs/getting-started/CHANGELOG.md)
