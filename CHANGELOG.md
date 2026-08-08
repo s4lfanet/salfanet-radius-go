@@ -6,6 +6,32 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.28] — 2026-08-09
+### Fixed — GenieACS API Audit & Device Status Threshold
+- **GenieACS path-based GET returning 405** (`internal/api/handlers/genieacs_ext.go`) — Root cause: GenieACS NBI API does not support path-based GET for single resources (e.g. `GET /presets/:id`). All such requests returned 405 Method Not Allowed. Fixed by switching to query-based filtering: `GET /presets?_id=:id`. Affected endpoints: GetDevice, DeviceAllParameters, GetDeviceParameters, GetDeviceWifi, GetPreset, GetProvision.
+- **List endpoints returning raw arrays** (`internal/api/handlers/genieacs_ext.go`) — Frontend expected `{success: true, data: [...]}` but backend returned raw JSON arrays. Fixed all list endpoints (presets, provisions, faults, files, config, virtual-parameters) to wrap responses in standard format.
+- **Single-item GET returning raw object** (`internal/api/handlers/genieacs_ext.go`) — Frontend expected `{data: item}` but backend returned raw object. Fixed all single-item GET endpoints to wrap in `{data: item}` format.
+- **Device detail page response format** (`src/app/admin/genieacs/devices/[deviceId]/page.tsx`) — Page expected `devJson.data` and `taskJson.data` but API returned different structure. Fixed to match frontend expectations.
+- **GetDeviceTasks query filtering** (`internal/api/handlers/genieacs_ext.go`) — GenieACS `/tasks` endpoint does not support query filtering by device. Fixed by fetching all tasks and filtering in Go by `device` field matching `deviceId`.
+- **DELETE body parsing** (`internal/api/handlers/genieacs_ext.go`, `internal/api/router.go`) — Frontend sends DELETE requests with JSON body `{id: "..."}` but backend expected path params. Fixed faults, config, and files DELETE handlers to read IDs from request body. Added `DELETE /faults` route (body-based) alongside existing `/faults/:faultId`.
+- **DeviceAllParameters raw device response** (`internal/api/handlers/settings_genieacs.go`) — Endpoint returned raw nested device object. Fixed to flatten parameter tree into a flat list with metadata (writable, object, timestamp fields).
+- **Status case mismatch** (`internal/api/handlers/settings_genieacs.go`) — Backend returned lowercase `online`/`offline` but frontend expected capitalized `Online`/`Offline`. Fixed `mapDevice` to return capitalized values.
+- **Device status threshold too strict** (`internal/api/handlers/settings_genieacs.go`, `src/components/genieacs/DeviceStatusBadge.tsx`) — Threshold was 15 minutes, causing devices to appear offline when GenieACS server restarts or NAT timeouts cause inform gaps >15min. Increased to 60 minutes to match GenieACS UI behavior. Devices with `PeriodicInformInterval=300s` (5 min) can have legitimate gaps up to 45+ minutes.
+
+### Improved
+- **GenieACS API response consistency** — All GenieACS proxy endpoints now return consistent JSON formats: `{success: true, data: [...]}` for lists, `{data: item}` for single items, matching frontend expectations.
+- **Device parameters flattening** — `DeviceAllParameters` now returns a flat list of parameters with metadata (path, value, writable, object, timestamp), making it easier for the frontend to render parameter trees.
+- **Device projection optimization** — `mapDevice` now uses targeted projection parameters to reduce GenieACS API response size.
+
+### Files
+- `internal/api/handlers/genieacs_ext.go` — **EDIT** — Fixed all path-based GETs to query-based, response formats, DELETE body parsing, GetDeviceTasks filtering, DeviceAllParameters flattening
+- `internal/api/handlers/settings_genieacs.go` — **EDIT** — Status threshold 15→60min, capitalized status, flattenParameters enhancement, query filter for device detail
+- `internal/api/router.go` — **EDIT** — Added DELETE /faults route (body-based)
+- `src/components/genieacs/DeviceStatusBadge.tsx` — **EDIT** — Default threshold 15→60min
+- `src/app/admin/genieacs/devices/[deviceId]/page.tsx` — **EDIT** — Fixed response format expectations
+
+---
+
 ## [2.54.27] — 2026-08-08
 ### Fixed — Footer Login, Cronjob Emoji, GenieACS Test Connection
 - **Footer Login not saving** (`internal/db/models/models.go`) — Root cause: Go `Company` struct was missing `footerAdmin`, `footerCustomer`, `footerTechnician`, `footerAgent` fields. These fields exist in Prisma schema and MySQL table, but were absent from the Go model. When the frontend sent footer values via `POST /api/company`, `json.Unmarshal` silently dropped them and `db.Save` never persisted them to the database. Added the 4 missing fields with proper GORM column tags.

@@ -2,7 +2,7 @@
 
 Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with FreeRADIUS integration supporting PPPoE and Hotspot authentication.
 
-> **Latest:** v2.54.26 — Settings silent failure audit: fixed GORM Create/Save/Updates calls across 10 settings handlers that silently failed and returned HTTP 200 with unsaved data. Added missing `qrisDeviceKey` column migration. (Aug 8, 2026)
+> **Latest:** v2.54.28 — GenieACS API audit: fixed 405 errors on path-based GETs, standardized response formats ({success, data}), fixed device online/offline status threshold (15→60min), flattened device parameters, fixed DELETE body parsing. (Aug 9, 2026)
 
 ---
 
@@ -26,7 +26,7 @@ Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with Free
 | **Agent/Reseller** | Balance-based voucher generation, commission tracking, sales stats |
 | **Financial** | Income/expense tracking with categories, keuangan reconciliation |
 | **Network (FTTH)** | OLT/ODC/ODP management, customer port assignment, network map, distance calculation |
-| **GenieACS TR-069** | CPE/ONT management, WiFi config (SSID/password), device status & uptime |
+| **GenieACS TR-069** | CPE/ONT management, device list with online/offline status (60-min threshold), WiFi config (SSID/password), device parameters (flattened tree), presets, provisions, virtual parameters, faults, files, config, tasks, auto-provision |
 | **Isolation** | Auto-isolate expired customers, customizable WhatsApp/Email/HTML landing page templates |
 | **Cron Jobs** | 16 automated background jobs (tsx runner via PM2 fork), history, distributed locking, manual trigger |
 | **Roles & Permissions** | 53 permissions, 6 roles (SUPER_ADMIN/FINANCE/CUSTOMER_SERVICE/TECHNICIAN/MARKETING/VIEWER/COLLECTOR), 5 portals (Admin/Customer/Agent/Technician + SuperAdmin) |
@@ -622,6 +622,31 @@ Dashboard · PPPoE · Hotspot · Agent · Invoice · Payment · Keuangan · Sess
 Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di GitHub.
 
 <!-- AUTO-CHANGELOG:START -->
+
+### v2.54.28 — 2026-08-09
+
+### Fixed — GenieACS API Audit & Device Status Threshold
+- **GenieACS path-based GET returning 405** (`internal/api/handlers/genieacs_ext.go`) — Root cause: GenieACS NBI API does not support path-based GET for single resources (e.g. `GET /presets/:id`). All such requests returned 405 Method Not Allowed. Fixed by switching to query-based filtering: `GET /presets?_id=:id`. Affected endpoints: GetDevice, DeviceAllParameters, GetDeviceParameters, GetDeviceWifi, GetPreset, GetProvision.
+- **List endpoints returning raw arrays** (`internal/api/handlers/genieacs_ext.go`) — Frontend expected `{success: true, data: [...]}` but backend returned raw JSON arrays. Fixed all list endpoints (presets, provisions, faults, files, config, virtual-parameters) to wrap responses in standard format.
+- **Single-item GET returning raw object** (`internal/api/handlers/genieacs_ext.go`) — Frontend expected `{data: item}` but backend returned raw object. Fixed all single-item GET endpoints to wrap in `{data: item}` format.
+- **Device detail page response format** (`src/app/admin/genieacs/devices/[deviceId]/page.tsx`) — Page expected `devJson.data` and `taskJson.data` but API returned different structure. Fixed to match frontend expectations.
+- **GetDeviceTasks query filtering** (`internal/api/handlers/genieacs_ext.go`) — GenieACS `/tasks` endpoint does not support query filtering by device. Fixed by fetching all tasks and filtering in Go by `device` field matching `deviceId`.
+- **DELETE body parsing** (`internal/api/handlers/genieacs_ext.go`, `internal/api/router.go`) — Frontend sends DELETE requests with JSON body `{id: "..."}` but backend expected path params. Fixed faults, config, and files DELETE handlers to read IDs from request body. Added `DELETE /faults` route (body-based) alongside existing `/faults/:faultId`.
+- **DeviceAllParameters raw device response** (`internal/api/handlers/settings_genieacs.go`) — Endpoint returned raw nested device object. Fixed to flatten parameter tree into a flat list with metadata (writable, object, timestamp fields).
+- **Status case mismatch** (`internal/api/handlers/settings_genieacs.go`) — Backend returned lowercase `online`/`offline` but frontend expected capitalized `Online`/`Offline`. Fixed `mapDevice` to return capitalized values.
+- **Device status threshold too strict** (`internal/api/handlers/settings_genieacs.go`, `src/components/genieacs/DeviceStatusBadge.tsx`) — Threshold was 15 minutes, causing devices to appear offline when GenieACS server restarts or NAT timeouts cause inform gaps >15min. Increased to 60 minutes to match GenieACS UI behavior. Devices with `PeriodicInformInterval=300s` (5 min) can have legitimate gaps up to 45+ minutes.
+
+### Improved
+- **GenieACS API response consistency** — All GenieACS proxy endpoints now return consistent JSON formats: `{success: true, data: [...]}` for lists, `{data: item}` for single items, matching frontend expectations.
+- **Device parameters flattening** — `DeviceAllParameters` now returns a flat list of parameters with metadata (path, value, writable, object, timestamp), making it easier for the frontend to render parameter trees.
+- **Device projection optimization** — `mapDevice` now uses targeted projection parameters to reduce GenieACS API response size.
+
+### Files
+- `internal/api/handlers/genieacs_ext.go` — **EDIT** — Fixed all path-based GETs to query-based, response formats, DELETE body parsing, GetDeviceTasks filtering, DeviceAllParameters flattening
+- `internal/api/handlers/settings_genieacs.go` — **EDIT** — Status threshold 15→60min, capitalized status, flattenParameters enhancement, query filter for device detail
+- `internal/api/router.go` — **EDIT** — Added DELETE /faults route (body-based)
+- `src/components/genieacs/DeviceStatusBadge.tsx` — **EDIT** — Default threshold 15→60min
+- `src/app/admin/genieacs/devices/[deviceId]/page.tsx` — **EDIT** — Fixed response format expectations
 
 ### v2.54.27 — 2026-08-08
 
