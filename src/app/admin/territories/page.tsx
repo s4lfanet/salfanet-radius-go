@@ -226,15 +226,15 @@ export default function TerritoriesPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Manajemen Wilayah</h1>
-          <p className="text-sm text-gray-400">Kelola wilayah dan kolektor ISP</p>
+          <h1 className="text-2xl font-bold text-white">Manajemen Kolektor</h1>
+          <p className="text-sm text-gray-400">Kelola kolektor dan area penagihan</p>
         </div>
         <button
           onClick={() => handleOpenDialog(null)}
           className="flex items-center gap-2 rounded-lg bg-cyan-500 px-4 py-2 text-sm font-medium text-black hover:bg-cyan-400"
         >
           <Plus className="h-4 w-4" />
-          Tambah Wilayah
+          Tambah Kolektor
         </button>
       </div>
 
@@ -243,7 +243,7 @@ export default function TerritoriesPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
-            placeholder="Cari wilayah..."
+            placeholder="Cari kolektor..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full rounded-lg border border-gray-700 bg-gray-900 py-2 pl-10 pr-4 text-sm text-white placeholder-gray-500 focus:border-cyan-500 focus:outline-none"
@@ -333,7 +333,7 @@ export default function TerritoriesPage() {
       {filteredTerritories.length === 0 && !loading && (
         <div className="text-center py-12 text-gray-500">
           <MapPin className="mx-auto h-12 w-12 mb-2 opacity-50" />
-          <p>Belum ada wilayah. Klik "Tambah Wilayah" untuk membuat.</p>
+          <p>Belum ada kolektor. Klik "Tambah Kolektor" untuk membuat.</p>
         </div>
       )}
 
@@ -341,21 +341,21 @@ export default function TerritoriesPage() {
       <SimpleModal isOpen={isDialogOpen} onClose={() => setIsDialogOpen(false)}>
         <form onSubmit={handleSubmit}>
           <ModalHeader>
-            <ModalTitle>{editingTerritory ? 'Edit Wilayah' : 'Tambah Wilayah'}</ModalTitle>
+            <ModalTitle>{editingTerritory ? 'Edit Kolektor' : 'Tambah Kolektor'}</ModalTitle>
             <ModalDescription>
-              {editingTerritory ? 'Perbarui informasi wilayah' : 'Buat wilayah baru untuk manajemen kolektor'}
+              {editingTerritory ? 'Perbarui informasi kolektor' : 'Buat kolektor baru dan tentukan area penagihan'}
             </ModalDescription>
           </ModalHeader>
           <ModalBody>
             <div className="space-y-4">
               <div>
-                <ModalLabel>Nama Wilayah</ModalLabel>
+                <ModalLabel>Nama Kolektor</ModalLabel>
                 <ModalInput
                   value={formData.name}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  placeholder="contoh: Wilayah Utara"
+                  placeholder="contoh: Kolektor Utara"
                   required
                 />
               </div>
@@ -366,7 +366,7 @@ export default function TerritoriesPage() {
                   onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  placeholder="Deskripsi wilayah (opsional)"
+                  placeholder="Deskripsi kolektor (opsional)"
                   rows={2}
                 />
               </div>
@@ -415,7 +415,7 @@ export default function TerritoriesPage() {
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            disabled={isAssignedToOther && !isChecked}
+                            disabled={Boolean(isAssignedToOther && !isChecked)}
                             onChange={(e) => {
                               if (e.target.checked) {
                                 setSelectedAreaIds([...selectedAreaIds, area.id]);
@@ -443,7 +443,7 @@ export default function TerritoriesPage() {
             <ModalButton type="button" variant="secondary" onClick={() => setIsDialogOpen(false)}>
               Batal
             </ModalButton>
-            <ModalButton type="submit">{editingTerritory ? 'Simpan' : 'Buat'}</ModalButton>
+            <ModalButton type="submit">{editingTerritory ? 'Simpan' : 'Buat Kolektor'}</ModalButton>
           </ModalFooter>
         </form>
       </SimpleModal>
@@ -454,7 +454,7 @@ export default function TerritoriesPage() {
         onClose={() => setSelectedTerritory(null)}
       >
         <ModalHeader>
-          <ModalTitle>Area Wilayah: {selectedTerritory?.name}</ModalTitle>
+          <ModalTitle>Area Kolektor: {selectedTerritory?.name}</ModalTitle>
           <ModalDescription>Pilih area dari data yang sudah diinput di Kelola Area</ModalDescription>
         </ModalHeader>
         <ModalBody>
