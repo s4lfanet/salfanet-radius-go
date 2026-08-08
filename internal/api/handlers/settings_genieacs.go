@@ -387,7 +387,7 @@ func (h *SettingsGenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.", "Device."}}
+	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.DeviceInfo.", "InternetGatewayDevice.WANDevice.", "InternetGatewayDevice.LANDevice.", "InternetGatewayDevice.X_HW_Debug."}}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
@@ -395,7 +395,19 @@ func (h *SettingsGenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	if status >= 400 {
 		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
 	}
-	return c.JSON(fiber.Map{"success": true, "message": "refresh task queued", "data": result})
+	// Send connection request to trigger immediate task execution
+	go func() {
+		crURL := host + "/devices/" + url.PathEscape(deviceID) + "/tasks?connection_request"
+		_, crStatus, crErr := h.proxyPOST(crURL, auth, nil)
+		if crErr != nil {
+			log.Error().Err(crErr).Str("device", deviceID).Msg("genieacs: connection request failed")
+		} else if crStatus >= 400 {
+			log.Error().Int("status", crStatus).Str("device", deviceID).Msg("genieacs: connection request error")
+		} else {
+			log.Info().Str("device", deviceID).Msg("genieacs: connection request sent")
+		}
+	}()
+	return c.JSON(fiber.Map{"success": true, "message": "refresh task queued", "data": result, "connectionRequest": true})
 }
 
 // GET /api/settings/genieacs/tasks — fetch real tasks from GenieACS
