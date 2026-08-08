@@ -474,12 +474,12 @@ export default function GenieACSTasksPage() {
             <Clock className="w-4 h-4 text-warning flex-shrink-0 mt-0.5" />
             <div className="text-xs text-warning">
               <p className="font-medium mb-1">{t('genieacs.tasksPending').replace('{count}', String(pendingCount))}</p>
-              <ul className="space-y-0.5 text-[11px]">
-                <li>• {t('genieacs.taskWillExecute')}</li>
-                <li>• {t('genieacs.informInterval')}</li>
-                <li>• {t('genieacs.alternative1')}</li>
-                <li>• {t('genieacs.alternative2')}</li>
-                <li className="text-muted-foreground">• {t('genieacs.connectionRequestNote')}</li>
+              <ul className="space-y-0.5 text-[11px] list-disc list-inside">
+                <li>{t('genieacs.taskWillExecute')}</li>
+                <li>{t('genieacs.informInterval')}</li>
+                <li>{t('genieacs.alternative1')}</li>
+                <li>{t('genieacs.alternative2')}</li>
+                <li className="text-muted-foreground">{t('genieacs.connectionRequestNote')}</li>
               </ul>
             </div>
           </div>
@@ -492,11 +492,11 @@ export default function GenieACSTasksPage() {
           <AlertCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
           <div className="text-xs text-primary">
             <p className="font-medium mb-1">{t('genieacs.aboutTasks')}</p>
-            <ul className="space-y-0.5 text-[11px]">
-              <li>• {t('genieacs.taskDescription')}</li>
-              <li>• {t('genieacs.pendingTaskExec')}</li>
-              <li>• {t('genieacs.useForceSyncTip')}</li>
-              <li>• {t('genieacs.faultTaskRetry')}</li>
+            <ul className="space-y-0.5 text-[11px] list-disc list-inside">
+              <li>{t('genieacs.taskDescription')}</li>
+              <li>{t('genieacs.pendingTaskExec')}</li>
+              <li>{t('genieacs.useForceSyncTip')}</li>
+              <li>{t('genieacs.faultTaskRetry')}</li>
             </ul>
           </div>
         </div>

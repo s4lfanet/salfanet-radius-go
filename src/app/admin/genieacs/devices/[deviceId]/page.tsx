@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useCallback, useEffect, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useCallback, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
@@ -79,8 +79,9 @@ function ActionButton({ label, icon, onClick, loading, variant = 'default' }: Ac
   );
 }
 
-export default function DeviceDetailPage({ params }: { params: Promise<{ deviceId: string }> }) {
-  const { deviceId } = use(params);
+export default function DeviceDetailPage() {
+  const params = useParams();
+  const deviceId = params.deviceId as string;
   const router = useRouter();
   const { addToast, confirm } = useToast();
 

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useCallback, useEffect, use, useMemo, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { copyToClipboard as copyText } from '@/lib/clipboard';
 import {
   ArrowLeft,
@@ -92,8 +93,9 @@ if (args[0].name === "${p.path}") {
   return lines.join('\n');
 }
 
-export default function DeviceParametersPage({ params }: { params: Promise<{ deviceId: string }> }) {
-  const { deviceId } = use(params);
+export default function DeviceParametersPage() {
+  const params = useParams();
+  const deviceId = params.deviceId as string;
   const { addToast } = useToast();
   const encodedId = encodeURIComponent(deviceId);
 
