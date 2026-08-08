@@ -5,16 +5,16 @@ import "time"
 // ─── Territory ───────────────────────────────────────────────────────────────
 
 type Territory struct {
-	ID          string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Name        string     `gorm:"uniqueIndex;not null" json:"name"`
-	Description *string    `json:"description"`
-	CollectorID *string    `gorm:"index;column:collectorId" json:"collectorId"`
-	IsActive    bool       `gorm:"default:true" json:"isActive"`
-	CreatedAt   time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
-	UpdatedAt   time.Time  `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
+	ID          string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Name        string    `gorm:"uniqueIndex;not null" json:"name"`
+	Description *string   `json:"description"`
+	CollectorID *string   `gorm:"index;column:collectorId" json:"collectorId"`
+	IsActive    bool      `gorm:"default:true" json:"isActive"`
+	CreatedAt   time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	UpdatedAt   time.Time `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
 
-	Collector   *User            `gorm:"foreignKey:CollectorID" json:"collector,omitempty"`
-	Areas       []TerritoryArea  `gorm:"foreignKey:TerritoryID" json:"areas,omitempty"`
+	Collector *User       `gorm:"foreignKey:CollectorID" json:"collector,omitempty"`
+	Areas     []PppoeArea `gorm:"foreignKey:TerritoryID" json:"areas,omitempty"`
 }
 
 func (Territory) TableName() string { return "territories" }
@@ -22,16 +22,16 @@ func (Territory) TableName() string { return "territories" }
 // ─── TerritoryArea ───────────────────────────────────────────────────────────
 
 type TerritoryArea struct {
-	ID             string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	TerritoryID    string    `gorm:"index;column:territoryId" json:"territoryId"`
-	KelurahanKode  *string   `gorm:"column:kelurahanKode;index" json:"kelurahanKode"`
-	KelurahanNama  *string   `gorm:"column:kelurahanNama" json:"kelurahanNama"`
-	KecamatanNama  *string   `gorm:"column:kecamatanNama" json:"kecamatanNama"`
-	KabupatenNama  *string   `gorm:"column:kabupatenNama" json:"kabupatenNama"`
-	ProvinsiNama   *string   `gorm:"column:provinsiNama" json:"provinsiNama"`
-	DusunNama      *string   `gorm:"column:dusunNama" json:"dusunNama"`
-	CollectorID    *string   `gorm:"index;column:collectorId" json:"collectorId"`
-	CreatedAt      time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	ID            string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	TerritoryID   string    `gorm:"index;column:territoryId" json:"territoryId"`
+	KelurahanKode *string   `gorm:"column:kelurahanKode;index" json:"kelurahanKode"`
+	KelurahanNama *string   `gorm:"column:kelurahanNama" json:"kelurahanNama"`
+	KecamatanNama *string   `gorm:"column:kecamatanNama" json:"kecamatanNama"`
+	KabupatenNama *string   `gorm:"column:kabupatenNama" json:"kabupatenNama"`
+	ProvinsiNama  *string   `gorm:"column:provinsiNama" json:"provinsiNama"`
+	DusunNama     *string   `gorm:"column:dusunNama" json:"dusunNama"`
+	CollectorID   *string   `gorm:"index;column:collectorId" json:"collectorId"`
+	CreatedAt     time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
 
 	Territory *Territory `gorm:"foreignKey:TerritoryID" json:"territory,omitempty"`
 }

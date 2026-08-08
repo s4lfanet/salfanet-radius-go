@@ -136,60 +136,75 @@ func (h *TerritoryHandler) DeleteTerritory(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Territory deactivated"})
 }
 
-// ─── Territory Areas ─────────────────────────────────────────────────────────
+// ─── Territory Areas (uses pppoe_areas, no duplicate area management) ─────────
 
-// GET /api/territories/:id/areas — list areas for a territory
+// GET /api/territories/:id/areas — list pppoe_areas assigned to a territory
 func (h *TerritoryHandler) ListAreas(c fiber.Ctx) error {
 	territoryID := c.Params("id")
-	var areas []models.TerritoryArea
-	if err := h.db.Where("territoryId = ?", territoryID).Order("kelurahanNama ASC").Find(&areas).Error; err != nil {
+	var areas []models.PppoeArea
+	if err := h.db.Where("territoryId = ?", territoryID).Order("name ASC").Find(&areas).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"data": areas})
 }
 
-// POST /api/territories/:id/areas — add area to territory
+// GET /api/territories/available-areas — list pppoe_areas not yet assigned to any territory
+func (h *TerritoryHandler) ListAvailableAreas(c fiber.Ctx) error {
+	var areas []models.PppoeArea
+	if err := h.db.Where("territoryId IS NULL AND isActive = ?", true).Order("name ASC").Find(&areas).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"data": areas})
+}
+
+// GET /api/territories/all-areas — list all pppoe_areas with territory assignment
+func (h *TerritoryHandler) ListAllAreas(c fiber.Ctx) error {
+	var areas []models.PppoeArea
+	if err := h.db.Order("name ASC").Find(&areas).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"data": areas})
+}
+
+// POST /api/territories/:id/areas — assign existing pppoe_area to territory
 func (h *TerritoryHandler) AddArea(c fiber.Ctx) error {
 	territoryID := c.Params("id")
 	var body struct {
-		KelurahanKode *string `json:"kelurahanKode"`
-		KelurahanNama *string `json:"kelurahanNama"`
-		KecamatanNama *string `json:"kecamatanNama"`
-		KabupatenNama *string `json:"kabupatenNama"`
-		ProvinsiNama  *string `json:"provinsiNama"`
-		DusunNama     *string `json:"dusunNama"`
-		CollectorID   *string `json:"collectorId"`
+		AreaID string `json:"areaId"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-
-	area := models.TerritoryArea{
-		ID:            uuid.New().String(),
-		TerritoryID:   territoryID,
-		KelurahanKode: body.KelurahanKode,
-		KelurahanNama: body.KelurahanNama,
-		KecamatanNama: body.KecamatanNama,
-		KabupatenNama: body.KabupatenNama,
-		ProvinsiNama:  body.ProvinsiNama,
-		DusunNama:     body.DusunNama,
-		CollectorID:   body.CollectorID,
+	if body.AreaID == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "areaId is required"})
 	}
 
-	if err := h.db.Create(&area).Error; err != nil {
+	// Verify the area exists and isn't already assigned to another territory
+	var area models.PppoeArea
+	if err := h.db.First(&area, "id = ?", body.AreaID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Area not found"})
+	}
+	if area.TerritoryID != nil && *area.TerritoryID != "" {
+		return c.Status(400).JSON(fiber.Map{"error": "Area already assigned to another territory"})
+	}
+
+	// Assign the area to this territory
+	if err := h.db.Model(&area).Update("territoryId", territoryID).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.Status(201).JSON(area)
+	area.TerritoryID = &territoryID
+	return c.Status(200).JSON(area)
 }
 
-// DELETE /api/territories/:id/areas/:areaId — remove area from territory
+// DELETE /api/territories/:id/areas/:areaId — unassign area from territory
 func (h *TerritoryHandler) RemoveArea(c fiber.Ctx) error {
 	areaID := c.Params("areaId")
-	if err := h.db.Delete(&models.TerritoryArea{}, "id = ?", areaID).Error; err != nil {
+	// Set territoryId back to NULL (unassign, don't delete the area)
+	if err := h.db.Model(&models.PppoeArea{}).Where("id = ?", areaID).Update("territoryId", nil).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return c.JSON(fiber.Map{"message": "Area removed"})
+	return c.JSON(fiber.Map{"message": "Area unassigned from territory"})
 }
 
 // ─── Collector List ──────────────────────────────────────────────────────────

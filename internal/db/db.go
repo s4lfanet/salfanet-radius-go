@@ -330,6 +330,10 @@ func runMigrations(db *gorm.DB) error {
 			INDEX idx_pp_date (promiseDate)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
+		// ─── Link pppoe_areas to territories (collector area assignment uses existing area data) ───
+		`ALTER TABLE pppoe_areas ADD COLUMN territoryId VARCHAR(191) NULL`,
+		`ALTER TABLE pppoe_areas ADD INDEX idx_pppoe_areas_territoryId (territoryId)`,
+
 		// ─── Remaining roadmap items: payment method edit count, API keys, PSB deadline, profile overrides, waiting list ───
 		`ALTER TABLE payments ADD COLUMN paymentMethodEditCount INT NOT NULL DEFAULT 0`,
 

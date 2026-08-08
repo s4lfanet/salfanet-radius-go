@@ -1358,6 +1358,8 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	territory.Get("/", territoryH.ListTerritories)
 	territory.Post("/", territoryH.CreateTerritory)
 	territory.Get("/collectors", territoryH.ListCollectors)
+	territory.Get("/available-areas", territoryH.ListAvailableAreas)
+	territory.Get("/all-areas", territoryH.ListAllAreas)
 	territory.Get("/:id", territoryH.GetTerritory)
 	territory.Put("/:id", territoryH.UpdateTerritory)
 	territory.Delete("/:id", territoryH.DeleteTerritory)

@@ -24,16 +24,12 @@ interface Collector {
   email: string;
 }
 
-interface TerritoryArea {
+interface PppoeArea {
   id: string;
-  territoryId: string;
-  kelurahanKode: string | null;
-  kelurahanNama: string | null;
-  kecamatanNama: string | null;
-  kabupatenNama: string | null;
-  provinsiNama: string | null;
-  dusunNama: string | null;
-  collectorId: string | null;
+  name: string;
+  description: string | null;
+  isActive: boolean;
+  territoryId: string | null;
 }
 
 interface Territory {
@@ -44,7 +40,7 @@ interface Territory {
   isActive: boolean;
   userCount: number;
   collector?: Collector | null;
-  areas?: TerritoryArea[];
+  areas?: PppoeArea[];
 }
 
 export default function TerritoriesPage() {
@@ -63,13 +59,8 @@ export default function TerritoriesPage() {
     collectorId: '',
     isActive: true,
   });
-  const [areaForm, setAreaForm] = useState({
-    kelurahanNama: '',
-    kecamatanNama: '',
-    kabupatenNama: '',
-    provinsiNama: '',
-    dusunNama: '',
-  });
+  const [availableAreas, setAvailableAreas] = useState<PppoeArea[]>([]);
+  const [selectedAreaId, setSelectedAreaId] = useState('');
 
   useEffect(() => {
     loadData();
@@ -77,14 +68,17 @@ export default function TerritoriesPage() {
 
   const loadData = async () => {
     try {
-      const [terrRes, collRes] = await Promise.all([
+      const [terrRes, collRes, areasRes] = await Promise.all([
         fetch('/api/territories'),
         fetch('/api/territories/collectors'),
+        fetch('/api/territories/available-areas'),
       ]);
       const terrData = await terrRes.json();
       const collData = await collRes.json();
+      const areasData = await areasRes.json();
       setTerritories(terrData.data || []);
       setCollectors(collData.data || []);
+      setAvailableAreas(areasData.data || []);
     } catch (error) {
       console.error('Load territories error:', error);
     } finally {
@@ -155,41 +149,45 @@ export default function TerritoriesPage() {
     }
   };
 
-  const handleAddArea = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedTerritory) return;
+  const handleAddArea = async () => {
+    if (!selectedTerritory || !selectedAreaId) return;
     try {
       const res = await fetch(`/api/territories/${selectedTerritory.id}/areas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          kelurahanNama: areaForm.kelurahanNama || null,
-          kecamatanNama: areaForm.kecamatanNama || null,
-          kabupatenNama: areaForm.kabupatenNama || null,
-          provinsiNama: areaForm.provinsiNama || null,
-          dusunNama: areaForm.dusunNama || null,
-        }),
+        body: JSON.stringify({ areaId: selectedAreaId }),
       });
-      if (!res.ok) throw new Error('Failed to add area');
-      showSuccess('Area berhasil ditambahkan');
-      setAreaForm({ kelurahanNama: '', kecamatanNama: '', kabupatenNama: '', provinsiNama: '', dusunNama: '' });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to assign area');
+      }
+      showSuccess('Area berhasil ditambahkan ke wilayah');
+      setSelectedAreaId('');
       loadTerritoryDetail(selectedTerritory.id);
+      // Refresh available areas
+      const areasRes = await fetch('/api/territories/available-areas');
+      const areasData = await areasRes.json();
+      setAvailableAreas(areasData.data || []);
     } catch (error) {
-      showError('Gagal menambahkan area');
+      showError(error instanceof Error ? error.message : 'Gagal menambahkan area');
     }
   };
 
   const handleRemoveArea = async (areaId: string) => {
     if (!selectedTerritory) return;
-    const confirmed = await showConfirm('Hapus area ini?');
+    const confirmed = await showConfirm('Lepaskan area ini dari wilayah?');
     if (!confirmed) return;
     try {
       const res = await fetch(`/api/territories/${selectedTerritory.id}/areas/${areaId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to remove area');
-      showSuccess('Area dihapus');
+      showSuccess('Area dilepaskan dari wilayah');
       loadTerritoryDetail(selectedTerritory.id);
+      // Refresh available areas
+      const areasRes = await fetch('/api/territories/available-areas');
+      const areasData = await areasRes.json();
+      setAvailableAreas(areasData.data || []);
     } catch (error) {
-      showError('Gagal menghapus area');
+      showError('Gagal melepaskan area');
     }
   };
 
@@ -298,7 +296,7 @@ export default function TerritoriesPage() {
                       key={area.id}
                       className="rounded bg-gray-800 px-2 py-0.5 text-xs text-gray-300"
                     >
-                      {area.dusunNama || area.kelurahanNama || 'Area'}
+                      {area.name}
                     </span>
                   ))}
                   {territory.areas.length > 3 && (
@@ -405,70 +403,42 @@ export default function TerritoriesPage() {
       >
         <ModalHeader>
           <ModalTitle>Area Wilayah: {selectedTerritory?.name}</ModalTitle>
-          <ModalDescription>Tambah atau hapus area (kelurahan/dusun) dalam wilayah ini</ModalDescription>
+          <ModalDescription>Pilih area dari data yang sudah diinput di Kelola Area</ModalDescription>
         </ModalHeader>
         <ModalBody>
-          <form onSubmit={handleAddArea} className="space-y-3 mb-4">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <ModalLabel>Provinsi</ModalLabel>
-                <ModalInput
-                  value={areaForm.provinsiNama}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setAreaForm({ ...areaForm, provinsiNama: e.target.value })
-                  }
-                  placeholder="Provinsi"
-                />
+          <div className="space-y-3 mb-4">
+            <div>
+              <ModalLabel>Pilih Area</ModalLabel>
+              <div className="flex gap-2">
+                <select
+                  value={selectedAreaId}
+                  onChange={(e) => setSelectedAreaId(e.target.value)}
+                  className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                >
+                  <option value="">-- Pilih Area --</option>
+                  {availableAreas.map((area) => (
+                    <option key={area.id} value={area.id}>
+                      {area.name}{area.description ? ` (${area.description})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleAddArea}
+                  disabled={!selectedAreaId}
+                  className="flex items-center gap-2 rounded-lg bg-cyan-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-cyan-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="h-4 w-4" />
+                  Tambah
+                </button>
               </div>
-              <div>
-                <ModalLabel>Kabupaten</ModalLabel>
-                <ModalInput
-                  value={areaForm.kabupatenNama}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setAreaForm({ ...areaForm, kabupatenNama: e.target.value })
-                  }
-                  placeholder="Kabupaten"
-                />
-              </div>
-              <div>
-                <ModalLabel>Kecamatan</ModalLabel>
-                <ModalInput
-                  value={areaForm.kecamatanNama}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setAreaForm({ ...areaForm, kecamatanNama: e.target.value })
-                  }
-                  placeholder="Kecamatan"
-                />
-              </div>
-              <div>
-                <ModalLabel>Kelurahan</ModalLabel>
-                <ModalInput
-                  value={areaForm.kelurahanNama}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setAreaForm({ ...areaForm, kelurahanNama: e.target.value })
-                  }
-                  placeholder="Kelurahan/Desa"
-                />
-              </div>
-              <div className="col-span-2">
-                <ModalLabel>Dusun (opsional)</ModalLabel>
-                <ModalInput
-                  value={areaForm.dusunNama}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setAreaForm({ ...areaForm, dusunNama: e.target.value })
-                  }
-                  placeholder="Nama dusun/RT/RW"
-                />
-              </div>
+              {availableAreas.length === 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Semua area sudah ditugaskan ke wilayah. Tambah area baru di menu Kelola Area.
+                </p>
+              )}
             </div>
-            <button
-              type="submit"
-              className="flex items-center gap-2 rounded-lg bg-cyan-500 px-3 py-1.5 text-sm font-medium text-black hover:bg-cyan-400"
-            >
-              <Plus className="h-4 w-4" />
-              Tambah Area
-            </button>
-          </form>
+          </div>
 
           <div className="space-y-2 max-h-60 overflow-y-auto">
             {selectedTerritory?.areas?.map((area) => (
@@ -477,9 +447,8 @@ export default function TerritoriesPage() {
                 className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-900/50 px-3 py-2"
               >
                 <div className="text-sm text-gray-300">
-                  {area.dusunNama && <span className="font-medium">{area.dusunNama}, </span>}
-                  {area.kelurahanNama}
-                  {area.kecamatanNama && <span className="text-gray-500"> - {area.kecamatanNama}</span>}
+                  <span className="font-medium">{area.name}</span>
+                  {area.description && <span className="text-gray-500"> - {area.description}</span>}
                 </div>
                 <button
                   onClick={() => handleRemoveArea(area.id)}
@@ -490,7 +459,7 @@ export default function TerritoriesPage() {
               </div>
             ))}
             {(!selectedTerritory?.areas || selectedTerritory.areas.length === 0) && (
-              <p className="text-center text-sm text-gray-500 py-4">Belum ada area</p>
+              <p className="text-center text-sm text-gray-500 py-4">Belum ada area ditugaskan</p>
             )}
           </div>
         </ModalBody>

@@ -68,6 +68,7 @@ type PppoeArea struct {
 	Name        string    `gorm:"uniqueIndex;not null" json:"name"`
 	Description *string   `json:"description"`
 	IsActive    bool      `gorm:"default:true" json:"isActive"`
+	TerritoryID *string   `gorm:"column:territoryId;index" json:"territoryId"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
