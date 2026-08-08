@@ -222,17 +222,17 @@ func runMigrations(db *gorm.DB) error {
 			UNIQUE KEY uniq_settlement_collector_date (collectorId, periodDate)
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 		// Add territoryId and territoryAreaId columns to pppoe_users (Prisma-managed table, Go adds columns)
-		`ALTER TABLE pppoe_users ADD COLUMN IF NOT EXISTS territoryId VARCHAR(191) NULL`,
-		`ALTER TABLE pppoe_users ADD COLUMN IF NOT EXISTS territoryAreaId VARCHAR(191) NULL`,
-		`ALTER TABLE pppoe_users ADD INDEX IF NOT EXISTS idx_pppoe_users_territoryId (territoryId)`,
-		`ALTER TABLE pppoe_users ADD INDEX IF NOT EXISTS idx_pppoe_users_territoryAreaId (territoryAreaId)`,
+		`ALTER TABLE pppoe_users ADD COLUMN territoryId VARCHAR(191) NULL`,
+		`ALTER TABLE pppoe_users ADD COLUMN territoryAreaId VARCHAR(191) NULL`,
+		`ALTER TABLE pppoe_users ADD INDEX idx_pppoe_users_territoryId (territoryId)`,
+		`ALTER TABLE pppoe_users ADD INDEX idx_pppoe_users_territoryAreaId (territoryAreaId)`,
 		// Phase 2: Invoice discount & cancel columns
-		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS discountAmount INT NULL`,
-		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS discountReason TEXT NULL`,
-		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS originalAmount INT NULL`,
-		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cancelledAt DATETIME(3) NULL`,
-		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cancelledBy VARCHAR(191) NULL`,
-		`ALTER TABLE invoices ADD COLUMN IF NOT EXISTS cancelReason TEXT NULL`,
+		`ALTER TABLE invoices ADD COLUMN discountAmount INT NULL`,
+		`ALTER TABLE invoices ADD COLUMN discountReason TEXT NULL`,
+		`ALTER TABLE invoices ADD COLUMN originalAmount INT NULL`,
+		`ALTER TABLE invoices ADD COLUMN cancelledAt DATETIME(3) NULL`,
+		`ALTER TABLE invoices ADD COLUMN cancelledBy VARCHAR(191) NULL`,
+		`ALTER TABLE invoices ADD COLUMN cancelReason TEXT NULL`,
 		// Phase 2: Package change logs
 		`CREATE TABLE IF NOT EXISTS package_change_logs (
 			id             VARCHAR(191) NOT NULL,
@@ -331,11 +331,11 @@ func runMigrations(db *gorm.DB) error {
 		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
 		// ─── Remaining roadmap items: payment method edit count, API keys, PSB deadline, profile overrides, waiting list ───
-		`ALTER TABLE payments ADD COLUMN IF NOT EXISTS paymentMethodEditCount INT NOT NULL DEFAULT 0`,
+		`ALTER TABLE payments ADD COLUMN paymentMethodEditCount INT NOT NULL DEFAULT 0`,
 
-		`ALTER TABLE pppoe_users ADD COLUMN IF NOT EXISTS initialPaymentPending BOOLEAN NOT NULL DEFAULT FALSE`,
-		`ALTER TABLE pppoe_users ADD COLUMN IF NOT EXISTS psbDeadlineAt DATETIME(3) NULL`,
-		`ALTER TABLE pppoe_users ADD INDEX IF NOT EXISTS idx_psb_deadline (psbDeadlineAt)`,
+		`ALTER TABLE pppoe_users ADD COLUMN initialPaymentPending BOOLEAN NOT NULL DEFAULT FALSE`,
+		`ALTER TABLE pppoe_users ADD COLUMN psbDeadlineAt DATETIME(3) NULL`,
+		`ALTER TABLE pppoe_users ADD INDEX idx_psb_deadline (psbDeadlineAt)`,
 
 		`CREATE TABLE IF NOT EXISTS api_keys (
 			id          VARCHAR(191) NOT NULL,
@@ -420,10 +420,24 @@ func runMigrations(db *gorm.DB) error {
 	}
 	for _, stmt := range statements {
 		if _, err := sqlDB.Exec(stmt); err != nil {
+			// Ignore duplicate column (1060) and duplicate key/index (1061) errors
+			// since MySQL doesn't support ADD COLUMN IF NOT EXISTS
+			if isIgnorableMigrationError(err) {
+				continue
+			}
 			return fmt.Errorf("migration failed: %w", err)
 		}
 	}
 	return nil
+}
+
+// isIgnorableMigrationError returns true for MySQL errors that indicate
+// a column or index already exists (1060 / 1061), which are safe to skip
+// since we run migrations idempotently.
+func isIgnorableMigrationError(err error) bool {
+	msg := err.Error()
+	return strings.Contains(msg, "1060") || strings.Contains(msg, "1061") ||
+		strings.Contains(msg, "Duplicate column") || strings.Contains(msg, "Duplicate key")
 }
 
 // convertDSN converts a Prisma-style mysql:// URL to a GORM DSN.
