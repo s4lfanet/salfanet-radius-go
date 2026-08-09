@@ -89,6 +89,33 @@ export function getCurrentTimezone(): string {
 }
 
 /**
+ * Format a real UTC timestamp (e.g., GenieACS _lastInform, ISO 8601 with Z suffix)
+ * into the configured system timezone.
+ *
+ * Unlike formatWIB which treats the Date's UTC values as already-being-WIB
+ * (for Prisma/MySQL compatibility), this function does a real timezone conversion
+ * from UTC to the configured timezone.
+ *
+ * @param date - Real UTC date string (ISO 8601 with Z or offset) or Date object
+ * @param formatStr - Format string (default: 'dd MMM yyyy HH:mm')
+ * @returns Formatted date string in system timezone
+ */
+export function formatFromUTC(
+  date: Date | string | null | undefined,
+  formatStr: string = 'dd MMM yyyy HH:mm'
+): string {
+  if (!date) return '-';
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return '-';
+    return formatInTimeZone(d, currentTimezone, formatStr, { locale: localeId });
+  } catch (error) {
+    console.error('formatFromUTC error:', error);
+    return '-';
+  }
+}
+
+/**
  * Get timezone offset in milliseconds from the configured timezone offset string
  */
 export function getTimezoneOffsetMs(): number {

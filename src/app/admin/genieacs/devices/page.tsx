@@ -21,7 +21,7 @@ import {
   ModalLabel,
   ModalButton,
 } from '@/components/cyberpunk';
-import { formatWIB } from '@/lib/timezone';
+import { formatWIB, formatFromUTC } from '@/lib/timezone';
 
 interface GenieACSDevice {
   _id: string;
@@ -1099,7 +1099,7 @@ export default function GenieACSDevicesPage() {
                             <InfoRow label={t('genieacs.pppoeIp')} value={selectedDevice.pppoeIP} highlight />
                             <InfoRow label={t('genieacs.tr069Ip')} value={selectedDevice.tr069IP} />
                             <InfoRow label={t('common.uptime')} value={selectedDevice.uptime} />
-                            <InfoRow label={t('genieacs.lastInform')} value={selectedDevice.lastInform ? formatWIB(selectedDevice.lastInform, 'dd/MM/yyyy HH:mm') : '-'} />
+                            <InfoRow label={t('genieacs.lastInform')} value={selectedDevice.lastInform ? formatFromUTC(selectedDevice.lastInform, 'dd/MM/yyyy HH:mm') : '-'} />
                             <InfoRow label={t('genieacs.dns')} value={selectedDevice.dns1} />
                           </div>
                         </div>

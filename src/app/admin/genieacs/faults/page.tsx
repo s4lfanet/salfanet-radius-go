@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Loader2, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
+import { formatFromUTC } from '@/lib/timezone';
 
 interface Fault {
   _id?: string;
@@ -191,7 +192,7 @@ export default function GenieACSFaultsPage() {
                     {f.message}
                   </td>
                   <td className="px-3 py-2 text-xs">{f.retries ?? 0}</td>
-                  <td className="px-3 py-2 text-xs">{f.timestamp ?? '-'}</td>
+                  <td className="px-3 py-2 text-xs">{f.timestamp ? formatFromUTC(f.timestamp, 'dd/MM/yyyy HH:mm') : '-'}</td>
                   <td className="px-3 py-2 text-right">
                     {f._id && (
                       <button

@@ -26,7 +26,7 @@ import {
 } from 'lucide-react';
 import { DeviceStatusBadge } from '@/components/genieacs/DeviceStatusBadge';
 import { TaskStatusBadge } from '@/components/genieacs/TaskStatusBadge';
-import { formatWIB } from '@/lib/timezone';
+import { formatWIB, formatFromUTC } from '@/lib/timezone';
 import { useToast } from '@/components/cyberpunk/CyberToast';
 
 interface GenieDevice {
@@ -522,7 +522,7 @@ export default function DeviceDetailPage() {
           <InfoCard label="PPPoE IP" value={pppoeIP} />
           <InfoCard label="RX Power" value={rxPower} />
           <InfoCard label="Uptime" value={uptime} />
-          <InfoCard label="Last Inform" value={lastInform ? formatWIB(new Date(lastInform)) : '-'} />
+          <InfoCard label="Last Inform" value={lastInform ? formatFromUTC(lastInform) : '-'} />
           <InfoCard label="Device ID" value={deviceId} mono />
         </div>
       )}
@@ -776,7 +776,7 @@ export default function DeviceDetailPage() {
                         <TaskStatusBadge status={task.status ?? 'pending'} />
                       </td>
                       <td className="px-4 py-2 text-gray-500 text-xs">
-                        {task.timestamp ? formatWIB(new Date(task.timestamp)) : '-'}
+                        {task.timestamp ? formatFromUTC(task.timestamp) : '-'}
                       </td>
                     </tr>
                   ))}

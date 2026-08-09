@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from '@/hooks/useTranslation';
 import { ListTodo, RefreshCw, Loader2, Trash2, CheckCircle, XCircle, Clock, Search, AlertCircle, X, Activity } from 'lucide-react';
 import { useToast } from '@/components/cyberpunk/CyberToast';
-import { formatWIB } from '@/lib/timezone';
+import { formatWIB, formatFromUTC } from '@/lib/timezone';
 
 interface GenieACSTask {
   _id: string;
@@ -358,7 +358,7 @@ export default function GenieACSTasksPage() {
                   <div>
                     <p className="text-[10px] text-muted-foreground">{t('genieacs.timestamp')}</p>
                     <p className="text-foreground text-[10px]">
-                      {formatWIB(task.timestamp, 'dd/MM/yyyy HH:mm')}
+                      {formatFromUTC(task.timestamp, 'dd/MM/yyyy HH:mm')}
                     </p>
                   </div>
                   <div>
@@ -426,7 +426,7 @@ export default function GenieACSTasksPage() {
                       {getTaskNameLabel(task.name)}
                     </td>
                     <td className="py-2 px-3 text-muted-foreground whitespace-nowrap">
-                      {formatWIB(task.timestamp, 'dd/MM/yyyy HH:mm')}
+                      {formatFromUTC(task.timestamp, 'dd/MM/yyyy HH:mm')}
                     </td>
                     <td className="py-2 px-3 text-center text-muted-foreground">
                       {task.retries || 0}
