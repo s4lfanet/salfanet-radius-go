@@ -213,10 +213,54 @@ func (h *GenieacsHandler) DeviceWAN(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	var body interface{}
-	_ = c.Bind().JSON(&body)
-	task := fiber.Map{"name": "setParameterValues", "parameterValues": body}
-	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
+	var body struct {
+		Username    string `json:"username"`
+		Password    string `json:"password"`
+		Enable      *bool  `json:"enable"`
+		VLAN        string `json:"vlan"`
+		ServiceList string `json:"serviceList"`
+		WanIndex    int    `json:"wanIndex"`
+		ConnIndex   int    `json:"connIndex"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "invalid JSON body"})
+	}
+	if body.WanIndex == 0 {
+		body.WanIndex = 1
+	}
+	if body.ConnIndex == 0 {
+		body.ConnIndex = 1
+	}
+
+	basePath := fmt.Sprintf("InternetGatewayDevice.WANDevice.1.WANConnectionDevice.%d.WANPPPConnection.%d", body.WanIndex, body.ConnIndex)
+
+	params := [][]interface{}{}
+	if body.Username != "" {
+		params = append(params, []interface{}{basePath + ".Username", body.Username, "xsd:string"})
+	}
+	if body.Password != "" {
+		params = append(params, []interface{}{basePath + ".Password", body.Password, "xsd:string"})
+	}
+	if body.Enable != nil {
+		enableVal := "false"
+		if *body.Enable {
+			enableVal = "true"
+		}
+		params = append(params, []interface{}{basePath + ".Enable", enableVal, "xsd:boolean"})
+	}
+	if body.VLAN != "" {
+		params = append(params, []interface{}{basePath + ".X_HW_VLAN", body.VLAN, "xsd:string"})
+	}
+	if body.ServiceList != "" {
+		params = append(params, []interface{}{basePath + ".X_HW_SERVICELIST", body.ServiceList, "xsd:string"})
+	}
+
+	if len(params) == 0 {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "no parameters to update"})
+	}
+
+	task := fiber.Map{"name": "setParameterValues", "parameterValues": params}
+	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks?connection_request", auth, task)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -241,7 +285,58 @@ func (h *GenieacsHandler) GetDeviceWifi(c fiber.Ctx) error {
 	if !ok || len(devs) == 0 {
 		return c.Status(404).JSON(fiber.Map{"error": "device not found"})
 	}
-	return c.Status(status).JSON(fiber.Map{"data": devs[0]})
+	dev, ok := devs[0].(map[string]interface{})
+	if !ok {
+		return c.Status(500).JSON(fiber.Map{"error": "unexpected response format"})
+	}
+
+	// Parse WiFi configurations from device data
+	wifiConfigs := []fiber.Map{}
+	if igd, ok := dev["InternetGatewayDevice"].(map[string]interface{}); ok {
+		if lan, ok := igd["LANDevice"].(map[string]interface{}); ok {
+			if lan1, ok := lan["1"].(map[string]interface{}); ok {
+				if wlan, ok := lan1["WLANConfiguration"].(map[string]interface{}); ok {
+					for i := 1; i <= 8; i++ {
+						key := fmt.Sprintf("%d", i)
+						if wl, ok := wlan[key].(map[string]interface{}); ok {
+							getVal := func(path string) string {
+								if p, ok := wl[path].(map[string]interface{}); ok {
+									if v, ok := p["_value"]; ok {
+										return fmt.Sprintf("%v", v)
+									}
+								}
+								return ""
+							}
+							ssid := getVal("SSID")
+							if ssid == "" {
+								continue
+							}
+							wifiConfigs = append(wifiConfigs, fiber.Map{
+								"index":             i,
+								"ssid":              ssid,
+								"enable":            getVal("Enable") == "true" || getVal("Enable") == "True",
+								"beaconType":        getVal("BeaconType"),
+								"authMode":          getVal("IEEE11iAuthenticationMode"),
+								"encryptionMode":    getVal("IEEE11iEncryptionModes"),
+								"keyPassphrase":     getVal("KeyPassphrase"),
+								"channel":           getVal("Channel"),
+								"maxBitRate":        getVal("MaxBitRate"),
+								"standard":          getVal("Standard"),
+								"bssid":             getVal("BSSID"),
+								"totalAssociations": getVal("TotalAssociations"),
+								"radioEnabled":      getVal("RadioEnabled"),
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": fiber.Map{
+		"device":      devs[0],
+		"wifiConfigs": wifiConfigs,
+	}})
 }
 
 // POST /api/genieacs/devices/:deviceId/reboot

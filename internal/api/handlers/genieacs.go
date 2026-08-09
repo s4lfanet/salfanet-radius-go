@@ -206,13 +206,18 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 		SecurityMode string `json:"securityMode"`
 		Enabled      *bool  `json:"enabled"`
 	}
-	body.WlanIndex = 1
-	body.SecurityMode = "WPA2-PSK"
-	enabled := true
-	body.Enabled = &enabled
-
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"success": false, "error": "Invalid request body"})
+	}
+	if body.WlanIndex == 0 {
+		body.WlanIndex = 1
+	}
+	if body.SecurityMode == "" {
+		body.SecurityMode = "WPA2-PSK"
+	}
+	if body.Enabled == nil {
+		enabled := true
+		body.Enabled = &enabled
 	}
 	if body.SSID == "" || len(body.SSID) > 32 {
 		return c.Status(400).JSON(fiber.Map{"success": false, "error": "SSID harus 1-32 karakter"})
@@ -258,7 +263,7 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 		{basePath + ".IEEE11iEncryptionModes", sm.encMode, "xsd:string"},
 	}
 	if body.SecurityMode != "None" && body.SecurityMode != "Open" && body.Password != "" {
-		params = append(params, []interface{}{basePath + ".PreSharedKey.1.PreSharedKey", body.Password, "xsd:string"})
+		params = append(params, []interface{}{basePath + ".KeyPassphrase", body.Password, "xsd:string"})
 	}
 
 	task := map[string]interface{}{
