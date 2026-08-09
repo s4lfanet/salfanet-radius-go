@@ -417,19 +417,9 @@ type WhatsappGlobalSettings struct {
 func (WhatsappGlobalSettings) TableName() string { return "whatsapp_reminder_settings" }
 
 // ─── WhatsApp Reminder Settings ──────────────────────────────────────────────
-
-type WhatsappReminderSetting struct {
-	ID           string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	DaysBefore   int       `gorm:"uniqueIndex" json:"daysBefore"` // e.g. 7, 5, 3, 1, 0
-	IsActive     bool      `gorm:"default:true" json:"isActive"`
-	SendTime     string    `gorm:"default:08:00" json:"sendTime"` // HH:MM
-	BatchSize    int       `gorm:"default:50" json:"batchSize"`
-	BatchDelayMs int       `gorm:"default:500" json:"batchDelayMs"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
-func (WhatsappReminderSetting) TableName() string { return "whatsapp_reminder_settings" }
+// NOTE: WhatsappReminderSetting (legacy multi-row model) was removed.
+// The table whatsapp_reminder_settings is now managed via WhatsappGlobalSettings (single-row config)
+// which matches the Prisma schema.
 
 // ─── Ticket Reply ─────────────────────────────────────────────────────────────
 

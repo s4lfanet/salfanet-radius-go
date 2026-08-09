@@ -6,6 +6,33 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.31] — 2026-08-10
+### Fixed — Backend ↔ Database ↔ Frontend Consistency Audit
+- **WhatsappReminderSetting legacy model conflict** (`internal/db/models/extra.go`, `internal/cron/scheduler.go`, `internal/api/handlers/whatsapp_crud.go`, `internal/api/router.go`) — Removed deprecated `WhatsappReminderSetting` struct that conflicted with `WhatsappGlobalSettings` on the same `whatsapp_reminder_settings` table. Updated cron scheduler to use `WhatsappGlobalSettings` with `reminderDays` JSON array parsing. Removed legacy CRUD handlers and route registrations for `-ext` endpoints.
+- **Settlement.Collector relation** (`internal/db/models/territory.go`) — Changed `Collector` field from `*User` to `*AdminUser` to correctly reference `admin_users` table.
+- **Radcheck.Op default value** (`internal/db/models/models.go`) — Fixed invalid GORM tag `default::=` to `default:=`.
+- **PppoeCustomer.CustomerID type** (`internal/db/models/models.go`) — Changed varchar length from 20 to 10 to match Prisma schema `@db.VarChar(10)`.
+- **Missing Company fields in Go struct** (`internal/db/models/models.go`) — Added `IsolationWhatsappTemplateId`, `IsolationEmailTemplateId`, `IsolationHtmlTemplateId`, `PppoeRenewalAnytime`, `PppoeRenewalDaysBefore`, `ReferralRewardType`, `ReferralRewardBoth`, `ReferralReferredAmount` to match Prisma schema.
+- **Go-managed columns missing from Prisma schema** (`prisma/schema.prisma`) — Added `territoryId` to `pppoeArea`; `territoryId`, `territoryAreaId`, `initialPaymentPending`, `psbDeadlineAt` to `pppoeUser`; `discountAmount`, `discountReason`, `originalAmount`, `cancelledAt`, `cancelledBy`, `cancelReason` to `invoice`; `qrisDeviceKey` to `company`; `paymentMethodEditCount` to `payment`. Prevents `prisma db push` from dropping Go-managed columns.
+- **GetRouter response missing fields** (`internal/api/handlers/network_ext.go`) — Added `latitude`, `longitude`, and `updatedAt` to the router detail response for API consistency.
+- **Frontend VpnClient/VpnServer types** (`src/features/network/types.ts`) — Fixed `VpnClient` type: removed non-existent `privateKey`, added `endpoint`, `description`, `updatedAt`. Fixed `VpnServer` type: added `description` field. Both now match Go struct definitions exactly.
+- **Unused genieacs sync method** (`internal/cron/genieacs_sync.go`) — Removed dead `jobGenieacsSyncSingle` method (never called; `RefreshDevice` handler does its own API call).
+
+### Files
+- `internal/db/models/extra.go` — **EDIT** — Removed legacy `WhatsappReminderSetting` struct
+- `internal/db/models/territory.go` — **EDIT** — Fixed `Settlement.Collector` relation type
+- `internal/db/models/models.go` — **EDIT** — Fixed `Radcheck.Op` default, `PppoeCustomer.CustomerID` type, added missing Company fields
+- `internal/cron/scheduler.go` — **EDIT** — Use `WhatsappGlobalSettings` instead of `WhatsappReminderSetting`
+- `internal/api/handlers/whatsapp_crud.go` — **EDIT** — Removed legacy reminder settings CRUD methods
+- `internal/api/router.go` — **EDIT** — Removed legacy `-ext` reminder settings routes
+- `internal/api/handlers/network_ext.go` — **EDIT** — Added missing fields to `GetRouter` response
+- `internal/cron/genieacs_sync.go` — **EDIT** — Removed unused `jobGenieacsSyncSingle` method
+- `prisma/schema.prisma` — **EDIT** — Added Go-managed columns to prevent schema drift
+- `src/features/network/types.ts` — **EDIT** — Fixed `VpnClient` and `VpnServer` types to match Go structs
+- `src/components/network/SplicePointsSection.tsx` — **EDIT** — TSC fix
+
+---
+
 ## [2.54.30] — 2026-08-10
 ### Fixed — GenieACS Timezone & Telegram Cron Timezone
 - **GenieACS timestamps 7-hour offset** (`src/lib/timezone.ts`, `src/app/admin/genieacs/devices/page.tsx`, `src/app/admin/genieacs/devices/[deviceId]/page.tsx`, `src/app/admin/genieacs/tasks/page.tsx`, `src/app/admin/genieacs/faults/page.tsx`) — GenieACS returns `_lastInform` and task `timestamp` as real UTC ISO 8601 strings (with `Z` suffix). The frontend used `formatWIB()` which treats UTC values as already-WIB (Prisma/MySQL convention), causing no timezone conversion and a 7-hour display offset. Added new `formatFromUTC()` function in `src/lib/timezone.ts` that performs real UTC→system timezone conversion using `date-fns-tz/formatInTimeZone`. Applied to all GenieACS timestamp displays: device list `lastInform`, device detail `lastInform` + `task.timestamp`, tasks page (card + table views), faults page (was raw string, now properly formatted).

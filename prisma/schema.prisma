@@ -128,6 +128,7 @@ model company {
   qrisStaticCode               String?  @db.Text // Kode QRIS statis dari bank/merchant (paste dari aplikasi bank)
   qrisMerchantName             String?  @db.VarChar(191) // Nama merchant untuk display di halaman pembayaran
   qrisEnabled                  Boolean? @default(false) // Enable/disable QRIS mandiri
+  qrisDeviceKey                String?  @db.VarChar(100) // Go-managed: Device key for Android QrisListener app auth
 
   // Referral system settings
   referralEnabled              Boolean? @default(false) // Enable/disable referral system
@@ -243,6 +244,14 @@ model invoice {
   baseAmount       Int?            // Amount before tax
   taxRate          Decimal?        @db.Decimal(5,2) // Tax percentage
   additionalFees   Json?           // [{name: string, amount: number}]
+  
+  // Go-managed columns (added via ALTER TABLE in runMigrations)
+  discountAmount   Int?            // Discount amount
+  discountReason   String?         @db.Text // Reason for discount
+  originalAmount   Int?            // Original amount before discount
+  cancelledAt      DateTime?       // When invoice was cancelled
+  cancelledBy      String?         // Who cancelled the invoice
+  cancelReason     String?         @db.Text // Reason for cancellation
   
   user             pppoeUser?           @relation(fields: [userId], references: [id])
   payments         payment[]
@@ -387,6 +396,7 @@ model payment {
   gatewayId String?
   status  String
   notes   String?         @db.Text
+  paymentMethodEditCount Int @default(0) // Go-managed: track payment method edits
   paidAt  DateTime        @default(now())
   createdAt DateTime      @default(now())
   gateway paymentGateway? @relation(fields: [gatewayId], references: [id])
@@ -490,12 +500,14 @@ model pppoeArea {
   name        String      @unique
   description String?
   isActive    Boolean     @default(true)
+  territoryId String?     // Go-managed: links to territories table
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   users       pppoeUser[]
   customers   pppoeCustomer[]
   registrations registrationRequest[]
 
+  @@index([territoryId])
   @@map("pppoe_areas")
 }
 
@@ -545,6 +557,12 @@ model pppoeUser {
   referralCode         String?    @unique @db.VarChar(10) // Auto-generated referral code
   referredById         String?    @map("referred_by_id") // ID of user who referred this customer
   
+  // Go-managed columns (added via ALTER TABLE in runMigrations)
+  territoryId          String?    // Links to territories table
+  territoryAreaId      String?    // Links to territory_areas table
+  initialPaymentPending Boolean    @default(false) // PSB initial payment pending
+  psbDeadlineAt        DateTime?  // PSB deadline timestamp
+  
   invoices         invoice[]
   manualPayments   manualPayment[]
   tickets          ticket[]
@@ -573,6 +591,9 @@ model pppoeUser {
   @@index([referralCode])
   @@index([referredById])
   @@index([pppoeCustomerId])
+  @@index([territoryId])
+  @@index([territoryAreaId])
+  @@index([psbDeadlineAt])
   // Performance indexes: common lookup patterns
   @@index([phone])               // customer login by phone number
   @@index([expiredAt])           // cron auto-isolate expired users

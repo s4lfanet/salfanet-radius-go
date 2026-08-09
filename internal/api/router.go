@@ -827,8 +827,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Put("/whatsapp/templates/:id", waCrudH.UpdateTemplate) // REST alias: overrides waH.UpdateTemplate (type vs id mismatch)
 	api.Delete("/whatsapp/templates/:id/remove", waCrudH.DeleteTemplate)
 	api.Delete("/whatsapp/templates/:id", waCrudH.DeleteTemplate) // REST alias
-	api.Get("/whatsapp/reminder-settings-ext", waCrudH.GetReminderSettings)
-	api.Put("/whatsapp/reminder-settings-ext", waCrudH.UpdateReminderSettings)
 	api.Post("/whatsapp/send-ext", waCrudH.Send)
 
 	// ─── Batch 7: Network Extended ────────────────────────────────────────────

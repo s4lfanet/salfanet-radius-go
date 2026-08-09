@@ -2,6 +2,7 @@
 package cron
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -233,24 +234,39 @@ func (s *Scheduler) jobSendReminders() {
 	h := s.startHistory("invoice_reminder")
 	defer func() { s.completeHistory(h, recover()) }()
 
-	var settings []models.WhatsappReminderSetting
-	s.db.Where("enabled = true").Find(&settings)
+	var gs models.WhatsappGlobalSettings
+	if err := s.db.First(&gs).Error; err != nil {
+		s.finishHistory(h, "no reminder settings found")
+		return
+	}
 
-	if len(settings) == 0 {
-		s.finishHistory(h, "no active reminder settings")
+	if !gs.Enabled {
+		s.finishHistory(h, "reminder settings disabled")
+		return
+	}
+
+	// Parse reminderDays JSON array, e.g. "[-7, -5, -3, 0]"
+	var daysOffset []int
+	if err := json.Unmarshal([]byte(gs.ReminderDays), &daysOffset); err != nil {
+		s.finishHistory(h, "invalid reminderDays JSON: "+err.Error())
+		return
+	}
+
+	if len(daysOffset) == 0 {
+		s.finishHistory(h, "no reminder days configured")
 		return
 	}
 
 	total := 0
-	for _, setting := range settings {
+	for _, days := range daysOffset {
 		// Calculate target due date
-		target := time.Now().AddDate(0, 0, setting.DaysBefore)
+		target := time.Now().AddDate(0, 0, days)
 		dateStart := time.Date(target.Year(), target.Month(), target.Day(), 0, 0, 0, 0, target.Location())
 		dateEnd := dateStart.Add(24 * time.Hour)
 
 		var invoices []models.Invoice
 		s.db.Where("status = 'PENDING' AND dueDate >= ? AND dueDate < ?", dateStart, dateEnd).
-			Limit(setting.BatchSize).
+			Limit(gs.BatchSize).
 			Find(&invoices)
 
 		for _, inv := range invoices {
@@ -270,8 +286,8 @@ func (s *Scheduler) jobSendReminders() {
 				paymentLink,
 			)
 			total++
-			if setting.BatchDelayMs > 0 {
-				time.Sleep(time.Duration(setting.BatchDelayMs) * time.Millisecond)
+			if gs.BatchDelay > 0 {
+				time.Sleep(time.Duration(gs.BatchDelay) * time.Second)
 			}
 		}
 	}

@@ -618,7 +618,7 @@ export default function SplicePointsSection({
                       placeholder="0.05"
                       className="w-full px-2 py-1.5 text-xs border dark:border-gray-700 rounded dark:bg-gray-800"
                     />
-                    <p className="text-[8px] text-gray-400 mt-1">Target: <=0.1 dB (Fusion), <=0.3 dB (Mech)</p>
+                    <p className="text-[8px] text-gray-400 mt-1">Target: {'<='}0.1 dB (Fusion), {'<='}0.3 dB (Mech)</p>
                   </div>
                   <div>
                     <label className="block text-[9px] font-medium mb-1">Reflectance (dB)</label>
@@ -630,7 +630,7 @@ export default function SplicePointsSection({
                       placeholder="-60"
                       className="w-full px-2 py-1.5 text-xs border dark:border-gray-700 rounded dark:bg-gray-800"
                     />
-                    <p className="text-[8px] text-gray-400 mt-1">Target: <=-60 dB</p>
+                    <p className="text-[8px] text-gray-400 mt-1">Target: {'<='}-60 dB</p>
                   </div>
                 </div>
               </div>

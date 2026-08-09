@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/rs/zerolog/log"
@@ -78,55 +77,6 @@ func (s *Scheduler) jobGenieacsSync() {
 
 	s.finishHistory(h, fmt.Sprintf("Synced %d devices from GenieACS", len(devices)))
 	log.Info().Int("devices", len(devices)).Msg("cron: genieacs_sync done")
-}
-
-// jobGenieacsSyncSingle fetches a single device from GenieACS and updates the cache.
-// Called after a manual refresh to get immediate updated data.
-func (s *Scheduler) jobGenieacsSyncSingle(deviceID string) {
-	var settings models.GenieacsSettings
-	if err := s.db.Where("isActive = ?", true).First(&settings).Error; err != nil {
-		return
-	}
-	if settings.Host == "" {
-		return
-	}
-
-	auth := "Basic " + base64.StdEncoding.EncodeToString([]byte(settings.Username+":"+settings.Password))
-	q, _ := json.Marshal(map[string]string{"_id": deviceID})
-	deviceURL := settings.Host + "/devices/?query=" + url.QueryEscape(string(q)) + "&projection=_id,_lastInform,_lastBoot,_registered,_deviceId,VirtualParameters"
-
-	client := &http.Client{Timeout: 15 * time.Second}
-	req, err := http.NewRequest("GET", deviceURL, nil)
-	if err != nil {
-		log.Error().Err(err).Str("device", deviceID).Msg("genieacs_sync_single: create request failed")
-		return
-	}
-	req.Header.Set("Authorization", auth)
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Error().Err(err).Str("device", deviceID).Msg("genieacs_sync_single: fetch failed")
-		return
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error().Err(err).Str("device", deviceID).Msg("genieacs_sync_single: read body failed")
-		return
-	}
-	if resp.StatusCode != 200 {
-		log.Error().Int("status", resp.StatusCode).Str("device", deviceID).Msg("genieacs_sync_single: bad status")
-		return
-	}
-
-	var rawDevices []map[string]interface{}
-	if err := json.Unmarshal(body, &rawDevices); err != nil || len(rawDevices) == 0 {
-		return
-	}
-
-	mapped := mapGenieacsDevice(rawDevices[0])
-	cache.GetGenieacsCache().SetDevice(deviceID, mapped)
-	log.Info().Str("device", deviceID).Msg("genieacs_sync_single: cache updated")
 }
 
 // mapGenieacsDevice maps a raw GenieACS device to the flat structure the frontend expects.

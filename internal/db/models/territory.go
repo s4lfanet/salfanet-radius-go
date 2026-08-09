@@ -51,7 +51,7 @@ type Settlement struct {
 	ConfirmedAt  *time.Time `gorm:"column:confirmedAt" json:"confirmedAt"`
 	CreatedAt    time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
 
-	Collector *User `gorm:"foreignKey:CollectorID" json:"collector,omitempty"`
+	Collector *AdminUser `gorm:"foreignKey:CollectorID" json:"collector,omitempty"`
 }
 
 func (Settlement) TableName() string { return "settlements" }

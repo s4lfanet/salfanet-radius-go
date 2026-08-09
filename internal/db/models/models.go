@@ -108,7 +108,7 @@ func (PppoeProfile) TableName() string { return "pppoe_profiles" }
 
 type PppoeCustomer struct {
 	ID           string    `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	CustomerID   string    `gorm:"uniqueIndex;type:varchar(20);column:customerId" json:"customerId"`
+	CustomerID   string    `gorm:"uniqueIndex;type:varchar(10);column:customerId" json:"customerId"`
 	Name         string    `json:"name"`
 	Phone        string    `gorm:"index" json:"phone"`
 	Email        *string   `json:"email"`
@@ -240,36 +240,44 @@ func (Router) TableName() string { return "nas" }
 // ─── Company ─────────────────────────────────────────────────────────────────
 
 type Company struct {
-	ID                      string  `gorm:"primaryKey;type:varchar(191)" json:"id"`
-	Name                    string  `json:"name"`
-	Address                 *string `json:"address"`
-	Phone                   *string `json:"phone"`
-	Email                   *string `json:"email"`
-	Logo                    *string `json:"logo"`
-	AdminPhone              *string `gorm:"column:adminPhone" json:"adminPhone"`
-	BaseURL                 *string `gorm:"default:http://localhost:3000;column:baseUrl" json:"baseUrl"`
-	Timezone                *string `gorm:"default:Asia/Jakarta" json:"timezone"`
-	PoweredBy               *string `gorm:"default:SALFANET RADIUS;column:poweredBy" json:"poweredBy"`
-	CustomerIDPrefix        *string `gorm:"type:varchar(10);column:customerIdPrefix" json:"customerIdPrefix"`
-	FooterAdmin             *string `gorm:"type:text;column:footerAdmin" json:"footerAdmin"`
-	FooterCustomer          *string `gorm:"type:text;column:footerCustomer" json:"footerCustomer"`
-	FooterTechnician        *string `gorm:"type:text;column:footerTechnician" json:"footerTechnician"`
-	FooterAgent             *string `gorm:"type:text;column:footerAgent" json:"footerAgent"`
-	InvoiceGenerateDays     *int    `gorm:"default:7;column:invoiceGenerateDays" json:"invoiceGenerateDays"`
-	GracePeriodDays         *int    `gorm:"default:0;column:gracePeriodDays" json:"gracePeriodDays"`
-	IsolationEnabled        *bool   `gorm:"default:true;column:isolationEnabled" json:"isolationEnabled"`
-	IsolationIpPool         *string `gorm:"column:isolationIpPool" json:"isolationIpPool"`
-	IsolationServerIp       *string `gorm:"column:isolationServerIp" json:"isolationServerIp"`
-	IsolationRateLimit      *string `gorm:"column:isolationRateLimit" json:"isolationRateLimit"`
-	IsolationRedirectUrl    *string `gorm:"column:isolationRedirectUrl" json:"isolationRedirectUrl"`
-	IsolationMessage        *string `gorm:"type:text;column:isolationMessage" json:"isolationMessage"`
-	IsolationAllowDns       *bool   `gorm:"default:true;column:isolationAllowDns" json:"isolationAllowDns"`
-	IsolationAllowPayment   *bool   `gorm:"default:true;column:isolationAllowPayment" json:"isolationAllowPayment"`
-	IsolationNotifyWhatsapp *bool   `gorm:"default:false;column:isolationNotifyWhatsapp" json:"isolationNotifyWhatsapp"`
-	IsolationNotifyEmail    *bool   `gorm:"default:false;column:isolationNotifyEmail" json:"isolationNotifyEmail"`
-	BankAccounts            *string `gorm:"type:text;column:bankAccounts" json:"bankAccounts"`
-	ReferralEnabled         *bool   `gorm:"default:false;column:referralEnabled" json:"referralEnabled"`
-	ReferralRewardAmount    *int    `gorm:"default:10000;column:referralRewardAmount" json:"referralRewardAmount"`
+	ID                          string  `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Name                        string  `json:"name"`
+	Address                     *string `json:"address"`
+	Phone                       *string `json:"phone"`
+	Email                       *string `json:"email"`
+	Logo                        *string `json:"logo"`
+	AdminPhone                  *string `gorm:"column:adminPhone" json:"adminPhone"`
+	BaseURL                     *string `gorm:"default:http://localhost:3000;column:baseUrl" json:"baseUrl"`
+	Timezone                    *string `gorm:"default:Asia/Jakarta" json:"timezone"`
+	PoweredBy                   *string `gorm:"default:SALFANET RADIUS;column:poweredBy" json:"poweredBy"`
+	CustomerIDPrefix            *string `gorm:"type:varchar(10);column:customerIdPrefix" json:"customerIdPrefix"`
+	FooterAdmin                 *string `gorm:"type:text;column:footerAdmin" json:"footerAdmin"`
+	FooterCustomer              *string `gorm:"type:text;column:footerCustomer" json:"footerCustomer"`
+	FooterTechnician            *string `gorm:"type:text;column:footerTechnician" json:"footerTechnician"`
+	FooterAgent                 *string `gorm:"type:text;column:footerAgent" json:"footerAgent"`
+	InvoiceGenerateDays         *int    `gorm:"default:7;column:invoiceGenerateDays" json:"invoiceGenerateDays"`
+	GracePeriodDays             *int    `gorm:"default:0;column:gracePeriodDays" json:"gracePeriodDays"`
+	IsolationEnabled            *bool   `gorm:"default:true;column:isolationEnabled" json:"isolationEnabled"`
+	IsolationIpPool             *string `gorm:"column:isolationIpPool" json:"isolationIpPool"`
+	IsolationServerIp           *string `gorm:"column:isolationServerIp" json:"isolationServerIp"`
+	IsolationRateLimit          *string `gorm:"column:isolationRateLimit" json:"isolationRateLimit"`
+	IsolationRedirectUrl        *string `gorm:"column:isolationRedirectUrl" json:"isolationRedirectUrl"`
+	IsolationMessage            *string `gorm:"type:text;column:isolationMessage" json:"isolationMessage"`
+	IsolationAllowDns           *bool   `gorm:"default:true;column:isolationAllowDns" json:"isolationAllowDns"`
+	IsolationAllowPayment       *bool   `gorm:"default:true;column:isolationAllowPayment" json:"isolationAllowPayment"`
+	IsolationNotifyWhatsapp     *bool   `gorm:"default:false;column:isolationNotifyWhatsapp" json:"isolationNotifyWhatsapp"`
+	IsolationNotifyEmail        *bool   `gorm:"default:false;column:isolationNotifyEmail" json:"isolationNotifyEmail"`
+	IsolationWhatsappTemplateId *string `gorm:"type:varchar(191);column:isolationWhatsappTemplateId" json:"isolationWhatsappTemplateId"`
+	IsolationEmailTemplateId    *string `gorm:"type:varchar(191);column:isolationEmailTemplateId" json:"isolationEmailTemplateId"`
+	IsolationHtmlTemplateId     *string `gorm:"type:varchar(191);column:isolationHtmlTemplateId" json:"isolationHtmlTemplateId"`
+	PppoeRenewalAnytime         *bool   `gorm:"default:false;column:pppoeRenewalAnytime" json:"pppoeRenewalAnytime"`
+	PppoeRenewalDaysBefore      *int    `gorm:"default:7;column:pppoeRenewalDaysBefore" json:"pppoeRenewalDaysBefore"`
+	BankAccounts                *string `gorm:"type:text;column:bankAccounts" json:"bankAccounts"`
+	ReferralEnabled             *bool   `gorm:"default:false;column:referralEnabled" json:"referralEnabled"`
+	ReferralRewardAmount        *int    `gorm:"default:10000;column:referralRewardAmount" json:"referralRewardAmount"`
+	ReferralRewardType          *string `gorm:"default:FIRST_PAYMENT;column:referralRewardType" json:"referralRewardType"`
+	ReferralRewardBoth          *bool   `gorm:"default:false;column:referralRewardBoth" json:"referralRewardBoth"`
+	ReferralReferredAmount      *int    `gorm:"default:0;column:referralReferredAmount" json:"referralReferredAmount"`
 	// QRIS Mandiri — konversi QRIS statis dari bank ke dinamis
 	QrisStaticCode   *string `gorm:"type:longtext;column:qrisStaticCode" json:"qrisStaticCode"`
 	QrisMerchantName *string `gorm:"type:varchar(191);column:qrisMerchantName" json:"qrisMerchantName"`
@@ -325,7 +333,7 @@ type Radcheck struct {
 	ID        int    `gorm:"primaryKey;autoIncrement" json:"id"`
 	Username  string `gorm:"type:varchar(64);index" json:"username"`
 	Attribute string `gorm:"type:varchar(64)" json:"attribute"`
-	Op        string `gorm:"type:char(2);default::=" json:"op"`
+	Op        string `gorm:"type:char(2);default:=" json:"op"`
 	Value     string `gorm:"type:varchar(253)" json:"value"`
 }
 

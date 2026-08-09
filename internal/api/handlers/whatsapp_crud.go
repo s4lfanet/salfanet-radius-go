@@ -235,36 +235,6 @@ func (h *WhatsappCrudHandler) DeleteTemplate(c fiber.Ctx) error {
 }
 
 // ─── Reminder Settings ────────────────────────────────────────────────────────
-
-// GET /api/whatsapp/reminder-settings
-func (h *WhatsappCrudHandler) GetReminderSettings(c fiber.Ctx) error {
-	var settings []models.WhatsappReminderSetting
-	h.db.Order("daysBefore desc").Find(&settings)
-	return c.JSON(fiber.Map{"success": true, "settings": settings})
-}
-
-// PUT /api/whatsapp/reminder-settings
-func (h *WhatsappCrudHandler) UpdateReminderSettings(c fiber.Ctx) error {
-	var body []models.WhatsappReminderSetting
-	if err := c.Bind().JSON(&body); err != nil {
-		// Try single object
-		var single models.WhatsappReminderSetting
-		if err2 := c.Bind().JSON(&single); err2 != nil {
-			return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
-		}
-		body = []models.WhatsappReminderSetting{single}
-	}
-	for _, s := range body {
-		if s.ID == "" {
-			s.ID = generateID()
-			s.CreatedAt = time.Now()
-			h.db.Create(&s)
-		} else {
-			s.UpdatedAt = time.Now()
-			h.db.Model(&s).Updates(s)
-		}
-	}
-	var settings []models.WhatsappReminderSetting
-	h.db.Order("daysBefore desc").Find(&settings)
-	return c.JSON(fiber.Map{"success": true, "settings": settings})
-}
+// NOTE: Legacy per-day reminder settings CRUD removed.
+// Use the main /api/whatsapp/reminder-settings endpoints in WhatsappHandler instead,
+// which correctly uses WhatsappGlobalSettings (single-row config matching Prisma schema).
