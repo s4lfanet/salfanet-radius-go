@@ -2,7 +2,7 @@
 
 Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with FreeRADIUS integration supporting PPPoE and Hotspot authentication.
 
-> **Latest:** v2.54.29 — WiFi config audit (security mapping fix for Huawei ONT), bulk delete faults, Redis cache implementation (HybridCache with memory fallback). (Aug 9, 2026)
+> **Latest:** v2.54.30 — GenieACS timezone fix (formatFromUTC for real UTC timestamps), auto-sync cronjob + in-memory cache for device data, telegram cron timezone fix. (Aug 10, 2026)
 
 ---
 
@@ -26,9 +26,9 @@ Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with Free
 | **Agent/Reseller** | Balance-based voucher generation, commission tracking, sales stats |
 | **Financial** | Income/expense tracking with categories, keuangan reconciliation |
 | **Network (FTTH)** | OLT/ODC/ODP management, customer port assignment, network map, distance calculation |
-| **GenieACS TR-069** | CPE/ONT management, device list with online/offline status (60-min threshold), WiFi config (SSID/password), device parameters (flattened tree), presets, provisions, virtual parameters, faults, files, config, tasks, auto-provision |
+| **GenieACS TR-069** | CPE/ONT management, device list with online/offline status (60-min threshold), auto-sync every 5 min with in-memory cache, WiFi config (SSID/password), device parameters (flattened tree), presets, provisions, virtual parameters, faults, files, config, tasks, auto-provision |
 | **Isolation** | Auto-isolate expired customers, customizable WhatsApp/Email/HTML landing page templates |
-| **Cron Jobs** | 16 automated background jobs (tsx runner via PM2 fork), history, distributed locking, manual trigger |
+| **Cron Jobs** | 20 automated background jobs (tsx runner via PM2 fork), history, distributed locking, manual trigger, GenieACS auto-sync |
 | **Roles & Permissions** | 53 permissions, 6 roles (SUPER_ADMIN/FINANCE/CUSTOMER_SERVICE/TECHNICIAN/MARKETING/VIEWER/COLLECTOR), 5 portals (Admin/Customer/Agent/Technician + SuperAdmin) |
 | **Activity Log** | Audit trail with auto-cleanup (30 days) |
 | **Security** | Session timeout 30 min, idle warning, RBAC, HTTPS/SSL |
