@@ -1096,6 +1096,42 @@ func (h *GenieacsHandler) DeleteFault(c fiber.Ctx) error {
 	return c.Status(status).JSON(fiber.Map{"success": status < 400})
 }
 
+// POST /api/genieacs/faults/bulk-delete
+func (h *GenieacsHandler) DeleteFaultsBulk(c fiber.Ctx) error {
+	var body struct {
+		IDs []string `json:"ids"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "Invalid request body"})
+	}
+	if len(body.IDs) == 0 {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "ids array required"})
+	}
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	deleted := 0
+	failed := 0
+	for _, fid := range body.IDs {
+		if fid == "" {
+			continue
+		}
+		status, err := h.proxyDELETE(host+"/faults/"+url.PathEscape(fid), auth)
+		if err != nil || status >= 400 {
+			failed++
+		} else {
+			deleted++
+		}
+	}
+	return c.JSON(fiber.Map{
+		"success": failed == 0,
+		"deleted": deleted,
+		"failed":  failed,
+		"message": fmt.Sprintf("Deleted %d fault(s)", deleted),
+	})
+}
+
 // ─── Sync ─────────────────────────────────────────────────────────────────────
 
 // POST /api/genieacs/sync

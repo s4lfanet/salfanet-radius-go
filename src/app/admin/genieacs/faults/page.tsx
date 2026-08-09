@@ -18,6 +18,8 @@ export default function GenieACSFaultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState('');
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -57,6 +59,45 @@ export default function GenieACSFaultsPage() {
     }
   };
 
+  const toggleSelect = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    const allIds = items.filter((f) => f._id).map((f) => f._id!);
+    if (selected.size === allIds.length && allIds.length > 0) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(allIds));
+    }
+  };
+
+  const bulkDelete = async () => {
+    if (selected.size === 0) return;
+    if (!confirm(`Delete ${selected.size} fault(s)?`)) return;
+    setBulkLoading(true);
+    try {
+      const res = await fetch('/api/genieacs/faults/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selected) }),
+      });
+      const json = await res.json();
+      if (!json.success && json.deleted === 0) throw new Error(json.error || 'Bulk delete failed');
+      setSelected(new Set());
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 space-y-4">
       <div className="flex items-center justify-between flex-wrap gap-2">
@@ -67,6 +108,16 @@ export default function GenieACSFaultsPage() {
           <p className="text-sm text-slate-500">Daftar fault provisioning per device</p>
         </div>
         <div className="flex gap-2">
+          {selected.size > 0 && (
+            <button
+              onClick={bulkDelete}
+              disabled={bulkLoading}
+              className="px-3 py-2 text-sm border rounded-md flex items-center gap-2 text-red-600 border-red-300 hover:bg-red-50 dark:border-red-800 dark:hover:bg-red-900/20"
+            >
+              {bulkLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+              Delete {selected.size} selected
+            </button>
+          )}
           <input
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -90,6 +141,14 @@ export default function GenieACSFaultsPage() {
         <table className="w-full text-sm">
           <thead className="bg-slate-100 dark:bg-slate-800">
             <tr>
+              <th className="text-left px-3 py-2 w-10">
+                <input
+                  type="checkbox"
+                  checked={selected.size > 0 && selected.size === items.filter((f) => f._id).length}
+                  onChange={toggleSelectAll}
+                  className="cursor-pointer"
+                />
+              </th>
               <th className="text-left px-3 py-2">Device</th>
               <th className="text-left px-3 py-2">Channel</th>
               <th className="text-left px-3 py-2">Code</th>
@@ -102,19 +161,29 @@ export default function GenieACSFaultsPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="text-center py-6">
+                <td colSpan={8} className="text-center py-6">
                   <Loader2 className="w-5 h-5 inline animate-spin" />
                 </td>
               </tr>
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={7} className="text-center py-6 text-slate-500">
+                <td colSpan={8} className="text-center py-6 text-slate-500">
                   No faults
                 </td>
               </tr>
             ) : (
               items.map((f) => (
                 <tr key={f._id ?? `${f.device}-${f.channel}`} className="border-t">
+                  <td className="px-3 py-2">
+                    {f._id && (
+                      <input
+                        type="checkbox"
+                        checked={selected.has(f._id)}
+                        onChange={() => toggleSelect(f._id!)}
+                        className="cursor-pointer"
+                      />
+                    )}
+                  </td>
                   <td className="px-3 py-2 font-mono text-xs">{f.device ?? '-'}</td>
                   <td className="px-3 py-2 text-xs">{f.channel ?? '-'}</td>
                   <td className="px-3 py-2 text-xs">{f.code}</td>

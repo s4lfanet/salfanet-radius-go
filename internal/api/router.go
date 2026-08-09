@@ -1034,6 +1034,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	genieacs.Get("/faults", genieacsH.ListFaults)
 	genieacs.Delete("/faults", genieacsH.DeleteFault)
 	genieacs.Delete("/faults/:faultId", genieacsH.DeleteFault)
+	genieacs.Post("/faults/bulk-delete", genieacsH.DeleteFaultsBulk)
 	// Config
 	genieacs.Get("/config", genieacsH.ListConfig)
 	genieacs.Put("/config", genieacsH.UpdateConfig)
