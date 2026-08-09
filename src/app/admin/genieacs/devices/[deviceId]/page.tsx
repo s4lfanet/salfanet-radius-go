@@ -136,7 +136,13 @@ export default function DeviceDetailPage() {
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j.error ?? `HTTP ${res.status}`);
-      setSuccess(`${label} queued successfully.`);
+      if (j.taskExecuted === true) {
+        setSuccess(`${label} executed successfully.`);
+      } else if (j.taskExecuted === false) {
+        setSuccess(`${label} queued. Device will process on next inform.`);
+      } else {
+        setSuccess(`${label} queued successfully.`);
+      }
       load();
     } catch (e) {
       setError((e as Error).message);

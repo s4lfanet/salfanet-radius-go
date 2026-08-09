@@ -290,8 +290,9 @@ export default function GenieACSDevicesPage() {
       const response = await fetch(`/api/settings/genieacs/devices/${encodeURIComponent(deviceId)}/refresh`, { method: 'POST' });
       const data = await response.json();
       if (response.ok && data.success) {
-        addToast({ type: 'success', title: t('common.success'), description: t('genieacs.refreshTaskSent'), duration: 2000 });
-        setTimeout(() => handleRefresh(), 2000);
+        const msg = data.taskExecuted === true ? t('genieacs.refreshTaskSent') : (data.message || t('genieacs.refreshTaskSent'));
+        addToast({ type: 'success', title: t('common.success'), description: msg, duration: 3000 });
+        setTimeout(() => handleRefresh(), 1000);
       } else {
         throw new Error(data.error || t('genieacs.failedSendTask'));
       }

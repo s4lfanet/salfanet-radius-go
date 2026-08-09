@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/rs/zerolog/log"
@@ -279,19 +280,55 @@ func (h *GenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
 	}
 	log.Info().Str("device", deviceID).Str("task", "refresh").Msg("genieacs: refresh task queued")
-	// Send connection request to trigger immediate task execution
-	go func() {
-		crURL := host + "/devices/" + url.PathEscape(deviceID) + "/tasks?connection_request"
-		_, crStatus, crErr := h.proxyPOST(crURL, auth, nil)
-		if crErr != nil {
-			log.Error().Err(crErr).Str("device", deviceID).Msg("genieacs: connection request failed")
-		} else if crStatus >= 400 {
-			log.Error().Int("status", crStatus).Str("device", deviceID).Msg("genieacs: connection request error")
-		} else {
-			log.Info().Str("device", deviceID).Msg("genieacs: connection request sent")
+
+	// Extract task ID from result
+	taskID := ""
+	if m, ok := result.(map[string]interface{}); ok {
+		if id, ok := m["_id"].(string); ok {
+			taskID = id
 		}
-	}()
-	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
+	}
+
+	// Send connection request synchronously to trigger immediate task execution
+	crURL := host + "/devices/" + url.PathEscape(deviceID) + "/tasks?connection_request"
+	_, crStatus, crErr := h.proxyPOST(crURL, auth, nil)
+	if crErr != nil {
+		log.Error().Err(crErr).Str("device", deviceID).Msg("genieacs: connection request failed")
+	} else if crStatus >= 400 {
+		log.Error().Int("status", crStatus).Str("device", deviceID).Msg("genieacs: connection request error")
+	} else {
+		log.Info().Str("device", deviceID).Msg("genieacs: connection request sent")
+	}
+
+	// Poll task status for up to 20 seconds to check if task was executed
+	taskExecuted := false
+	if taskID != "" {
+		for i := 0; i < 10; i++ {
+			time.Sleep(2 * time.Second)
+			tasksResult, _, _ := h.proxyGET(host+"/tasks", auth)
+			if arr, ok := tasksResult.([]interface{}); ok {
+				found := false
+				for _, t := range arr {
+					if tm, ok := t.(map[string]interface{}); ok {
+						if id, ok := tm["_id"].(string); ok && id == taskID {
+							found = true
+							break
+						}
+					}
+				}
+				if !found {
+					taskExecuted = true
+					break
+				}
+			}
+		}
+	}
+
+	if taskExecuted {
+		log.Info().Str("device", deviceID).Msg("genieacs: refresh task executed successfully")
+		return c.Status(status).JSON(fiber.Map{"success": true, "data": result, "taskExecuted": true})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result, "taskExecuted": false, "message": "Task queued, device will process on next inform"})
 }
 
 // POST /api/genieacs/devices/:deviceId/factory-reset
