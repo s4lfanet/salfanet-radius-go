@@ -22,10 +22,8 @@ interface ParameterConfig {
 }
 
 interface VirtualParameter {
-  id: string;
-  name: string;
-  parameter: string;
-  isActive: boolean;
+  _id: string;
+  script: string;
 }
 
 export default function ParameterConfigPage() {
@@ -51,7 +49,7 @@ export default function ParameterConfigPage() {
       const response = await fetch('/api/settings/genieacs/virtual-parameters');
       const data = await response.json();
       if (data.success) {
-        setVirtualParameters((data.data ?? []).filter((vp: VirtualParameter) => vp.isActive));
+        setVirtualParameters(data.data ?? []);
       }
     } catch (error) {
       console.error('Error fetching virtual parameters:', error);
@@ -716,8 +714,8 @@ export default function ParameterConfigPage() {
                   >
                     <option value="" className="dark:bg-input">{t('genieacs.selectToAdd')}</option>
                     {virtualParameters.map((vp) => (
-                      <option key={vp.id} value={vp.parameter}>
-                        {vp.name} ({vp.parameter})
+                      <option key={vp._id} value={`VirtualParameters.${vp._id}`}>
+                        {vp._id}
                       </option>
                     ))}
                   </select>
