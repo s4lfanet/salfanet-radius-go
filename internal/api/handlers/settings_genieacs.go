@@ -106,6 +106,50 @@ func (h *SettingsGenieacsHandler) proxyPOST(targetURL, authHeader string, payloa
 	return result, resp.StatusCode, nil
 }
 
+// proxyPUT sends a PUT to GenieACS with JSON body
+func (h *SettingsGenieacsHandler) proxyPUT(targetURL, authHeader string, payload interface{}) (interface{}, int, error) {
+	b, err := json.Marshal(payload)
+	if err != nil {
+		return nil, 500, err
+	}
+	req, err := http.NewRequest("PUT", targetURL, strings.NewReader(string(b)))
+	if err != nil {
+		return nil, 500, err
+	}
+	req.Header.Set("Authorization", authHeader)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return nil, 502, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 500, err
+	}
+	var result interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return string(body), resp.StatusCode, nil
+	}
+	return result, resp.StatusCode, nil
+}
+
+// proxyDELETE sends a DELETE to GenieACS
+func (h *SettingsGenieacsHandler) proxyDELETE(targetURL, authHeader string) (int, error) {
+	req, err := http.NewRequest("DELETE", targetURL, nil)
+	if err != nil {
+		return 500, err
+	}
+	req.Header.Set("Authorization", authHeader)
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return 502, err
+	}
+	defer resp.Body.Close()
+	io.ReadAll(resp.Body)
+	return resp.StatusCode, nil
+}
+
 // vpValue extracts _value from a VirtualParameters entry (which may be a dict or a raw value)
 func vpValue(vp map[string]interface{}, key string) string {
 	if vp == nil {
@@ -647,14 +691,121 @@ func (h *SettingsGenieacsHandler) ResetParameterDisplay(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "message": "reset to defaults"})
 }
 
-// GET /api/settings/genieacs/virtual-parameters
+// GET /api/settings/genieacs/virtual-parameters — fetch from GenieACS
 func (h *SettingsGenieacsHandler) ListVirtualParameters(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "data": []fiber.Map{}})
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	result, status, err := h.proxyGET(host+"/virtual-parameters", auth)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	items, _ := result.([]interface{})
+	if items == nil {
+		items = []interface{}{}
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
 }
 
-// GET /api/settings/genieacs/virtual-parameters/:id
+// GET /api/settings/genieacs/virtual-parameters/:id — fetch single VP from GenieACS
 func (h *SettingsGenieacsHandler) GetVirtualParameter(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "parameter": nil})
+	vpID := c.Params("id")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	q := `[["_id","=","` + vpID + `"]]`
+	result, status, err := h.proxyGET(host+"/virtual-parameters?query="+url.QueryEscape(q), auth)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	items, ok := result.([]interface{})
+	if !ok || len(items) == 0 {
+		return c.Status(404).JSON(fiber.Map{"success": false, "error": "virtual parameter not found"})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": items[0]})
+}
+
+// POST /api/settings/genieacs/virtual-parameters — create VP in GenieACS
+func (h *SettingsGenieacsHandler) CreateVirtualParameter(c fiber.Ctx) error {
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	var body map[string]interface{}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "invalid JSON body"})
+	}
+	// Map frontend fields to GenieACS format
+	genieBody := fiber.Map{}
+	if name, ok := body["name"].(string); ok {
+		genieBody["_id"] = name
+	}
+	if expr, ok := body["expression"].(string); ok {
+		genieBody["script"] = expr
+	}
+	// Also pass through any _id or script fields directly
+	if id, ok := body["_id"].(string); ok {
+		genieBody["_id"] = id
+	}
+	if script, ok := body["script"].(string); ok {
+		genieBody["script"] = script
+	}
+	result, status, err := h.proxyPOST(host+"/virtual-parameters", auth, genieBody)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	if status >= 400 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
+}
+
+// PUT /api/settings/genieacs/virtual-parameters/:id — update VP in GenieACS
+func (h *SettingsGenieacsHandler) UpdateVirtualParameter(c fiber.Ctx) error {
+	vpID := c.Params("id")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	var body map[string]interface{}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "invalid JSON body"})
+	}
+	// Map frontend fields to GenieACS format
+	genieBody := fiber.Map{}
+	if expr, ok := body["expression"].(string); ok {
+		genieBody["script"] = expr
+	}
+	if script, ok := body["script"].(string); ok {
+		genieBody["script"] = script
+	}
+	if name, ok := body["name"].(string); ok && name != vpID {
+		genieBody["_id"] = name
+	}
+	result, status, err := h.proxyPUT(host+"/virtual-parameters/"+url.PathEscape(vpID), auth, genieBody)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	if status >= 400 {
+		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status), "details": result})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": true, "data": result})
+}
+
+// DELETE /api/settings/genieacs/virtual-parameters/:id — delete VP from GenieACS
+func (h *SettingsGenieacsHandler) DeleteVirtualParameter(c fiber.Ctx) error {
+	vpID := c.Params("id")
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		return h.notConfiguredErr(c)
+	}
+	status, err := h.proxyDELETE(host+"/virtual-parameters/"+url.PathEscape(vpID), auth)
+	if err != nil {
+		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	return c.Status(status).JSON(fiber.Map{"success": status < 400})
 }
 
 // ─── Isolation Templates ──────────────────────────────────────────────────────

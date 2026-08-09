@@ -770,6 +770,9 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Post("/settings/genieacs/parameter-display/reset", settingsGnH.ResetParameterDisplay)
 	api.Get("/settings/genieacs/virtual-parameters", settingsGnH.ListVirtualParameters)
 	api.Get("/settings/genieacs/virtual-parameters/:id", settingsGnH.GetVirtualParameter)
+	api.Post("/settings/genieacs/virtual-parameters", settingsGnH.CreateVirtualParameter)
+	api.Put("/settings/genieacs/virtual-parameters/:id", settingsGnH.UpdateVirtualParameter)
+	api.Delete("/settings/genieacs/virtual-parameters/:id", settingsGnH.DeleteVirtualParameter)
 
 	// Isolation templates
 	api.Get("/settings/isolation/templates", settingsGnH.ListIsolationTemplates)
