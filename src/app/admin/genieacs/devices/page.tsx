@@ -304,6 +304,7 @@ export default function GenieACSDevicesPage() {
 
   const handleViewDetail = async (deviceId: string) => {
     setLoadingDetail(true);
+    setSelectedDevice(null);
     setShowDetailModal(true);
     try {
       const response = await fetch(`/api/settings/genieacs/devices/${encodeURIComponent(deviceId)}/detail`);
