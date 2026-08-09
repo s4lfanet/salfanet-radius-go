@@ -490,35 +490,58 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 							ipAddr := getParamVal(h, "IPAddress")
 							macAddr := getParamVal(h, "MACAddress")
 							active := getParamVal(h, "Active")
-							l2if := getParamVal(h, "Layer2Interface")
 							ifType := getParamVal(h, "InterfaceType")
+							l2if := getParamVal(h, "Layer2Interface")
+							rssi := getParamVal(h, "X_HW_RSI")
+							if rssi == "" {
+								rssi = getParamVal(h, "X_HW_RSSI")
+							}
 							if hostName == "" && macAddr == "" {
 								continue
 							}
-							// Determine WiFi vs LAN from Layer2Interface
-							// WiFi hosts have "WLANConfiguration" in their Layer2Interface path
+							// Determine WiFi vs LAN from InterfaceType
+							// Huawei devices don't populate Layer2Interface._value
+							isWifi := strings.Contains(strings.ToUpper(ifType), "802.11") || strings.Contains(strings.ToUpper(ifType), "WIFI")
 							ssidIndex := 0
-							if strings.Contains(l2if, "WLANConfiguration.") {
-								// Extract WLAN index from path like "InternetGatewayDevice.LANDevice.1.WLANConfiguration.2"
-								parts := strings.Split(l2if, "WLANConfiguration.")
-								if len(parts) > 1 {
-									idxStr := parts[len(parts)-1]
-									if idx := strings.IndexByte(idxStr, '.'); idx > 0 {
-										idxStr = idxStr[:idx]
+							if isWifi {
+								// Try to extract WLAN index from Layer2Interface path
+								if strings.Contains(l2if, "WLANConfiguration.") {
+									parts := strings.Split(l2if, "WLANConfiguration.")
+									if len(parts) > 1 {
+										idxStr := parts[len(parts)-1]
+										if idx := strings.IndexByte(idxStr, '.'); idx > 0 {
+											idxStr = idxStr[:idx]
+										}
+										if n, err := strconv.Atoi(idxStr); err == nil {
+											ssidIndex = n
+										}
 									}
-									if n, err := strconv.Atoi(idxStr); err == nil {
-										ssidIndex = n
-									}
+								}
+								// If no ssidIndex from Layer2Interface, default to 1 for WiFi
+								if ssidIndex == 0 {
+									ssidIndex = 1
+								}
+							}
+							// Active may not have _value on some devices; default to true if host has IP
+							isActive := active == "true" || active == "True" || active == "1"
+							if active == "" && ipAddr != "" {
+								isActive = true
+							}
+							rssiInt := 0
+							if rssi != "" {
+								if n, err := strconv.Atoi(rssi); err == nil {
+									rssiInt = n
 								}
 							}
 							connectedDevices = append(connectedDevices, fiber.Map{
 								"hostName":        hostName,
 								"ipAddress":       ipAddr,
 								"macAddress":      macAddr,
-								"active":          active == "true" || active == "True" || active == "1",
+								"active":          isActive,
 								"interfaceType":   ifType,
 								"layer2Interface": l2if,
 								"ssidIndex":       ssidIndex,
+								"rssi":            rssiInt,
 							})
 							totalConnected++
 						}
