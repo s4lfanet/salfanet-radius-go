@@ -223,7 +223,8 @@ stop_all_services() {
     pm2 delete all 2>/dev/null || true
     pm2 kill 2>/dev/null || true
     
-    if id "$APP_USER" &>/dev/null; then
+    # Only try per-user PM2 cleanup for non-root users (root PM2 already killed above)
+    if [ "$APP_USER" != "root" ] && id "$APP_USER" &>/dev/null; then
         sudo su - $APP_USER -c 'pm2 delete all' 2>/dev/null || true
         sudo su - $APP_USER -c 'pm2 kill' 2>/dev/null || true
     fi
