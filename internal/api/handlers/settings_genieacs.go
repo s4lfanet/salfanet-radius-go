@@ -342,7 +342,17 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 	vp, _ := dev["VirtualParameters"].(map[string]interface{})
 	deviceIDObj, _ := dev["_deviceId"].(map[string]interface{})
 
-	// Extra fields for detail view
+	// Helper to get _value from a parameter object
+	getParamVal := func(obj map[string]interface{}, key string) string {
+		if p, ok := obj[key].(map[string]interface{}); ok {
+			if v, ok := p["_value"]; ok {
+				return fmt.Sprintf("%v", v)
+			}
+		}
+		return ""
+	}
+
+	// Extra fields for detail view (defaults)
 	base["txPower"] = ""
 	base["macAddress"] = vpValue(vp, "PonMac")
 	base["softwareVersion"] = ""
@@ -366,9 +376,235 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 	base["isDualBand"] = false
 	base["tags"] = []string{}
 
-	// Try to extract from InternetGatewayDevice tree for deeper info
+	// Parse InternetGatewayDevice tree for detailed info
 	if igd, ok := dev["InternetGatewayDevice"].(map[string]interface{}); ok {
-		base["_raw"] = igd // pass raw tree for frontend to parse if needed
+		base["_raw"] = igd
+
+		// DeviceInfo
+		if di, ok := igd["DeviceInfo"].(map[string]interface{}); ok {
+			if v := getParamVal(di, "SoftwareVersion"); v != "" {
+				base["softwareVersion"] = v
+			}
+			if v := getParamVal(di, "HardwareVersion"); v != "" {
+				base["hardwareVersion"] = v
+			}
+			if v := getParamVal(di, "MACAddress"); v != "" {
+				base["macAddress"] = v
+			}
+		}
+
+		// LANDevice
+		if lan, ok := igd["LANDevice"].(map[string]interface{}); ok {
+			if lan1, ok := lan["1"].(map[string]interface{}); ok {
+				// LANHostConfigConfig
+				if hc, ok := lan1["LANHostConfigConfig"].(map[string]interface{}); ok {
+					base["lanIP"] = getParamVal(hc, "IPInterfaceIPAddress")
+					base["lanSubnet"] = getParamVal(hc, "IPInterfaceSubnetMask")
+					base["dhcpEnabled"] = getParamVal(hc, "DHCPServerEnable")
+					base["dhcpStart"] = getParamVal(hc, "MinAddress")
+					base["dhcpEnd"] = getParamVal(hc, "MaxAddress")
+				}
+
+				// WLANConfiguration
+				if wlan, ok := lan1["WLANConfiguration"].(map[string]interface{}); ok {
+					wlanConfigs := []interface{}{}
+					for i := 1; i <= 8; i++ {
+						wl, ok := wlan[fmt.Sprintf("%d", i)].(map[string]interface{})
+						if !ok {
+							continue
+						}
+						ssid := getParamVal(wl, "SSID")
+						if ssid == "" {
+							continue
+						}
+						enable := getParamVal(wl, "Enable")
+						standard := getParamVal(wl, "Standard")
+						channel := getParamVal(wl, "Channel")
+						beaconType := getParamVal(wl, "BeaconType")
+						authMode := getParamVal(wl, "IEEE11iAuthenticationMode")
+						encMode := getParamVal(wl, "IEEE11iEncryptionModes")
+						keyPass := getParamVal(wl, "KeyPassphrase")
+						totalAssoc := getParamVal(wl, "TotalAssociations")
+						assocInt := 0
+						if totalAssoc != "" {
+							if n, err := strconv.Atoi(totalAssoc); err == nil {
+								assocInt = n
+							}
+						}
+						// Determine band from standard
+						band := "2.4GHz"
+						if strings.Contains(strings.ToUpper(standard), "5") || strings.Contains(strings.ToUpper(standard), "AC") || strings.Contains(strings.ToUpper(standard), "AX") {
+							band = "5GHz"
+						}
+						// Determine security display
+						security := beaconType
+						if authMode != "" {
+							security = authMode
+						}
+						wlanConfigs = append(wlanConfigs, fiber.Map{
+							"index":             i,
+							"ssid":              ssid,
+							"enabled":           enable == "true" || enable == "True" || enable == "1",
+							"channel":           channel,
+							"standard":          standard,
+							"security":          security,
+							"password":          keyPass,
+							"band":              band,
+							"beaconType":        beaconType,
+							"authMode":          authMode,
+							"encryptionMode":    encMode,
+							"totalAssociations": assocInt,
+						})
+					}
+					base["wlanConfigs"] = wlanConfigs
+					// Check dual band
+					bands := map[string]bool{}
+					for _, wc := range wlanConfigs {
+						if wcm, ok := wc.(fiber.Map); ok {
+							if b, ok := wcm["band"].(string); ok {
+								bands[b] = true
+							}
+						}
+					}
+					base["isDualBand"] = len(bands) > 1
+				}
+
+				// Hosts (connected devices)
+				if hosts, ok := lan1["Hosts"].(map[string]interface{}); ok {
+					if host, ok := hosts["Host"].(map[string]interface{}); ok {
+						connectedDevices := []interface{}{}
+						totalConnected := 0
+						for i := 1; i <= 64; i++ {
+							h, ok := host[fmt.Sprintf("%d", i)].(map[string]interface{})
+							if !ok {
+								continue
+							}
+							hostName := getParamVal(h, "HostName")
+							ipAddr := getParamVal(h, "IPAddress")
+							macAddr := getParamVal(h, "MACAddress")
+							active := getParamVal(h, "Active")
+							l2if := getParamVal(h, "Layer2Interface")
+							ifType := getParamVal(h, "InterfaceType")
+							if hostName == "" && macAddr == "" {
+								continue
+							}
+							connectedDevices = append(connectedDevices, fiber.Map{
+								"hostName":        hostName,
+								"ipAddress":       ipAddr,
+								"macAddress":      macAddr,
+								"active":          active == "true" || active == "True" || active == "1",
+								"interfaceType":   ifType,
+								"layer2Interface": l2if,
+							})
+							totalConnected++
+						}
+						base["connectedDevices"] = connectedDevices
+						base["totalConnected"] = totalConnected
+					}
+				}
+			}
+		}
+
+		// WANDevice
+		if wan, ok := igd["WANDevice"].(map[string]interface{}); ok {
+			wanConnections := []interface{}{}
+			for wi := 1; wi <= 4; wi++ {
+				wd, ok := wan[fmt.Sprintf("%d", wi)].(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if wanc, ok := wd["WANConnectionDevice"].(map[string]interface{}); ok {
+					for wci := 1; wci <= 4; wci++ {
+						wcd, ok := wanc[fmt.Sprintf("%d", wci)].(map[string]interface{})
+						if !ok {
+							continue
+						}
+
+						// WANPPPConnection
+						if ppp, ok := wcd["WANPPPConnection"].(map[string]interface{}); ok {
+							for ci := 1; ci <= 4; ci++ {
+								conn, ok := ppp[fmt.Sprintf("%d", ci)].(map[string]interface{})
+								if !ok {
+									continue
+								}
+								username := getParamVal(conn, "Username")
+								status := getParamVal(conn, "ConnectionStatus")
+								if username == "" && status != "Connected" {
+									continue
+								}
+								enable := getParamVal(conn, "Enable")
+								wanConnections = append(wanConnections, fiber.Map{
+									"wanDeviceIndex":           wi,
+									"wanConnectionDeviceIndex": wci,
+									"connectionIndex":          ci,
+									"connectionType":           "PPPoE",
+									"path":                     fmt.Sprintf("InternetGatewayDevice.WANDevice.%d.WANConnectionDevice.%d.WANPPPConnection.%d", wi, wci, ci),
+									"name":                     fmt.Sprintf("WANPPPConnection.%d", ci),
+									"enable":                   enable == "true" || enable == "True" || enable == "1",
+									"connectionStatus":         status,
+									"externalIPAddress":        getParamVal(conn, "ExternalIPAddress"),
+									"username":                 username,
+									"password":                 "",
+									"macAddress":               getParamVal(conn, "MACAddress"),
+									"dnsServers":               getParamVal(conn, "DNSServers"),
+									"vlanId":                   getParamVal(conn, "X_HW_VLAN"),
+									"serviceList":              getParamVal(conn, "X_HW_SERVICELIST"),
+								})
+							}
+						}
+
+						// WANIPConnection
+						if ipc, ok := wcd["WANIPConnection"].(map[string]interface{}); ok {
+							for ci := 1; ci <= 4; ci++ {
+								conn, ok := ipc[fmt.Sprintf("%d", ci)].(map[string]interface{})
+								if !ok {
+									continue
+								}
+								enable := getParamVal(conn, "Enable")
+								status := getParamVal(conn, "ConnectionStatus")
+								ipAddr := getParamVal(conn, "ExternalIPAddress")
+								if status != "Connected" && ipAddr == "" {
+									continue
+								}
+								wanConnections = append(wanConnections, fiber.Map{
+									"wanDeviceIndex":           wi,
+									"wanConnectionDeviceIndex": wci,
+									"connectionIndex":          ci,
+									"connectionType":           "IP",
+									"path":                     fmt.Sprintf("InternetGatewayDevice.WANDevice.%d.WANConnectionDevice.%d.WANIPConnection.%d", wi, wci, ci),
+									"name":                     fmt.Sprintf("WANIPConnection.%d", ci),
+									"enable":                   enable == "true" || enable == "True" || enable == "1",
+									"connectionStatus":         status,
+									"externalIPAddress":        ipAddr,
+									"username":                 "",
+									"password":                 "",
+									"macAddress":               getParamVal(conn, "MACAddress"),
+									"dnsServers":               getParamVal(conn, "DNSServers"),
+									"vlanId":                   getParamVal(conn, "X_HW_VLAN"),
+									"serviceList":              getParamVal(conn, "X_HW_SERVICELIST"),
+								})
+							}
+						}
+					}
+				}
+
+				// Optical info from WANDevice.1.X_GponInterafceConfig or similar
+				if wi == 1 {
+					if gpon, ok := wd["X_GponInterafceConfig"].(map[string]interface{}); ok {
+						if v := getParamVal(gpon, "TXPower"); v != "" {
+							base["txPower"] = v
+						}
+						if v := getParamVal(gpon, "Temperature"); v != "" {
+							base["temp"] = v
+						}
+						if v := getParamVal(gpon, "Voltage"); v != "" {
+							base["voltage"] = v
+						}
+					}
+				}
+			}
+			base["wanConnections"] = wanConnections
+		}
 	}
 
 	if deviceIDObj != nil {
