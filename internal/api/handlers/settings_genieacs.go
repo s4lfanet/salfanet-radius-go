@@ -495,6 +495,22 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 							if hostName == "" && macAddr == "" {
 								continue
 							}
+							// Determine WiFi vs LAN from Layer2Interface
+							// WiFi hosts have "WLANConfiguration" in their Layer2Interface path
+							ssidIndex := 0
+							if strings.Contains(l2if, "WLANConfiguration.") {
+								// Extract WLAN index from path like "InternetGatewayDevice.LANDevice.1.WLANConfiguration.2"
+								parts := strings.Split(l2if, "WLANConfiguration.")
+								if len(parts) > 1 {
+									idxStr := parts[len(parts)-1]
+									if idx := strings.IndexByte(idxStr, '.'); idx > 0 {
+										idxStr = idxStr[:idx]
+									}
+									if n, err := strconv.Atoi(idxStr); err == nil {
+										ssidIndex = n
+									}
+								}
+							}
 							connectedDevices = append(connectedDevices, fiber.Map{
 								"hostName":        hostName,
 								"ipAddress":       ipAddr,
@@ -502,6 +518,7 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 								"active":          active == "true" || active == "True" || active == "1",
 								"interfaceType":   ifType,
 								"layer2Interface": l2if,
+								"ssidIndex":       ssidIndex,
 							})
 							totalConnected++
 						}

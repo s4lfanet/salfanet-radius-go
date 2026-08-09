@@ -236,8 +236,8 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 	// Security mode mapping
 	type secMode struct{ beacon, authMode, encMode string }
 	secMap := map[string]secMode{
-		"None":         {"None", "None", "None"},
-		"Open":         {"None", "None", "None"},
+		"None":         {"None", "", ""},
+		"Open":         {"None", "", ""},
 		"WPA-PSK":      {"WPA", "PSKAuthentication", "TKIPEncryption"},
 		"WPA2-PSK":     {"11i", "PSKAuthentication", "AESEncryption"},
 		"WPA-WPA2-PSK": {"WPAand11i", "PSKAuthentication", "TKIPandAESEncryption"},
@@ -259,8 +259,14 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 		{basePath + ".Enable", enabledVal, "xsd:boolean"},
 		{basePath + ".SSID", body.SSID, "xsd:string"},
 		{basePath + ".BeaconType", sm.beacon, "xsd:string"},
-		{basePath + ".IEEE11iAuthenticationMode", sm.authMode, "xsd:string"},
-		{basePath + ".IEEE11iEncryptionModes", sm.encMode, "xsd:string"},
+	}
+	// Only set IEEE11i parameters for secured networks (not None/Open)
+	// Huawei devices reject "None" as a value for these parameters (faultCode 9007)
+	if sm.authMode != "" {
+		params = append(params, []interface{}{basePath + ".IEEE11iAuthenticationMode", sm.authMode, "xsd:string"})
+	}
+	if sm.encMode != "" {
+		params = append(params, []interface{}{basePath + ".IEEE11iEncryptionModes", sm.encMode, "xsd:string"})
 	}
 	if body.SecurityMode != "None" && body.SecurityMode != "Open" && body.Password != "" {
 		params = append(params, []interface{}{basePath + ".KeyPassphrase", body.Password, "xsd:string"})
