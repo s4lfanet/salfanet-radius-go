@@ -1030,10 +1030,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	genieacs.Get("/virtual-parameters/:vpId", genieacsH.GetVirtualParameter)
 	genieacs.Put("/virtual-parameters/:vpId", genieacsH.UpdateVirtualParameter)
 	genieacs.Delete("/virtual-parameters/:vpId", genieacsH.DeleteVirtualParameter)
-	// Files
-	genieacs.Get("/files", genieacsH.ListFiles)
-	genieacs.Post("/files", genieacsH.UploadFile)
-	genieacs.Delete("/files", genieacsH.DeleteFile)
 	// Faults
 	genieacs.Get("/faults", genieacsH.ListFaults)
 	genieacs.Delete("/faults", genieacsH.DeleteFault)
@@ -1045,10 +1041,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// Backup
 	genieacs.Get("/backup", genieacsH.GetBackup)
 	genieacs.Post("/backup", genieacsH.CreateBackup)
-	// Auto-provision
-	genieacs.Get("/auto-provision", genieacsH.ListAutoProvision)
-	genieacs.Post("/auto-provision", genieacsH.CreateAutoProvision)
-	genieacs.Delete("/auto-provision", genieacsH.DeleteAutoProvision)
 
 	// ─── Batch 9: Backup info routes ─────────────────────────────────────────
 	api.Get("/backup", backupH.ListBackups)

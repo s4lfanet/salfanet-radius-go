@@ -241,8 +241,6 @@ const menuGroups: MenuGroup[] = [
           { titleKey: 'nav.provisions', href: '/admin/genieacs/provisions', requiredPermission: 'settings.genieacs' },
           { titleKey: 'nav.faults', href: '/admin/genieacs/faults', requiredPermission: 'settings.genieacs' },
           { titleKey: 'nav.config', href: '/admin/genieacs/config', requiredPermission: 'settings.genieacs' },
-          { titleKey: 'nav.autoProvision', href: '/admin/genieacs/auto-provision', requiredPermission: 'settings.genieacs' },
-          { titleKey: 'nav.files', href: '/admin/genieacs/files', requiredPermission: 'settings.genieacs' },
         ],
       },
       {
