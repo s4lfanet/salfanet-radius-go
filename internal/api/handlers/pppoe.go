@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -12,6 +13,32 @@ import (
 	"github.com/s4lfanet/salfanet-radius-go/internal/notify"
 	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
+
+// createUserBody is a loose-typed request body for creating PPPoE users.
+// The frontend sends latitude, longitude, billingDay, and expiredAt as strings,
+// which cannot be directly bound to the PppoeUser struct (*float64, *int, *time.Time).
+// Password is also included here because PppoeUser.Password has json:"-" tag.
+type createUserBody struct {
+	Username         string `json:"username"`
+	Password         string `json:"password"`
+	ProfileID        string `json:"profileId"`
+	AreaID           string `json:"areaId"`
+	RouterID         string `json:"routerId"`
+	Name             string `json:"name"`
+	Phone            string `json:"phone"`
+	Email            string `json:"email"`
+	Address          string `json:"address"`
+	IPAddress        string `json:"ipAddress"`
+	MACAddress       string `json:"macAddress"`
+	Comment          string `json:"comment"`
+	ReferralCode     string `json:"referralCode"`
+	SubscriptionType string `json:"subscriptionType"`
+	Status           string `json:"status"`
+	Latitude         string `json:"latitude"`
+	Longitude        string `json:"longitude"`
+	BillingDay       string `json:"billingDay"`
+	ExpiredAt        string `json:"expiredAt"`
+}
 
 // PPPoEHandler handles all PPPoE user/customer/profile/area endpoints.
 type PPPoEHandler struct {
@@ -184,13 +211,73 @@ func (h *PPPoEHandler) GetUser(c fiber.Ctx) error {
 }
 
 func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
-	var body models.PppoeUser
+	var body createUserBody
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
-	body.ID = uuid.New().String()
 
-	if err := h.db.Create(&body).Error; err != nil {
+	user := models.PppoeUser{
+		ID:             uuid.New().String(),
+		Username:       body.Username,
+		Password:       body.Password,
+		ProfileID:      body.ProfileID,
+		Name:           body.Name,
+		Phone:          body.Phone,
+		Status:         body.Status,
+		IPAddress:      ptrStr(body.IPAddress),
+		MACAddress:     ptrStr(body.MACAddress),
+		Comment:        ptrStr(body.Comment),
+		ReferralCode:   ptrStr(body.ReferralCode),
+		SyncedToRadius: false,
+	}
+
+	if body.AreaID != "" {
+		user.AreaID = ptrStr(body.AreaID)
+	}
+	if body.RouterID != "" {
+		user.RouterID = ptrStr(body.RouterID)
+	}
+	if body.Email != "" {
+		user.Email = ptrStr(body.Email)
+	}
+	if body.Address != "" {
+		user.Address = ptrStr(body.Address)
+	}
+	if body.SubscriptionType != "" {
+		user.SubscriptionType = models.SubscriptionType(body.SubscriptionType)
+	}
+	if body.Status == "" {
+		user.Status = "active"
+	}
+
+	// Parse latitude
+	if body.Latitude != "" {
+		if v, err := strconv.ParseFloat(body.Latitude, 64); err == nil {
+			user.Latitude = &v
+		}
+	}
+	// Parse longitude
+	if body.Longitude != "" {
+		if v, err := strconv.ParseFloat(body.Longitude, 64); err == nil {
+			user.Longitude = &v
+		}
+	}
+	// Parse billingDay
+	if body.BillingDay != "" {
+		if v, err := strconv.Atoi(body.BillingDay); err == nil {
+			user.BillingDay = &v
+		}
+	}
+	// Parse expiredAt
+	if body.ExpiredAt != "" {
+		if t, err := time.Parse(time.RFC3339, body.ExpiredAt); err == nil {
+			user.ExpiredAt = &t
+		} else if t, err := time.Parse("2006-01-02", body.ExpiredAt); err == nil {
+			user.ExpiredAt = &t
+		}
+	}
+
+	if err := h.db.Create(&user).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -201,11 +288,11 @@ func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
 	if profile.RateLimit != nil {
 		rateLimit = *profile.RateLimit
 	}
-	if err := h.radius.UpsertUser(body.Username, body.Password, rateLimit, profile.GroupName); err != nil {
-		log.Error().Err(err).Str("username", body.Username).Msg("pppoe: radius sync error")
+	if err := h.radius.UpsertUser(user.Username, body.Password, rateLimit, profile.GroupName); err != nil {
+		log.Error().Err(err).Str("username", user.Username).Msg("pppoe: radius sync error")
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(body)
+	return c.Status(fiber.StatusCreated).JSON(user)
 }
 
 func (h *PPPoEHandler) UpdateUser(c fiber.Ctx) error {
@@ -214,9 +301,78 @@ func (h *PPPoEHandler) UpdateUser(c fiber.Ctx) error {
 	if err := h.db.First(&user, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
 	}
-	if err := c.Bind().JSON(&user); err != nil {
+
+	var body createUserBody
+	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
+
+	// Apply fields from body to existing user
+	if body.Username != "" {
+		user.Username = body.Username
+	}
+	if body.Password != "" {
+		user.Password = body.Password
+	}
+	if body.ProfileID != "" {
+		user.ProfileID = body.ProfileID
+	}
+	user.AreaID = ptrStr(body.AreaID)
+	user.RouterID = ptrStr(body.RouterID)
+	if body.Name != "" {
+		user.Name = body.Name
+	}
+	if body.Phone != "" {
+		user.Phone = body.Phone
+	}
+	user.Email = ptrStr(body.Email)
+	user.Address = ptrStr(body.Address)
+	user.IPAddress = ptrStr(body.IPAddress)
+	user.MACAddress = ptrStr(body.MACAddress)
+	user.Comment = ptrStr(body.Comment)
+	user.ReferralCode = ptrStr(body.ReferralCode)
+	if body.SubscriptionType != "" {
+		user.SubscriptionType = models.SubscriptionType(body.SubscriptionType)
+	}
+	if body.Status != "" {
+		user.Status = body.Status
+	}
+
+	// Parse latitude
+	if body.Latitude != "" {
+		if v, err := strconv.ParseFloat(body.Latitude, 64); err == nil {
+			user.Latitude = &v
+		}
+	} else {
+		user.Latitude = nil
+	}
+	// Parse longitude
+	if body.Longitude != "" {
+		if v, err := strconv.ParseFloat(body.Longitude, 64); err == nil {
+			user.Longitude = &v
+		}
+	} else {
+		user.Longitude = nil
+	}
+	// Parse billingDay
+	if body.BillingDay != "" {
+		if v, err := strconv.Atoi(body.BillingDay); err == nil {
+			user.BillingDay = &v
+		}
+	} else {
+		user.BillingDay = nil
+	}
+	// Parse expiredAt
+	if body.ExpiredAt != "" {
+		if t, err := time.Parse(time.RFC3339, body.ExpiredAt); err == nil {
+			user.ExpiredAt = &t
+		} else if t, err := time.Parse("2006-01-02", body.ExpiredAt); err == nil {
+			user.ExpiredAt = &t
+		}
+	} else {
+		user.ExpiredAt = nil
+	}
+
 	h.db.Save(&user)
 	return c.JSON(user)
 }

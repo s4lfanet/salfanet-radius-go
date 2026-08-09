@@ -46,7 +46,7 @@ const nextConfig: NextConfig = {
       // Scripts: allow self + inline (Next.js hydration) + Cloudflare analytics
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://static.cloudflareinsights.com",
       // Styles: allow self + inline (Tailwind utility classes)
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com",
       // Images: allow self, data URIs (inline), blob (PDF export), CDN maps
       "img-src 'self' data: blob: https: http:",
       // Fonts: self + data URIs

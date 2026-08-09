@@ -12,6 +12,14 @@ func generateID() string {
 	return uuid.New().String()
 }
 
+// ptrStr converts a string to *string, returning nil for empty strings.
+func ptrStr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
 // pageParams extracts page and pageSize from query params.
 // This helper is shared across all handlers in the same package.
 func pageParams(c fiber.Ctx) (page, pageSize int) {
