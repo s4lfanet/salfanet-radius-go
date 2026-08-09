@@ -31,7 +31,7 @@ var wsUpgrader = fws.FastHTTPUpgrader{
 }
 
 // New builds and returns the configured Fiber app.
-func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched *cron.Scheduler) *fiber.App {
+func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched *cron.Scheduler, hybridCache *cache.HybridCache) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:      "Salfanet RADIUS API",
 		IdleTimeout:  150 * time.Second, // must be > nginx keepalive_timeout (120s) to avoid race with Cloudflare
@@ -130,9 +130,8 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	integrationH := handlers.NewIntegrationHandler(db)
 	eventBus := eventbus.New()
 	automationH := handlers.NewAutomationHandler(db, eventBus)
-	memCache := cache.New()
 	jobQueue := queue.New(4)
-	scalingH := handlers.NewScalingHandler(db, memCache, jobQueue)
+	scalingH := handlers.NewScalingHandler(db, hybridCache, jobQueue)
 	roadmapH := handlers.NewRoadmapHandler(db)
 	// NOTE: networkInfraH is instantiated near batch 12 routes (after olt group)
 

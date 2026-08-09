@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/api"
+	"github.com/s4lfanet/salfanet-radius-go/internal/cache"
 	"github.com/s4lfanet/salfanet-radius-go/internal/config"
 	"github.com/s4lfanet/salfanet-radius-go/internal/cron"
 	"github.com/s4lfanet/salfanet-radius-go/internal/db"
@@ -40,6 +41,20 @@ func main() {
 	}
 	log.Info().Msg("database connected")
 
+	// ─── Redis / Cache ────────────────────────────────────────────────────────
+	var hybridCache *cache.HybridCache
+	if cfg.RedisEnabled {
+		hybridCache = cache.NewHybrid(cfg.RedisAddr, cfg.RedisPassword, cfg.RedisDB, cfg.RedisPrefix)
+		if hybridCache.IsRedis() {
+			log.Info().Str("addr", cfg.RedisAddr).Msg("redis cache connected")
+		} else {
+			log.Warn().Msg("redis unavailable, using memory-only cache")
+		}
+	} else {
+		hybridCache = cache.NewHybrid("", "", 0, "")
+		log.Info().Msg("redis disabled by config, using memory-only cache")
+	}
+
 	// ─── FreeRADIUS service ───────────────────────────────────────────────────
 	radSvc := radius.New(gormDB)
 	log.Info().Msg("radius service initialized")
@@ -57,7 +72,7 @@ func main() {
 	p.StartAll()
 
 	// ─── HTTP API ─────────────────────────────────────────────────────────────
-	app := api.New(gormDB, p, hub, radSvc, scheduler)
+	app := api.New(gormDB, p, hub, radSvc, scheduler, hybridCache)
 
 	// ─── Graceful shutdown ────────────────────────────────────────────────────
 	quit := make(chan os.Signal, 1)
@@ -83,6 +98,11 @@ func main() {
 		// Close DB
 		if sqlDB, err := gormDB.DB(); err == nil {
 			sqlDB.Close()
+		}
+
+		// Close cache
+		if hybridCache != nil {
+			hybridCache.Close()
 		}
 
 		log.Info().Msg("server stopped")

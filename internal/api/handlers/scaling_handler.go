@@ -1,21 +1,33 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 
-	"github.com/s4lfanet/salfanet-radius-go/internal/cache"
 	"github.com/s4lfanet/salfanet-radius-go/internal/queue"
 )
 
 // ScalingHandler handles Phase 5 scaling endpoints.
+// cache is either HybridCache (Redis+Memory) or MemoryCache.
 type ScalingHandler struct {
 	db    *gorm.DB
-	cache *cache.MemoryCache
+	cache CacheInterface
 	queue *queue.JobQueue
 }
 
-func NewScalingHandler(db *gorm.DB, c *cache.MemoryCache, q *queue.JobQueue) *ScalingHandler {
+// CacheInterface defines the common interface for MemoryCache and HybridCache.
+type CacheInterface interface {
+	Set(key string, value interface{}, ttl time.Duration)
+	Get(key string, dest interface{}) bool
+	Delete(key string)
+	DeletePattern(prefix string)
+	Flush()
+	Stats() map[string]interface{}
+}
+
+func NewScalingHandler(db *gorm.DB, c CacheInterface, q *queue.JobQueue) *ScalingHandler {
 	return &ScalingHandler{db: db, cache: c, queue: q}
 }
 
@@ -104,11 +116,11 @@ func (h *ScalingHandler) CaptiveIdentify(c fiber.Ctx) error {
 
 	// Get unpaid invoices
 	var invoices []struct {
-		ID         string  `json:"id"`
-		InvoiceNo  string  `json:"invoiceNo"`
-		Amount     float64 `json:"amount"`
-		DueDate    string  `json:"dueDate"`
-		Status     string  `json:"status"`
+		ID        string  `json:"id"`
+		InvoiceNo string  `json:"invoiceNo"`
+		Amount    float64 `json:"amount"`
+		DueDate   string  `json:"dueDate"`
+		Status    string  `json:"status"`
 	}
 	h.db.Table("invoices").
 		Select("id, invoiceNo, amount, dueDate, status").
@@ -127,11 +139,18 @@ func (h *ScalingHandler) CaptiveIdentify(c fiber.Ctx) error {
 
 // GET /api/scaling/rate-limit/status — rate limiting configuration
 func (h *ScalingHandler) RateLimitStatus(c fiber.Ctx) error {
+	redisMode := "disabled"
+	if h.cache != nil {
+		if stats, ok := h.cache.Stats()["mode"].(string); ok {
+			redisMode = stats
+		}
+	}
 	return c.JSON(fiber.Map{
-		"enabled":    true,
-		"global":     fiber.Map{"max": 100, "window": "1m"},
-		"auth":       fiber.Map{"max": 5, "window": "1m"},
-		"portal":     fiber.Map{"max": 10, "window": "1m"},
-		"message":    "Rate limiting is configured via Fiber middleware",
+		"enabled": true,
+		"backend": redisMode,
+		"global":  fiber.Map{"max": 100, "window": "1m"},
+		"auth":    fiber.Map{"max": 5, "window": "1m"},
+		"portal":  fiber.Map{"max": 10, "window": "1m"},
+		"message": "Rate limiting is configured via Fiber middleware",
 	})
 }

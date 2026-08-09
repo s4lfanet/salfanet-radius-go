@@ -45,6 +45,13 @@ type Config struct {
 	VAPIDPublicKey  string
 	VAPIDPrivateKey string
 	VAPIDEmail      string
+
+	// Redis
+	RedisAddr     string
+	RedisPassword string
+	RedisDB       int
+	RedisPrefix   string
+	RedisEnabled  bool
 }
 
 var C *Config
@@ -75,6 +82,11 @@ func Load() (*Config, error) {
 		VAPIDPublicKey:     getEnv("VAPID_PUBLIC_KEY", ""),
 		VAPIDPrivateKey:    getEnv("VAPID_PRIVATE_KEY", ""),
 		VAPIDEmail:         getEnv("VAPID_EMAIL", ""),
+		RedisAddr:          getEnv("REDIS_ADDR", "127.0.0.1:6379"),
+		RedisPassword:      getEnv("REDIS_PASSWORD", ""),
+		RedisDB:            getEnvInt("REDIS_DB", 0),
+		RedisPrefix:        getEnv("REDIS_PREFIX", "salfanet"),
+		RedisEnabled:       getEnv("REDIS_ENABLED", "true") == "true",
 	}
 
 	loc, err := time.LoadLocation(cfg.AppTimezone)
