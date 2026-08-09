@@ -174,3 +174,22 @@ test_cfg.sh
 .gitignore
 .gitignore
 test_status2.sh
+
+# Cleaned up: stale/debug files
+check.py
+check_areas.sql.txt
+check_genieacs.sh
+check_users.sql.txt
+cron-service.js
+deploy_genieacs.sh
+get_admin.sh
+list_vp.py
+task_refresh.json
+test_login.json.txt
+update-olt-opt/
+OLT-ZTE-C320-Provisioning-main/
+billing-radius/
+billing.pmynet.id-main/
+baileys_whatsapp_patch/
+pon_data_*.csv
+frontend-deploy*.zip
