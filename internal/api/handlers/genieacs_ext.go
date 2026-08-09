@@ -540,7 +540,7 @@ func buildDigestAuth(challenge, uri, username, password, method string) string {
 	qop := params["qop"]
 	opaque := params["opaque"]
 
-	cnonce := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%d", time.Now().UnixNano()))))
+	cnonce := fmt.Sprintf("%x", md5.Sum(fmt.Appendf(nil, "%d", time.Now().UnixNano())))
 	nc := "00000001"
 
 	ha1Data := fmt.Sprintf("%s:%s:%s", username, realm, password)

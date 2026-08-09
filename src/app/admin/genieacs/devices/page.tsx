@@ -359,7 +359,7 @@ export default function GenieACSDevicesPage() {
       ssid: wlan?.ssid || '',
       password: '',  // Always start empty for security
       enabled: wlan?.enabled ?? true,
-      securityMode: wlan?.security && !wlan.security.toLowerCase().includes('none') ? wlan.security : 'WPA2-PSK',
+      securityMode: wlan?.security ? (wlan.security.toLowerCase().includes('none') || wlan.security.toLowerCase().includes('open') ? 'None' : (wlan.security.startsWith('WPA') ? wlan.security : 'WPA2-PSK')) : 'WPA2-PSK',
       band: wlan?.band || '2.4GHz',
       channel: wlan?.channel !== '-' ? (wlan?.channel || '') : '',
     });
@@ -405,7 +405,7 @@ export default function GenieACSDevicesPage() {
         ssid: wlan.ssid || '',
         password: '', // Always clear password for security
         enabled: wlan.enabled ?? true,
-        securityMode: wlan.security && !wlan.security.toLowerCase().includes('none') ? wlan.security : 'WPA2-PSK',
+        securityMode: wlan.security ? (wlan.security.toLowerCase().includes('none') || wlan.security.toLowerCase().includes('open') ? 'None' : (wlan.security.startsWith('WPA') ? wlan.security : 'WPA2-PSK')) : 'WPA2-PSK',
         band: wlan.band || '2.4GHz',
       });
     } else {
