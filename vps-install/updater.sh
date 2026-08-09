@@ -611,7 +611,8 @@ if [ -n "$USE_BRANCH" ]; then
         APP_DIR="$APP_DIR" bash "$APP_DIR/vps-install/fix-auth-after-update.sh" 2>&1 | tail -10 || true
     fi
 
-    print_step "Building application (incremental — no .next wipe)"
+    print_step "Building application (clean build — clearing .next/cache)"
+    rm -rf "$APP_DIR/.next/cache"
     BUILD_OK=false
     if NODE_OPTIONS="--max-old-space-size=1536" NEXT_TELEMETRY_DISABLED=1 npm run build 2>&1; then
         BUILD_OK=true
