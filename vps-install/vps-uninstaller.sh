@@ -66,11 +66,15 @@ show_warning() {
     echo -e "${RED}╚═══════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${YELLOW}Components that will be removed:${NC}"
-    echo "  ❌ PM2 processes (salfanet-radius, salfanet-cron)"
+    echo "  ❌ PM2 processes (salfanet-radius, salfanet-cron, salfanet-wa)"
+    echo "  ❌ Go backend (salfanet-api systemd service + Go runtime)"
     echo "  ❌ Application files ($APP_DIR)"
     echo "  ❌ MySQL database ($DB_NAME)"
     echo "  ❌ FreeRADIUS configuration"
     echo "  ❌ Nginx configuration"
+    echo "  ❌ Redis data (if installed)"
+    echo "  ❌ WireGuard / L2TP VPN server configs"
+    echo "  ❌ Persistent data (/var/data/salfanet/)"
     echo "  ❌ User account ($APP_USER)"
     echo "  ❌ System packages (optional)"
     echo "  ❌ All logs and data"
@@ -229,6 +233,12 @@ stop_all_services() {
     systemctl stop nginx 2>/dev/null || true
     systemctl stop freeradius 2>/dev/null || true
     
+    # Stop WireGuard if running
+    systemctl stop wg-quick@wg0 2>/dev/null || true
+    # Stop L2TP if running
+    systemctl stop xl2tpd 2>/dev/null || true
+    systemctl stop strongswan 2>/dev/null || true
+    
     # Kill any remaining Node processes
     pkill -9 node 2>/dev/null || true
     
@@ -248,6 +258,20 @@ remove_application() {
     else
         print_info "Application directory not found (already removed)"
     fi
+
+    # Remove persistent data directory
+    print_info "Removing persistent data: /var/data/salfanet/"
+    rm -rf /var/data/salfanet 2>/dev/null || true
+    print_success "Persistent data removed"
+
+    # Remove /etc/salfanet (L2TP config, etc.)
+    if [ -d /etc/salfanet ]; then
+        rm -rf /etc/salfanet 2>/dev/null || true
+        print_info "Removed /etc/salfanet/"
+    fi
+
+    # Remove applied migrations log
+    rm -f /var/lib/salfanet-applied-migrations.txt 2>/dev/null || true
 }
 
 remove_go_backend() {
@@ -337,6 +361,43 @@ remove_freeradius() {
     print_info "Sudoers entry removed"
     
     print_success "FreeRADIUS removed"
+}
+
+remove_vpn_servers() {
+    print_step "Removing VPN server configurations"
+
+    # WireGuard
+    if [ -f /etc/wireguard/wg-server-info.json ] || [ -f /etc/wireguard/wg0.conf ]; then
+        print_info "Removing WireGuard server..."
+        systemctl stop wg-quick@wg0 2>/dev/null || true
+        systemctl disable wg-quick@wg0 2>/dev/null || true
+        rm -rf /etc/wireguard 2>/dev/null || true
+        print_success "WireGuard server removed"
+    else
+        print_info "WireGuard server not found (skipping)"
+    fi
+
+    # L2TP/IPsec
+    if [ -f /etc/salfanet/l2tp/l2tp-server-info.json ] || dpkg -s xl2tpd &>/dev/null; then
+        print_info "Removing L2TP/IPsec server..."
+        systemctl stop xl2tpd 2>/dev/null || true
+        systemctl disable xl2tpd 2>/dev/null || true
+        systemctl stop strongswan 2>/dev/null || true
+        systemctl disable strongswan 2>/dev/null || true
+        if [ "$UNATTENDED" = "true" ]; then
+            REMOVE_L2TP_PKGS="y"
+        else
+            read -p "Remove L2TP/StrongSwan packages? [y/N]: " REMOVE_L2TP_PKGS </dev/tty
+        fi
+        if [[ "$REMOVE_L2TP_PKGS" =~ ^[Yy]$ ]]; then
+            apt-get purge -y xl2tpd strongswan 2>/dev/null || true
+            apt-get autoremove -y 2>/dev/null || true
+        fi
+        rm -rf /etc/salfanet/l2tp 2>/dev/null || true
+        print_success "L2TP/IPsec server removed"
+    else
+        print_info "L2TP/IPsec server not found (skipping)"
+    fi
 }
 
 remove_nginx_config() {
@@ -490,11 +551,13 @@ clean_firewall() {
         ufw delete allow 1812/udp 2>/dev/null || true
         ufw delete allow 1813/udp 2>/dev/null || true
         ufw delete allow 3799/udp 2>/dev/null || true
-        # L2TP/IPSec ports (opened by install-freeradius.sh)
+        # L2TP/IPSec ports
         ufw delete allow 500/udp  2>/dev/null || true
         ufw delete allow 4500/udp 2>/dev/null || true
         ufw delete allow 1701/udp 2>/dev/null || true
-        # HTTP/HTTPS (opened by install-nginx.sh)
+        # WireGuard port
+        ufw delete allow 51820/udp 2>/dev/null || true
+        # HTTP/HTTPS
         ufw delete allow 80/tcp   2>/dev/null || true
         ufw delete allow 443/tcp  2>/dev/null || true
         print_success "Firewall rules removed"
@@ -509,6 +572,8 @@ clean_logs() {
     rm -f /var/log/salfanet-install.log 2>/dev/null || true
     rm -rf /var/log/freeradius 2>/dev/null || true
     rm -f /var/log/nginx/salfanet-radius-* 2>/dev/null || true
+    rm -f /tmp/go-build.log 2>/dev/null || true
+    rm -f /tmp/updater-*.sh 2>/dev/null || true
     
     print_success "Logs cleaned"
 }
@@ -549,6 +614,7 @@ main() {
     remove_go_backend
     remove_database
     remove_freeradius
+    remove_vpn_servers
     remove_nginx_config
     remove_user
     remove_pm2
@@ -569,12 +635,16 @@ main() {
     echo -e "${GREEN}╚═══════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
     echo -e "${CYAN}Summary:${NC}"
-    echo "  ✓ PM2 processes stopped and removed"
+    echo "  ✓ PM2 processes stopped and removed (salfanet-radius, salfanet-cron, salfanet-wa)"
+    echo "  ✓ Go backend service removed"
     echo "  ✓ Application files deleted"
+    echo "  ✓ Persistent data removed (/var/data/salfanet/)"
     echo "  ✓ Database and user removed"
     echo "  ✓ FreeRADIUS cleaned"
+    echo "  ✓ VPN servers removed (WireGuard + L2TP)"
     echo "  ✓ Nginx configuration removed"
     echo "  ✓ User account deleted"
+    echo "  ✓ Firewall rules cleaned"
     echo "  ✓ Logs cleaned"
     echo ""
     
@@ -589,9 +659,9 @@ main() {
     
     echo -e "${CYAN}System is now clean and ready for fresh installation.${NC}"
     echo ""
-    echo "To reinstall, run:"
-    echo "  cd /root/SALFANET-RADIUS-main/vps-install"
-    echo "  ./vps-installer.sh"
+    echo "To reinstall:"
+    echo "  1. Clone repo:  git clone https://github.com/s4lfanet/salfanet-radius-go.git /root/salfanet-radius-go"
+    echo "  2. Run installer: cd /root/salfanet-radius-go && bash vps-install/vps-installer.sh"
     echo ""
 }
 

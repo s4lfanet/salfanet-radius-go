@@ -371,6 +371,7 @@ if [ -n "$USE_BRANCH" ]; then
             pm2 delete "$PM2_APP_NAME" 2>/dev/null || true
             pm2 start "$APP_DIR/ecosystem.config.js" --only "$PM2_APP_NAME" 2>/dev/null || true
             pm2 start "$APP_DIR/ecosystem.config.js" --only "$PM2_CRON_NAME" 2>/dev/null || true
+            pm2 start "$APP_DIR/ecosystem.config.js" --only "salfanet-wa" 2>/dev/null || true
             pm2 save 2>/dev/null || true
             sleep 3
             if pm2 list 2>/dev/null | grep -q "$PM2_APP_NAME.*online"; then
@@ -492,7 +493,21 @@ if [ -n "$USE_BRANCH" ]; then
     print_success "Stale file cleanup done"
 
     # ── Ensure required directories exist ────────────────────────────────────
-    mkdir -p "${APP_DIR}/logs" "${APP_DIR}/bin"
+    mkdir -p "${APP_DIR}/logs" "${APP_DIR}/bin" /var/data/salfanet/uploads/logos /var/data/salfanet/uploads/payment-proofs /var/data/salfanet/uploads/customer-photos
+
+    # ── Ensure Redis env vars exist in .env ────────────────────────────────
+    if [ -f "$APP_DIR/.env" ]; then
+        if ! grep -q '^REDIS_ENABLED=' "$APP_DIR/.env"; then
+            echo "" >> "$APP_DIR/.env"
+            echo "# Redis Cache (HybridCache: Redis primary + memory fallback)" >> "$APP_DIR/.env"
+            echo "REDIS_ENABLED=true" >> "$APP_DIR/.env"
+            echo "REDIS_ADDR=127.0.0.1:6379" >> "$APP_DIR/.env"
+            echo "REDIS_PASSWORD=" >> "$APP_DIR/.env"
+            echo "REDIS_DB=0" >> "$APP_DIR/.env"
+            echo "REDIS_PREFIX=salfanet" >> "$APP_DIR/.env"
+            print_success "Redis env vars added to .env"
+        fi
+    fi
 
     # ── Bring Next.js online immediately with existing build (minimize downtime)
     if [ -f "$APP_DIR/.next/standalone/server.js" ]; then
@@ -528,6 +543,11 @@ if [ -n "$USE_BRANCH" ]; then
         if grep -q "ReadWritePaths" "$SVC_FILE" && ! grep "ReadWritePaths" "$SVC_FILE" | grep -q "/etc/ppp"; then
             print_info "Patching salfanet-api.service: adding /etc/ppp /etc/salfanet /etc/wireguard to ReadWritePaths..."
             sed -i "s|ReadWritePaths=\(.*\)|ReadWritePaths=\1 /etc/ppp /etc/salfanet /etc/wireguard|" "$SVC_FILE"
+            PATCHED=1
+        fi
+        if grep -q "ReadWritePaths" "$SVC_FILE" && ! grep "ReadWritePaths" "$SVC_FILE" | grep -q "/var/data/salfanet/uploads"; then
+            print_info "Patching salfanet-api.service: adding /var/data/salfanet/uploads to ReadWritePaths..."
+            sed -i "s|ReadWritePaths=\(.*\)|ReadWritePaths=\1 /var/data/salfanet/uploads|" "$SVC_FILE"
             PATCHED=1
         fi
         if [ "$PATCHED" = "1" ]; then

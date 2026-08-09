@@ -482,6 +482,7 @@ FreeRADIUS      : $(freeradius -v 2>&1 | head -n1 || echo 'N/A')
 PM2 Version     : $(pm2 --version 2>/dev/null || echo 'N/A')
 Go Version      : $(go version 2>/dev/null | awk '{print $3}' || echo 'N/A')
 Go API Service  : $(systemctl is-active salfanet-api 2>/dev/null || echo 'N/A')
+Redis            : $(systemctl is-active redis-server 2>/dev/null || echo 'N/A')
 
 [>] DATABASE CREDENTIALS
 -----------------------
@@ -528,6 +529,8 @@ MySQL     : $(systemctl is-active mysql 2>/dev/null || echo 'N/A')
 FreeRADIUS: $(systemctl is-active freeradius 2>/dev/null || echo 'N/A')
 Nginx     : $(systemctl is-active nginx 2>/dev/null || echo 'N/A')
 PM2 App   : $(pm2 list 2>/dev/null | grep -q "salfanet-radius.*online" && echo "online" || echo "offline")
+PM2 WA    : $(pm2 list 2>/dev/null | grep -q "salfanet-wa.*online" && echo "online" || echo "offline")
+PM2 Cron  : $(pm2 list 2>/dev/null | grep -q "salfanet-cron.*online" && echo "online" || echo "offline")
 
 [>] NETWORK / FIREWALL
 ----------------------
@@ -614,6 +617,12 @@ show_final_summary() {
     fi
     echo -e "${CYAN}PM2 Status:${NC}"
     sudo su - ${APP_USER} -c 'pm2 list' 2>/dev/null || pm2 list 2>/dev/null || true
+    echo ""
+    echo -e "${CYAN}PM2 Processes:${NC}"
+    echo "  salfanet-radius : Next.js frontend (port 3000)"
+    echo "  salfanet-wa     : WhatsApp Baileys service (port 4000 internal)"
+    echo "  salfanet-cron   : Background cron jobs"
+    echo "  salfanet-api    : Go API backend (systemd, port 8080)"
     echo ""
     echo -e "${CYAN}Kredensial Database:${NC}"
     echo "  DB Name : ${DB_NAME}"

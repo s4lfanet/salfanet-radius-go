@@ -290,11 +290,11 @@ export -f check_root
 
 check_directory() {
     local CURRENT_DIR=$(pwd)
-    if [[ "$CURRENT_DIR" != *"salfanet-radius"* ]] && [[ "$CURRENT_DIR" != *"SALFANET-RADIUS-main"* ]]; then
+    if [[ "$CURRENT_DIR" != *"salfanet-radius"* ]] && [[ "$CURRENT_DIR" != *"SALFANET-RADIUS-main"* ]] && [[ "$CURRENT_DIR" != *"salfanet-radius-go"* ]]; then
         print_error "Please run this script from the source directory"
         echo "   Current directory: $CURRENT_DIR"
         echo ""
-        echo "   Expected: /root/salfanet-radius or /root/SALFANET-RADIUS-main"
+        echo "   Expected: /root/salfanet-radius, /root/salfanet-radius-go, or /root/SALFANET-RADIUS-main"
         exit 1
     fi
 }
@@ -494,7 +494,7 @@ print_banner() {
     clear 2>/dev/null || true
     echo ""
     echo -e "${CYAN}=============================================${NC}"
-    echo -e "${CYAN}  SALFANET RADIUS - Installer v2.10.9${NC}"
+    echo -e "${CYAN}  SALFANET RADIUS - Installer v2.54.30${NC}"
     echo -e "${CYAN}  Supports: Public VPS | Proxmox LXC/VM${NC}"
     echo -e "${CYAN}=============================================${NC}"
     if [ -n "$DEPLOY_ENV_LABEL" ]; then

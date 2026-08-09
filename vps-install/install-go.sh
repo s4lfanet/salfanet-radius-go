@@ -128,7 +128,7 @@ SyslogIdentifier=${GO_SERVICE_NAME}
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
-ReadWritePaths=${_APP_DIR}/logs ${_APP_DIR}/uploads ${_APP_DIR}/backups /etc/ppp /etc/salfanet /etc/wireguard
+ReadWritePaths=${_APP_DIR}/logs ${_APP_DIR}/uploads ${_APP_DIR}/backups /var/data/salfanet/uploads /etc/ppp /etc/salfanet /etc/wireguard
 AmbientCapabilities=CAP_NET_BIND_SERVICE
 
 [Install]
@@ -136,7 +136,7 @@ WantedBy=multi-user.target
 SYSTEMD
 
     # Create directories referenced in ReadWritePaths to prevent systemd NAMESPACE error
-    mkdir -p /etc/salfanet /etc/wireguard ${_APP_DIR}/backups
+    mkdir -p /etc/salfanet /etc/wireguard /var/data/salfanet/uploads ${_APP_DIR}/backups
 
     systemctl daemon-reload
     systemctl enable "${GO_SERVICE_NAME}"

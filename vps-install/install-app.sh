@@ -28,7 +28,7 @@ copy_application_files() {
     #   4. Current working directory
     local SOURCE_DIR=""
 
-    for candidate in "$SCRIPT_SOURCE_DIR" "/root/salfanet-radius" "/root/SALFANET-RADIUS-main" "$(pwd)"; do
+    for candidate in "$SCRIPT_SOURCE_DIR" "/root/salfanet-radius-go" "/root/salfanet-radius" "/root/SALFANET-RADIUS-main" "$(pwd)"; do
         if [ -f "$candidate/package.json" ]; then
             SOURCE_DIR="$candidate"
             break
@@ -134,6 +134,16 @@ CORS_ORIGINS=${CORS_ORIGINS_STR}
 # WhatsApp sidecar (internal)
 WA_SERVICE_URL=http://localhost:3001
 
+# Redis Cache (HybridCache: Redis primary + memory fallback)
+REDIS_ENABLED=true
+REDIS_ADDR=127.0.0.1:6379
+REDIS_PASSWORD=
+REDIS_DB=0
+REDIS_PREFIX=salfanet
+
+# Persistent upload directory (survives rebuilds)
+UPLOAD_DIR=/var/data/salfanet/uploads
+
 # === Next.js Frontend ==========================================================
 # Database Configuration (used by Prisma / Next.js API routes still in Next.js)
 DATABASE_URL="mysql://${DB_USER}:${DB_PASSWORD}@127.0.0.1:3306/${DB_NAME}?connection_limit=10&pool_timeout=20"
@@ -173,7 +183,11 @@ EOF
 
     chmod 600 ${APP_DIR}/.env
     print_success ".env file created"
-    
+
+    # Create persistent upload directory
+    mkdir -p /var/data/salfanet/uploads/logos /var/data/salfanet/uploads/payment-proofs /var/data/salfanet/uploads/customer-photos
+    print_success "Persistent upload directory created: /var/data/salfanet/uploads"
+
     # Save to install info
     save_install_info "NEXTAUTH_SECRET" "$NEXTAUTH_SECRET"
     save_install_info "AGENT_JWT_SECRET" "$AGENT_JWT_SECRET"
