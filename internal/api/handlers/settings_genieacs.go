@@ -273,7 +273,7 @@ func (h *SettingsGenieacsHandler) GetDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID)+"&projection=_id,_lastInform,_lastBoot,_registered,_deviceId,VirtualParameters", auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+deviceID+"&projection=_id,_lastInform,_lastBoot,_registered,_deviceId,VirtualParameters", auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -298,7 +298,7 @@ func (h *SettingsGenieacsHandler) DeleteDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	req, err := http.NewRequest("DELETE", host+"/devices/?_id="+url.QueryEscape(deviceID), nil)
+	req, err := http.NewRequest("DELETE", host+"/devices/?_id="+deviceID, nil)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -321,7 +321,11 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	// GenieACS _id values may contain URL-encoded chars like %2D, %20.
+	// Fiber's c.Params already URL-decodes the path segment, so deviceID
+	// is the raw value. We must NOT re-encode it with url.QueryEscape
+	// because GenieACS expects the _id as stored (with %2D etc).
+	result, status, err := h.proxyGET(host+"/devices/?_id="+deviceID, auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -335,6 +339,12 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 	dev, ok := devs[0].(map[string]interface{})
 	if !ok {
 		return c.JSON(fiber.Map{"success": false, "error": "unexpected response format"})
+	}
+
+	// Verify the returned device actually matches the requested _id
+	retID, _ := dev["_id"].(string)
+	if retID != deviceID {
+		return c.JSON(fiber.Map{"success": false, "error": "device not found (id mismatch)"})
 	}
 
 	// Build flat device info from mapDevice, then add extra detail fields
@@ -621,7 +631,7 @@ func (h *SettingsGenieacsHandler) DeviceParameters(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/?_id="+deviceID, auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -650,7 +660,7 @@ func (h *SettingsGenieacsHandler) RebootDevice(c fiber.Ctx) error {
 		return h.notConfiguredErr(c)
 	}
 	task := fiber.Map{"name": "reboot"}
-	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
+	result, status, err := h.proxyPOST(host+"/devices/"+deviceID+"/tasks", auth, task)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -669,7 +679,7 @@ func (h *SettingsGenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	}
 
 	// 1. Fetch device data to get ConnectionRequestURL and credentials
-	devResult, _, _ := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	devResult, _, _ := h.proxyGET(host+"/devices/?_id="+deviceID, auth)
 	crURL, crUser, crPass := "", "", ""
 	if arr, ok := devResult.([]interface{}); ok && len(arr) > 0 {
 		if dev, ok := arr[0].(map[string]interface{}); ok {
@@ -697,7 +707,7 @@ func (h *SettingsGenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 
 	// 2. Create task
 	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.DeviceInfo.SerialNumber", "InternetGatewayDevice.DeviceInfo.Manufacturer", "InternetGatewayDevice.DeviceInfo.ModelName", "InternetGatewayDevice.DeviceInfo.SoftwareVersion", "InternetGatewayDevice.ManagementServer.ConnectionRequestURL", "InternetGatewayDevice.ManagementServer.PeriodicInformInterval", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ConnectionStatus"}}
-	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
+	result, status, err := h.proxyPOST(host+"/devices/"+deviceID+"/tasks", auth, task)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -718,7 +728,7 @@ func (h *SettingsGenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 		go h.sendDirectConnectionRequest(crURL, crUser, crPass, deviceID)
 	} else {
 		// Fallback: try GenieACS connection request
-		crGenieURL := host + "/devices/" + url.PathEscape(deviceID) + "/tasks?connection_request"
+		crGenieURL := host + "/devices/" + deviceID + "/tasks?connection_request"
 		_, crStatus, crErr := h.proxyPOST(crGenieURL, auth, nil)
 		if crErr != nil {
 			log.Error().Err(crErr).Str("device", deviceID).Msg("genieacs: connection request failed")
