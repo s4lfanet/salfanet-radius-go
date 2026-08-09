@@ -56,7 +56,7 @@ func (h *GenieacsHandler) GetDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -74,7 +74,7 @@ func (h *GenieacsHandler) DeleteDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	status, err := h.proxyDELETE(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	status, err := h.proxyDELETE(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -88,7 +88,7 @@ func (h *GenieacsHandler) DeviceAllParameters(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -130,7 +130,7 @@ func (h *GenieacsHandler) GetDeviceParameters(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -277,7 +277,7 @@ func (h *GenieacsHandler) GetDeviceWifi(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -369,7 +369,7 @@ func (h *GenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	}
 
 	// 1. Fetch device data to get ConnectionRequestURL and credentials
-	devResult, _, _ := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	devResult, _, _ := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	crURL, crUser, crPass := "", "", ""
 	if arr, ok := devResult.([]interface{}); ok && len(arr) > 0 {
 		if dev, ok := arr[0].(map[string]interface{}); ok {

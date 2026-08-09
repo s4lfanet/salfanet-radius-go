@@ -233,14 +233,33 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 		return h.notConfiguredErr(c)
 	}
 
-	// Security mode mapping
-	type secMode struct{ beacon, authMode, encMode string }
+	// Security mode mapping for Huawei ONT/ONU devices
+	// BeaconType controls the security mode:
+	//   "11i"        = WPA2-PSK
+	//   "WPA"        = WPA-PSK
+	//   "WPAand11i"  = WPA/WPA2 Mixed
+	//   "None"       = Open (no security)
+	//   "Basic"      = WEP (not supported in UI)
+	//
+	// IEEE11iAuthenticationMode and IEEE11iEncryptionModes are only meaningful
+	// when BeaconType is 11i or WPAand11i. For None/Basic, Huawei devices
+	// reject setting these parameters (faultCode 9007).
+	//
+	// For Open (None) security, we must set BasicAuthenticationMode and
+	// BasicEncryptionModes to "None" to clear any previous security.
+	type secMode struct {
+		beacon    string
+		authMode  string
+		encMode   string
+		basicAuth string
+		basicEnc  string
+	}
 	secMap := map[string]secMode{
-		"None":         {"None", "", ""},
-		"Open":         {"None", "", ""},
-		"WPA-PSK":      {"WPA", "PSKAuthentication", "TKIPEncryption"},
-		"WPA2-PSK":     {"11i", "PSKAuthentication", "AESEncryption"},
-		"WPA-WPA2-PSK": {"WPAand11i", "PSKAuthentication", "TKIPandAESEncryption"},
+		"None":         {"None", "", "", "None", "None"},
+		"Open":         {"None", "", "", "None", "None"},
+		"WPA-PSK":      {"WPA", "PSKAuthentication", "TKIPEncryption", "", ""},
+		"WPA2-PSK":     {"11i", "PSKAuthentication", "AESEncryption", "", ""},
+		"WPA-WPA2-PSK": {"WPAand11i", "PSKAuthentication", "TKIPandAESEncryption", "", ""},
 	}
 	sm, ok := secMap[body.SecurityMode]
 	if !ok {
@@ -260,17 +279,33 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 		{basePath + ".SSID", body.SSID, "xsd:string"},
 		{basePath + ".BeaconType", sm.beacon, "xsd:string"},
 	}
-	// Only set IEEE11i parameters for secured networks (not None/Open)
-	// Huawei devices reject "None" as a value for these parameters (faultCode 9007)
+	// Set IEEE11i parameters only for WPA/WPA2 secured networks
 	if sm.authMode != "" {
 		params = append(params, []interface{}{basePath + ".IEEE11iAuthenticationMode", sm.authMode, "xsd:string"})
 	}
 	if sm.encMode != "" {
 		params = append(params, []interface{}{basePath + ".IEEE11iEncryptionModes", sm.encMode, "xsd:string"})
 	}
+	// For Open/None security, set Basic parameters to None to clear previous security
+	if sm.basicAuth != "" {
+		params = append(params, []interface{}{basePath + ".BasicAuthenticationMode", sm.basicAuth, "xsd:string"})
+	}
+	if sm.basicEnc != "" {
+		params = append(params, []interface{}{basePath + ".BasicEncryptionModes", sm.basicEnc, "xsd:string"})
+	}
+	// Set KeyPassphrase only for secured networks with non-empty password
 	if body.SecurityMode != "None" && body.SecurityMode != "Open" && body.Password != "" {
 		params = append(params, []interface{}{basePath + ".KeyPassphrase", body.Password, "xsd:string"})
 	}
+
+	log.Info().
+		Str("device", deviceID).
+		Str("wlanIndex", fmt.Sprintf("%d", body.WlanIndex)).
+		Str("ssid", body.SSID).
+		Str("securityMode", body.SecurityMode).
+		Str("beaconType", sm.beacon).
+		Int("paramCount", len(params)).
+		Msg("genieacs: sending setParameterValues task for WiFi update")
 
 	task := map[string]interface{}{
 		"name":            "setParameterValues",
@@ -280,12 +315,18 @@ func (h *GenieacsHandler) UpdateWifi(c fiber.Ctx) error {
 	reqURL := fmt.Sprintf("%s/devices/%s/tasks?connection_request", host, url.PathEscape(deviceID))
 	result, statusCode, err := h.proxyPOST(reqURL, auth, task)
 	if err != nil {
+		log.Error().Err(err).Str("device", deviceID).Msg("genieacs: WiFi update task failed")
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
+	log.Info().
+		Int("statusCode", statusCode).
+		Str("device", deviceID).
+		Msg("genieacs: WiFi update task response")
 	if statusCode == 404 {
 		return c.Status(404).JSON(fiber.Map{"success": false, "error": "Device not found"})
 	}
 	if statusCode >= 400 {
+		log.Error().Int("statusCode", statusCode).Str("device", deviceID).Interface("result", result).Msg("genieacs: WiFi update task error response")
 		return c.Status(statusCode).JSON(fiber.Map{"success": false, "error": "GenieACS returned error", "details": result})
 	}
 

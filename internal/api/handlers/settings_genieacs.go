@@ -443,10 +443,22 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 						if strings.Contains(strings.ToUpper(standard), "5") || strings.Contains(strings.ToUpper(standard), "AC") || strings.Contains(strings.ToUpper(standard), "AX") {
 							band = "5GHz"
 						}
-						// Determine security display
-						security := beaconType
-						if authMode != "" {
-							security = authMode
+						// Determine security display from BeaconType
+						// BeaconType is the authoritative security indicator on Huawei devices
+						security := "None"
+						switch beaconType {
+						case "11i":
+							security = "WPA2-PSK"
+						case "WPA":
+							security = "WPA-PSK"
+						case "WPAand11i":
+							security = "WPA-WPA2-PSK"
+						case "Basic":
+							security = "WEP"
+						case "None", "":
+							security = "None"
+						default:
+							security = beaconType
 						}
 						wlanConfigs = append(wlanConfigs, fiber.Map{
 							"index":             i,
