@@ -407,6 +407,7 @@
     "vpScripts": "VP Scripts",
     "faults": "Faults",
     "config": "Config",
+    "guide": "Panduan",
     "syncGenieacs": "Sync ke GenieACS",
     "oltManagement": "OLT Management",
     "oltMonitoring": "OLT Monitoring",

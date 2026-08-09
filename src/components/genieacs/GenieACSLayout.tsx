@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   FileCode2,
   Sliders,
+  BookOpen,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -21,6 +22,7 @@ const NAV_ITEMS = [
   },
   { href: '/admin/genieacs/faults', label: 'Faults', icon: AlertTriangle },
   { href: '/admin/genieacs/config', label: 'Config', icon: Settings2 },
+  { href: '/admin/genieacs/guide', label: 'Panduan', icon: BookOpen },
 ];
 
 interface Props {
