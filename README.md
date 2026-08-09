@@ -638,6 +638,35 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.30 — 2026-08-10
+
+### Fixed — GenieACS Timezone & Telegram Cron Timezone
+- **GenieACS timestamps 7-hour offset** (`src/lib/timezone.ts`, `src/app/admin/genieacs/devices/page.tsx`, `src/app/admin/genieacs/devices/[deviceId]/page.tsx`, `src/app/admin/genieacs/tasks/page.tsx`, `src/app/admin/genieacs/faults/page.tsx`) — GenieACS returns `_lastInform` and task `timestamp` as real UTC ISO 8601 strings (with `Z` suffix). The frontend used `formatWIB()` which treats UTC values as already-WIB (Prisma/MySQL convention), causing no timezone conversion and a 7-hour display offset. Added new `formatFromUTC()` function in `src/lib/timezone.ts` that performs real UTC→system timezone conversion using `date-fns-tz/formatInTimeZone`. Applied to all GenieACS timestamp displays: device list `lastInform`, device detail `lastInform` + `task.timestamp`, tasks page (card + table views), faults page (was raw string, now properly formatted).
+- **Telegram cron hardcoded timezone** (`internal/cron/telegram_cron.go`) — Replaced `time.Now().Format("2006-01-02 15:04:05 WIB")` with `tzutil.FormatNow("2006-01-02 15:04:05 WIB")` for consistent timezone from company settings. Added `tzutil` import.
+- **VPN server page `toLocaleString`** (`src/app/admin/network/vpn-server/page.tsx`) — Replaced browser-local `toLocaleString` with `formatWIB` for `peer.lastHandshake` display, ensuring consistent timezone formatting.
+
+### Added — GenieACS Auto-Sync Cronjob & In-Memory Cache
+- **GenieACS device cache** (`internal/cache/genieacs_cache.go`) — New specialized in-memory cache with 5-minute TTL for GenieACS device data. Thread-safe with `sync.RWMutex`. Stores flat device list and per-device map for O(1) lookups. Cache invalidation on manual refresh. More efficient than Redis for structured data (no serialization overhead).
+- **GenieACS auto-sync cronjob** (`internal/cron/genieacs_sync.go`) — New cronjob runs every 5 minutes, fetches all devices from GenieACS NBI with projection (`_id,_lastInform,_lastBoot,_registered,_deviceId,VirtualParameters`), maps to flat structure, and populates cache. Also supports single-device sync (`jobGenieacsSyncSingle`) for immediate cache update after manual refresh. Standalone `mapGenieacsDevice` function (no fiber dependency).
+- **Scheduler registration** (`internal/cron/scheduler.go`) — Registered `genieacs_sync` job at `0 */5 * * * *` (every 5 min). Added to `TriggerJob` switch for manual invocation. Total jobs: 20.
+
+### Improved — GenieACS API Performance
+- **ListDevices/GetDevice cache-first** (`internal/api/handlers/settings_genieacs.go`) — `ListDevices` and `GetDevice` now serve from cache first. On cache miss (cold start or expired TTL), falls back to direct GenieACS NBI call and populates cache. `RefreshDevice` invalidates cache for the refreshed device so next read fetches fresh data. Response includes `cached` boolean and `updatedAt` timestamp. This eliminates repeated GenieACS HTTP calls on every page load, reducing CPU/RAM usage.
+- **Status/rxPower/pppoeStatus always actual** — With cron auto-sync every 5 minutes, device status (Online/Offline), rxPower, PPPoE username/IP, PON mode, and uptime are always fresh without manual intervention.
+
+### Files
+- `src/lib/timezone.ts` — **EDIT** — Added `formatFromUTC()` function for real UTC→timezone conversion
+- `src/app/admin/genieacs/devices/page.tsx` — **EDIT** — `lastInform` uses `formatFromUTC` instead of `formatWIB`
+- `src/app/admin/genieacs/devices/[deviceId]/page.tsx` — **EDIT** — `lastInform` + `task.timestamp` use `formatFromUTC`
+- `src/app/admin/genieacs/tasks/page.tsx` — **EDIT** — Task timestamps (card + table) use `formatFromUTC`
+- `src/app/admin/genieacs/faults/page.tsx` — **EDIT** — Fault timestamp uses `formatFromUTC` (was raw string)
+- `src/app/admin/network/vpn-server/page.tsx` — **EDIT** — `peer.lastHandshake` uses `formatWIB` instead of `toLocaleString`
+- `internal/cron/telegram_cron.go` — **EDIT** — Replaced `time.Now().Format` with `tzutil.FormatNow`, added `tzutil` import
+- `internal/cache/genieacs_cache.go` — **NEW** — In-memory cache for GenieACS device data with 5-min TTL
+- `internal/cron/genieacs_sync.go` — **NEW** — Auto-sync cronjob + standalone `mapGenieacsDevice`
+- `internal/cron/scheduler.go` — **EDIT** — Registered `genieacs_sync` job, added to `TriggerJob`
+- `internal/api/handlers/settings_genieacs.go` — **EDIT** — Cache-first `ListDevices`/`GetDevice`, cache invalidation on `RefreshDevice`, added `cache` import
+
 ### v2.54.29 — 2026-08-09
 
 ### Fixed — WiFi Configuration Audit & GenieACS Query Fixes
@@ -729,30 +758,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/handlers/genieacs.go` — **EDIT** — Error checking on Create/Updates
 - `internal/api/handlers/misc_handler.go` — **EDIT** — Error checking on Create/Save (payment gateway)
 - `internal/db/db.go` — **EDIT** — Migration: qrisDeviceKey column
-
-### v2.54.25 — 2026-08-08
-
-### Changed — Collector Area Management Refactor
-- **Menu rename** (`src/locales/id.json`, `src/app/admin/territories/page.tsx`) — "Manajemen Wilayah" → "Manajemen Kolektor". All UI labels updated: page title, modal title, buttons, search placeholder, detail modal.
-- **Auto-populate collector name** (`src/app/admin/territories/page.tsx`) — Removed manual name input field. Collector name auto-fills from dropdown selection. Dropdown is now required.
-- **Area multi-select in modal** (`src/app/admin/territories/page.tsx`) — Added checkbox list for area selection directly in create/edit collector modal. Fetches all areas from `GET /api/territories/all-areas`. Areas assigned to other collectors shown greyed out with "(wilayah lain)" label. Empty state links to Kelola Area page.
-- **Backend: areaIds in create/update** (`internal/api/handlers/territory_handler.go`) — `CreateTerritory` and `UpdateTerritory` now accept `areaIds[]` in request body. Areas are assigned/unassigned by updating `territoryId` on `pppoe_areas` in a single request. Removed need for separate area assignment calls.
-
-### Added
-- **COLLECTOR role permissions** (`internal/api/handlers/permissions.go`) — Added "COLLECTOR" to `GetRoleTemplates` role list. Role permissions now auto-generate when COLLECTOR role is selected in user management.
-- **Database migration** (`internal/db/db.go`) — `ALTER TABLE pppoe_areas ADD COLUMN territoryId VARCHAR(191) NULL` + index. Links areas to territories. `ALTER TABLE admin_users MODIFY COLUMN role ENUM(..., 'COLLECTOR')` — adds COLLECTOR to role enum.
-- **API endpoint** — `GET /api/territories/all-areas` — Returns all areas (assigned + unassigned) for multi-select UI.
-- **Upload: BodyLimit** (`internal/api/router.go`) — Set Fiber BodyLimit to 10MB (default 4MB) to support file uploads.
-- **Upload: file types** (`internal/api/handlers/upload.go`) — Added `.gif` and `.avif` support to match frontend accept types. Added error logging for debugging 500 errors.
-
-### Files
-- `internal/api/handlers/territory_handler.go` — **EDIT** — CreateTerritory & UpdateTerritory accept areaIds
-- `internal/api/handlers/permissions.go` — **EDIT** — Add COLLECTOR to GetRoleTemplates
-- `internal/db/db.go` — **EDIT** — Migration: territoryId column, COLLECTOR role enum
-- `internal/api/router.go` — **EDIT** — BodyLimit 10MB
-- `internal/api/handlers/upload.go` — **EDIT** — Error logging, .gif/.avif support
-- `src/app/admin/territories/page.tsx` — **EDIT** — Rename to Manajemen Kolektor, auto-fill name, area multi-select
-- `src/locales/id.json` — **EDIT** — nav.territoryManage: "Manajemen Kolektor"
 
 <!-- AUTO-CHANGELOG:END -->
 
