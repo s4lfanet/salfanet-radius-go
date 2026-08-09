@@ -603,20 +603,20 @@ func (GenieacsSettings) TableName() string { return "genieacs_settings" }
 // ─── Parameter Display Config ─────────────────────────────────────────────────
 
 type ParameterDisplayConfig struct {
-	ID             uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	ConfigType     string    `gorm:"type:enum('DEVICE_LIST','DEVICE_DETAIL');index" json:"configType"`
-	Section        string    `gorm:"type:varchar(100);index" json:"section"`
-	ParameterName  string    `gorm:"type:varchar(191)" json:"parameterName"`
-	Label          string    `gorm:"type:varchar(191)" json:"label"`
-	ParameterPaths string    `gorm:"type:json" json:"parameterPaths"`
-	Enabled        bool      `gorm:"default:true;index" json:"enabled"`
-	DisplayOrder   int       `gorm:"default:0" json:"displayOrder"`
-	ColumnWidth    *string   `gorm:"type:varchar(50)" json:"columnWidth,omitempty"`
-	Format         *string   `gorm:"type:varchar(50)" json:"format,omitempty"`
-	ColorCoding    *string   `gorm:"type:json" json:"colorCoding,omitempty"`
-	Icon           *string   `gorm:"type:varchar(50)" json:"icon,omitempty"`
-	CreatedAt      time.Time `json:"createdAt"`
-	UpdatedAt      time.Time `json:"updatedAt"`
+	ID             uint      `gorm:"primaryKey;autoIncrement;column:id" json:"id"`
+	ConfigType     string    `gorm:"type:enum('DEVICE_LIST','DEVICE_DETAIL');index;column:configType" json:"configType"`
+	Section        string    `gorm:"type:varchar(100);index;column:section" json:"section"`
+	ParameterName  string    `gorm:"type:varchar(191);column:parameterName" json:"parameterName"`
+	Label          string    `gorm:"type:varchar(191);column:label" json:"label"`
+	ParameterPaths string    `gorm:"type:json;column:parameterPaths" json:"parameterPaths"`
+	Enabled        bool      `gorm:"default:true;index;column:enabled" json:"enabled"`
+	DisplayOrder   int       `gorm:"default:0;column:displayOrder" json:"displayOrder"`
+	ColumnWidth    *string   `gorm:"type:varchar(50);column:columnWidth" json:"columnWidth,omitempty"`
+	Format         *string   `gorm:"type:varchar(50);column:format" json:"format,omitempty"`
+	ColorCoding    *string   `gorm:"type:json;column:colorCoding" json:"colorCoding,omitempty"`
+	Icon           *string   `gorm:"type:varchar(50);column:icon" json:"icon,omitempty"`
+	CreatedAt      time.Time `gorm:"column:createdAt" json:"createdAt"`
+	UpdatedAt      time.Time `gorm:"column:updatedAt" json:"updatedAt"`
 }
 
 func (ParameterDisplayConfig) TableName() string { return "parameter_display_config" }
