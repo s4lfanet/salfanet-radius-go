@@ -702,7 +702,7 @@ func (h *GenieacsHandler) ListVirtualParameters(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/virtual-parameters", auth)
+	result, status, err := h.proxyGET(host+"/virtual_parameters", auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -721,7 +721,7 @@ func (h *GenieacsHandler) CreateVirtualParameter(c fiber.Ctx) error {
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
-	result, status, err := h.proxyPOST(host+"/virtual-parameters", auth, body)
+	result, status, err := h.proxyPOST(host+"/virtual_parameters", auth, body)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -736,7 +736,7 @@ func (h *GenieacsHandler) GetVirtualParameter(c fiber.Ctx) error {
 		return h.notConfiguredErr(c)
 	}
 	q := `[["_id","=","` + vpID + `"]]`
-	result, status, err := h.proxyGET(host+"/virtual-parameters?query="+url.QueryEscape(q), auth)
+	result, status, err := h.proxyGET(host+"/virtual_parameters?query="+url.QueryEscape(q), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -756,7 +756,7 @@ func (h *GenieacsHandler) UpdateVirtualParameter(c fiber.Ctx) error {
 	}
 	var body interface{}
 	_ = c.Bind().JSON(&body)
-	return h.proxyPUT(c, host+"/virtual-parameters/"+url.PathEscape(vpID), auth, body)
+	return h.proxyPUT(c, host+"/virtual_parameters/"+url.PathEscape(vpID), auth, body)
 }
 
 // DELETE /api/genieacs/virtual-parameters/:vpId
@@ -766,7 +766,7 @@ func (h *GenieacsHandler) DeleteVirtualParameter(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	status, err := h.proxyDELETE(host+"/virtual-parameters/"+url.PathEscape(vpID), auth)
+	status, err := h.proxyDELETE(host+"/virtual_parameters/"+url.PathEscape(vpID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
 	}
