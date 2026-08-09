@@ -307,7 +307,7 @@ export default function GenieACSDevicesPage() {
     setSelectedDevice(null);
     setShowDetailModal(true);
     try {
-      const response = await fetch(`/api/settings/genieacs/devices/${deviceId}/detail`);
+      const response = await fetch(`/api/settings/genieacs/devices/${encodeURIComponent(deviceId)}/detail`);
       const data = await response.json();
       if (response.ok && data.success && data.device) {
         setSelectedDevice(data.device);
