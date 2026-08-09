@@ -18,6 +18,7 @@ import (
 	"github.com/valyala/fasthttp"
 	"gorm.io/gorm"
 
+	"github.com/s4lfanet/salfanet-radius-go/internal/cache"
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 )
 
@@ -236,8 +237,21 @@ func mapDevice(dev map[string]interface{}) fiber.Map {
 	}
 }
 
-// GET /api/settings/genieacs/devices — fetch real device list from GenieACS
+// GET /api/settings/genieacs/devices — fetch device list from cache (refreshed by cron every 5 min)
 func (h *SettingsGenieacsHandler) ListDevices(c fiber.Ctx) error {
+	// Try cache first
+	cached := cache.GetGenieacsCache().GetDevices()
+	if cached != nil {
+		return c.JSON(fiber.Map{
+			"success":   true,
+			"devices":   cached,
+			"total":     len(cached),
+			"cached":    true,
+			"updatedAt": cache.GetGenieacsCache().UpdatedAt(),
+		})
+	}
+
+	// Cache miss — fetch from GenieACS directly
 	host, auth, err := h.getCredentials()
 	if err != nil {
 		return h.notConfiguredErr(c)
@@ -251,13 +265,12 @@ func (h *SettingsGenieacsHandler) ListDevices(c fiber.Ctx) error {
 		return c.Status(status).JSON(fiber.Map{"success": false, "error": fmt.Sprintf("GenieACS returned HTTP %d", status)})
 	}
 
-	// GenieACS returns a flat array of device objects
 	rawDevices, ok := result.([]interface{})
 	if !ok {
 		return c.JSON(fiber.Map{"success": true, "devices": []fiber.Map{}, "total": 0})
 	}
 
-	devices := make([]fiber.Map, 0, len(rawDevices))
+	devices := make([]map[string]interface{}, 0, len(rawDevices))
 	for _, raw := range rawDevices {
 		dev, ok := raw.(map[string]interface{})
 		if !ok {
@@ -266,16 +279,29 @@ func (h *SettingsGenieacsHandler) ListDevices(c fiber.Ctx) error {
 		devices = append(devices, mapDevice(dev))
 	}
 
+	// Populate cache for subsequent requests
+	cache.GetGenieacsCache().SetDevices(devices)
+
 	return c.JSON(fiber.Map{
-		"success": true,
-		"devices": devices,
-		"total":   len(devices),
+		"success":   true,
+		"devices":   devices,
+		"total":     len(devices),
+		"cached":    false,
+		"updatedAt": cache.GetGenieacsCache().UpdatedAt(),
 	})
 }
 
 // GET /api/settings/genieacs/devices/:deviceId
 func (h *SettingsGenieacsHandler) GetDevice(c fiber.Ctx) error {
 	deviceID := c.Params("deviceId")
+
+	// Try cache first
+	cached := cache.GetGenieacsCache().GetDevice(deviceID)
+	if cached != nil {
+		return c.JSON(fiber.Map{"success": true, "device": cached, "cached": true})
+	}
+
+	// Cache miss — fetch from GenieACS
 	host, auth, err := h.getCredentials()
 	if err != nil {
 		return h.notConfiguredErr(c)
@@ -295,7 +321,9 @@ func (h *SettingsGenieacsHandler) GetDevice(c fiber.Ctx) error {
 	if !ok {
 		return c.JSON(fiber.Map{"success": false, "error": "unexpected response format"})
 	}
-	return c.JSON(fiber.Map{"success": true, "device": mapDevice(dev)})
+	mapped := mapDevice(dev)
+	cache.GetGenieacsCache().SetDevice(deviceID, mapped)
+	return c.JSON(fiber.Map{"success": true, "device": mapped, "cached": false})
 }
 
 // DELETE /api/settings/genieacs/devices/:deviceId
@@ -814,8 +842,11 @@ func (h *SettingsGenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 
 	if taskExecuted {
 		log.Info().Str("device", deviceID).Msg("genieacs: refresh task executed successfully")
+		// Invalidate cache for this device so next read fetches fresh data from GenieACS
+		cache.GetGenieacsCache().SetDevice(deviceID, nil)
 		return c.JSON(fiber.Map{"success": true, "message": "refresh task executed", "data": result, "taskExecuted": true})
 	}
+	cache.GetGenieacsCache().SetDevice(deviceID, nil)
 	return c.JSON(fiber.Map{"success": true, "message": "refresh task queued, device will process on next inform", "data": result, "taskExecuted": false})
 }
 

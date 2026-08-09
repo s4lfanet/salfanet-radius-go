@@ -101,8 +101,12 @@ func (s *Scheduler) Start() {
 	// Payment promise check — daily 8 AM WIB
 	s.cron.AddFunc("0 0 8 * * *", s.jobPaymentPromiseCheck)
 
+	// ── GenieACS ───────────────────────────────────────────────────────────────
+	// GenieACS device sync — every 5 minutes (caches device data to avoid NBI hits on page load)
+	s.cron.AddFunc("0 */5 * * * *", s.jobGenieacsSync)
+
 	s.cron.Start()
-	log.Info().Msg("cron: scheduler started (19 jobs registered)")
+	log.Info().Msg("cron: scheduler started (20 jobs registered)")
 }
 
 func (s *Scheduler) Stop() {
@@ -152,6 +156,8 @@ func (s *Scheduler) TriggerJob(job string) error {
 		go s.jobNotificationCheck()
 	case "voucher_reconcile":
 		go s.jobReconcileVoucherTransactions()
+	case "genieacs_sync":
+		go s.jobGenieacsSync()
 	default:
 		return fmt.Errorf("unknown job: %s", job)
 	}
