@@ -21,6 +21,13 @@ import (
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 )
 
+// genieacsIDQuery builds a GenieACS NBI query string to filter by _id.
+// GenieACS does not support ?_id=xxx as a filter; it requires ?query={"_id":"xxx"}.
+func genieacsIDQuery(deviceID string) string {
+	q, _ := json.Marshal(map[string]string{"_id": deviceID})
+	return "?query=" + url.QueryEscape(string(q))
+}
+
 type SettingsGenieacsHandler struct {
 	db         *gorm.DB
 	httpClient *http.Client
@@ -273,7 +280,7 @@ func (h *SettingsGenieacsHandler) GetDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID)+"&projection=_id,_lastInform,_lastBoot,_registered,_deviceId,VirtualParameters", auth)
+	result, status, err := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID)+"&projection=_id,_lastInform,_lastBoot,_registered,_deviceId,VirtualParameters", auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -298,7 +305,7 @@ func (h *SettingsGenieacsHandler) DeleteDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	req, err := http.NewRequest("DELETE", host+"/devices/?_id="+url.QueryEscape(deviceID), nil)
+	req, err := http.NewRequest("DELETE", host+"/devices/"+genieacsIDQuery(deviceID), nil)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -321,12 +328,7 @@ func (h *SettingsGenieacsHandler) DeviceDetail(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	// GenieACS _id values may contain URL-encoded chars like %2D, %20.
-	// Fiber's c.Params already URL-decodes the path segment, so deviceID
-	// is the raw stored value (e.g. "80F7A6-FD512XW%2DR460-...").
-	// We must re-encode with url.QueryEscape so the HTTP query string
-	// preserves %2D (otherwise GenieACS HTTP server decodes %2D to '-').
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -626,7 +628,7 @@ func (h *SettingsGenieacsHandler) DeviceParameters(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
-	result, status, err := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	result, status, err := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	if err != nil {
 		return c.Status(502).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
@@ -674,7 +676,7 @@ func (h *SettingsGenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	}
 
 	// 1. Fetch device data to get ConnectionRequestURL and credentials
-	devResult, _, _ := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	devResult, _, _ := h.proxyGET(host+"/devices/"+genieacsIDQuery(deviceID), auth)
 	crURL, crUser, crPass := "", "", ""
 	if arr, ok := devResult.([]interface{}); ok && len(arr) > 0 {
 		if dev, ok := arr[0].(map[string]interface{}); ok {
