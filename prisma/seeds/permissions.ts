@@ -158,6 +158,18 @@ export const ROLE_TEMPLATES: Record<AdminRole, string[]> = {
     'notifications.view',
   ],
 
+  COLLECTOR: [
+    'dashboard.view',
+    'customers.view',
+    'invoices.view',
+    'invoices.approve',
+    'keuangan.view',
+    'keuangan.create',
+    'reports.view',
+    'notifications.view',
+    'sessions.view',
+  ],
+
   VIEWER: [
     'dashboard.view',
     'customers.view',
