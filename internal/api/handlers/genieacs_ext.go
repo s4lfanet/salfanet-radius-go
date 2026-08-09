@@ -711,19 +711,16 @@ func (h *GenieacsHandler) syncVpToGenieACS(vp *models.GenieacsVpScript) {
 		"_id":    vp.Name,
 		"script": vp.Script,
 	}
-	_, status, err := h.proxyPOST(host+"/virtual_parameters", auth, body)
+	// GenieACS NBI uses PUT for both create and update of virtual parameters
+	_, status, err := h.proxyPUTRaw(host+"/virtual_parameters/"+url.PathEscape(vp.Name), auth, body)
 	if err != nil || status >= 400 {
-		// Try PUT (update) if POST failed (already exists)
-		_, status2, err2 := h.proxyPUTRaw(host+"/virtual_parameters/"+url.PathEscape(vp.Name), auth, body)
-		if err2 != nil || status2 >= 400 {
-			errMsg := fmt.Sprintf("GenieACS sync failed: HTTP %d", status)
-			if err != nil {
-				errMsg = err.Error()
-			}
-			vp.SyncError = &errMsg
-			h.db.Save(vp)
-			return
+		errMsg := fmt.Sprintf("GenieACS sync failed: HTTP %d", status)
+		if err != nil {
+			errMsg = err.Error()
 		}
+		vp.SyncError = &errMsg
+		h.db.Save(vp)
+		return
 	}
 	now := time.Now()
 	vp.SyncedAt = &now
