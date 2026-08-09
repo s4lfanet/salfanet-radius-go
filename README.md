@@ -2,7 +2,7 @@
 
 Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with FreeRADIUS integration supporting PPPoE and Hotspot authentication.
 
-> **Latest:** v2.54.28 — GenieACS API audit: fixed 405 errors on path-based GETs, standardized response formats ({success, data}), fixed device online/offline status threshold (15→60min), flattened device parameters, fixed DELETE body parsing. (Aug 9, 2026)
+> **Latest:** v2.54.29 — WiFi config audit (security mapping fix for Huawei ONT), bulk delete faults, Redis cache implementation (HybridCache with memory fallback). (Aug 9, 2026)
 
 ---
 
@@ -89,6 +89,7 @@ Session WhatsApp tersimpan di `/var/data/salfanet/baileys_auth/` dan persist mes
 | Database | MySQL 8.0 + Prisma ORM (frontend) + GORM (Go backend) |
 | RADIUS | FreeRADIUS 3.0.26 |
 | API Backend | Go (Fiber) — port 8080, systemd `salfanet-api.service` |
+| Cache | Redis 6.0+ (HybridCache: Redis primary + memory fallback) |
 | Process Manager | PM2 (fork mode, 3 processes) + systemd |
 | Session Tracking | FreeRADIUS radacct (real-time) |
 | Maps | Leaflet / OpenStreetMap |
@@ -109,6 +110,12 @@ Session WhatsApp tersimpan di `/var/data/salfanet/baileys_auth/` dan persist mes
                      │              │     │  (port 8080)│
                      │              │     │  systemd    │
                      │              │     └──────┬──────┘
+                     │              │            │
+                     │              │     ┌──────▼──────┐
+                     │              │     │  Redis 6.0  │
+                     │              │     │  (cache +   │
+                     │              │     │   rate limit)│
+                     │              │     └─────────────┘
                      │              │            │
                      │              │     ┌──────▼──────┐
                      │              │     │  MySQL 8.0  │
@@ -293,6 +300,13 @@ TRIPAY_PRIVATE_KEY=
 # Web Push (optional)
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
+
+# Redis Cache
+REDIS_ENABLED=true
+REDIS_ADDR=127.0.0.1:6379
+REDIS_PASSWORD=
+REDIS_DB=0
+REDIS_PREFIX=salfanet
 ```
 
 ### Database Setup
@@ -316,6 +330,7 @@ npx prisma db push
 |---------|---------|------|---------|
 | `salfanet-radius` | PM2 | 3000 | Next.js frontend |
 | `salfanet-api` | systemd | 8080 | Go API backend |
+| `redis-server` | systemd | 6379 | Redis cache & rate limiting |
 | `salfanet-wa` | PM2 | 4000 | WhatsApp Baileys service |
 | `salfanet-cron` | PM2 | — | Background cron jobs |
 | `nginx` | systemd | 80/443 | Reverse proxy |
@@ -622,6 +637,30 @@ Dashboard · PPPoE · Hotspot · Agent · Invoice · Payment · Keuangan · Sess
 Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di GitHub.
 
 <!-- AUTO-CHANGELOG:START -->
+
+### v2.54.29 — 2026-08-09
+
+### Fixed — WiFi Configuration Audit & GenieACS Query Fixes
+- **WiFi security mapping mismatch** (`internal/api/handlers/genieacs.go`) — Huawei ONT/ONU devices require `BeaconType` as the primary security indicator. For "None" (Open) security, `IEEE11iAuthenticationMode` and `IEEE11iEncryptionModes` must NOT be sent (Huawei rejects with faultCode 9007). Now sets `BasicAuthenticationMode=None` and `BasicEncryptionModes=None` for Open security to clear previous security settings. Security mapping: `None→BeaconType=None`, `WPA-PSK→WPA+TKIP`, `WPA2-PSK→11i+AES`, `WPA/WPA2 Mixed→WPAand11i+TKIP+AES`.
+- **Security display in DeviceDetail** (`internal/api/handlers/settings_genieacs.go`) — Was showing raw `IEEE11iAuthenticationMode` (e.g. "PSKAuthentication") instead of user-friendly label. Now maps `BeaconType` to security labels: `11i→WPA2-PSK`, `WPA→WPA-PSK`, `WPAand11i→WPA-WPA2-PSK`, `None→None`, `Basic→WEP`.
+- **GenieACS device queries returning all devices** (`internal/api/handlers/genieacs_ext.go`) — 6 handlers still used broken `?_id=xxx` query format. GenieACS NBI ignores `_id` as a query param and returns all devices. Fixed all to use `genieacsIDQuery()` with proper `?query={"_id":"xxx"}` format.
+- **Connected devices display** (`internal/api/handlers/settings_genieacs.go`) — Huawei devices don't populate `Layer2Interface._value`. Switched to `InterfaceType` for WiFi/LAN detection (802.11/WiFi). Default `ssidIndex=1` for WiFi if not parseable. Default `active=true` if IP present. Added `X_HW_RSSI`/`X_HW_RSI` for signal strength.
+- **WiFi update logging** (`internal/api/handlers/genieacs.go`) — Added zerolog logging for setParameterValues task payload (device, wlanIndex, ssid, securityMode, beaconType, paramCount) and GenieACS response status code. Error responses now logged with full details.
+
+### Added — Bulk Delete Faults & Redis Cache
+- **Bulk delete faults** (`internal/api/handlers/genieacs_ext.go`, `internal/api/router.go`, `src/app/admin/genieacs/faults/page.tsx`) — New `POST /api/genieacs/faults/bulk-delete` endpoint accepts `{ids: [...]}` array. Frontend faults page now has select-all checkbox, per-row checkboxes, and "Delete N selected" button with confirmation dialog.
+- **Redis cache implementation** (`internal/cache/redis.go`, `internal/config/config.go`, `cmd/server/main.go`, `internal/api/router.go`, `internal/api/handlers/scaling_handler.go`) — Full Redis integration with `HybridCache` (Redis primary + Memory fallback). Auto-fallback to memory-only if Redis unavailable. New env vars: `REDIS_ENABLED`, `REDIS_ADDR`, `REDIS_PASSWORD`, `REDIS_DB`, `REDIS_PREFIX`. Redis-based sliding window `RateLimiter` using Sorted Sets. `CacheInterface` abstraction for swappable cache backends. Cache stats endpoint now reports Redis mode.
+
+### Files
+- `internal/api/handlers/genieacs.go` — **EDIT** — WiFi security mapping fix, BasicAuth/BasicEnc for None, detailed logging
+- `internal/api/handlers/settings_genieacs.go` — **EDIT** — Security display from BeaconType, connected devices parsing fix
+- `internal/api/handlers/genieacs_ext.go` — **EDIT** — All `?_id=` queries replaced with `genieacsIDQuery()`, added `DeleteFaultsBulk` handler
+- `internal/api/router.go` — **EDIT** — Added `POST /faults/bulk-delete` route, HybridCache wiring
+- `internal/api/handlers/scaling_handler.go` — **EDIT** — `CacheInterface` abstraction, Redis mode in rate-limit status
+- `internal/cache/redis.go` — **NEW** — `RedisCache`, `HybridCache`, `RateLimiter` implementations
+- `internal/config/config.go` — **EDIT** — Added Redis config fields
+- `cmd/server/main.go` — **EDIT** — Redis/HybridCache initialization, graceful shutdown
+- `src/app/admin/genieacs/faults/page.tsx` — **EDIT** — Bulk delete UI with checkboxes
 
 ### v2.54.28 — 2026-08-09
 

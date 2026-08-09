@@ -6,6 +6,31 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.29] — 2026-08-09
+### Fixed — WiFi Configuration Audit & GenieACS Query Fixes
+- **WiFi security mapping mismatch** (`internal/api/handlers/genieacs.go`) — Huawei ONT/ONU devices require `BeaconType` as the primary security indicator. For "None" (Open) security, `IEEE11iAuthenticationMode` and `IEEE11iEncryptionModes` must NOT be sent (Huawei rejects with faultCode 9007). Now sets `BasicAuthenticationMode=None` and `BasicEncryptionModes=None` for Open security to clear previous security settings. Security mapping: `None→BeaconType=None`, `WPA-PSK→WPA+TKIP`, `WPA2-PSK→11i+AES`, `WPA/WPA2 Mixed→WPAand11i+TKIP+AES`.
+- **Security display in DeviceDetail** (`internal/api/handlers/settings_genieacs.go`) — Was showing raw `IEEE11iAuthenticationMode` (e.g. "PSKAuthentication") instead of user-friendly label. Now maps `BeaconType` to security labels: `11i→WPA2-PSK`, `WPA→WPA-PSK`, `WPAand11i→WPA-WPA2-PSK`, `None→None`, `Basic→WEP`.
+- **GenieACS device queries returning all devices** (`internal/api/handlers/genieacs_ext.go`) — 6 handlers still used broken `?_id=xxx` query format. GenieACS NBI ignores `_id` as a query param and returns all devices. Fixed all to use `genieacsIDQuery()` with proper `?query={"_id":"xxx"}` format.
+- **Connected devices display** (`internal/api/handlers/settings_genieacs.go`) — Huawei devices don't populate `Layer2Interface._value`. Switched to `InterfaceType` for WiFi/LAN detection (802.11/WiFi). Default `ssidIndex=1` for WiFi if not parseable. Default `active=true` if IP present. Added `X_HW_RSSI`/`X_HW_RSI` for signal strength.
+- **WiFi update logging** (`internal/api/handlers/genieacs.go`) — Added zerolog logging for setParameterValues task payload (device, wlanIndex, ssid, securityMode, beaconType, paramCount) and GenieACS response status code. Error responses now logged with full details.
+
+### Added — Bulk Delete Faults & Redis Cache
+- **Bulk delete faults** (`internal/api/handlers/genieacs_ext.go`, `internal/api/router.go`, `src/app/admin/genieacs/faults/page.tsx`) — New `POST /api/genieacs/faults/bulk-delete` endpoint accepts `{ids: [...]}` array. Frontend faults page now has select-all checkbox, per-row checkboxes, and "Delete N selected" button with confirmation dialog.
+- **Redis cache implementation** (`internal/cache/redis.go`, `internal/config/config.go`, `cmd/server/main.go`, `internal/api/router.go`, `internal/api/handlers/scaling_handler.go`) — Full Redis integration with `HybridCache` (Redis primary + Memory fallback). Auto-fallback to memory-only if Redis unavailable. New env vars: `REDIS_ENABLED`, `REDIS_ADDR`, `REDIS_PASSWORD`, `REDIS_DB`, `REDIS_PREFIX`. Redis-based sliding window `RateLimiter` using Sorted Sets. `CacheInterface` abstraction for swappable cache backends. Cache stats endpoint now reports Redis mode.
+
+### Files
+- `internal/api/handlers/genieacs.go` — **EDIT** — WiFi security mapping fix, BasicAuth/BasicEnc for None, detailed logging
+- `internal/api/handlers/settings_genieacs.go` — **EDIT** — Security display from BeaconType, connected devices parsing fix
+- `internal/api/handlers/genieacs_ext.go` — **EDIT** — All `?_id=` queries replaced with `genieacsIDQuery()`, added `DeleteFaultsBulk` handler
+- `internal/api/router.go` — **EDIT** — Added `POST /faults/bulk-delete` route, HybridCache wiring
+- `internal/api/handlers/scaling_handler.go` — **EDIT** — `CacheInterface` abstraction, Redis mode in rate-limit status
+- `internal/cache/redis.go` — **NEW** — `RedisCache`, `HybridCache`, `RateLimiter` implementations
+- `internal/config/config.go` — **EDIT** — Added Redis config fields
+- `cmd/server/main.go` — **EDIT** — Redis/HybridCache initialization, graceful shutdown
+- `src/app/admin/genieacs/faults/page.tsx` — **EDIT** — Bulk delete UI with checkboxes
+
+---
+
 ## [2.54.28] — 2026-08-09
 ### Fixed — GenieACS API Audit & Device Status Threshold
 - **GenieACS path-based GET returning 405** (`internal/api/handlers/genieacs_ext.go`) — Root cause: GenieACS NBI API does not support path-based GET for single resources (e.g. `GET /presets/:id`). All such requests returned 405 Method Not Allowed. Fixed by switching to query-based filtering: `GET /presets?_id=:id`. Affected endpoints: GetDevice, DeviceAllParameters, GetDeviceParameters, GetDeviceWifi, GetPreset, GetProvision.
