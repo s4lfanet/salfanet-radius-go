@@ -638,6 +638,32 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.31 — 2026-08-10
+
+### Fixed — Backend ↔ Database ↔ Frontend Consistency Audit
+- **WhatsappReminderSetting legacy model conflict** (`internal/db/models/extra.go`, `internal/cron/scheduler.go`, `internal/api/handlers/whatsapp_crud.go`, `internal/api/router.go`) — Removed deprecated `WhatsappReminderSetting` struct that conflicted with `WhatsappGlobalSettings` on the same `whatsapp_reminder_settings` table. Updated cron scheduler to use `WhatsappGlobalSettings` with `reminderDays` JSON array parsing. Removed legacy CRUD handlers and route registrations for `-ext` endpoints.
+- **Settlement.Collector relation** (`internal/db/models/territory.go`) — Changed `Collector` field from `*User` to `*AdminUser` to correctly reference `admin_users` table.
+- **Radcheck.Op default value** (`internal/db/models/models.go`) — Fixed invalid GORM tag `default::=` to `default:=`.
+- **PppoeCustomer.CustomerID type** (`internal/db/models/models.go`) — Changed varchar length from 20 to 10 to match Prisma schema `@db.VarChar(10)`.
+- **Missing Company fields in Go struct** (`internal/db/models/models.go`) — Added `IsolationWhatsappTemplateId`, `IsolationEmailTemplateId`, `IsolationHtmlTemplateId`, `PppoeRenewalAnytime`, `PppoeRenewalDaysBefore`, `ReferralRewardType`, `ReferralRewardBoth`, `ReferralReferredAmount` to match Prisma schema.
+- **Go-managed columns missing from Prisma schema** (`prisma/schema.prisma`) — Added `territoryId` to `pppoeArea`; `territoryId`, `territoryAreaId`, `initialPaymentPending`, `psbDeadlineAt` to `pppoeUser`; `discountAmount`, `discountReason`, `originalAmount`, `cancelledAt`, `cancelledBy`, `cancelReason` to `invoice`; `qrisDeviceKey` to `company`; `paymentMethodEditCount` to `payment`. Prevents `prisma db push` from dropping Go-managed columns.
+- **GetRouter response missing fields** (`internal/api/handlers/network_ext.go`) — Added `latitude`, `longitude`, and `updatedAt` to the router detail response for API consistency.
+- **Frontend VpnClient/VpnServer types** (`src/features/network/types.ts`) — Fixed `VpnClient` type: removed non-existent `privateKey`, added `endpoint`, `description`, `updatedAt`. Fixed `VpnServer` type: added `description` field. Both now match Go struct definitions exactly.
+- **Unused genieacs sync method** (`internal/cron/genieacs_sync.go`) — Removed dead `jobGenieacsSyncSingle` method (never called; `RefreshDevice` handler does its own API call).
+
+### Files
+- `internal/db/models/extra.go` — **EDIT** — Removed legacy `WhatsappReminderSetting` struct
+- `internal/db/models/territory.go` — **EDIT** — Fixed `Settlement.Collector` relation type
+- `internal/db/models/models.go` — **EDIT** — Fixed `Radcheck.Op` default, `PppoeCustomer.CustomerID` type, added missing Company fields
+- `internal/cron/scheduler.go` — **EDIT** — Use `WhatsappGlobalSettings` instead of `WhatsappReminderSetting`
+- `internal/api/handlers/whatsapp_crud.go` — **EDIT** — Removed legacy reminder settings CRUD methods
+- `internal/api/router.go` — **EDIT** — Removed legacy `-ext` reminder settings routes
+- `internal/api/handlers/network_ext.go` — **EDIT** — Added missing fields to `GetRouter` response
+- `internal/cron/genieacs_sync.go` — **EDIT** — Removed unused `jobGenieacsSyncSingle` method
+- `prisma/schema.prisma` — **EDIT** — Added Go-managed columns to prevent schema drift
+- `src/features/network/types.ts` — **EDIT** — Fixed `VpnClient` and `VpnServer` types to match Go structs
+- `src/components/network/SplicePointsSection.tsx` — **EDIT** — TSC fix
+
 ### v2.54.30 — 2026-08-10
 
 ### Fixed — GenieACS Timezone & Telegram Cron Timezone
@@ -728,36 +754,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/db/models/models.go` — **EDIT** — Added FooterAdmin, FooterCustomer, FooterTechnician, FooterAgent fields to Company struct
 - `internal/db/db.go` — **EDIT** — Added utf8mb4 conversion migrations for cron_history and companies, qrisDeviceKey column migration
 - `internal/api/handlers/settings_genieacs.go` — **EDIT** — Implemented real TestConnection handler with HTTP request to GenieACS NBI API
-
-### v2.54.26 — 2026-08-08
-
-### Fixed — Settings Silent Failure Audit
-- **Company settings not saving** (`internal/api/handlers/company.go`) — Root cause: Go model `Company` had `QrisDeviceKey` field but DB table `companies` lacked the `qrisDeviceKey` column. GORM `Create`/`Save` silently failed with "Unknown column" error. Added error checking on `db.Create` and `db.Save` calls with proper 500 response + `log.Error()` logging.
-- **Database migration** (`internal/db/db.go`) — `ALTER TABLE companies ADD COLUMN qrisDeviceKey VARCHAR(100) NULL` — adds missing column referenced by Go model.
-- **Email settings silent save** (`internal/api/handlers/settings.go`) — `UpdateEmailSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
-- **Telegram settings silent save** (`internal/api/handlers/telegram_handler.go`) — `UpdateSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
-- **Backup Telegram settings silent save** (`internal/api/handlers/backup_handler.go`) — `UpdateTelegramSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
-- **WhatsApp reminder settings silent save** (`internal/api/handlers/whatsapp.go`) — `UpdateReminderSettings`: `db.Create()` and `db.Save()` had no error check. Added error handling + logging.
-- **Cloudflare tunnel settings silent save** (`internal/api/handlers/admin_misc_handler.go`) — `UpdateCloudflareTunnel`: `db.Model().Updates()` had no error check. Added error handling + logging.
-- **Map settings silent save** (`internal/api/handlers/admin_misc_handler.go`) — `UpdateMapSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
-- **VPN settings silent save** (`internal/api/handlers/admin_vpn_handler.go`) — `UpdateSettings`: `db.Model().Updates()` had no error check. Added error handling + logging.
-- **GenieACS settings silent save** (`internal/api/handlers/genieacs.go`) — `SaveSettings`: `db.Create()` and `db.Model().Updates()` had no error check. Added error handling + logging.
-- **Payment gateway settings silent save** (`internal/api/handlers/misc_handler.go`) — `UpdatePaymentGateway`: `db.Create()` and `db.Save()` had no error check. Added error handling + logging.
-
-### Changed
-- **Pattern fix across all settings handlers** — All GORM `Create`/`Save`/`Updates` calls in settings handlers now check `.Error` and return HTTP 500 with error message on failure. Previously, these calls silently failed, returning HTTP 200 with unsaved data to the frontend, causing the "data reverts to empty" bug.
-
-### Files
-- `internal/api/handlers/company.go` — **EDIT** — Error checking on Create/Save
-- `internal/api/handlers/settings.go` — **EDIT** — Error checking on Updates (email settings)
-- `internal/api/handlers/telegram_handler.go` — **EDIT** — Error checking on Create/Updates
-- `internal/api/handlers/backup_handler.go` — **EDIT** — Error checking on Create/Updates
-- `internal/api/handlers/whatsapp.go` — **EDIT** — Error checking on Create/Save
-- `internal/api/handlers/admin_misc_handler.go` — **EDIT** — Error checking on Updates (cloudflare + map)
-- `internal/api/handlers/admin_vpn_handler.go` — **EDIT** — Error checking on Updates
-- `internal/api/handlers/genieacs.go` — **EDIT** — Error checking on Create/Updates
-- `internal/api/handlers/misc_handler.go` — **EDIT** — Error checking on Create/Save (payment gateway)
-- `internal/db/db.go` — **EDIT** — Migration: qrisDeviceKey column
 
 <!-- AUTO-CHANGELOG:END -->
 
