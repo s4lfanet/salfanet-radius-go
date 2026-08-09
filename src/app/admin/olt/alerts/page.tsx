@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { AlertCircle, CheckCircle, RefreshCw, Wifi, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { formatWIB } from '@/lib/timezone';
 
 interface Alert {
   id: string;
@@ -38,7 +39,7 @@ function relativeTime(dateStr: string): string {
   if (diff < 60) return `${diff}d lalu`;
   if (diff < 3600) return `${Math.floor(diff / 60)}m lalu`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}j lalu`;
-  return new Date(dateStr).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return formatWIB(dateStr, 'dd MMM HH:mm');
 }
 
 export default function OLTAlertsPage() {
@@ -302,7 +303,7 @@ export default function OLTAlertsPage() {
                             )}
                           </span>
                         )}
-                        <span title={new Date(alert.createdAt).toLocaleString('id-ID')}>{relativeTime(alert.createdAt)}</span>
+                        <span title={formatWIB(alert.createdAt, 'dd MMM yyyy HH:mm')}>{relativeTime(alert.createdAt)}</span>
                       </div>
                     </div>
                   </div>

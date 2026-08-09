@@ -12,6 +12,7 @@ import (
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 	"github.com/s4lfanet/salfanet-radius-go/internal/notify"
 	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 // Scheduler wraps robfig/cron with DB access for all cron jobs.
@@ -21,9 +22,9 @@ type Scheduler struct {
 	radius *radius.Service
 }
 
-// New creates a new Scheduler with Asia/Jakarta timezone.
+// New creates a new Scheduler with the configured timezone (from company settings).
 func New(db *gorm.DB, rad *radius.Service) *Scheduler {
-	loc, _ := time.LoadLocation("Asia/Jakarta")
+	loc := tzutil.Location()
 	c := cron.New(cron.WithLocation(loc), cron.WithSeconds())
 	return &Scheduler{cron: c, db: db, radius: rad}
 }

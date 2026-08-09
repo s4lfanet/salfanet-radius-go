@@ -4,6 +4,8 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 // Event represents a system event that can trigger notifications.
@@ -18,10 +20,10 @@ type EventHandler func(event Event) error
 
 // EventBus is an in-memory pub/sub event system.
 type EventBus struct {
-	mu         sync.RWMutex
+	mu          sync.RWMutex
 	subscribers map[string][]EventHandler
-	dedup      map[string]time.Time // dedup key → last fired time
-	dedupMu    sync.Mutex
+	dedup       map[string]time.Time // dedup key → last fired time
+	dedupMu     sync.Mutex
 }
 
 // New creates a new EventBus.
@@ -93,11 +95,7 @@ func (b *EventBus) CleanupDedup(maxAge time.Duration) {
 
 // IsQuietHours checks if current time is within quiet hours (default 22:00-07:00 WIB).
 func IsQuietHours(startHour, endHour int) bool {
-	loc, err := time.LoadLocation("Asia/Jakarta")
-	if err != nil {
-		loc = time.UTC
-	}
-	hour := time.Now().In(loc).Hour()
+	hour := tzutil.Now().Hour()
 	if startHour <= endHour {
 		return hour >= startHour && hour < endHour
 	}

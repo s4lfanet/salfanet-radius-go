@@ -9,6 +9,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 // CompanyHandler handles company settings endpoints.
@@ -118,5 +119,11 @@ func (h *CompanyHandler) UpdateCompany(c fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to save company: " + err.Error()})
 		}
 	}
+
+	// Update Go backend timezone if company timezone changed
+	if company.Timezone != nil && *company.Timezone != "" {
+		tzutil.SetTimezone(*company.Timezone)
+	}
+
 	return c.JSON(buildCompanyResp(company))
 }

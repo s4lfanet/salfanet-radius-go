@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
+import { formatWIB } from '@/lib/timezone';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -2465,7 +2466,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
         o.distance?.toString() ?? '',
         o.customer?.name ?? '',
         o.customer?.username ?? '',
-        o.lastSeenAt ? new Date(o.lastSeenAt).toLocaleString('id-ID') : '',
+        o.lastSeenAt ? formatWIB(o.lastSeenAt, 'dd MMM yyyy HH:mm') : '',
       ]),
     ];
     const csv = rows.map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
@@ -2820,7 +2821,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                         )}
                       </td>
                       <td className="py-2.5 pr-4 text-xs text-gray-500 dark:text-gray-400">
-                        {onu.lastSeenAt ? new Date(onu.lastSeenAt).toLocaleString('id-ID') : '--'}
+                        {onu.lastSeenAt ? formatWIB(onu.lastSeenAt, 'dd MMM yyyy HH:mm') : '--'}
                       </td>
                       <td className="py-2.5 pr-3">
                         {onu.status === 'auth_failed' ? (
@@ -2947,7 +2948,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                       </div>
                       <p className="text-gray-600 text-sm mt-1">{alert.message}</p>
                       <p className="text-gray-400 text-xs mt-1">
-                        {new Date(alert.createdAt).toLocaleString('id-ID')}
+                        {formatWIB(alert.createdAt, 'dd MMM yyyy HH:mm')}
                       </p>
                     </div>
                   </div>
@@ -3228,7 +3229,7 @@ export default function OLTDetailPage({ params }: { params: Promise<{ id: string
                     <div className="flex-1">
                       <p className="text-sm">{log.message}</p>
                       <p className="text-xs text-gray-400">
-                        {new Date(log.createdAt).toLocaleString('id-ID')}
+                        {formatWIB(log.createdAt, 'dd MMM yyyy HH:mm')}
                       </p>
                     </div>
                   </div>

@@ -13,6 +13,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 	"gorm.io/gorm"
 )
 
@@ -55,10 +56,7 @@ func (h *FreeradiusHandler) GetStatus(c fiber.Ctx) error {
 		if rawTS != "" && rawTS != "n/a" {
 			tzRe := regexp.MustCompile(`\s+[A-Z]{2,5}$`)
 			cleanTS := tzRe.ReplaceAllString(rawTS, "")
-			loc, err := time.LoadLocation("Asia/Jakarta")
-			if err != nil {
-				loc = time.Local
-			}
+			loc := tzutil.Location()
 			if t, err := time.ParseInLocation("Mon 2006-01-02 15:04:05", cleanTS, loc); err == nil {
 				startTimeISO = t.UTC().Format("2006-01-02T15:04:05.000Z")
 				dur := time.Since(t)

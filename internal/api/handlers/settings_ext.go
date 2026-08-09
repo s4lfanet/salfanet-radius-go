@@ -7,6 +7,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 type SettingsExtHandler struct{ db *gorm.DB }
@@ -103,6 +104,7 @@ func (h *SettingsExtHandler) SetTimezone(c fiber.Ctx) error {
 	if err := h.db.Model(&models.Company{}).Where("1 = 1").Update("timezone", body.Timezone).Error; err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "failed to save timezone"})
 	}
+	tzutil.SetTimezone(body.Timezone)
 	return c.JSON(fiber.Map{"success": true, "timezone": body.Timezone})
 }
 

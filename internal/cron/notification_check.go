@@ -15,6 +15,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 func (s *Scheduler) jobNotificationCheck() {
@@ -71,8 +72,8 @@ func (s *Scheduler) checkOverdueInvoices() int {
 }
 
 func (s *Scheduler) checkExpiredUsers() int {
-	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	now := tzutil.Now()
+	today := tzutil.StartOfToday()
 	tomorrow := today.Add(24 * time.Hour)
 
 	var users []models.PppoeUser

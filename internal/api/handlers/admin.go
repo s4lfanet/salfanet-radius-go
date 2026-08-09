@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 // AdminHandler handles dashboard/stats endpoints.
@@ -49,7 +50,7 @@ func formatIDR(amount int64) string {
 // Stats godoc
 // GET /api/dashboard/stats
 func (h *AdminHandler) Stats(c fiber.Ctx) error {
-	now := time.Now()
+	now := tzutil.Now()
 
 	// Parse optional ?month=YYYY-MM
 	monthParam := c.Query("month")
@@ -67,7 +68,7 @@ func (h *AdminHandler) Stats(c fiber.Ctx) error {
 
 	startOfMonth := time.Date(selectedYear, time.Month(selectedMonth), 1, 0, 0, 0, 0, time.UTC)
 	startOfNextMonth := time.Date(selectedYear, time.Month(selectedMonth)+1, 1, 0, 0, 0, 0, time.UTC)
-	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
+	startOfToday := tzutil.StartOfToday()
 	sevenDaysFromNow := now.Add(7 * 24 * time.Hour)
 
 	// ── PPPoE user counts ──────────────────────────────────────────────────────

@@ -11,17 +11,16 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 func (s *Scheduler) jobPsbDeadline() {
 	h := s.startHistory("psb_deadline")
 	defer func() { s.completeHistory(h, recover()) }()
 
-	now := time.Now()
-	loc, _ := time.LoadLocation("Asia/Jakarta")
-	nowWIB := now.In(loc)
+	now := tzutil.Now()
+	nowWIB := now
 
 	isolated := 0
 	notified := 0

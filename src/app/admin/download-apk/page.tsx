@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { copyToClipboard as copyText } from '@/lib/clipboard';
+import { formatWIB } from '@/lib/timezone';
 import {
   Smartphone, Download, Shield, Wifi, Users, UserCheck,
   CheckCircle2, XCircle, Clock, AlertTriangle, RefreshCw,
@@ -91,7 +92,7 @@ function formatBytes(bytes: number) {
 
 function formatTime(iso?: string) {
   if (!iso) return '-';
-  return new Date(iso).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+  return formatWIB(iso, 'dd MMM yyyy HH:mm');
 }
 
 // --- CopyButton ---------------------------------------------------------------

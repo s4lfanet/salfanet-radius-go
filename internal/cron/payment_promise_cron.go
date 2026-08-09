@@ -7,19 +7,18 @@ package cron
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/rs/zerolog/log"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 func (s *Scheduler) jobPaymentPromiseCheck() {
 	h := s.startHistory("payment_promise_check")
 	defer func() { s.completeHistory(h, recover()) }()
 
-	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	today := tzutil.StartOfToday()
 	broken := 0
 
 	// Find expired active promises

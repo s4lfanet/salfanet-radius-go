@@ -17,6 +17,7 @@ import (
 	"github.com/s4lfanet/salfanet-radius-go/internal/db"
 	"github.com/s4lfanet/salfanet-radius-go/internal/olt/poller"
 	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 	"github.com/s4lfanet/salfanet-radius-go/internal/ws"
 )
 
@@ -34,12 +35,18 @@ func main() {
 	}
 	log.Info().Str("port", cfg.Port).Str("tz", cfg.AppTimezone).Msg("config loaded")
 
+	// ─── Initialize timezone from config ─────────────────────────────────────
+	tzutil.Init(cfg.Timezone, cfg.AppTimezone)
+
 	// ─── Database ─────────────────────────────────────────────────────────────
 	gormDB, err := db.Init(cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to database")
 	}
 	log.Info().Msg("database connected")
+
+	// ─── Load timezone from company settings (overrides config) ───────────────
+	tzutil.LoadFromDB(gormDB)
 
 	// ─── Redis / Cache ────────────────────────────────────────────────────────
 	var hybridCache *cache.HybridCache

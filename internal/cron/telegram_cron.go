@@ -22,6 +22,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/tzutil"
 )
 
 const telegramBackupDir = "/var/www/salfanet-radius/backups"
@@ -219,7 +220,7 @@ func formatHealthReport(h healthData) string {
 		h["totalUsers"],
 		h["activeUsers"],
 		h["pendingInvoices"],
-		time.Now().Format("2006-01-02 15:04:05 WIB"),
+		tzutil.FormatNow("2006-01-02 15:04:05 WIB"),
 	)
 
 	if issues, ok := h["issues"].(string); ok && issues != "" {

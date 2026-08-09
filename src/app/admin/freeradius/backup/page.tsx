@@ -7,6 +7,7 @@ import {
     Upload, Server,
 } from 'lucide-react';
 import { useToast } from '@/components/cyberpunk/CyberToast';
+import { formatWIB } from '@/lib/timezone';
 
 interface BackupFile {
     name: string;
@@ -21,10 +22,7 @@ function formatBytes(bytes: number) {
 }
 
 function formatDate(iso: string) {
-    return new Date(iso).toLocaleString('id-ID', {
-        day: '2-digit', month: 'short', year: 'numeric',
-        hour: '2-digit', minute: '2-digit',
-    });
+    return formatWIB(iso, 'dd MMM yyyy HH:mm');
 }
 
 export default function FreeRADIUSBackupPage() {
