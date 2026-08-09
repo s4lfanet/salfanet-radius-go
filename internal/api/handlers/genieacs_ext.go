@@ -6,6 +6,7 @@
 
 import (
 	"bytes"
+	"crypto/md5"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -269,6 +270,35 @@ func (h *GenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 	if err != nil {
 		return h.notConfiguredErr(c)
 	}
+
+	// 1. Fetch device data to get ConnectionRequestURL and credentials
+	devResult, _, _ := h.proxyGET(host+"/devices/?_id="+url.QueryEscape(deviceID), auth)
+	crURL, crUser, crPass := "", "", ""
+	if arr, ok := devResult.([]interface{}); ok && len(arr) > 0 {
+		if dev, ok := arr[0].(map[string]interface{}); ok {
+			if igd, ok := dev["InternetGatewayDevice"].(map[string]interface{}); ok {
+				if mgmt, ok := igd["ManagementServer"].(map[string]interface{}); ok {
+					if cr, ok := mgmt["ConnectionRequestURL"].(map[string]interface{}); ok {
+						if v, ok := cr["_value"].(string); ok {
+							crURL = v
+						}
+					}
+					if u, ok := mgmt["ConnectionRequestUsername"].(map[string]interface{}); ok {
+						if v, ok := u["_value"].(string); ok {
+							crUser = v
+						}
+					}
+					if p, ok := mgmt["ConnectionRequestPassword"].(map[string]interface{}); ok {
+						if v, ok := p["_value"].(string); ok {
+							crPass = v
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// 2. Create task
 	task := fiber.Map{"name": "getParameterValues", "parameterNames": []string{"InternetGatewayDevice.DeviceInfo.SerialNumber", "InternetGatewayDevice.DeviceInfo.Manufacturer", "InternetGatewayDevice.DeviceInfo.ModelName", "InternetGatewayDevice.DeviceInfo.SoftwareVersion", "InternetGatewayDevice.ManagementServer.ConnectionRequestURL", "InternetGatewayDevice.ManagementServer.PeriodicInformInterval", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ExternalIPAddress", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.Username", "InternetGatewayDevice.WANDevice.1.WANConnectionDevice.1.WANPPPConnection.1.ConnectionStatus"}}
 	result, status, err := h.proxyPOST(host+"/devices/"+url.PathEscape(deviceID)+"/tasks", auth, task)
 	if err != nil {
@@ -289,18 +319,23 @@ func (h *GenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 		}
 	}
 
-	// Send connection request synchronously to trigger immediate task execution
-	crURL := host + "/devices/" + url.PathEscape(deviceID) + "/tasks?connection_request"
-	_, crStatus, crErr := h.proxyPOST(crURL, auth, nil)
-	if crErr != nil {
-		log.Error().Err(crErr).Str("device", deviceID).Msg("genieacs: connection request failed")
-	} else if crStatus >= 400 {
-		log.Error().Int("status", crStatus).Str("device", deviceID).Msg("genieacs: connection request error")
+	// 3. Send direct connection request to device (bypassing GenieACS which may not reach device)
+	if crURL != "" {
+		go h.sendDirectConnectionRequest(crURL, crUser, crPass, deviceID)
 	} else {
-		log.Info().Str("device", deviceID).Msg("genieacs: connection request sent")
+		// Fallback: try GenieACS connection request
+		crGenieURL := host + "/devices/" + url.PathEscape(deviceID) + "/tasks?connection_request"
+		_, crStatus, crErr := h.proxyPOST(crGenieURL, auth, nil)
+		if crErr != nil {
+			log.Error().Err(crErr).Str("device", deviceID).Msg("genieacs: connection request failed")
+		} else if crStatus >= 400 {
+			log.Error().Int("status", crStatus).Str("device", deviceID).Msg("genieacs: connection request error")
+		} else {
+			log.Info().Str("device", deviceID).Msg("genieacs: connection request sent")
+		}
 	}
 
-	// Poll task status for up to 20 seconds to check if task was executed
+	// 4. Poll task status for up to 20 seconds
 	taskExecuted := false
 	if taskID != "" {
 		for i := 0; i < 10; i++ {
@@ -329,6 +364,133 @@ func (h *GenieacsHandler) RefreshDevice(c fiber.Ctx) error {
 		return c.Status(status).JSON(fiber.Map{"success": true, "data": result, "taskExecuted": true})
 	}
 	return c.Status(status).JSON(fiber.Map{"success": true, "data": result, "taskExecuted": false, "message": "Task queued, device will process on next inform"})
+}
+
+// sendDirectConnectionRequest sends a connection request directly to the device
+// using digest auth, bypassing GenieACS (which may not have network route to device)
+func (h *GenieacsHandler) sendDirectConnectionRequest(crURL, crUser, crPass, deviceID string) {
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	// First request without auth to get digest challenge
+	req, err := http.NewRequest("GET", crURL, nil)
+	if err != nil {
+		log.Error().Err(err).Str("device", deviceID).Msg("genieacs: direct CR request creation failed")
+		return
+	}
+	if crUser == "" && crPass == "" {
+		// No auth needed, just send
+		resp, err := client.Do(req)
+		if err != nil {
+			log.Error().Err(err).Str("device", deviceID).Msg("genieacs: direct CR request failed")
+			return
+		}
+		defer resp.Body.Close()
+		io.ReadAll(resp.Body)
+		log.Info().Int("status", resp.StatusCode).Str("device", deviceID).Msg("genieacs: direct CR sent")
+		return
+	}
+
+	// Try basic auth first
+	req.SetBasicAuth(crUser, crPass)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error().Err(err).Str("device", deviceID).Msg("genieacs: direct CR request failed")
+		return
+	}
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	if resp.StatusCode == 200 {
+		log.Info().Int("status", 200).Str("device", deviceID).Msg("genieacs: direct CR sent (basic auth)")
+		return
+	}
+
+	// If 401, check for digest auth challenge
+	if resp.StatusCode == 401 {
+		authHeader := resp.Header.Get("WWW-Authenticate")
+		if strings.Contains(authHeader, "Digest") {
+			// Extract path from full URL for digest URI
+			digestURI := crURL
+			if u, e := url.Parse(crURL); e == nil {
+				digestURI = u.RequestURI()
+			}
+			// Parse digest challenge and retry with digest auth
+			digestAuth := buildDigestAuth(authHeader, digestURI, crUser, crPass, "GET")
+			req2, _ := http.NewRequest("GET", crURL, nil)
+			req2.Header.Set("Authorization", digestAuth)
+			resp2, err := client.Do(req2)
+			if err != nil {
+				log.Error().Err(err).Str("device", deviceID).Msg("genieacs: direct CR digest request failed")
+				return
+			}
+			defer resp2.Body.Close()
+			io.ReadAll(resp2.Body)
+			log.Info().Int("status", resp2.StatusCode).Str("device", deviceID).Msg("genieacs: direct CR sent (digest auth)")
+			return
+		}
+	}
+
+	log.Info().Int("status", resp.StatusCode).Str("device", deviceID).Msg("genieacs: direct CR sent")
+	_ = bodyBytes
+}
+
+// buildDigestAuth builds a Digest auth header from a WWW-Authenticate challenge
+func buildDigestAuth(challenge, uri, username, password, method string) string {
+	// Parse challenge parameters
+	params := parseDigestParams(challenge)
+	realm := params["realm"]
+	nonce := params["nonce"]
+	qop := params["qop"]
+	opaque := params["opaque"]
+
+	cnonce := fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprintf("%d", time.Now().UnixNano()))))
+	nc := "00000001"
+
+	ha1Data := fmt.Sprintf("%s:%s:%s", username, realm, password)
+	ha1 := fmt.Sprintf("%x", md5.Sum([]byte(ha1Data)))
+	ha2Data := fmt.Sprintf("%s:%s", method, uri)
+	ha2 := fmt.Sprintf("%x", md5.Sum([]byte(ha2Data)))
+
+	var response string
+	if qop == "auth" {
+		respData := fmt.Sprintf("%s:%s:%s:%s:%s:%s", ha1, nonce, nc, cnonce, qop, ha2)
+		response = fmt.Sprintf("%x", md5.Sum([]byte(respData)))
+	} else {
+		respData := fmt.Sprintf("%s:%s:%s", ha1, nonce, ha2)
+		response = fmt.Sprintf("%x", md5.Sum([]byte(respData)))
+	}
+
+	auth := fmt.Sprintf(`Digest username="%s", realm="%s", nonce="%s", uri="%s", response="%s"`, username, realm, nonce, uri, response)
+	if qop != "" {
+		auth += fmt.Sprintf(`, qop=%s, nc=%s, cnonce="%s"`, qop, nc, cnonce)
+	}
+	if opaque != "" {
+		auth += fmt.Sprintf(`, opaque="%s"`, opaque)
+	}
+	return auth
+}
+
+// parseDigestParams extracts key=value pairs from a Digest WWW-Authenticate header
+func parseDigestParams(challenge string) map[string]string {
+	result := make(map[string]string)
+	// Remove "Digest " prefix
+	s := strings.TrimPrefix(challenge, "Digest ")
+	s = strings.TrimSpace(s)
+
+	// Split by comma, but handle quoted values
+	parts := strings.Split(s, ",")
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		idx := strings.Index(part, "=")
+		if idx < 0 {
+			continue
+		}
+		key := strings.TrimSpace(part[:idx])
+		val := strings.TrimSpace(part[idx+1:])
+		val = strings.Trim(val, `"`)
+		result[key] = val
+	}
+	return result
 }
 
 // POST /api/genieacs/devices/:deviceId/factory-reset
