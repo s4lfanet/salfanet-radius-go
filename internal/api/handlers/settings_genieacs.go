@@ -678,16 +678,201 @@ func (h *SettingsGenieacsHandler) TestConnection(c fiber.Ctx) error {
 
 // GET /api/settings/genieacs/parameter-display
 func (h *SettingsGenieacsHandler) ListParameterDisplay(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "configs": []fiber.Map{}})
+	configType := c.Query("configType", "DEVICE_LIST")
+	var configs []models.ParameterDisplayConfig
+	if err := h.db.Where("configType = ?", configType).Order("displayOrder ASC").Find(&configs).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	result := make([]fiber.Map, 0, len(configs))
+	for _, cfg := range configs {
+		var paths []string
+		_ = json.Unmarshal([]byte(cfg.ParameterPaths), &paths)
+		var colorCoding interface{}
+		if cfg.ColorCoding != nil {
+			_ = json.Unmarshal([]byte(*cfg.ColorCoding), &colorCoding)
+		}
+		entry := fiber.Map{
+			"id":             cfg.ID,
+			"configType":     cfg.ConfigType,
+			"section":        cfg.Section,
+			"parameterName":  cfg.ParameterName,
+			"label":          cfg.Label,
+			"parameterPaths": paths,
+			"enabled":        cfg.Enabled,
+			"displayOrder":   cfg.DisplayOrder,
+		}
+		if cfg.ColumnWidth != nil {
+			entry["columnWidth"] = *cfg.ColumnWidth
+		}
+		if cfg.Format != nil {
+			entry["format"] = *cfg.Format
+		}
+		if colorCoding != nil {
+			entry["colorCoding"] = colorCoding
+		}
+		if cfg.Icon != nil {
+			entry["icon"] = *cfg.Icon
+		}
+		result = append(result, entry)
+	}
+	return c.JSON(fiber.Map{"success": true, "configs": result})
+}
+
+// POST /api/settings/genieacs/parameter-display
+func (h *SettingsGenieacsHandler) CreateParameterDisplay(c fiber.Ctx) error {
+	var body struct {
+		ConfigType     string   `json:"configType"`
+		Section        string   `json:"section"`
+		ParameterName  string   `json:"parameterName"`
+		Label          string   `json:"label"`
+		ParameterPaths []string `json:"parameterPaths"`
+		Enabled        bool     `json:"enabled"`
+		DisplayOrder   int      `json:"displayOrder"`
+		ColumnWidth    string   `json:"columnWidth"`
+		Format         string   `json:"format"`
+		ColorCoding    any      `json:"colorCoding"`
+		Icon           string   `json:"icon"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "invalid JSON body"})
+	}
+	pathsJSON, _ := json.Marshal(body.ParameterPaths)
+	cfg := models.ParameterDisplayConfig{
+		ConfigType:     body.ConfigType,
+		Section:        body.Section,
+		ParameterName:  body.ParameterName,
+		Label:          body.Label,
+		ParameterPaths: string(pathsJSON),
+		Enabled:        body.Enabled,
+		DisplayOrder:   body.DisplayOrder,
+	}
+	if body.ColumnWidth != "" {
+		cfg.ColumnWidth = &body.ColumnWidth
+	}
+	if body.Format != "" {
+		cfg.Format = &body.Format
+	}
+	if body.Icon != "" {
+		cfg.Icon = &body.Icon
+	}
+	if body.ColorCoding != nil {
+		ccJSON, _ := json.Marshal(body.ColorCoding)
+		ccStr := string(ccJSON)
+		cfg.ColorCoding = &ccStr
+	}
+	if err := h.db.Create(&cfg).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"success": true, "config": cfg})
 }
 
 // PUT /api/settings/genieacs/parameter-display/:id
 func (h *SettingsGenieacsHandler) UpdateParameterDisplay(c fiber.Ctx) error {
+	id := c.Params("id")
+	var cfg models.ParameterDisplayConfig
+	if err := h.db.First(&cfg, id).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"success": false, "error": "config not found"})
+	}
+	var body map[string]interface{}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "invalid JSON body"})
+	}
+	updates := map[string]interface{}{}
+	if v, ok := body["label"]; ok {
+		updates["label"] = v
+	}
+	if v, ok := body["parameterName"]; ok {
+		updates["parameterName"] = v
+	}
+	if v, ok := body["section"]; ok {
+		updates["section"] = v
+	}
+	if v, ok := body["enabled"]; ok {
+		updates["enabled"] = v
+	}
+	if v, ok := body["displayOrder"]; ok {
+		updates["displayOrder"] = v
+	}
+	if v, ok := body["columnWidth"]; ok {
+		if s, ok2 := v.(string); ok2 && s != "" {
+			updates["columnWidth"] = s
+		} else {
+			updates["columnWidth"] = nil
+		}
+	}
+	if v, ok := body["format"]; ok {
+		if s, ok2 := v.(string); ok2 && s != "" {
+			updates["format"] = s
+		} else {
+			updates["format"] = nil
+		}
+	}
+	if v, ok := body["icon"]; ok {
+		if s, ok2 := v.(string); ok2 && s != "" {
+			updates["icon"] = s
+		} else {
+			updates["icon"] = nil
+		}
+	}
+	if v, ok := body["colorCoding"]; ok {
+		if v != nil {
+			ccJSON, _ := json.Marshal(v)
+			updates["colorCoding"] = string(ccJSON)
+		} else {
+			updates["colorCoding"] = nil
+		}
+	}
+	if v, ok := body["parameterPaths"]; ok {
+		pathsJSON, _ := json.Marshal(v)
+		updates["parameterPaths"] = string(pathsJSON)
+	}
+	if len(updates) > 0 {
+		if err := h.db.Model(&cfg).Updates(updates).Error; err != nil {
+			return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
+		}
+	}
 	return c.JSON(fiber.Map{"success": true, "message": "updated"})
+}
+
+// PUT /api/settings/genieacs/parameter-display (bulk update ordering)
+func (h *SettingsGenieacsHandler) BulkUpdateParameterDisplay(c fiber.Ctx) error {
+	var body struct {
+		Configs []struct {
+			ID           int `json:"id"`
+			DisplayOrder int `json:"displayOrder"`
+		} `json:"configs"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "invalid JSON body"})
+	}
+	for _, item := range body.Configs {
+		h.db.Model(&models.ParameterDisplayConfig{}).Where("id = ?", item.ID).Update("displayOrder", item.DisplayOrder)
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "order saved"})
+}
+
+// DELETE /api/settings/genieacs/parameter-display/:id
+func (h *SettingsGenieacsHandler) DeleteParameterDisplay(c fiber.Ctx) error {
+	id := c.Params("id")
+	if err := h.db.Delete(&models.ParameterDisplayConfig{}, id).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"success": true, "message": "deleted"})
 }
 
 // POST /api/settings/genieacs/parameter-display/reset
 func (h *SettingsGenieacsHandler) ResetParameterDisplay(c fiber.Ctx) error {
+	h.db.Where("1=1").Delete(&models.ParameterDisplayConfig{})
+	defaults := []models.ParameterDisplayConfig{
+		{ConfigType: "DEVICE_LIST", Section: "main", ParameterName: "serialNumber", Label: "Device", ParameterPaths: `["VirtualParameters.getSerialNumber"]`, Enabled: true, DisplayOrder: 1},
+		{ConfigType: "DEVICE_LIST", Section: "main", ParameterName: "pppoeUsername", Label: "Network", ParameterPaths: `["VirtualParameters.pppoeUsername"]`, Enabled: true, DisplayOrder: 2},
+		{ConfigType: "DEVICE_LIST", Section: "main", ParameterName: "rxPower", Label: "Signal", ParameterPaths: `["VirtualParameters.RXPower"]`, Enabled: true, DisplayOrder: 3},
+		{ConfigType: "DEVICE_LIST", Section: "main", ParameterName: "lastInform", Label: "Last Inform", ParameterPaths: `["_lastInform"]`, Enabled: true, DisplayOrder: 4},
+		{ConfigType: "DEVICE_LIST", Section: "main", ParameterName: "connectionStatus", Label: "Status", ParameterPaths: `["_registered"]`, Enabled: true, DisplayOrder: 5},
+	}
+	for _, d := range defaults {
+		h.db.Create(&d)
+	}
 	return c.JSON(fiber.Map{"success": true, "message": "reset to defaults"})
 }
 

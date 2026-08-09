@@ -600,6 +600,42 @@ type GenieacsSettings struct {
 
 func (GenieacsSettings) TableName() string { return "genieacs_settings" }
 
+// ─── Parameter Display Config ─────────────────────────────────────────────────
+
+type ParameterDisplayConfig struct {
+	ID             uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	ConfigType     string    `gorm:"type:enum('DEVICE_LIST','DEVICE_DETAIL');index" json:"configType"`
+	Section        string    `gorm:"type:varchar(100);index" json:"section"`
+	ParameterName  string    `gorm:"type:varchar(191)" json:"parameterName"`
+	Label          string    `gorm:"type:varchar(191)" json:"label"`
+	ParameterPaths string    `gorm:"type:json" json:"parameterPaths"`
+	Enabled        bool      `gorm:"default:true;index" json:"enabled"`
+	DisplayOrder   int       `gorm:"default:0" json:"displayOrder"`
+	ColumnWidth    *string   `gorm:"type:varchar(50)" json:"columnWidth,omitempty"`
+	Format         *string   `gorm:"type:varchar(50)" json:"format,omitempty"`
+	ColorCoding    *string   `gorm:"type:json" json:"colorCoding,omitempty"`
+	Icon           *string   `gorm:"type:varchar(50)" json:"icon,omitempty"`
+	CreatedAt      time.Time `json:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt"`
+}
+
+func (ParameterDisplayConfig) TableName() string { return "parameter_display_config" }
+
+// ─── GenieACS VP Scripts ──────────────────────────────────────────────────────
+
+type GenieacsVpScript struct {
+	ID          string     `gorm:"primaryKey;type:varchar(191)" json:"id"`
+	Name        string     `gorm:"type:varchar(191);uniqueIndex" json:"name"`
+	Script      string     `gorm:"type:longtext" json:"script"`
+	Description *string    `gorm:"type:text" json:"description,omitempty"`
+	SyncedAt    *time.Time `json:"syncedAt,omitempty"`
+	SyncError   *string    `gorm:"type:text" json:"syncError,omitempty"`
+	CreatedAt   time.Time  `gorm:"index" json:"createdAt"`
+	UpdatedAt   time.Time  `json:"updatedAt"`
+}
+
+func (GenieacsVpScript) TableName() string { return "genieacs_vp_scripts" }
+
 // ─── AdminUser ────────────────────────────────────────────────────────────────
 
 type AdminUser struct {

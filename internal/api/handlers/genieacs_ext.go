@@ -16,7 +16,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 )
 
 // ─── Device routes ────────────────────────────────────────────────────────────
@@ -694,83 +696,194 @@ func (h *GenieacsHandler) DeleteProvision(c fiber.Ctx) error {
 	return c.Status(status).JSON(fiber.Map{"success": status < 400})
 }
 
-// ─── Virtual Parameters ───────────────────────────────────────────────────────
+// ─── Virtual Parameters (VP Scripts with DB + GenieACS sync) ───────────────────
+
+// syncVpToGenieACS pushes a VP script to GenieACS NBI and updates sync status
+func (h *GenieacsHandler) syncVpToGenieACS(vp *models.GenieacsVpScript) {
+	host, auth, err := h.getCredentials()
+	if err != nil {
+		errMsg := "GenieACS not configured"
+		vp.SyncError = &errMsg
+		h.db.Save(vp)
+		return
+	}
+	body := map[string]interface{}{
+		"_id":    vp.Name,
+		"script": vp.Script,
+	}
+	_, status, err := h.proxyPOST(host+"/virtual_parameters", auth, body)
+	if err != nil || status >= 400 {
+		// Try PUT (update) if POST failed (already exists)
+		_, status2, err2 := h.proxyPUTRaw(host+"/virtual_parameters/"+url.PathEscape(vp.Name), auth, body)
+		if err2 != nil || status2 >= 400 {
+			errMsg := fmt.Sprintf("GenieACS sync failed: HTTP %d", status)
+			if err != nil {
+				errMsg = err.Error()
+			}
+			vp.SyncError = &errMsg
+			h.db.Save(vp)
+			return
+		}
+	}
+	now := time.Now()
+	vp.SyncedAt = &now
+	vp.SyncError = nil
+	h.db.Save(vp)
+}
+
+// proxyPUTRaw is a helper that does a PUT and returns raw status
+func (h *GenieacsHandler) proxyPUTRaw(targetURL, authHeader string, payload interface{}) (interface{}, int, error) {
+	var bodyReader io.Reader
+	if payload != nil {
+		b, err := json.Marshal(payload)
+		if err != nil {
+			return nil, 500, err
+		}
+		bodyReader = strings.NewReader(string(b))
+	}
+	req, err := http.NewRequest("PUT", targetURL, bodyReader)
+	if err != nil {
+		return nil, 500, err
+	}
+	req.Header.Set("Authorization", authHeader)
+	if payload != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	resp, err := h.httpClient.Do(req)
+	if err != nil {
+		return nil, 502, err
+	}
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+	var result interface{}
+	_ = json.Unmarshal(respBody, &result)
+	return result, resp.StatusCode, nil
+}
 
 // GET /api/genieacs/virtual-parameters
 func (h *GenieacsHandler) ListVirtualParameters(c fiber.Ctx) error {
-	host, auth, err := h.getCredentials()
-	if err != nil {
-		return h.notConfiguredErr(c)
+	var scripts []models.GenieacsVpScript
+	if err := h.db.Order("name ASC").Find(&scripts).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
 	}
-	result, status, err := h.proxyGET(host+"/virtual_parameters", auth)
-	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+	result := make([]fiber.Map, 0, len(scripts))
+	for _, s := range scripts {
+		entry := fiber.Map{
+			"_id":         s.Name,
+			"script":      s.Script,
+			"description": s.Description,
+			"syncedAt":    s.SyncedAt,
+			"syncError":   s.SyncError,
+		}
+		result = append(result, entry)
 	}
-	items, _ := result.([]interface{})
-	if items == nil {
-		items = []interface{}{}
-	}
-	return c.Status(status).JSON(fiber.Map{"success": true, "data": items})
+	return c.JSON(fiber.Map{"success": true, "data": result})
 }
 
 // POST /api/genieacs/virtual-parameters
 func (h *GenieacsHandler) CreateVirtualParameter(c fiber.Ctx) error {
-	host, auth, err := h.getCredentials()
-	if err != nil {
-		return h.notConfiguredErr(c)
+	var body struct {
+		ID          string `json:"_id"`
+		Name        string `json:"name"`
+		Script      string `json:"script"`
+		Description string `json:"description"`
 	}
-	var body interface{}
-	_ = c.Bind().JSON(&body)
-	result, status, err := h.proxyPOST(host+"/virtual_parameters", auth, body)
-	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "invalid JSON"})
 	}
-	return c.Status(status).JSON(result)
+	name := body.Name
+	if name == "" {
+		name = body.ID
+	}
+	if name == "" {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "_id or name is required"})
+	}
+	// Check if already exists
+	var existing models.GenieacsVpScript
+	if h.db.Where("name = ?", name).First(&existing).Error == nil {
+		return c.Status(409).JSON(fiber.Map{"success": false, "error": "VP script with this name already exists"})
+	}
+	vp := models.GenieacsVpScript{
+		ID:     uuid.New().String(),
+		Name:   name,
+		Script: body.Script,
+	}
+	if body.Description != "" {
+		vp.Description = &body.Description
+	}
+	if err := h.db.Create(&vp).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"success": false, "error": err.Error()})
+	}
+	h.syncVpToGenieACS(&vp)
+	return c.JSON(fiber.Map{"success": true, "data": fiber.Map{
+		"_id":         vp.Name,
+		"script":      vp.Script,
+		"description": vp.Description,
+		"syncedAt":    vp.SyncedAt,
+		"syncError":   vp.SyncError,
+	}})
 }
 
 // GET /api/genieacs/virtual-parameters/:vpId
 func (h *GenieacsHandler) GetVirtualParameter(c fiber.Ctx) error {
 	vpID := c.Params("vpId")
-	host, auth, err := h.getCredentials()
-	if err != nil {
-		return h.notConfiguredErr(c)
+	var vp models.GenieacsVpScript
+	if err := h.db.Where("name = ?", vpID).First(&vp).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"success": false, "error": "virtual parameter not found"})
 	}
-	q := `[["_id","=","` + vpID + `"]]`
-	result, status, err := h.proxyGET(host+"/virtual_parameters?query="+url.QueryEscape(q), auth)
-	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
-	}
-	items, ok := result.([]interface{})
-	if !ok || len(items) == 0 {
-		return c.Status(404).JSON(fiber.Map{"error": "virtual parameter not found"})
-	}
-	return c.Status(status).JSON(fiber.Map{"data": items[0]})
+	return c.JSON(fiber.Map{"data": fiber.Map{
+		"_id":         vp.Name,
+		"script":      vp.Script,
+		"description": vp.Description,
+		"syncedAt":    vp.SyncedAt,
+		"syncError":   vp.SyncError,
+	}})
 }
 
 // PUT /api/genieacs/virtual-parameters/:vpId
 func (h *GenieacsHandler) UpdateVirtualParameter(c fiber.Ctx) error {
 	vpID := c.Params("vpId")
-	host, auth, err := h.getCredentials()
-	if err != nil {
-		return h.notConfiguredErr(c)
+	var vp models.GenieacsVpScript
+	if err := h.db.Where("name = ?", vpID).First(&vp).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"success": false, "error": "virtual parameter not found"})
 	}
-	var body interface{}
-	_ = c.Bind().JSON(&body)
-	return h.proxyPUT(c, host+"/virtual_parameters/"+url.PathEscape(vpID), auth, body)
+	var body struct {
+		Script      string `json:"script"`
+		Description string `json:"description"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"success": false, "error": "invalid JSON"})
+	}
+	vp.Script = body.Script
+	if body.Description != "" {
+		vp.Description = &body.Description
+	}
+	h.db.Save(&vp)
+	h.syncVpToGenieACS(&vp)
+	return c.JSON(fiber.Map{"success": true, "data": fiber.Map{
+		"_id":         vp.Name,
+		"script":      vp.Script,
+		"description": vp.Description,
+		"syncedAt":    vp.SyncedAt,
+		"syncError":   vp.SyncError,
+	}})
 }
 
 // DELETE /api/genieacs/virtual-parameters/:vpId
 func (h *GenieacsHandler) DeleteVirtualParameter(c fiber.Ctx) error {
 	vpID := c.Params("vpId")
+	var vp models.GenieacsVpScript
+	if err := h.db.Where("name = ?", vpID).First(&vp).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"success": false, "error": "virtual parameter not found"})
+	}
+	// Delete from GenieACS
 	host, auth, err := h.getCredentials()
-	if err != nil {
-		return h.notConfiguredErr(c)
+	if err == nil {
+		h.proxyDELETE(host+"/virtual_parameters/"+url.PathEscape(vpID), auth)
 	}
-	status, err := h.proxyDELETE(host+"/virtual_parameters/"+url.PathEscape(vpID), auth)
-	if err != nil {
-		return c.Status(502).JSON(fiber.Map{"error": err.Error()})
-	}
-	return c.Status(status).JSON(fiber.Map{"success": status < 400})
+	// Delete from DB
+	h.db.Delete(&vp)
+	return c.JSON(fiber.Map{"success": true})
 }
 
 // ─── Files ────────────────────────────────────────────────────────────────────
@@ -895,6 +1008,38 @@ func (h *GenieacsHandler) DeleteFault(c fiber.Ctx) error {
 
 // POST /api/genieacs/sync
 func (h *GenieacsHandler) SyncDevices(c fiber.Ctx) error {
+	var body struct {
+		Types []string `json:"types"`
+	}
+	_ = c.Bind().JSON(&body)
+
+	// If syncing virtual parameters
+	for _, t := range body.Types {
+		if t == "virtualParameters" {
+			var scripts []models.GenieacsVpScript
+			h.db.Find(&scripts)
+			success, failed := 0, 0
+			for i := range scripts {
+				h.syncVpToGenieACS(&scripts[i])
+				if scripts[i].SyncError == nil {
+					success++
+				} else {
+					failed++
+				}
+			}
+			return c.JSON(fiber.Map{
+				"success": true,
+				"data": fiber.Map{
+					"virtualParameters": fiber.Map{
+						"success": success,
+						"failed":  failed,
+					},
+				},
+			})
+		}
+	}
+
+	// Default: trigger device sync
 	host, auth, err := h.getCredentials()
 	if err != nil {
 		return h.notConfiguredErr(c)
