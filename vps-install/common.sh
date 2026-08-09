@@ -237,8 +237,23 @@ detect_ip_address() {
     LOCAL_IP=$(ip route get 1 2>/dev/null | awk '{print $7; exit}') || \
     LOCAL_IP="127.0.0.1"
     
-    # For LXC/container environments, prefer local IP (accessed via LAN)
-    if [[ "${DEPLOY_ENV:-}" == "lxc" || "${IS_CONTAINER:-}" == "true" ]]; then
+    # For LXC/VM/bare metal environments, ALWAYS prefer local IP (accessed via LAN)
+    # These environments are behind NAT — public IP detection would return the
+    # gateway/router's public IP, not the actual server's LAN IP.
+    if [[ "${DEPLOY_ENV:-}" == "lxc" || "${DEPLOY_ENV:-}" == "vm" || "${DEPLOY_ENV:-}" == "bare" || "${IS_CONTAINER:-}" == "true" ]]; then
+        echo -e "${YELLOW}[INFO] Local/VM/LXC environment — using local IP: ${LOCAL_IP}${NC}" >&2
+        echo "$LOCAL_IP"
+        return 0
+    fi
+    
+    # For VPS environments: if local IP is a private range (192.168.x.x, 10.x.x.x, etc.),
+    # the VPS is behind NAT. Try public IP detection, but also allow local IP override.
+    # If local IP is already public (not private range), use it directly.
+    if [[ "$LOCAL_IP" =~ ^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.) ]]; then
+        # Local IP is private — try to detect public IP for VPS environment
+        echo -e "${YELLOW}[INFO] Local IP is private (${LOCAL_IP}), detecting public IP...${NC}" >&2
+    else
+        # Local IP is already public — use it directly
         echo "$LOCAL_IP"
         return 0
     fi
