@@ -1065,6 +1065,12 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 		} else {
 			connectionType = "VPN Tunnel"
 		}
+	} else {
+		// Non-VPN: use router NASName as the NAS IP (this is the IP FreeRADIUS sees)
+		nasSrcAddress = router.NASName
+		if nasSrcAddress == "" {
+			nasSrcAddress = router.IPAddress
+		}
 	}
 
 	// VPN Gateway IP: for CoA masquerade (CoA packets may appear from gateway, not RADIUS server)
