@@ -76,6 +76,11 @@ func (h *NetworkHandler) UpdateRouter(c fiber.Ctx) error {
 	if v, ok := body["secret"].(string); ok && v == "" {
 		delete(body, "secret")
 	}
+	// Map camelCase JSON fields to snake_case DB columns (GORM uses map keys as column names)
+	if v, ok := body["authMode"]; ok {
+		body["auth_mode"] = v
+		delete(body, "authMode")
+	}
 	body["updatedAt"] = time.Now()
 	h.db.Model(&router).Updates(body)
 	if err := radius.SyncNASClients(h.db); err != nil {
