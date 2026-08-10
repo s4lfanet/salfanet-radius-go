@@ -75,11 +75,11 @@ export default function NewPppoeUserPage() {
     if (!file) return;
     setUploadingIdCard(true);
     try {
-      const fd = new FormData(); fd.append('file', file); fd.append('type', 'id_card');
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const fd = new FormData(); fd.append('file', file);
+      const res = await fetch('/api/upload/pppoe-customer', { method: 'POST', body: fd });
       const data = await res.json();
       if (res.ok && data.url) setFormData(prev => ({ ...prev, idCardPhoto: data.url }));
-      else await showError('Gagal upload foto KTP');
+      else await showError(data.error || 'Gagal upload foto KTP');
     } catch { await showError('Gagal upload foto KTP'); }
     finally { setUploadingIdCard(false); }
   };
@@ -89,11 +89,11 @@ export default function NewPppoeUserPage() {
     if (!file) return;
     setUploadingInstallation(true);
     try {
-      const fd = new FormData(); fd.append('file', file); fd.append('type', 'installation');
-      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const fd = new FormData(); fd.append('file', file);
+      const res = await fetch('/api/upload/pppoe-customer', { method: 'POST', body: fd });
       const data = await res.json();
       if (res.ok && data.url) setFormData(prev => ({ ...prev, installationPhotos: [...prev.installationPhotos, data.url] }));
-      else await showError('Gagal upload foto instalasi');
+      else await showError(data.error || 'Gagal upload foto instalasi');
     } catch { await showError('Gagal upload foto instalasi'); }
     finally { setUploadingInstallation(false); }
   };
