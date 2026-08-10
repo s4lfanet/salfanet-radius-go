@@ -231,13 +231,11 @@ export default function CronSettingsPage() {
   const triggerManual = async (jobType: string) => {
     setTriggering(jobType);
     try {
-      const res = await fetch('/api/cron', {
+      const res = await fetch(`/api/cron/trigger/${jobType}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: jobType, ...(jobType === 'invoice_generate' ? { force: true } : {}) })
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.message) {
         addToast({ type: 'success', title: t('common.success'), description: data.message || 'Job triggered successfully', duration: 2000 });
       } else {
         addToast({ type: 'error', title: t('common.error'), description: data.error || t('common.failed') });
