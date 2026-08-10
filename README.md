@@ -2,7 +2,7 @@
 
 Modern, full-stack billing & RADIUS management system for ISP/RTRW.NET with FreeRADIUS integration supporting PPPoE and Hotspot authentication.
 
-> **Latest:** v2.54.31 — Backend ↔ Database ↔ Frontend consistency audit: removed legacy WhatsappReminderSetting model, fixed Settlement.Collector relation, aligned Go structs with Prisma schema (missing Company fields, Go-managed columns), fixed frontend VpnClient/VpnServer types, removed unused genieacs sync method. (Aug 10, 2026)
+> **Latest:** v2.54.32 — Fix CSP blocking leaflet.css from unpkg.com (added to style-src in proxy.ts, next.config.ts, nginx configs). Fix PPPoE user create/update 400 error (frontend sends string types for latitude/longitude/billingDay/expiredAt; added createUserBody struct with proper type conversion). (Aug 10, 2026)
 
 ---
 

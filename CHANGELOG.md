@@ -6,6 +6,22 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
+## [2.54.32] — 2026-08-10
+### Fixed — CSP Violation & PPPoE User Create/Update 400 Error
+- **CSP blocking leaflet.css from unpkg.com** (`src/proxy.ts`, `next.config.ts`, `vps-install/install-nginx.sh`, `production/nginx-salfanet-radius.conf`, `production/nginx-radius.hotspotapp.net.conf`) — Added `https://unpkg.com` to `style-src` CSP directive in all CSP definitions (Next.js middleware, Next.js headers, nginx install script, production nginx configs). The Leaflet CSS stylesheet from `https://unpkg.com/leaflet@1.9.4/dist/leaflet.css` was being blocked by the browser because `unpkg.com` was only in `script-src` but not `style-src`.
+- **PPPoE user create/update 400 Bad Request** (`internal/api/handlers/pppoe.go`, `internal/api/handlers/helpers.go`) — `CreateUser` and `UpdateUser` handlers bound JSON directly to `models.PppoeUser` which expects `*float64` for `latitude`/`longitude`, `*int` for `billingDay`, and `*time.Time` for `expiredAt`. The frontend sends these as strings (e.g. `''`, `'1'`, `'2024-01-01'`), causing JSON binding errors. Also `Password` field has `json:"-"` tag so it was never populated from JSON. Added `createUserBody` struct with all-string fields for loose JSON binding, then convert to proper Go types using `strconv.ParseFloat`, `strconv.Atoi`, and `time.Parse`. Added `ptrStr` helper function in `helpers.go`.
+
+### Files
+- `src/proxy.ts` — **EDIT** — Added `https://unpkg.com` to `style-src` CSP directive
+- `next.config.ts` — **EDIT** — Added `https://unpkg.com` to `style-src` CSP directive
+- `vps-install/install-nginx.sh` — **EDIT** — Added `https://unpkg.com` and `https://cdnjs.cloudflare.com` to `style-src` and `font-src` CSP directives
+- `production/nginx-salfanet-radius.conf` — **EDIT** — Added `https://unpkg.com` to `style-src` CSP directive
+- `production/nginx-radius.hotspotapp.net.conf` — **EDIT** — Added `https://unpkg.com` to `style-src` CSP directive
+- `internal/api/handlers/pppoe.go` — **EDIT** — Added `createUserBody` struct, rewrote `CreateUser` and `UpdateUser` handlers with proper type conversion
+- `internal/api/handlers/helpers.go` — **EDIT** — Added `ptrStr` helper function
+
+---
+
 ## [2.54.31] — 2026-08-10
 ### Fixed — Backend ↔ Database ↔ Frontend Consistency Audit
 - **WhatsappReminderSetting legacy model conflict** (`internal/db/models/extra.go`, `internal/cron/scheduler.go`, `internal/api/handlers/whatsapp_crud.go`, `internal/api/router.go`) — Removed deprecated `WhatsappReminderSetting` struct that conflicted with `WhatsappGlobalSettings` on the same `whatsapp_reminder_settings` table. Updated cron scheduler to use `WhatsappGlobalSettings` with `reminderDays` JSON array parsing. Removed legacy CRUD handlers and route registrations for `-ext` endpoints.
