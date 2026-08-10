@@ -704,7 +704,7 @@ export default function PppoeUsersPage() {
   const handleDelete = async () => {
     if (!deleteUserId) return;
     try {
-      const res = await fetch(`/api/pppoe/users?id=${deleteUserId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/pppoe/users/${deleteUserId}`, { method: 'DELETE' });
       const result = await res.json();
       if (res.ok) { 
         await showSuccess(t('management.userDeleted')); 
@@ -836,7 +836,7 @@ export default function PppoeUsersPage() {
     const confirmed = await showConfirm(t('pppoe.deleteConfirmUsers').replace('{count}', String(selectedUsers.size)));
     if (!confirmed) return;
     try {
-      await Promise.all(Array.from(selectedUsers).map(id => fetch(`/api/pppoe/users?id=${id}`, { method: 'DELETE' })));
+      await Promise.all(Array.from(selectedUsers).map(id => fetch(`/api/pppoe/users/${id}`, { method: 'DELETE' })));
       await showSuccess(t('pppoe.usersDeleted').replace('{count}', String(selectedUsers.size))); setSelectedUsers(new Set()); loadData();
     } catch (error) { console.error('Bulk delete error:', error); await showError(t('common.failed')); }
   };
