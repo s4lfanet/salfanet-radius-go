@@ -139,7 +139,9 @@ func (h *MiscHandler) RadiusAuthorize(c fiber.Ctx) error {
 		NasPort       string `json:"nasPort"`
 		CalledStation string `json:"calledStationId"`
 	}
-	c.Bind().JSON(&body)
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+	}
 
 	uname := body.UserName
 	if uname == "" {
