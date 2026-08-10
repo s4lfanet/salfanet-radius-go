@@ -133,6 +133,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	jobQueue := queue.New(4)
 	scalingH := handlers.NewScalingHandler(db, hybridCache, jobQueue)
 	roadmapH := handlers.NewRoadmapHandler(db)
+	addonH := handlers.NewAddonHandler(db)
 	// NOTE: networkInfraH is instantiated near batch 12 routes (after olt group)
 
 	// ─── Public routes (NO auth — must be before the api group) ──────────────
@@ -1451,6 +1452,16 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	roadmap.Post("/ont-removal-tasks/:id/complete", roadmapH.CompleteOntRemovalTask)
 	roadmap.Post("/ont-removal-tasks/:id/confirm", roadmapH.ConfirmOntRemovalTask)
 	roadmap.Post("/ont-removal-tasks/:id/cancel", roadmapH.CancelOntRemovalTask)
+
+	// ─── Addon (Layanan Tambahan) ─────────────────────────────────────────────
+	api.Get("/addon-types", addonH.ListAddonTypes)
+	api.Post("/addon-types", addonH.CreateAddonType)
+	api.Put("/addon-types/:id", addonH.UpdateAddonType)
+	api.Delete("/addon-types/:id", addonH.DeleteAddonType)
+	api.Get("/customers/:userId/addons", addonH.ListCustomerAddons)
+	api.Post("/customers/:userId/addons", addonH.AssignCustomerAddon)
+	api.Delete("/customer-addons/:id", addonH.RemoveCustomerAddon)
+	api.Post("/billing/sync-addons", addonH.SyncAddons)
 
 	// ─────────────────────────────────────────────────────────────────────────
 

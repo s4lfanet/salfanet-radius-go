@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError } from '@/lib/sweetalert';
-import { ArrowLeft, MapPin, Map, Eye, EyeOff, Loader2, X, ChevronRight, ChevronLeft, Wifi, WifiOff, Clock, Camera } from 'lucide-react';
+import { ArrowLeft, MapPin, Map, Eye, EyeOff, Loader2, X, ChevronRight, ChevronLeft, Wifi, WifiOff, Clock, Camera, Package } from 'lucide-react';
 import MapPicker from '@/components/MapPicker';
 import CameraCapture from '@/components/CameraCapture';
 import { ModalInput, ModalSelect, ModalLabel } from '@/components/cyberpunk';
@@ -10,6 +10,7 @@ import { ModalInput, ModalSelect, ModalLabel } from '@/components/cyberpunk';
 interface Profile { id: string; name: string; groupName: string; price: number; }
 interface Router { id: string; name: string; nasname: string; ipAddress: string; authMode?: string; }
 interface Area { id: string; name: string; }
+interface AddonType { id: number; name: string; description: string | null; price: number; isRecurring: boolean; isActive: boolean; }
 
 const TABS = [
   { id: 'radius', label: 'Akun RADIUS', icon: 'R' },
@@ -33,6 +34,8 @@ export default function NewPppoeUserPage() {
   const [hasPppoeAccount, setHasPppoeAccount] = useState(true);
   const [createPppSecret, setCreatePppSecret] = useState(false);
   const [firstInvoice, setFirstInvoice] = useState<'none' | 'prorate' | 'full'>('prorate');
+  const [addonTypes, setAddonTypes] = useState<AddonType[]>([]);
+  const [psbAddons, setPsbAddons] = useState<{ addonTypeId: number; priceOverride: number | null }[]>([]);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -70,6 +73,7 @@ export default function NewPppoeUserPage() {
       setRouters(routersData.routers || []);
       setAreas(areasData.areas || []);
     }).catch(console.error);
+    fetch('/api/addon-types').then(r => r.ok ? r.json() : []).then((data: AddonType[]) => setAddonTypes(data.filter(a => a.isActive))).catch(() => {});
   }, []);
 
   const uploadIdCardFile = async (file: File) => {
@@ -145,6 +149,7 @@ export default function NewPppoeUserPage() {
             return isNaN(d.getTime()) ? undefined : d.toISOString();
           })()
         }),
+        psbAddons: psbAddons.length > 0 ? psbAddons : undefined,
       };
       const res = await fetch('/api/pppoe/users', {
         method: 'POST',
@@ -652,6 +657,68 @@ export default function NewPppoeUserPage() {
                   placeholder="Catatan tambahan untuk pelanggan ini..." rows={3}
                   className="w-full px-3 py-2 text-xs border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary resize-none" />
               </div>
+              {addonTypes.length > 0 && (
+                <div className="bg-card border border-border rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Package className="w-4 h-4 text-primary" />
+                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Layanan Tambahan (Add-on)</p>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">Pilih layanan tambahan untuk pelanggan ini. Add-on akan ditambahkan ke tagihan bulanan.</p>
+                  <div className="space-y-2">
+                    {addonTypes.map(a => {
+                      const selected = psbAddons.some(x => x.addonTypeId === a.id);
+                      const addon = psbAddons.find(x => x.addonTypeId === a.id);
+                      return (
+                        <div key={a.id} className={`flex items-center gap-3 p-2.5 border-2 rounded-lg transition-all ${selected ? 'border-primary bg-primary/5' : 'border-border'}`}>
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setPsbAddons(prev => [...prev, { addonTypeId: a.id, priceOverride: null }]);
+                              } else {
+                                setPsbAddons(prev => prev.filter(x => x.addonTypeId !== a.id));
+                              }
+                            }}
+                            className="w-4 h-4 rounded border-border accent-primary flex-shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold">{a.name}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              Rp {Number(a.price).toLocaleString('id-ID')}/{a.isRecurring ? 'bln' : 'sekali'}
+                              {a.description ? ` — ${a.description}` : ''}
+                            </p>
+                          </div>
+                          {selected && (
+                            <div className="flex items-center gap-1 flex-shrink-0">
+                              <span className="text-[10px] text-muted-foreground">Rp</span>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder={String(a.price)}
+                                value={addon?.priceOverride ?? ''}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setPsbAddons(prev => prev.map(x => x.addonTypeId === a.id ? { ...x, priceOverride: val === '' ? null : parseInt(val) } : x));
+                                }}
+                                className="w-20 px-2 py-1 text-xs border border-border rounded bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {psbAddons.length > 0 && (
+                    <div className="text-xs font-semibold text-primary pt-1">
+                      Total Add-on: Rp {psbAddons.reduce((sum, x) => {
+                        const at = addonTypes.find(a => a.id === x.addonTypeId);
+                        return sum + (x.priceOverride ?? at?.price ?? 0);
+                      }, 0).toLocaleString('id-ID')}/bln
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           )}
 

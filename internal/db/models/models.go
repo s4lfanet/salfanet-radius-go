@@ -204,6 +204,7 @@ type Invoice struct {
 	DiscountAmount   *int          `gorm:"column:discountAmount" json:"discountAmount"`
 	DiscountReason   *string       `gorm:"type:text;column:discountReason" json:"discountReason"`
 	OriginalAmount   *int          `gorm:"column:originalAmount" json:"originalAmount"`
+	AddonAmount      *int          `gorm:"column:addonAmount;default:0" json:"addonAmount"`
 	CancelledAt      *time.Time    `gorm:"column:cancelledAt" json:"cancelledAt"`
 	CancelledBy      *string       `gorm:"column:cancelledBy" json:"cancelledBy"`
 	CancelReason     *string       `gorm:"type:text;column:cancelReason" json:"cancelReason"`
@@ -511,3 +512,48 @@ type Ticket struct {
 }
 
 func (Ticket) TableName() string { return "tickets" }
+
+// ─── Addon Types ─────────────────────────────────────────────────────────────
+
+type AddonType struct {
+	ID          uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name        string    `gorm:"type:varchar(100);not null" json:"name"`
+	Description *string   `gorm:"type:varchar(255)" json:"description"`
+	Price       int       `gorm:"not null;default:0" json:"price"`
+	IsRecurring bool      `gorm:"column:isRecurring;default:true" json:"isRecurring"`
+	IsActive    bool      `gorm:"column:isActive;default:true" json:"isActive"`
+	CreatedAt   time.Time `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+	UpdatedAt   time.Time `gorm:"column:updatedAt;autoUpdateTime" json:"updatedAt"`
+}
+
+func (AddonType) TableName() string { return "addon_types" }
+
+// ─── Customer Addons ─────────────────────────────────────────────────────────
+
+type CustomerAddon struct {
+	ID            uint       `gorm:"primaryKey;autoIncrement" json:"id"`
+	UserID        string     `gorm:"index;column:userId;not null" json:"userId"`
+	AddonTypeID   uint       `gorm:"index;column:addonTypeId;not null" json:"addonTypeId"`
+	PriceOverride *int       `gorm:"column:priceOverride" json:"priceOverride"`
+	StartDate     time.Time  `gorm:"column:startDate;not null" json:"startDate"`
+	EndDate       *time.Time `gorm:"column:endDate" json:"endDate"`
+	Notes         *string    `gorm:"type:varchar(255)" json:"notes"`
+	CreatedAt     time.Time  `gorm:"column:createdAt;autoCreateTime" json:"createdAt"`
+
+	AddonType *AddonType `gorm:"foreignKey:AddonTypeID" json:"addonType,omitempty"`
+	User      *PppoeUser `gorm:"foreignKey:UserID" json:"user,omitempty"`
+}
+
+func (CustomerAddon) TableName() string { return "customer_addons" }
+
+// ─── Invoice Addons (line items) ─────────────────────────────────────────────
+
+type InvoiceAddonItem struct {
+	ID          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+	InvoiceID   string `gorm:"index;column:invoiceId;not null" json:"invoiceId"`
+	AddonTypeID *uint  `gorm:"column:addonTypeId" json:"addonTypeId"`
+	AddonName   string `gorm:"column:addonName;not null" json:"addonName"`
+	Amount      int    `gorm:"not null;default:0" json:"amount"`
+}
+
+func (InvoiceAddonItem) TableName() string { return "invoice_addons" }

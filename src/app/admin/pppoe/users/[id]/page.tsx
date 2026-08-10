@@ -9,7 +9,7 @@ import {
   Phone, Mail, MapPin, Calendar, CreditCard, Copy, ExternalLink, RefreshCw,
   AlertTriangle, FileText, Clock, Zap, Check, Activity, Eye, EyeOff,
   Hash, MessageCircle, Download, Upload, Timer, Server,
-  ChevronDown, ChevronUp, Plus, SendHorizonal, Laptop,
+  ChevronDown, ChevronUp, Plus, SendHorizonal, Laptop, Package, Trash2,
 } from 'lucide-react';
 
 interface PppoeUserDetail {
@@ -97,6 +97,12 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
   const [showSessions, setShowSessions]     = useState(false);
   const [sendingWA, setSendingWA]           = useState(false);
   const [waResult, setWaResult]             = useState<string | null>(null);
+  const [customerAddons, setCustomerAddons] = useState<any[]>([]);
+  const [addonTypes, setAddonTypes]         = useState<any[]>([]);
+  const [showAddons, setShowAddons]         = useState(false);
+  const [addonLoading, setAddonLoading]     = useState(false);
+  const [showAddonModal, setShowAddonModal] = useState(false);
+  const [addonForm, setAddonForm]           = useState({ addonTypeId: '', priceOverride: '', startDate: new Date().toISOString().slice(0, 10) });
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchData(); }, [id]);
@@ -104,18 +110,24 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [userRes, invoicesRes, sessionsRes] = await Promise.all([
+      const [userRes, invoicesRes, sessionsRes, addonsRes, addonTypesRes] = await Promise.all([
         fetch(`/api/pppoe/users/${id}`),
         fetch(`/api/invoices?userId=${id}&limit=20`),
         fetch(`/api/pppoe/users/${id}/activity?type=sessions&limit=10`),
+        fetch(`/api/customers/${id}/addons`),
+        fetch(`/api/addon-types`),
       ]);
       const userData     = await userRes.json();
       const invoicesData = await invoicesRes.json();
       const sessionsData = await sessionsRes.json();
+      const addonsData   = await addonsRes.json();
+      const addonTypesData = await addonTypesRes.json();
       if (userData.user)          setUser(userData.user);
       if (userData.activeSession) setActiveSession(userData.activeSession);
       if (invoicesData.invoices)  setInvoices(invoicesData.invoices);
       if (sessionsData.sessions)  setSessions(sessionsData.sessions);
+      if (Array.isArray(addonsData))     setCustomerAddons(addonsData);
+      if (Array.isArray(addonTypesData)) setAddonTypes(addonTypesData);
     } catch (e) {
       console.error(e);
     } finally {
@@ -162,6 +174,44 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
     copyText(link);
     setCopiedId(key);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleAssignAddon = async () => {
+    if (!user || !addonForm.addonTypeId) return;
+    setAddonLoading(true);
+    try {
+      const res = await fetch(`/api/customers/${user.id}/addons`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          addonTypeId: parseInt(addonForm.addonTypeId),
+          priceOverride: addonForm.priceOverride ? parseInt(addonForm.priceOverride) : null,
+          startDate: addonForm.startDate,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal');
+      setShowAddonModal(false);
+      setAddonForm({ addonTypeId: '', priceOverride: '', startDate: new Date().toISOString().slice(0, 10) });
+      const addonsRes = await fetch(`/api/customers/${user.id}/addons`);
+      if (addonsRes.ok) setCustomerAddons(await addonsRes.json());
+    } catch (e: any) {
+      alert(e.message);
+    } finally {
+      setAddonLoading(false);
+    }
+  };
+
+  const handleRemoveAddon = async (addonId: number) => {
+    if (!user) return;
+    if (!confirm('Hentikan layanan tambahan ini?')) return;
+    try {
+      await fetch(`/api/customer-addons/${addonId}`, { method: 'DELETE' });
+      const addonsRes = await fetch(`/api/customers/${user.id}/addons`);
+      if (addonsRes.ok) setCustomerAddons(await addonsRes.json());
+    } catch {
+      alert('Gagal menghentikan addon');
+    }
   };
 
   const formatCurrency = (amount: number) =>
@@ -617,6 +667,119 @@ export default function PppoeUserDetailPage({ params }: { params: Promise<{ id: 
           </div>
         )}
       </div>
+
+      {/* -- Addons (Layanan Tambahan) ------------------------------------- */}
+      <div className="bg-card border border-border rounded-xl overflow-hidden">
+        <button
+          onClick={() => setShowAddons(!showAddons)}
+          className="w-full px-4 py-3 bg-muted/50 border-b border-border flex items-center justify-between hover:bg-muted/70 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Package className="w-4 h-4 text-primary" />
+            <span className="font-semibold text-sm text-foreground">Layanan Tambahan</span>
+            <span className="text-xs text-muted-foreground">({customerAddons.filter(a => !a.endDate).length} aktif)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setShowAddonModal(true); }}
+              className="flex items-center gap-1 px-2 py-1 text-xs bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
+            >
+              <Plus className="w-3 h-3" /> Tambah
+            </button>
+            {showAddons ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+          </div>
+        </button>
+        {showAddons && (
+          <div className="divide-y divide-border">
+            {customerAddons.length === 0 ? (
+              <div className="px-4 py-6 text-center text-xs text-muted-foreground">
+                Belum ada layanan tambahan untuk pelanggan ini.
+              </div>
+            ) : customerAddons.map((ca) => (
+              <div key={ca.id} className="px-4 py-2.5 flex items-center justify-between gap-3 text-xs hover:bg-muted/20">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-foreground">{ca.addonType?.name || 'Unknown'}</span>
+                    {ca.endDate ? (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">Berhenti</span>
+                    ) : (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-500">Aktif</span>
+                    )}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">
+                    Rp {Number(ca.priceOverride ?? ca.addonType?.price ?? 0).toLocaleString('id-ID')}/{ca.addonType?.isRecurring ? 'bln' : 'sekali'}
+                    {' — '}mulai {ca.startDate?.slice(0, 10)}
+                    {ca.endDate && ` — berhenti ${ca.endDate.slice(0, 10)}`}
+                  </div>
+                </div>
+                {!ca.endDate && (
+                  <button
+                    onClick={() => handleRemoveAddon(ca.id)}
+                    className="p-1.5 rounded hover:bg-destructive/10 text-destructive transition-colors"
+                    title="Hentikan"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Addon Assign Modal */}
+      {showAddonModal && user && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddonModal(false)}>
+          <div className="bg-card border border-border rounded-xl p-5 w-full max-w-md space-y-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-2">
+              <Package className="w-5 h-5 text-primary" />
+              <h3 className="font-semibold text-sm">Tambah Layanan Tambahan</h3>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Pilih Add-on</label>
+                <select
+                  value={addonForm.addonTypeId}
+                  onChange={(e) => setAddonForm(f => ({ ...f, addonTypeId: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="">-- Pilih --</option>
+                  {addonTypes.filter((a: any) => a.isActive).map((a: any) => (
+                    <option key={a.id} value={a.id}>{a.name} — Rp {Number(a.price).toLocaleString('id-ID')}/{a.isRecurring ? 'bln' : 'sekali'}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Harga Override (opsional)</label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Kosongkan untuk harga default"
+                  value={addonForm.priceOverride}
+                  onChange={(e) => setAddonForm(f => ({ ...f, priceOverride: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted-foreground mb-1">Tanggal Mulai</label>
+                <input
+                  type="date"
+                  value={addonForm.startDate}
+                  onChange={(e) => setAddonForm(f => ({ ...f, startDate: e.target.value }))}
+                  className="w-full px-3 py-2 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setShowAddonModal(false)} className="px-3 py-2 text-xs border border-border rounded-lg hover:bg-muted transition-colors">Batal</button>
+              <button onClick={handleAssignAddon} disabled={!addonForm.addonTypeId || addonLoading} className="px-3 py-2 text-xs bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors">
+                {addonLoading ? 'Menyimpan...' : 'Tambahkan'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* -- Session History ------------------------------------------------ */}
       {sessions.length > 0 && (

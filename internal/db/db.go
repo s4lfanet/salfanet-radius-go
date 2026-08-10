@@ -454,6 +454,39 @@ func runMigrations(db *gorm.DB) error {
 
 		// Add auth_mode column to nas table for hybrid PPPoE authentication
 		`ALTER TABLE nas ADD COLUMN auth_mode VARCHAR(10) NULL DEFAULT 'radius'`,
+
+		// ─── Addon system (layanan tambahan) ────────────────────────────────────
+		`CREATE TABLE IF NOT EXISTS addon_types (
+			id          INT AUTO_INCREMENT PRIMARY KEY,
+			name        VARCHAR(100) NOT NULL,
+			description VARCHAR(255) NULL,
+			price       INT NOT NULL DEFAULT 0,
+			isRecurring TINYINT(1) NOT NULL DEFAULT 1,
+			isActive    TINYINT(1) NOT NULL DEFAULT 1,
+			createdAt   DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			updatedAt   DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		`CREATE TABLE IF NOT EXISTS customer_addons (
+			id            INT AUTO_INCREMENT PRIMARY KEY,
+			userId        VARCHAR(191) NOT NULL,
+			addonTypeId   INT NOT NULL,
+			priceOverride INT NULL,
+			startDate     DATE NOT NULL,
+			endDate       DATE NULL,
+			notes         VARCHAR(255) NULL,
+			createdAt     DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+			INDEX idx_ca_user (userId),
+			INDEX idx_ca_addonType (addonTypeId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		`CREATE TABLE IF NOT EXISTS invoice_addons (
+			id          INT AUTO_INCREMENT PRIMARY KEY,
+			invoiceId   VARCHAR(191) NOT NULL,
+			addonTypeId INT NULL,
+			addonName   VARCHAR(100) NOT NULL,
+			amount      INT NOT NULL DEFAULT 0,
+			INDEX idx_ia_invoice (invoiceId)
+		) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+		`ALTER TABLE invoices ADD COLUMN addonAmount INT NULL DEFAULT 0`,
 	}
 	for _, stmt := range statements {
 		if _, err := sqlDB.Exec(stmt); err != nil {

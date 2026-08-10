@@ -23,33 +23,39 @@ import (
 // which cannot be directly bound to the PppoeUser struct (*float64, *int, *time.Time).
 // Password is also included here because PppoeUser.Password has json:"-" tag.
 type createUserBody struct {
-	Username           string   `json:"username"`
-	Password           string   `json:"password"`
-	ProfileID          string   `json:"profileId"`
-	AreaID             string   `json:"areaId"`
-	RouterID           string   `json:"routerId"`
-	Name               string   `json:"name"`
-	Phone              string   `json:"phone"`
-	Email              string   `json:"email"`
-	Address            string   `json:"address"`
-	IPAddress          string   `json:"ipAddress"`
-	MACAddress         string   `json:"macAddress"`
-	Comment            string   `json:"comment"`
-	ReferralCode       string   `json:"referralCode"`
-	SubscriptionType   string   `json:"subscriptionType"`
-	Status             string   `json:"status"`
-	Latitude           string   `json:"latitude"`
-	Longitude          string   `json:"longitude"`
-	BillingDay         string   `json:"billingDay"`
-	ExpiredAt          string   `json:"expiredAt"`
-	NoPppoeAccount     bool     `json:"noPppoeAccount"`
-	FirstInvoice       string   `json:"firstInvoice"`
-	CreatePppSecret    bool     `json:"createPppSecret"`
-	IdCardNumber       string   `json:"idCardNumber"`
-	IdCardPhoto        string   `json:"idCardPhoto"`
-	InstallationPhotos []string `json:"installationPhotos"`
-	FollowRoad         bool     `json:"followRoad"`
-	RegisteredAt       string   `json:"registeredAt"`
+	Username           string     `json:"username"`
+	Password           string     `json:"password"`
+	ProfileID          string     `json:"profileId"`
+	AreaID             string     `json:"areaId"`
+	RouterID           string     `json:"routerId"`
+	Name               string     `json:"name"`
+	Phone              string     `json:"phone"`
+	Email              string     `json:"email"`
+	Address            string     `json:"address"`
+	IPAddress          string     `json:"ipAddress"`
+	MACAddress         string     `json:"macAddress"`
+	Comment            string     `json:"comment"`
+	ReferralCode       string     `json:"referralCode"`
+	SubscriptionType   string     `json:"subscriptionType"`
+	Status             string     `json:"status"`
+	Latitude           string     `json:"latitude"`
+	Longitude          string     `json:"longitude"`
+	BillingDay         string     `json:"billingDay"`
+	ExpiredAt          string     `json:"expiredAt"`
+	NoPppoeAccount     bool       `json:"noPppoeAccount"`
+	FirstInvoice       string     `json:"firstInvoice"`
+	CreatePppSecret    bool       `json:"createPppSecret"`
+	IdCardNumber       string     `json:"idCardNumber"`
+	IdCardPhoto        string     `json:"idCardPhoto"`
+	InstallationPhotos []string   `json:"installationPhotos"`
+	FollowRoad         bool       `json:"followRoad"`
+	RegisteredAt       string     `json:"registeredAt"`
+	PsbAddons          []psbAddon `json:"psbAddons"`
+}
+
+type psbAddon struct {
+	AddonTypeID   uint `json:"addonTypeId"`
+	PriceOverride *int `json:"priceOverride"`
 }
 
 // PPPoEHandler handles all PPPoE user/customer/profile/area endpoints.
@@ -355,6 +361,23 @@ func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
 	// Generate first invoice if requested
 	if body.FirstInvoice == "prorate" || body.FirstInvoice == "full" {
 		h.generateFirstInvoice(&user, &profile, body.FirstInvoice)
+	}
+
+	// Assign PSB addons if any
+	if len(body.PsbAddons) > 0 {
+		installDate := time.Now()
+		for _, a := range body.PsbAddons {
+			if a.AddonTypeID == 0 {
+				continue
+			}
+			ca := models.CustomerAddon{
+				UserID:        user.ID,
+				AddonTypeID:   a.AddonTypeID,
+				PriceOverride: a.PriceOverride,
+				StartDate:     installDate,
+			}
+			h.db.Create(&ca)
+		}
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(user)

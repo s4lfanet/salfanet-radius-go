@@ -215,6 +215,29 @@ func (s *Scheduler) generateMonthlyInvoice(u *models.PppoeUser, _ *models.Compan
 		amount = baseAmount + (baseAmount * u.Profile.PPNRate / 100)
 	}
 
+	// Add recurring addons
+	var customerAddons []models.CustomerAddon
+	s.db.Preload("AddonType").Where("userId = ? AND endDate IS NULL", u.ID).Find(&customerAddons)
+	addonTotal := 0
+	var addonItems []models.InvoiceAddonItem
+	for _, ca := range customerAddons {
+		if !ca.AddonType.IsRecurring {
+			continue
+		}
+		effectivePrice := ca.AddonType.Price
+		if ca.PriceOverride != nil {
+			effectivePrice = *ca.PriceOverride
+		}
+		addonTotal += effectivePrice
+		atID := ca.AddonTypeID
+		addonItems = append(addonItems, models.InvoiceAddonItem{
+			AddonTypeID: &atID,
+			AddonName:   ca.AddonType.Name,
+			Amount:      effectivePrice,
+		})
+	}
+	amount += addonTotal
+
 	now := time.Now()
 	dueDate := now.AddDate(0, 0, 7) // 7 days from now
 	token := fmt.Sprintf("%d-%d", now.UnixNano(), now.UnixMilli())
@@ -225,6 +248,7 @@ func (s *Scheduler) generateMonthlyInvoice(u *models.PppoeUser, _ *models.Compan
 		UserID:           &u.ID,
 		Amount:           amount,
 		BaseAmount:       &baseAmount,
+		AddonAmount:      &addonTotal,
 		Status:           models.InvoicePending,
 		DueDate:          dueDate,
 		InvoiceType:      models.InvoiceMonthly,
@@ -233,7 +257,17 @@ func (s *Scheduler) generateMonthlyInvoice(u *models.PppoeUser, _ *models.Compan
 		CustomerUsername: &u.Username,
 		PaymentToken:     &token,
 	}
-	return s.db.Create(&inv).Error
+	if err := s.db.Create(&inv).Error; err != nil {
+		return err
+	}
+
+	// Create invoice_addons line items
+	for _, item := range addonItems {
+		item.InvoiceID = inv.ID
+		s.db.Create(&item)
+	}
+
+	return nil
 }
 
 func (s *Scheduler) jobSendReminders() {
