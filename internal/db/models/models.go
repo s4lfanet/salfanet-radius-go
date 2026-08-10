@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
@@ -166,7 +169,7 @@ type PppoeUser struct {
 	PsbDeadlineAt         *time.Time       `gorm:"index;column:psbDeadlineAt" json:"psbDeadlineAt"`
 	IdCardNumber          *string          `gorm:"column:idCardNumber;type:varchar(50)" json:"idCardNumber"`
 	IdCardPhoto           *string          `gorm:"column:idCardPhoto;type:varchar(500)" json:"idCardPhoto"`
-	InstallationPhotos    string           `gorm:"column:installationPhotos;type:json" json:"installationPhotos"`
+	InstallationPhotos    json.RawMessage  `gorm:"column:installationPhotos;type:json" json:"installationPhotos"`
 	FollowRoad            bool             `gorm:"default:false;column:followRoad" json:"followRoad"`
 
 	Profile       PppoeProfile           `gorm:"foreignKey:ProfileID" json:"profile,omitempty"`

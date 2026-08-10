@@ -259,10 +259,10 @@ func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
 	customerID := fmt.Sprintf("CMP-%s%02d-%04d", now.Format("2006"), int(now.Month()), now.Unix()%10000)
 
 	// Marshal installation photos to JSON
-	installPhotosJSON := "[]"
+	installPhotosJSON := json.RawMessage("[]")
 	if len(body.InstallationPhotos) > 0 {
 		if b, err := json.Marshal(body.InstallationPhotos); err == nil {
-			installPhotosJSON = string(b)
+			installPhotosJSON = b
 		}
 	}
 
@@ -419,6 +419,15 @@ func (h *PPPoEHandler) UpdateUser(c fiber.Ctx) error {
 	user.MACAddress = ptrStr(body.MACAddress)
 	user.Comment = ptrStr(body.Comment)
 	user.ReferralCode = ptrStr(body.ReferralCode)
+	user.IdCardNumber = ptrStr(body.IdCardNumber)
+	user.IdCardPhoto = ptrStr(body.IdCardPhoto)
+	if len(body.InstallationPhotos) > 0 {
+		if b, err := json.Marshal(body.InstallationPhotos); err == nil {
+			user.InstallationPhotos = b
+		}
+	} else {
+		user.InstallationPhotos = json.RawMessage("[]")
+	}
 	if body.SubscriptionType != "" {
 		user.SubscriptionType = models.SubscriptionType(body.SubscriptionType)
 	}
