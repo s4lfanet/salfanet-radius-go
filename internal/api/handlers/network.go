@@ -134,6 +134,8 @@ func (h *NetworkHandler) ListRouters(c fiber.Ctx) error {
 		ID             string  `gorm:"column:id"`
 		Name           string  `gorm:"column:name"`
 		VpnIp          string  `gorm:"column:vpnIp"`
+		Username       string  `gorm:"column:username"`
+		Password       string  `gorm:"column:password"`
 		IsRadiusServer bool    `gorm:"column:isRadiusServer"`
 		ApiUsername    *string `gorm:"column:apiUsername"`
 		ApiPassword    *string `gorm:"column:apiPassword"`
@@ -175,17 +177,19 @@ func (h *NetworkHandler) ListRouters(c fiber.Ctx) error {
 	}
 
 	type vpnClientResp struct {
-		ID             string  `json:"id"`
-		Name           string  `json:"name"`
-		VpnIp          string  `json:"vpnIp"`
-		IsRadiusServer bool    `json:"isRadiusServer"`
-		ApiUsername    *string `json:"apiUsername"`
-		ApiPassword    *string `json:"apiPassword"`
-		NasSecret      *string `json:"nasSecret"`
+		ID               string  `json:"id"`
+		Name             string  `json:"name"`
+		VpnIp            string  `json:"vpnIp"`
+		IsRadiusServer   bool    `json:"isRadiusServer"`
+		ApiUsername      *string `json:"apiUsername"`
+		ApiPassword      *string `json:"apiPassword"`
+		NasSecret        *string `json:"nasSecret"`
+		ResolvedUsername *string `json:"resolvedUsername"`
+		ResolvedPassword *string `json:"resolvedPassword"`
 	}
 	vpnClientResult := make([]vpnClientResp, 0, len(vpnClientRows)+len(vpsPeerRows))
 	for _, cl := range vpnClientRows {
-		vpnClientResult = append(vpnClientResult, vpnClientResp{
+		resp := vpnClientResp{
 			ID:             cl.ID,
 			Name:           cl.Name,
 			VpnIp:          cl.VpnIp,
@@ -193,17 +197,31 @@ func (h *NetworkHandler) ListRouters(c fiber.Ctx) error {
 			ApiUsername:    cl.ApiUsername,
 			ApiPassword:    cl.ApiPassword,
 			NasSecret:      secretMap[cl.ID],
-		})
+		}
+		// Resolved credentials: prefer apiUsername/apiPassword, fall back to vpn client credentials
+		if cl.ApiUsername != nil && *cl.ApiUsername != "" {
+			resp.ResolvedUsername = cl.ApiUsername
+		} else if cl.Username != "" {
+			resp.ResolvedUsername = &cl.Username
+		}
+		if cl.ApiPassword != nil && *cl.ApiPassword != "" {
+			resp.ResolvedPassword = cl.ApiPassword
+		} else if cl.Password != "" {
+			resp.ResolvedPassword = &cl.Password
+		}
+		vpnClientResult = append(vpnClientResult, resp)
 	}
 	// Append VPS peers (WireGuard/L2TP) — these use peer_name and peer_ip
 	for _, p := range vpsPeerRows {
 		vpnClientResult = append(vpnClientResult, vpnClientResp{
-			ID:          p.ID,
-			Name:        p.PeerName,
-			VpnIp:       p.PeerIp,
-			ApiUsername: p.ApiUsername,
-			ApiPassword: p.ApiPassword,
-			NasSecret:   p.NasSecret,
+			ID:               p.ID,
+			Name:             p.PeerName,
+			VpnIp:            p.PeerIp,
+			ApiUsername:      p.ApiUsername,
+			ApiPassword:      p.ApiPassword,
+			NasSecret:        p.NasSecret,
+			ResolvedUsername: p.ApiUsername,
+			ResolvedPassword: p.ApiPassword,
 		})
 	}
 
