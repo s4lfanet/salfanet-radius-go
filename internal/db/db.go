@@ -451,6 +451,9 @@ func runMigrations(db *gorm.DB) error {
 
 		// Ensure companies table uses utf8mb4 for emoji in footer text
 		`ALTER TABLE companies CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+
+		// Add auth_mode column to nas table for hybrid PPPoE authentication
+		`ALTER TABLE nas ADD COLUMN auth_mode VARCHAR(10) NULL DEFAULT 'radius'`,
 	}
 	for _, stmt := range statements {
 		if _, err := sqlDB.Exec(stmt); err != nil {

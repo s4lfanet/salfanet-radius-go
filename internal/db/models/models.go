@@ -227,6 +227,7 @@ type Router struct {
 	Server      *string   `json:"server"`
 	Community   *string   `json:"community"`
 	VpnClientId *string   `gorm:"column:vpnClientId" json:"vpnClientId"`
+	AuthMode    string    `gorm:"column:auth_mode;default:radius" json:"authMode"` // 'local' = PPP Secret, 'radius' = FreeRADIUS
 	Description *string   `json:"description"`
 	Latitude    *float64  `json:"latitude"`
 	Longitude   *float64  `json:"longitude"`

@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/mikrotik"
 	"github.com/s4lfanet/salfanet-radius-go/internal/notify"
 	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
@@ -42,6 +43,7 @@ type createUserBody struct {
 	ExpiredAt        string `json:"expiredAt"`
 	NoPppoeAccount   bool   `json:"noPppoeAccount"`
 	FirstInvoice     string `json:"firstInvoice"`
+	CreatePppSecret  bool   `json:"createPppSecret"`
 }
 
 // PPPoEHandler handles all PPPoE user/customer/profile/area endpoints.
@@ -318,6 +320,13 @@ func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
 		} else {
 			h.db.Model(&user).Update("syncedToRadius", true)
 		}
+	}
+
+	// Hybrid PPPoE: manage PPP Secret in MikroTik based on router auth_mode
+	// - auth_mode 'local': always create PPP Secret (enabled) — router manages auth
+	// - auth_mode 'radius': only create if createPppSecret=true (disabled as backup)
+	if body.RouterID != "" && !body.NoPppoeAccount {
+		h.managePppSecretAsync(body.RouterID, username, password, profile.GroupName, body.CreatePppSecret)
 	}
 
 	// Generate first invoice if requested
@@ -746,4 +755,84 @@ func (h *PPPoEHandler) generateFirstInvoice(user *models.PppoeUser, profile *mod
 	if err := h.db.Create(&inv).Error; err != nil {
 		log.Error().Err(err).Str("userId", user.ID).Msg("pppoe: failed to create first invoice")
 	}
+}
+
+// managePppSecretAsync creates/updates a PPP Secret in MikroTik based on router auth_mode.
+// - auth_mode 'local': always create PPP Secret (enabled) — router manages auth locally
+// - auth_mode 'radius': only create if createPppSecret=true (disabled as backup)
+// Runs in a goroutine (fire-and-forget, best-effort) to not block the API response.
+func (h *PPPoEHandler) managePppSecretAsync(routerID, username, password, profileGroup string, createPppSecret bool) {
+	go func() {
+		var router models.Router
+		if err := h.db.First(&router, "id = ?", routerID).Error; err != nil {
+			log.Error().Err(err).Str("routerId", routerID).Msg("[PPP_SECRET] router not found")
+			return
+		}
+
+		authMode := router.AuthMode
+		if authMode == "" {
+			authMode = "radius" // default
+		}
+
+		// RADIUS mode: skip unless admin explicitly requested PPP Secret
+		if authMode == "radius" && !createPppSecret {
+			log.Info().Str("username", username).Msg("[PPP_SECRET] skipped — router mode RADIUS, checkbox not checked")
+			return
+		}
+
+		// Local mode: create enabled. RADIUS mode with checkbox: create disabled (backup)
+		disabled := authMode == "radius"
+
+		// Build MikroTik API address
+		addr := fmt.Sprintf("%s:%d", router.IPAddress, router.Port)
+		pool := mikrotik.GetPool()
+		client, err := pool.GetClient(addr, router.Username, router.Password, 10*time.Second)
+		if err != nil {
+			log.Error().Err(err).Str("addr", addr).Msg("[PPP_SECRET] failed to connect to MikroTik")
+			return
+		}
+
+		// Query existing PPP secrets
+		resp, err := client.Run("/ppp/secret/print", "?name="+username)
+		if err != nil {
+			log.Error().Err(err).Str("username", username).Msg("[PPP_SECRET] failed to query existing secrets")
+			return
+		}
+
+		mtProfile := profileGroup
+
+		disabledStr := "no"
+		if disabled {
+			disabledStr = "yes"
+		}
+
+		if len(resp.Re) > 0 {
+			// Secret exists — update it
+			secretID := resp.Re[0].Map[".id"]
+			_, err = client.Run("/ppp/secret/set",
+				"=.id="+secretID,
+				"=password="+password,
+				"=profile="+mtProfile,
+				"=service=pppoe",
+				"=disabled="+disabledStr)
+			if err != nil {
+				log.Error().Err(err).Str("username", username).Msg("[PPP_SECRET] failed to update secret")
+			} else {
+				log.Info().Str("username", username).Bool("disabled", disabled).Msg("[PPP_SECRET] updated existing secret")
+			}
+		} else {
+			// Create new secret
+			_, err = client.Run("/ppp/secret/add",
+				"=name="+username,
+				"=password="+password,
+				"=profile="+mtProfile,
+				"=service=pppoe",
+				"=disabled="+disabledStr)
+			if err != nil {
+				log.Error().Err(err).Str("username", username).Msg("[PPP_SECRET] failed to create secret")
+			} else {
+				log.Info().Str("username", username).Bool("disabled", disabled).Str("mode", authMode).Msg("[PPP_SECRET] created secret")
+			}
+		}
+	}()
 }

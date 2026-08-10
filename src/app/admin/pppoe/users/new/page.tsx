@@ -7,7 +7,7 @@ import MapPicker from '@/components/MapPicker';
 import { ModalInput, ModalSelect, ModalLabel } from '@/components/cyberpunk';
 
 interface Profile { id: string; name: string; groupName: string; price: number; }
-interface Router { id: string; name: string; nasname: string; ipAddress: string; }
+interface Router { id: string; name: string; nasname: string; ipAddress: string; authMode?: string; }
 interface Area { id: string; name: string; }
 
 const TABS = [
@@ -29,6 +29,7 @@ export default function NewPppoeUserPage() {
   const [uploadingIdCard, setUploadingIdCard] = useState(false);
   const [uploadingInstallation, setUploadingInstallation] = useState(false);
   const [hasPppoeAccount, setHasPppoeAccount] = useState(true);
+  const [createPppSecret, setCreatePppSecret] = useState(false);
   const [firstInvoice, setFirstInvoice] = useState<'none' | 'prorate' | 'full'>('prorate');
 
   const [formData, setFormData] = useState({
@@ -112,6 +113,7 @@ export default function NewPppoeUserPage() {
         password: hasPppoeAccount ? formData.password : '',
         noPppoeAccount: !hasPppoeAccount,
         firstInvoice,
+        createPppSecret,
         ...(formData.expiredAt && {
           expiredAt: (() => {
             const raw = formData.expiredAt;
@@ -395,6 +397,27 @@ export default function NewPppoeUserPage() {
                     </ModalSelect>
                   </div>
                 </div>
+                {hasPppoeAccount && formData.routerId && (() => {
+                  const sel = routers.find(r => r.id === formData.routerId);
+                  if (sel?.authMode !== 'radius') return null;
+                  return (
+                    <div className="flex items-center gap-2.5 pt-1">
+                      <input
+                        type="checkbox"
+                        id="createPppSecret"
+                        checked={createPppSecret}
+                        onChange={(e) => setCreatePppSecret(e.target.checked)}
+                        className="w-4 h-4 rounded border-border accent-primary"
+                      />
+                      <label htmlFor="createPppSecret" className="text-xs text-foreground cursor-pointer">
+                        Buat PPP Secret di MikroTik
+                        <span className="block text-[10px] text-muted-foreground mt-0.5">
+                          Router ini menggunakan mode RADIUS. PPP Secret bersifat opsional — centang jika ingin menyimpan cadangan di MikroTik (dibuat disabled).
+                        </span>
+                      </label>
+                    </div>
+                  );
+                })()}
               </div>
             </>
           )}

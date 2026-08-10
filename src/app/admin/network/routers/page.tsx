@@ -25,6 +25,7 @@ interface Router {
   community?: string
   description?: string
   vpnClientId?: string
+  authMode?: string
   vpnClient?: {
     id: string
     name: string
@@ -72,6 +73,7 @@ export default function RouterPage() {
     port: '8728',
     apiPort: '8729',
     secret: 'secret123',
+    authMode: 'radius',
     ports: '1812',
     server: '',
     community: '',
@@ -313,7 +315,7 @@ export default function RouterPage() {
   const resetForm = () => {
     setFormData({
       name: '', nasname: '', shortname: '', type: 'mikrotik', ipAddress: '', username: '', password: '',
-      port: '8728', apiPort: '8729', secret: 'secret123', ports: '1812', server: '', community: '', description: '', vpnClientId: '',
+      port: '8728', apiPort: '8729', secret: 'secret123', authMode: 'radius', ports: '1812', server: '', community: '', description: '', vpnClientId: '',
     })
     setTestResult(null)
     setUseVpnClient(false)
@@ -327,6 +329,7 @@ export default function RouterPage() {
       name: routerData.name, nasname: routerData.nasname, shortname: routerData.shortname, type: routerData.type,
       ipAddress: routerData.ipAddress, username: routerData.username, password: '',
       port: routerData.port.toString(), apiPort: routerData.apiPort.toString(), secret: '',
+      authMode: routerData.authMode || 'radius',
       ports: routerData.ports.toString(), server: routerData.server || '', community: routerData.community || '',
       description: routerData.description || '', vpnClientId: routerData.vpnClientId || '',
     })
@@ -671,6 +674,16 @@ export default function RouterPage() {
                                   via VPN: {routerData.vpnClient.name}
                                 </span>
                               )}
+                              {routerData.authMode === 'local' && (
+                                <span className="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-400">
+                                  LOCAL
+                                </span>
+                              )}
+                              {(!routerData.authMode || routerData.authMode === 'radius') && (
+                                <span className="px-3 py-1 text-xs font-bold rounded-lg bg-violet-500/20 border border-violet-500/40 text-violet-400">
+                                  RADIUS
+                                </span>
+                              )}
                             </div>
                             <p className="text-muted-foreground text-sm mt-0.5">{routerData.type} * {routerData.nasname}</p>
                           </div>
@@ -961,6 +974,25 @@ export default function RouterPage() {
                     placeholder="secret123"
                     required
                   />
+                </div>
+
+                {/* Auth Mode */}
+                <div>
+                  <label className="block text-sm font-medium text-brand-400 mb-2">Mode Autentikasi</label>
+                  <select
+                    value={formData.authMode}
+                    onChange={(e) => setFormData({ ...formData, authMode: e.target.value })}
+                    className="w-full px-4 py-3 bg-input border border-border rounded-xl text-foreground focus:border-brand-500 focus:ring-2 focus:ring-[brand-400]/30 transition-all"
+                  >
+                    <option value="radius">RADIUS — FreeRADIUS (radcheck)</option>
+                    <option value="local">Local — PPP Secret di MikroTik</option>
+                  </select>
+                  {formData.authMode === 'local' && (
+                    <p className="text-xs text-emerald-500 mt-1.5">Sistem akan membuat PPP Secret di MikroTik untuk setiap pelanggan baru.</p>
+                  )}
+                  {formData.authMode === 'radius' && (
+                    <p className="text-xs text-brand-400 mt-1.5">Autentikasi via FreeRADIUS. PPP Secret bersifat opsional saat tambah pelanggan.</p>
+                  )}
                 </div>
 
                 {/* Test Connection */}

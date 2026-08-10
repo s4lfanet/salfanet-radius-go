@@ -49,6 +49,7 @@ func (h *NetworkHandler) GetRouter(c fiber.Ctx) error {
 			"latitude":    router.Latitude,
 			"longitude":   router.Longitude,
 			"vpnClientId": router.VpnClientId,
+			"authMode":    router.AuthMode,
 			"isActive":    router.IsActive,
 			"createdAt":   router.CreatedAt,
 			"updatedAt":   router.UpdatedAt,
