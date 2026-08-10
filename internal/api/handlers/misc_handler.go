@@ -1096,6 +1096,31 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 		srcAddr = " src-address=" + nasSrcAddress
 	}
 
+	// Query all distinct IPPoolName values from pppoe_profiles to generate pool creation commands.
+	// This ensures MikroTik has pools matching the Framed-Pool attribute returned by RADIUS.
+	var poolNames []string
+	if err := h.db.Raw("SELECT DISTINCT IPPoolName FROM pppoe_profiles WHERE IPPoolName IS NOT NULL AND IPPoolName != ''").Scan(&poolNames).Error; err != nil {
+		log.Warn().Err(err).Msg("setup-radius: failed to query pool names")
+	}
+	if len(poolNames) == 0 {
+		poolNames = []string{"pppoe"}
+	}
+
+	// Build pool creation commands for each profile pool name.
+	poolCmdsRos7 := ""
+	poolCmdsRos6 := ""
+	primaryPool := poolNames[0]
+	for _, pn := range poolNames {
+		poolCmdsRos7 += fmt.Sprintf(
+			":if ([:len [/ip pool find name=\"%s\"]] = 0) do={\n"+
+				"    /ip pool add name=%s ranges=10.10.10.2-10.10.10.254 comment=\"SALFANET RADIUS\"\n"+
+				"}\n", pn, pn)
+		poolCmdsRos6 += fmt.Sprintf(
+			":if ([:len [/ip pool find name=\"%s\"]] = 0) do={\n"+
+				"    /ip pool add name=%s ranges=10.10.10.2-10.10.10.254 comment=\"SALFANET RADIUS\"\n"+
+				"}\n", pn, pn)
+	}
+
 	// Extra gateway entry (only when VPN and gateway differs from RADIUS server)
 	gatewayEntry7 := ""
 	gatewayEntry6 := ""
@@ -1169,13 +1194,11 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 			"/ppp aaa set use-radius=yes accounting=yes interim-update=5m\n\n"+
 			"# 4. Enable RADIUS Incoming (CoA/Disconnect)\n"+
 			"/radius incoming set accept=yes port=%d\n\n"+
-			"# 5. Buat PPP Pool jika belum ada\n"+
-			":if ([:len [/ip pool find name=\"pool-radius-default\"]] = 0) do={\n"+
-			"    /ip pool add name=pool-radius-default ranges=10.10.10.2-10.10.10.254 comment=\"SALFANET RADIUS\"\n"+
-			"}\n\n"+
+			"# 5. Buat PPP Pool(s) jika belum ada (match Framed-Pool dari RADIUS)\n"+
+			"%s\n"+
 			"# 6. Buat PPP Profile jika belum ada\n"+
 			":if ([:len [/ppp profile find name=\"salfanetradius\"]] = 0) do={\n"+
-			"    /ppp profile add name=salfanetradius local-address=10.10.10.1 remote-address=pool-radius-default use-compression=no use-encryption=no comment=\"SALFANET RADIUS Profile\"\n"+
+			"    /ppp profile add name=salfanetradius local-address=10.10.10.1 remote-address=%s use-compression=no use-encryption=no comment=\"SALFANET RADIUS Profile\"\n"+
 			"}\n\n"+
 			"# 7. Enable RADIUS untuk semua Hotspot Server Profile\n"+
 			"/ip hotspot profile set [find] use-radius=yes\n\n"+
@@ -1191,6 +1214,8 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 			"# ============================================",
 		router.Name, nasSrcAddress, radiusServerIP, gatewayIP, connectionType, now,
 		nasSrcAddress, radiusServerIP, secret, srcAddr, authPort, acctPort,
+		poolCmdsRos7,
+		primaryPool,
 		gatewayEntry7,
 		coaPort,
 		fwRos7,
@@ -1217,13 +1242,11 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 			"/ppp aaa set use-radius=yes accounting=yes interim-update=5m\n\n"+
 			"# 4. Enable RADIUS Incoming (CoA/Disconnect)\n"+
 			"/radius incoming set accept=yes port=%d\n\n"+
-			"# 5. Buat PPP Pool jika belum ada\n"+
-			":if ([:len [/ip pool find name=\"pool-radius-default\"]] = 0) do={\n"+
-			"    /ip pool add name=pool-radius-default ranges=10.10.10.2-10.10.10.254 comment=\"SALFANET RADIUS\"\n"+
-			"}\n\n"+
+			"# 5. Buat PPP Pool(s) jika belum ada (match Framed-Pool dari RADIUS)\n"+
+			"%s\n"+
 			"# 6. Buat PPP Profile jika belum ada\n"+
 			":if ([:len [/ppp profile find name=\"salfanetradius\"]] = 0) do={\n"+
-			"    /ppp profile add name=salfanetradius local-address=10.10.10.1 remote-address=pool-radius-default use-compression=no use-encryption=no comment=\"SALFANET RADIUS Profile\"\n"+
+			"    /ppp profile add name=salfanetradius local-address=10.10.10.1 remote-address=%s use-compression=no use-encryption=no comment=\"SALFANET RADIUS Profile\"\n"+
 			"}\n\n"+
 			"# 7. Enable RADIUS untuk semua Hotspot Server Profile\n"+
 			"/ip hotspot profile set [find] use-radius=yes\n\n"+
@@ -1239,6 +1262,8 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 			"# ============================================",
 		router.Name, nasSrcAddress, radiusServerIP, gatewayIP, connectionType, now,
 		nasSrcAddress, radiusServerIP, secret, srcAddr, authPort, acctPort,
+		poolCmdsRos6,
+		primaryPool,
 		gatewayEntry6,
 		coaPort,
 		fwRos6,
