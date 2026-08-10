@@ -399,22 +399,38 @@ export default function NewPppoeUserPage() {
                 </div>
                 {hasPppoeAccount && formData.routerId && (() => {
                   const sel = routers.find(r => r.id === formData.routerId);
-                  if (sel?.authMode !== 'radius') return null;
+                  const mode = sel?.authMode || 'radius';
                   return (
-                    <div className="flex items-center gap-2.5 pt-1">
-                      <input
-                        type="checkbox"
-                        id="createPppSecret"
-                        checked={createPppSecret}
-                        onChange={(e) => setCreatePppSecret(e.target.checked)}
-                        className="w-4 h-4 rounded border-border accent-primary"
-                      />
-                      <label htmlFor="createPppSecret" className="text-xs text-foreground cursor-pointer">
-                        Buat PPP Secret di MikroTik
-                        <span className="block text-[10px] text-muted-foreground mt-0.5">
-                          Router ini menggunakan mode RADIUS. PPP Secret bersifat opsional — centang jika ingin menyimpan cadangan di MikroTik (dibuat disabled).
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded ${mode === 'local' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' : 'bg-violet-500/20 text-violet-400 border border-violet-500/40'}`}>
+                          {mode === 'local' ? 'LOCAL — PPP Secret' : 'RADIUS — FreeRADIUS'}
                         </span>
-                      </label>
+                      </div>
+                      {mode === 'radius' && (
+                        <div className="flex items-start gap-2.5 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                          <input
+                            type="checkbox"
+                            id="createPppSecret"
+                            checked={createPppSecret}
+                            onChange={(e) => setCreatePppSecret(e.target.checked)}
+                            className="w-4 h-4 mt-0.5 rounded border-border accent-primary flex-shrink-0"
+                          />
+                          <label htmlFor="createPppSecret" className="text-xs text-foreground cursor-pointer">
+                            Buat PPP Secret di MikroTik
+                            <span className="block text-[10px] text-muted-foreground mt-0.5">
+                              Router ini menggunakan mode RADIUS. PPP Secret bersifat opsional — centang jika ingin menyimpan cadangan di MikroTik (dibuat disabled).
+                            </span>
+                          </label>
+                        </div>
+                      )}
+                      {mode === 'local' && (
+                        <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg">
+                          <p className="text-xs text-emerald-400">
+                            Sistem akan otomatis membuat PPP Secret di MikroTik (enabled) untuk pelanggan ini.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}

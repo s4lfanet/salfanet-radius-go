@@ -193,7 +193,5 @@ billing.pmynet.id-main/
 baileys_whatsapp_patch/
 pon_data_*.csv
 frontend-deploy*.zip
-#home.pmynet.id-main/
-
 # Reference project (not part of this repo)
 home.pmynet.id-main/
