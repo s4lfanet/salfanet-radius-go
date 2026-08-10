@@ -705,11 +705,11 @@ export default function PppoeUsersPage() {
     if (!deleteUserId) return;
     try {
       const res = await fetch(`/api/pppoe/users/${deleteUserId}`, { method: 'DELETE' });
-      const result = await res.json();
       if (res.ok) { 
         await showSuccess(t('management.userDeleted')); 
         loadData(); 
       } else { 
+        const result = await res.json().catch(() => ({ error: 'Gagal menghapus pelanggan' }));
         await showError(result.error || t('common.failed')); 
       }
     } catch (error) { 

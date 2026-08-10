@@ -467,11 +467,38 @@ func (h *PPPoEHandler) DeleteUser(c fiber.Ctx) error {
 	id := c.Params("id")
 	var user models.PppoeUser
 	if err := h.db.First(&user, "id = ?", id).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Pelanggan tidak ditemukan"})
 	}
-	h.db.Delete(&user)
+
+	// Check for related invoices
+	var invoiceCount int64
+	h.db.Model(&models.Invoice{}).Where("userId = ?", id).Count(&invoiceCount)
+	if invoiceCount > 0 {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": fmt.Sprintf("Tidak dapat menghapus pelanggan karena masih ada %d tagihan terkait. Hapus atau pindahkan tagihan terlebih dahulu.", invoiceCount),
+		})
+	}
+
+	// Check for related manual payments
+	var paymentCount int64
+	h.db.Table("manual_payments").Where("userId = ?", id).Count(&paymentCount)
+	if paymentCount > 0 {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": fmt.Sprintf("Tidak dapat menghapus pelanggan karena masih ada %d pembayaran terkait. Hapus data pembayaran terlebih dahulu.", paymentCount),
+		})
+	}
+
+	// Delete from RADIUS first (best-effort)
 	_ = h.radius.DeleteUser(user.Username)
-	return c.SendStatus(fiber.StatusNoContent)
+
+	// Delete user from database
+	if err := h.db.Delete(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fmt.Sprintf("Gagal menghapus pelanggan: %s. Mungkin masih ada data terkait (tagihan, pembayaran, sesi, dll).", err.Error()),
+		})
+	}
+
+	return c.JSON(fiber.Map{"success": true, "message": "Pelanggan berhasil dihapus"})
 }
 
 func (h *PPPoEHandler) SuspendUser(c fiber.Ctx) error {
