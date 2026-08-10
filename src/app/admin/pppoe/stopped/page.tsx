@@ -131,7 +131,7 @@ export default function StoppedSubscriptionsPage() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`/api/pppoe/users?id=${userId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/pppoe/users/${userId}`, { method: 'DELETE' });
       const result = await res.json();
       if (res.ok) {
         await showSuccess(t('common.customerDeleted'));
