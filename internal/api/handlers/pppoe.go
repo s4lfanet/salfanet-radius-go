@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -38,6 +40,8 @@ type createUserBody struct {
 	Longitude        string `json:"longitude"`
 	BillingDay       string `json:"billingDay"`
 	ExpiredAt        string `json:"expiredAt"`
+	NoPppoeAccount   bool   `json:"noPppoeAccount"`
+	FirstInvoice     string `json:"firstInvoice"`
 }
 
 // PPPoEHandler handles all PPPoE user/customer/profile/area endpoints.
@@ -216,10 +220,30 @@ func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	// Hybrid auth mode: if noPppoeAccount is true, auto-generate a RADIUS username
+	// for IP Static / MAC-based users (no PPPoE login credentials needed)
+	username := body.Username
+	password := body.Password
+	if body.NoPppoeAccount {
+		if username == "" {
+			// Generate username from name + short uuid suffix
+			suffix := uuid.New().String()[:8]
+			if body.Name != "" {
+				username = "static-" + strings.ToLower(strings.ReplaceAll(body.Name, " ", "")) + "-" + suffix
+			} else {
+				username = "static-" + suffix
+			}
+		}
+		// Password not needed for IP Static/MAC, but RADIUS requires a check entry
+		if password == "" {
+			password = uuid.New().String()[:12]
+		}
+	}
+
 	user := models.PppoeUser{
 		ID:             uuid.New().String(),
-		Username:       body.Username,
-		Password:       body.Password,
+		Username:       username,
+		Password:       password,
 		ProfileID:      body.ProfileID,
 		Name:           body.Name,
 		Phone:          body.Phone,
@@ -281,15 +305,24 @@ func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// Sync to FreeRADIUS
+	// Sync to FreeRADIUS (for both PPPoE and IP Static/MAC users — both need RADIUS entries)
 	var profile models.PppoeProfile
 	h.db.First(&profile, "id = ?", body.ProfileID)
 	rateLimit := ""
 	if profile.RateLimit != nil {
 		rateLimit = *profile.RateLimit
 	}
-	if err := h.radius.UpsertUser(user.Username, body.Password, rateLimit, profile.GroupName); err != nil {
-		log.Error().Err(err).Str("username", user.Username).Msg("pppoe: radius sync error")
+	if username != "" && password != "" {
+		if err := h.radius.UpsertUser(username, password, rateLimit, profile.GroupName); err != nil {
+			log.Error().Err(err).Str("username", username).Msg("pppoe: radius sync error")
+		} else {
+			h.db.Model(&user).Update("syncedToRadius", true)
+		}
+	}
+
+	// Generate first invoice if requested
+	if body.FirstInvoice == "prorate" || body.FirstInvoice == "full" {
+		h.generateFirstInvoice(&user, &profile, body.FirstInvoice)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(user)
@@ -376,6 +409,7 @@ func (h *PPPoEHandler) UpdateUser(c fiber.Ctx) error {
 	h.db.Save(&user)
 
 	// Sync to RADIUS (reload profile for rate limit / group name)
+	// Skip if user has no username/password (non-PPPoE / IP Static without generated credentials)
 	var profile models.PppoeProfile
 	h.db.First(&profile, "id = ?", user.ProfileID)
 	rateLimit := ""
@@ -386,10 +420,12 @@ func (h *PPPoEHandler) UpdateUser(c fiber.Ctx) error {
 	if user.Status == "isolated" {
 		groupName = "isolir"
 	}
-	if err := h.radius.UpsertUser(user.Username, user.Password, rateLimit, groupName); err != nil {
-		log.Error().Err(err).Str("username", user.Username).Msg("pppoe: radius sync error on update")
-	} else {
-		h.db.Model(&user).Update("syncedToRadius", true)
+	if user.Username != "" && user.Password != "" {
+		if err := h.radius.UpsertUser(user.Username, user.Password, rateLimit, groupName); err != nil {
+			log.Error().Err(err).Str("username", user.Username).Msg("pppoe: radius sync error on update")
+		} else {
+			h.db.Model(&user).Update("syncedToRadius", true)
+		}
 	}
 
 	return c.JSON(user)
@@ -645,4 +681,69 @@ func (h *PPPoEHandler) RejectRegistration(c fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
 	}
 	return c.JSON(fiber.Map{"message": "rejected"})
+}
+
+// generateFirstInvoice creates the first invoice for a new customer.
+// mode = "prorate" (prorated based on billing day) or "full" (full month price).
+func (h *PPPoEHandler) generateFirstInvoice(user *models.PppoeUser, profile *models.PppoeProfile, mode string) {
+	now := time.Now()
+	baseAmount := profile.Price
+	amount := baseAmount
+
+	if mode == "prorate" && user.BillingDay != nil {
+		billingDay := *user.BillingDay
+		year := now.Year()
+		month := now.Month()
+		currentDay := now.Day()
+
+		var nextBilling time.Time
+		if currentDay < billingDay {
+			nextBilling = time.Date(year, month, billingDay, 0, 0, 0, 0, now.Location())
+		} else {
+			nextBilling = time.Date(year, month+1, billingDay, 0, 0, 0, 0, now.Location())
+		}
+
+		daysActive := int(nextBilling.Sub(now).Hours()/24) + 1
+		if daysActive < 1 {
+			daysActive = 1
+		}
+		daysInMonth := time.Date(year, month+1, 0, 0, 0, 0, 0, now.Location()).Day()
+		if daysActive >= daysInMonth {
+			amount = baseAmount
+		} else {
+			amount = (baseAmount * daysActive) / daysInMonth
+			if amount < 1 {
+				amount = 1
+			}
+		}
+	}
+
+	// Apply PPN if active
+	if profile.PPNActive && profile.PPNRate > 0 {
+		amount = amount + (amount * profile.PPNRate / 100)
+	}
+
+	dueDate := now.AddDate(0, 0, 7)
+	token := fmt.Sprintf("%d-%d", now.UnixNano(), now.UnixMilli())
+	custName := user.Name
+	custPhone := user.Phone
+	custUsername := user.Username
+
+	inv := models.Invoice{
+		ID:               uuid.New().String(),
+		InvoiceNumber:    fmt.Sprintf("INV-%s-%d", now.Format("200601"), now.UnixNano()),
+		UserID:           &user.ID,
+		Amount:           amount,
+		BaseAmount:       &baseAmount,
+		Status:           models.InvoicePending,
+		DueDate:          dueDate,
+		InvoiceType:      models.InvoiceInstallation,
+		CustomerName:     &custName,
+		CustomerPhone:    &custPhone,
+		CustomerUsername: &custUsername,
+		PaymentToken:     &token,
+	}
+	if err := h.db.Create(&inv).Error; err != nil {
+		log.Error().Err(err).Str("userId", user.ID).Msg("pppoe: failed to create first invoice")
+	}
 }
