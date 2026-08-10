@@ -181,7 +181,7 @@ func (h *InvoiceExtHandler) Generate(c fiber.Ctx) error {
 	if body.Scope == "single" && body.UserID != "" {
 		q = q.Where("id = ?", body.UserID)
 	} else {
-		q = q.Where("subscriptionType = ?", "POSTPAID")
+		q = q.Where("subscriptionType IN ('POSTPAID','PREPAID')")
 	}
 
 	var users []models.PppoeUser

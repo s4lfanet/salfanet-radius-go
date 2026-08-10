@@ -183,11 +183,11 @@ func (s *Scheduler) jobGenerateInvoices() {
 		generateDays = *company.InvoiceGenerateDays
 	}
 
-	// Find POSTPAID users whose expiry is within generateDays and no pending invoice
+	// Find POSTPAID + PREPAID users whose expiry is within generateDays and no pending invoice
 	cutoff := time.Now().AddDate(0, 0, generateDays)
 
 	var users []models.PppoeUser
-	s.db.Where(`subscriptionType = 'POSTPAID' AND status IN ('active','isolated') 
+	s.db.Where(`subscriptionType IN ('POSTPAID','PREPAID') AND status IN ('active','isolated') 
 		AND expiredAt IS NOT NULL AND expiredAt <= ?
 		AND id NOT IN (
 			SELECT userId FROM invoices 

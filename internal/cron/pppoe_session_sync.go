@@ -284,10 +284,10 @@ func (s *Scheduler) jobInvoiceCatchup() {
 		return
 	}
 
-	// Find POSTPAID users that are isolated/expired with NO pending invoice
+	// Find POSTPAID + PREPAID users that are isolated/expired with NO pending invoice
 	var users []models.PppoeUser
 	s.db.Preload("Profile").
-		Where(`subscriptionType = 'POSTPAID'
+		Where(`subscriptionType IN ('POSTPAID','PREPAID')
 			AND status IN ('isolated', 'stop')
 			AND id NOT IN (
 				SELECT userId FROM invoices
