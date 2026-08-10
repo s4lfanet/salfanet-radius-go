@@ -155,8 +155,13 @@ func (h *InvoiceExtHandler) Counts(c fiber.Ctx) error {
 // POST /api/invoices/generate — generate monthly invoices
 func (h *InvoiceExtHandler) Generate(c fiber.Ctx) error {
 	var body struct {
-		Month  string `json:"month"` // YYYY-MM
-		DryRun bool   `json:"dryRun"`
+		Month        string `json:"month"`       // YYYY-MM (legacy)
+		TargetMonth  string `json:"targetMonth"` // YYYY-MM (frontend)
+		Scope        string `json:"scope"`       // "all" or "single"
+		UserID       string `json:"userId"`
+		SkipExisting bool   `json:"skipExisting"`
+		SendWa       bool   `json:"sendWa"`
+		DryRun       bool   `json:"dryRun"`
 	}
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
@@ -164,30 +169,50 @@ func (h *InvoiceExtHandler) Generate(c fiber.Ctx) error {
 
 	month := body.Month
 	if month == "" {
+		month = body.TargetMonth
+	}
+	if month == "" {
 		now := time.Now()
 		month = fmt.Sprintf("%d-%02d", now.Year(), now.Month())
 	}
 
-	// Get active postpaid users
+	// Build query
+	q := h.db.Model(&models.PppoeUser{}).Where("status = ?", "active").Preload("Profile")
+	if body.Scope == "single" && body.UserID != "" {
+		q = q.Where("id = ?", body.UserID)
+	} else {
+		q = q.Where("subscriptionType = ?", "POSTPAID")
+	}
+
 	var users []models.PppoeUser
-	h.db.Where("status = ? AND subscriptionType = ?", "active", "POSTPAID").
-		Preload("Profile").
-		Find(&users)
+	q.Find(&users)
 
 	generated := 0
 	skipped := 0
+	type errEntry struct {
+		Username string `json:"username"`
+		Error    string `json:"error"`
+	}
+	errs := make([]errEntry, 0)
+
 	for _, user := range users {
 		// Check if invoice already exists for this month
-		var count int64
-		h.db.Model(&models.Invoice{}).
-			Where("userId = ? AND invoiceType = ? AND DATE_FORMAT(createdAt, '%Y-%m') = ?", user.ID, "MONTHLY", month).
-			Count(&count)
-		if count > 0 {
-			skipped++
-			continue
+		if body.SkipExisting {
+			var count int64
+			h.db.Model(&models.Invoice{}).
+				Where("userId = ? AND invoiceType = ? AND DATE_FORMAT(createdAt, '%Y-%m') = ?", user.ID, "MONTHLY", month).
+				Count(&count)
+			if count > 0 {
+				skipped++
+				continue
+			}
 		}
 		if body.DryRun {
 			generated++
+			continue
+		}
+		if user.Profile.ID == "" {
+			errs = append(errs, errEntry{Username: user.Username, Error: "profile not found"})
 			continue
 		}
 		amount := user.Profile.Price
@@ -204,14 +229,21 @@ func (h *InvoiceExtHandler) Generate(c fiber.Ctx) error {
 			PaymentToken:  &token,
 			DueDate:       dueDate,
 		}
-		h.db.Create(&inv)
+		if err := h.db.Create(&inv).Error; err != nil {
+			errs = append(errs, errEntry{Username: user.Username, Error: err.Error()})
+			continue
+		}
 		generated++
 	}
+
+	message := fmt.Sprintf("Generate tagihan %s selesai: %d dibuat, %d dilewati, %d gagal", month, generated, skipped, len(errs))
 
 	return c.JSON(fiber.Map{
 		"success":   true,
 		"generated": generated,
 		"skipped":   skipped,
+		"errors":    errs,
+		"message":   message,
 		"month":     month,
 		"dryRun":    body.DryRun,
 	})

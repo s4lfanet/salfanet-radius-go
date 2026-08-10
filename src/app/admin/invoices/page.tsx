@@ -1404,7 +1404,7 @@ export default function InvoicesPage() {
               {genResult ? (
                 /* Result view */
                 <div className="space-y-3">
-                  <div className={`rounded-xl border p-3 ${genResult.errors.length === 0 ? 'border-success/30 bg-success/10' : 'border-warning/30 bg-warning/10'}`}>
+                  <div className={`rounded-xl border p-3 ${(genResult.errors?.length || 0) === 0 ? 'border-success/30 bg-success/10' : 'border-warning/30 bg-warning/10'}`}>
                     <p className="text-xs font-semibold mb-2">{genResult.message}</p>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="text-center">
@@ -1416,15 +1416,15 @@ export default function InvoicesPage() {
                         <p className="text-[10px] text-muted-foreground">Dilewati</p>
                       </div>
                       <div className="text-center">
-                        <p className="text-lg font-bold text-destructive">{genResult.errors.length}</p>
+                        <p className="text-lg font-bold text-destructive">{genResult.errors?.length || 0}</p>
                         <p className="text-[10px] text-muted-foreground">Gagal</p>
                       </div>
                     </div>
                   </div>
-                  {genResult.errors.length > 0 && (
+                  {(genResult.errors?.length || 0) > 0 && (
                     <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 max-h-32 overflow-y-auto">
                       <p className="text-[10px] font-semibold text-destructive mb-1.5">Error detail:</p>
-                      {genResult.errors.map((e, i) => (
+                      {genResult.errors?.map((e, i) => (
                         <p key={i} className="text-[10px] text-muted-foreground"><span className="font-mono text-foreground">{e.username}</span>: {e.error}</p>
                       ))}
                     </div>
