@@ -2,8 +2,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { showSuccess, showError } from '@/lib/sweetalert';
-import { ArrowLeft, MapPin, Map, Eye, EyeOff, Loader2, X, ChevronRight, ChevronLeft, Wifi, WifiOff, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Map, Eye, EyeOff, Loader2, X, ChevronRight, ChevronLeft, Wifi, WifiOff, Clock, Camera } from 'lucide-react';
 import MapPicker from '@/components/MapPicker';
+import CameraCapture from '@/components/CameraCapture';
 import { ModalInput, ModalSelect, ModalLabel } from '@/components/cyberpunk';
 
 interface Profile { id: string; name: string; groupName: string; price: number; }
@@ -28,6 +29,7 @@ export default function NewPppoeUserPage() {
   const [showMapPicker, setShowMapPicker] = useState(false);
   const [uploadingIdCard, setUploadingIdCard] = useState(false);
   const [uploadingInstallation, setUploadingInstallation] = useState(false);
+  const [showCamera, setShowCamera] = useState<null | 'idCard' | 'installation'>(null);
   const [hasPppoeAccount, setHasPppoeAccount] = useState(true);
   const [createPppSecret, setCreatePppSecret] = useState(false);
   const [firstInvoice, setFirstInvoice] = useState<'none' | 'prorate' | 'full'>('prorate');
@@ -70,9 +72,7 @@ export default function NewPppoeUserPage() {
     }).catch(console.error);
   }, []);
 
-  const handleUploadIdCard = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadIdCardFile = async (file: File) => {
     setUploadingIdCard(true);
     try {
       const fd = new FormData(); fd.append('file', file);
@@ -84,9 +84,18 @@ export default function NewPppoeUserPage() {
     finally { setUploadingIdCard(false); }
   };
 
-  const handleUploadInstallation = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadIdCard = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    uploadIdCardFile(file);
+  };
+
+  const handleCameraCaptureIdCard = (file: File) => {
+    uploadIdCardFile(file);
+    setShowCamera(null);
+  };
+
+  const uploadInstallationFile = async (file: File) => {
     setUploadingInstallation(true);
     try {
       const fd = new FormData(); fd.append('file', file);
@@ -96,6 +105,17 @@ export default function NewPppoeUserPage() {
       else await showError(data.error || 'Gagal upload foto instalasi');
     } catch { await showError('Gagal upload foto instalasi'); }
     finally { setUploadingInstallation(false); }
+  };
+
+  const handleUploadInstallation = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    uploadInstallationFile(file);
+  };
+
+  const handleCameraCaptureInstallation = (file: File) => {
+    uploadInstallationFile(file);
+    setShowCamera(null);
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -503,10 +523,16 @@ export default function NewPppoeUserPage() {
                   </div>
                   <div>
                     <ModalLabel required>Foto KTP</ModalLabel>
-                    <input type="file" accept="image/*" onChange={handleUploadIdCard} disabled={uploadingIdCard} className="hidden" id="idCardUpload" />
-                    <label htmlFor="idCardUpload" className={`w-full flex items-center justify-center px-3 py-2 text-xs border border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingIdCard ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                      {uploadingIdCard ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Upload...</span> : 'Upload KTP'}
-                    </label>
+                    <div className="flex gap-1.5">
+                      <input type="file" accept="image/*" onChange={handleUploadIdCard} disabled={uploadingIdCard} className="hidden" id="idCardUpload" />
+                      <label htmlFor="idCardUpload" className={`flex-1 flex items-center justify-center px-2 py-2 text-xs border border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingIdCard ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                        {uploadingIdCard ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />...</span> : 'Upload'}
+                      </label>
+                      <button type="button" onClick={() => setShowCamera('idCard')} disabled={uploadingIdCard}
+                        className="flex items-center justify-center px-2.5 py-2 text-xs border border-border rounded-lg hover:bg-muted text-primary disabled:opacity-50">
+                        <Camera className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </div>
                 </div>
                 {formData.idCardPhoto && (
@@ -535,10 +561,16 @@ export default function NewPppoeUserPage() {
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
                 <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Foto Instalasi (opsional)</p>
-                <input type="file" accept="image/*" onChange={handleUploadInstallation} disabled={uploadingInstallation} className="hidden" id="installUpload" />
-                <label htmlFor="installUpload" className={`w-full block px-3 py-3 text-xs text-center border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingInstallation ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  {uploadingInstallation ? <span className="flex items-center justify-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Mengupload...</span> : 'Tambah Foto Instalasi'}
-                </label>
+                <div className="flex gap-2">
+                  <input type="file" accept="image/*" onChange={handleUploadInstallation} disabled={uploadingInstallation} className="hidden" id="installUpload" />
+                  <label htmlFor="installUpload" className={`flex-1 block px-3 py-3 text-xs text-center border-2 border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingInstallation ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                    {uploadingInstallation ? <span className="flex items-center justify-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Mengupload...</span> : 'Tambah Foto'}
+                  </label>
+                  <button type="button" onClick={() => setShowCamera('installation')} disabled={uploadingInstallation}
+                    className="flex items-center justify-center px-4 py-3 text-xs border-2 border-border rounded-lg hover:bg-muted text-primary disabled:opacity-50">
+                    <Camera className="h-4 w-4" />
+                  </button>
+                </div>
                 <p className="text-[10px] text-muted-foreground">Maks. 5 foto @ 5MB ({formData.installationPhotos.length}/5)</p>
                 {formData.installationPhotos.length > 0 && (
                   <div className="grid grid-cols-4 gap-2">
@@ -656,6 +688,21 @@ export default function NewPppoeUserPage() {
         onSelect={(lat, lng) => { setFormData(prev => ({ ...prev, latitude: lat.toFixed(6), longitude: lng.toFixed(6) })); setShowMapPicker(false); }}
         initialLat={formData.latitude ? parseFloat(formData.latitude) : undefined}
         initialLng={formData.longitude ? parseFloat(formData.longitude) : undefined} />
+
+      {showCamera === 'idCard' && (
+        <CameraCapture
+          label="Foto KTP"
+          onCapture={handleCameraCaptureIdCard}
+          onClose={() => setShowCamera(null)}
+        />
+      )}
+      {showCamera === 'installation' && (
+        <CameraCapture
+          label="Foto Instalasi"
+          onCapture={handleCameraCaptureInstallation}
+          onClose={() => setShowCamera(null)}
+        />
+      )}
     </div>
   );
 }
