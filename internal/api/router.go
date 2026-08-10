@@ -197,6 +197,13 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	webhooks.Post("/duitku", billingH.WebhookDuitku)
 	webhooks.Post("/tripay", billingH.WebhookTripay)
 
+	// RADIUS internal endpoints (public — called by FreeRADIUS REST module)
+	app.Post("/api/radius/authorize", miscH.RadiusAuthorize)
+	app.Post("/api/radius/post-auth", miscH.RadiusPostAuth)
+	app.Post("/api/radius/coa", miscH.RadiusCOA)
+	app.Get("/api/radius/accounting", miscH.RadiusAccounting)
+	app.Post("/api/radius/accounting", miscH.RadiusAccounting)
+
 	// ─── Protected routes (JWT or NextAuth session required) ─────────────────
 	api := app.Group("/api", middleware.CombinedAuthMiddleware, middleware.AdminPathGuard)
 
@@ -924,9 +931,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	api.Get("/coordinator/tasks", miscH.CoordinatorTasks)
 	api.Get("/health/db", miscH.HealthDB)
 	api.Get("/health/radius", miscH.HealthRadius)
-	app.Post("/api/radius/authorize", miscH.RadiusAuthorize)
-	app.Post("/api/radius/post-auth", miscH.RadiusPostAuth)
-	app.Post("/api/radius/coa", miscH.RadiusCOA)
 	api.Post("/pppoe/upload-photo", miscH.PppoeUploadPhoto)
 	api.Get("/public/homepage", miscH.PublicHomepage)
 	api.Get("/admin/nas", miscH.ListNAS)
@@ -1272,10 +1276,6 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	// ─── Batch 12: Payment extras ─────────────────────────────────────────────
 	app.Post("/api/pay/manual", miscH.PayManual)
 	api.Get("/payment/duitku-methods", miscH.DuitkuMethods)
-
-	// ─── Batch 12: RADIUS accounting ─────────────────────────────────────────
-	app.Get("/api/radius/accounting", miscH.RadiusAccounting)
-	app.Post("/api/radius/accounting", miscH.RadiusAccounting)
 
 	// ─── Batch 12: Network routers extras ────────────────────────────────────
 	api.Post("/network/routers/:id/setup-radius", miscH.SetupRadiusOnRouter)
