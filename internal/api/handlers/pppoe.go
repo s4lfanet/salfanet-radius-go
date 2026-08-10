@@ -259,7 +259,7 @@ func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
 	customerID := fmt.Sprintf("CMP-%s%02d-%04d", now.Format("2006"), int(now.Month()), now.Unix()%10000)
 
 	// Marshal installation photos to JSON
-	var installPhotosJSON string
+	installPhotosJSON := "[]"
 	if len(body.InstallationPhotos) > 0 {
 		if b, err := json.Marshal(body.InstallationPhotos); err == nil {
 			installPhotosJSON = string(b)
