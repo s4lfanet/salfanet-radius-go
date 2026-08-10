@@ -133,19 +133,42 @@ func (h *MiscHandler) HealthRadius(c fiber.Ctx) error {
 // POST /api/radius/authorize — FreeRADIUS authorize hook
 func (h *MiscHandler) RadiusAuthorize(c fiber.Ctx) error {
 	var body struct {
-		UserName string `json:"User-Name"`
+		UserName      string `json:"User-Name"`
+		Username      string `json:"username"`
+		NasIp         string `json:"nasIp"`
+		NasPort       string `json:"nasPort"`
+		CalledStation string `json:"calledStationId"`
 	}
 	c.Bind().JSON(&body)
 
-	var check models.Radcheck
-	if err := h.db.Where("username = ? AND attribute = ?", body.UserName, "Cleartext-Password").
-		First(&check).Error; err != nil {
+	uname := body.UserName
+	if uname == "" {
+		uname = body.Username
+	}
+	if uname == "" {
+		return c.Status(400).JSON(fiber.Map{"error": "username required"})
+	}
+
+	var user models.PppoeUser
+	if err := h.db.Where("username = ?", uname).First(&user).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"reply-message": "User not found"})
 	}
-	return c.JSON(fiber.Map{
-		"Cleartext-Password": check.Value,
-		"reply":              "ok",
-	})
+
+	if user.Status == "isolated" || user.Status == "suspended" {
+		return c.Status(403).JSON(fiber.Map{
+			"control:Auth-Type":   "Reject",
+			"reply:Reply-Message": "Akun Anda diisolir, silakan hubungi admin",
+		})
+	}
+
+	if user.ExpiredAt != nil && user.ExpiredAt.Before(time.Now()) {
+		return c.Status(403).JSON(fiber.Map{
+			"control:Auth-Type":   "Reject",
+			"reply:Reply-Message": "Langganan Anda telah berakhir",
+		})
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // POST /api/radius/post-auth — FreeRADIUS post-auth hook

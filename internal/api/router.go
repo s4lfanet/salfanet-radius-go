@@ -599,6 +599,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	invoicesGrp.Get("/:id/pdf", invExtH.GetPDF)
 	invoicesGrp.Get("/", invExtH.List)
 	invoicesGrp.Post("/", invExtH.Create)
+	invoicesGrp.Put("/", billingH.MarkPaid)
 	invoicesGrp.Delete("/", invExtH.Delete)
 
 	// Referrals

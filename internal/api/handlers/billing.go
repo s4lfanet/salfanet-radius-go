@@ -86,6 +86,58 @@ func (h *BillingHandler) UpdateInvoice(c fiber.Ctx) error {
 	return c.JSON(inv)
 }
 
+// PUT /api/invoices — mark invoice as paid (body: { id, status: 'PAID' })
+func (h *BillingHandler) MarkPaid(c fiber.Ctx) error {
+	var body struct {
+		ID     string `json:"id"`
+		Status string `json:"status"`
+	}
+	if err := c.Bind().JSON(&body); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	if body.ID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "id required"})
+	}
+	var inv models.Invoice
+	if err := h.db.First(&inv, "id = ?", body.ID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "invoice not found"})
+	}
+	if inv.Status == models.InvoicePaid {
+		return c.Status(400).JSON(fiber.Map{"error": "invoice already paid"})
+	}
+	now := time.Now()
+	inv.Status = models.InvoicePaid
+	inv.PaidAt = &now
+	h.db.Save(&inv)
+
+	mp := models.ManualPayment{
+		ID:        uuid.New().String(),
+		InvoiceID: inv.ID,
+		PppoeUserID: func() string {
+			if inv.UserID != nil {
+				return *inv.UserID
+			}
+			return ""
+		}(),
+		Amount:       float64(inv.Amount),
+		BankName:     "CASH",
+		AccountName:  "-",
+		TransferDate: now,
+		Status:       "APPROVED",
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+	h.db.Create(&mp)
+
+	h.postPaymentProcess(&inv, now)
+
+	if inv.CustomerPhone != nil && inv.CustomerName != nil {
+		_ = notify.SendPaymentSuccess(*inv.CustomerPhone, *inv.CustomerName, inv.InvoiceNumber, inv.Amount)
+	}
+
+	return c.JSON(fiber.Map{"message": "paid", "invoice": inv})
+}
+
 func (h *BillingHandler) DeleteInvoice(c fiber.Ctx) error {
 	id := c.Params("id")
 	h.db.Delete(&models.Invoice{}, "id = ?", id)
