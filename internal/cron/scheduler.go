@@ -171,12 +171,9 @@ func (s *Scheduler) jobGenerateInvoices() {
 	h := s.startHistory("invoice_generate")
 	defer func() { s.completeHistory(h, recover()) }()
 
-	// Get company settings
+	// Get company settings (optional — use defaults if not configured)
 	var company models.Company
-	if err := s.db.First(&company).Error; err != nil {
-		s.failHistory(h, err)
-		return
-	}
+	s.db.First(&company) // ignore error — use defaults if no company record
 
 	generateDays := 7
 	if company.InvoiceGenerateDays != nil {

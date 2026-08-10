@@ -279,10 +279,7 @@ func (s *Scheduler) jobInvoiceCatchup() {
 	defer func() { s.completeHistory(h, recover()) }()
 
 	var company models.Company
-	if err := s.db.First(&company).Error; err != nil {
-		s.failHistory(h, err)
-		return
-	}
+	s.db.First(&company) // ignore error — use defaults if no company record
 
 	// Find POSTPAID + PREPAID users that are isolated/expired with NO pending invoice
 	var users []models.PppoeUser
