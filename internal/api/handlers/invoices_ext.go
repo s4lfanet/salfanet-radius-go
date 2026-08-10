@@ -86,7 +86,7 @@ func (h *InvoiceExtHandler) Create(c fiber.Ctx) error {
 	}
 	id := generateID()
 	token := generateID() + generateID()
-	invNum := fmt.Sprintf("INV-%s", time.Now().Format("20060102150405"))
+	invNum := fmt.Sprintf("INV-%s-%d", time.Now().Format("200601"), time.Now().UnixNano())
 	dueDate := time.Now().AddDate(0, 0, 14)
 	if body.DueDate != nil {
 		t, err := time.Parse("2006-01-02", *body.DueDate)

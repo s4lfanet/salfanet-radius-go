@@ -5,6 +5,7 @@ package radius
 import (
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
@@ -26,15 +27,41 @@ func (s *Service) SetPassword(username, password string) error {
 	`, username, password).Error
 }
 
-// Isolate replaces the password with an invalid token, blocking the user.
+// Isolate moves user to isolir group for restricted access (user can still login
+// but gets limited access via the isolir group profile).
 func (s *Service) Isolate(username string) error {
-	return s.db.Model(&models.Radcheck{}).
-		Where("username = ? AND attribute = 'Cleartext-Password'", username).
-		Update("value", "WRONG_PASSWORD_ISOLATED__"+username).Error
+	// Remove any Auth-Type reject
+	if err := s.db.Where("username = ? AND attribute = ?", username, "Auth-Type").
+		Delete(&models.Radcheck{}).Error; err != nil {
+		return fmt.Errorf("remove auth-type: %w", err)
+	}
+	// Remove reject reply message
+	if err := s.db.Where("username = ? AND attribute = ?", username, "Reply-Message").
+		Delete(&models.Radreply{}).Error; err != nil {
+		return fmt.Errorf("remove reply-message: %w", err)
+	}
+	// Move to isolir group
+	s.db.Where("username = ?", username).Delete(&models.Radusergroup{})
+	if err := s.SetGroup(username, "isolir"); err != nil {
+		return fmt.Errorf("set isolir group: %w", err)
+	}
+	// Remove static IP (user will get IP from pool-isolir)
+	s.db.Where("username = ? AND attribute = ?", username, "Framed-IP-Address").
+		Delete(&models.Radreply{})
+	// Close active sessions
+	s.db.Exec(`UPDATE radacct SET acctstoptime = NOW(), acctterminatecause = 'Admin-Reset'
+		WHERE username = ? AND acctstoptime IS NULL`, username)
+	log.Debug().Str("username", username).Msg("radius: isolate user ok")
+	return nil
 }
 
-// Activate restores the real password from the pppoe_users table.
+// Activate restores the real password and removes any reject markers.
 func (s *Service) Activate(username, password string) error {
+	// Remove Auth-Type reject if present
+	s.db.Where("username = ? AND attribute = ?", username, "Auth-Type").Delete(&models.Radcheck{})
+	// Remove reject reply message
+	s.db.Where("username = ? AND attribute = ?", username, "Reply-Message").Delete(&models.Radreply{})
+	// Restore password
 	return s.SetPassword(username, password)
 }
 
@@ -64,7 +91,11 @@ func (s *Service) DeleteUser(username string) error {
 	if err := s.db.Where("username = ?", username).Delete(&models.Radreply{}).Error; err != nil {
 		return err
 	}
-	return s.db.Where("username = ?", username).Delete(&models.Radusergroup{}).Error
+	if err := s.db.Where("username = ?", username).Delete(&models.Radusergroup{}).Error; err != nil {
+		return err
+	}
+	log.Debug().Str("username", username).Msg("radius: delete user ok")
+	return nil
 }
 
 // RestoreUser restores an isolated user in RADIUS:
@@ -104,6 +135,7 @@ func (s *Service) RestoreUser(username, groupName string, ipAddress *string) err
 		}
 	}
 
+	log.Debug().Str("username", username).Str("group", groupName).Msg("radius: restore user ok")
 	return nil
 }
 
@@ -122,6 +154,7 @@ func (s *Service) UpsertUser(username, password, rateLimit, groupname string) er
 			return fmt.Errorf("set group: %w", err)
 		}
 	}
+	log.Debug().Str("username", username).Str("group", groupname).Msg("radius: upsert user ok")
 	return nil
 }
 

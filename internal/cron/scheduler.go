@@ -210,22 +210,31 @@ func (s *Scheduler) jobGenerateInvoices() {
 }
 
 func (s *Scheduler) generateMonthlyInvoice(u *models.PppoeUser, _ *models.Company) error {
-	amount := u.Profile.Price
+	baseAmount := u.Profile.Price
+	amount := baseAmount
+
+	// Apply PPN if enabled on profile
+	if u.Profile.PPNActive && u.Profile.PPNRate > 0 {
+		amount = baseAmount + (baseAmount * u.Profile.PPNRate / 100)
+	}
 
 	now := time.Now()
 	dueDate := now.AddDate(0, 0, 7) // 7 days from now
+	token := fmt.Sprintf("%d-%d", now.UnixNano(), now.UnixMilli())
 
 	inv := models.Invoice{
 		ID:               newID(),
-		InvoiceNumber:    fmt.Sprintf("INV-%s", now.Format("20060102150405")),
+		InvoiceNumber:    fmt.Sprintf("INV-%s-%d", now.Format("200601"), now.UnixNano()),
 		UserID:           &u.ID,
 		Amount:           amount,
+		BaseAmount:       &baseAmount,
 		Status:           models.InvoicePending,
 		DueDate:          dueDate,
 		InvoiceType:      models.InvoiceMonthly,
 		CustomerName:     &u.Name,
 		CustomerPhone:    &u.Phone,
 		CustomerUsername: &u.Username,
+		PaymentToken:     &token,
 	}
 	return s.db.Create(&inv).Error
 }

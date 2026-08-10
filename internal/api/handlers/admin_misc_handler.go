@@ -17,13 +17,19 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
+
+	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
 
 // AdminMiscHandler handles miscellaneous admin endpoints.
-type AdminMiscHandler struct{ db *gorm.DB }
+type AdminMiscHandler struct {
+	db     *gorm.DB
+	radius *radius.Service
+}
 
-func NewAdminMiscHandler(db *gorm.DB) *AdminMiscHandler {
-	return &AdminMiscHandler{db: db}
+func NewAdminMiscHandler(db *gorm.DB, rad *radius.Service) *AdminMiscHandler {
+	return &AdminMiscHandler{db: db, radius: rad}
 }
 
 // ─── APK Management ──────────────────────────────────────────────────────────
@@ -374,9 +380,42 @@ func (h *AdminMiscHandler) Update2FA(c fiber.Ctx) error {
 
 // ─── PPPoE Admin ─────────────────────────────────────────────────────────────
 
-// POST /api/admin/pppoe/sync-all-radius — sync all PPPoE users to RADIUS
+// POST /api/admin/pppoe/sync-all-radius — sync all active PPPoE users to RADIUS
 func (h *AdminMiscHandler) SyncAllRadius(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"success": true, "message": "RADIUS sync queued", "count": 0})
+	var users []models.PppoeUser
+	if err := h.db.Preload("Profile").
+		Where("status IN ('active','isolated')").
+		Find(&users).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to load users"})
+	}
+
+	synced := 0
+	failed := 0
+	for _, u := range users {
+		rateLimit := ""
+		if u.Profile.RateLimit != nil {
+			rateLimit = *u.Profile.RateLimit
+		}
+		groupName := u.Profile.GroupName
+		if u.Status == "isolated" {
+			groupName = "isolir"
+		}
+		if err := h.radius.UpsertUser(u.Username, u.Password, rateLimit, groupName); err != nil {
+			log.Error().Err(err).Str("username", u.Username).Msg("sync-all-radius: upsert failed")
+			failed++
+			continue
+		}
+		h.db.Model(&u).Update("syncedToRadius", true)
+		synced++
+	}
+
+	log.Info().Int("synced", synced).Int("failed", failed).Msg("sync-all-radius: complete")
+	return c.JSON(fiber.Map{
+		"success": true,
+		"message": fmt.Sprintf("Synced %d users, %d failed", synced, failed),
+		"synced":  synced,
+		"failed":  failed,
+	})
 }
 
 // POST /api/admin/pppoe/users/:id/deposit — record deposit for PPPoE user

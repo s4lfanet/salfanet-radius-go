@@ -287,12 +287,12 @@ func (s *Scheduler) jobInvoiceCatchup() {
 	// Find POSTPAID users that are isolated/expired with NO pending invoice
 	var users []models.PppoeUser
 	s.db.Preload("Profile").
-		Where(`subscription_type = 'POSTPAID'
+		Where(`subscriptionType = 'POSTPAID'
 			AND status IN ('isolated', 'stop')
 			AND id NOT IN (
-				SELECT user_id FROM invoices
-				WHERE status = 'PENDING' AND invoice_type = 'MONTHLY'
-				  AND user_id IS NOT NULL
+				SELECT userId FROM invoices
+				WHERE status = 'PENDING' AND invoiceType = 'MONTHLY'
+				  AND userId IS NOT NULL
 			)`).
 		Find(&users)
 
@@ -326,11 +326,11 @@ func (s *Scheduler) jobAgentSalesRecording() {
 	}
 	var rows []agentSaleRow
 	s.db.Raw(`
-		SELECT i.id AS invoice_id, i.user_id, pu.referred_by_id AS agent_id, i.amount
+		SELECT i.id AS invoice_id, i.userId AS user_id, pu.referred_by_id AS agent_id, i.amount
 		FROM invoices i
-		INNER JOIN pppoe_users pu ON pu.id = i.user_id
+		INNER JOIN pppoe_users pu ON pu.id = i.userId
 		WHERE i.status        = 'PAID'
-		  AND i.paid_at       >= CURDATE()
+		  AND i.paidAt        >= CURDATE()
 		  AND pu.referred_by_id IS NOT NULL
 		  AND i.id NOT IN (
 			  SELECT invoice_id FROM agent_sales WHERE invoice_id IS NOT NULL

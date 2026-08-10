@@ -54,7 +54,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	adminH := handlers.NewAdminHandler(db)
 	oltH := handlers.NewOLTHandler(db, p, hub)
 	pppoeH := handlers.NewPPPoEHandler(db, rad)
-	billingH := handlers.NewBillingHandler(db)
+	billingH := handlers.NewBillingHandler(db, rad)
 	radiusH := handlers.NewRadiusHandler(db, rad)
 	hotspotH := handlers.NewHotspotHandler(db)
 	agentH := handlers.NewAgentHandler(db)
@@ -92,7 +92,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	telegramH := handlers.NewTelegramHandler(db)
 	pushH := handlers.NewPushHandler(db)
 	oltExtH := handlers.NewOltExtHandler(db)
-	pppoeExtH := handlers.NewPppoeExtHandler(db)
+	pppoeExtH := handlers.NewPppoeExtHandler(db, rad)
 	techPortalH := handlers.NewTechnicianPortalHandler(db)
 	uploadH := handlers.NewUploadHandler(db)
 	waExtH := handlers.NewWhatsappExtHandler(db)
@@ -107,7 +107,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 
 	// ─── Batch 8 handlers ────────────────────────────────────────────────────
 	custExt2H := handlers.NewCustomerPortalExt2Handler(db)
-	paymentH := handlers.NewPaymentHandler(db)
+	paymentH := handlers.NewPaymentHandler(db, rad)
 
 	// ─── Batch 9 handlers ────────────────────────────────────────────────────
 	paymentsApprovalH := handlers.NewPaymentsApprovalHandler(db)
@@ -123,7 +123,7 @@ func New(db *gorm.DB, p *poller.Poller, hub *ws.Hub, rad *radius.Service, sched 
 	fcmH := handlers.NewFCMHandler(db)
 
 	// ─── Batch 11 handlers ───────────────────────────────────────────────────
-	adminMiscH := handlers.NewAdminMiscHandler(db)
+	adminMiscH := handlers.NewAdminMiscHandler(db, rad)
 	networkVPNH := handlers.NewNetworkVPNHandler(db)
 	territoryH := handlers.NewTerritoryHandler(db)
 	billingExtH := handlers.NewBillingExtHandler(db)

@@ -9,17 +9,22 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 	"github.com/s4lfanet/salfanet-radius-go/internal/lib/qris"
+	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
 
 // PaymentHandler handles payment gateway routes.
-type PaymentHandler struct{ db *gorm.DB }
+type PaymentHandler struct {
+	db     *gorm.DB
+	radius *radius.Service
+}
 
-func NewPaymentHandler(db *gorm.DB) *PaymentHandler {
-	return &PaymentHandler{db: db}
+func NewPaymentHandler(db *gorm.DB, rad *radius.Service) *PaymentHandler {
+	return &PaymentHandler{db: db, radius: rad}
 }
 
 // POST /api/payment/create — initiate a payment order via active gateway
@@ -205,11 +210,16 @@ func (h *PaymentHandler) Webhook(c fiber.Ctx) error {
 
 	switch status {
 	case "settlement", "capture", "paid", "PAID":
+		if invoice.Status == "PAID" {
+			return c.JSON(fiber.Map{"received": true, "message": "already paid"})
+		}
 		now := time.Now()
 		h.db.Model(&invoice).Updates(map[string]interface{}{
 			"status": "PAID",
 			"paidAt": now,
 		})
+		// Extend subscription + restore RADIUS
+		h.extendSubscription(&invoice, now)
 	case "expire", "cancel", "EXPIRED":
 		h.db.Model(&invoice).Update("status", "EXPIRED")
 	}
@@ -464,4 +474,54 @@ func (h *PaymentHandler) QrisTest(c fiber.Ctx) error {
 		"uniqueAmount": pending.UniqueAmount,
 		"sourceApp":    body.SourceApp,
 	})
+}
+
+// extendSubscription extends the user's subscription and restores RADIUS access after payment.
+func (h *PaymentHandler) extendSubscription(inv *models.Invoice, paidAt time.Time) {
+	if inv.UserID == nil || *inv.UserID == "" {
+		return
+	}
+	var user models.PppoeUser
+	if err := h.db.Preload("Profile").First(&user, "id = ?", *inv.UserID).Error; err != nil {
+		log.Error().Err(err).Str("invoiceId", inv.ID).Msg("payment: post-payment user lookup failed")
+		return
+	}
+
+	var newExpiry time.Time
+	if user.ExpiredAt != nil {
+		newExpiry = *user.ExpiredAt
+	} else {
+		newExpiry = paidAt
+	}
+	validity := user.Profile.ValidityValue
+	if validity <= 0 {
+		validity = 1
+	}
+	switch user.Profile.ValidityUnit {
+	case "MONTHS":
+		newExpiry = newExpiry.AddDate(0, validity, 0)
+	case "DAYS":
+		newExpiry = newExpiry.AddDate(0, 0, validity)
+	default:
+		newExpiry = newExpiry.AddDate(0, 1, 0)
+	}
+
+	h.db.Model(&user).Updates(map[string]interface{}{
+		"expiredAt":       newExpiry,
+		"lastPaymentDate": paidAt,
+		"status":          "active",
+	})
+
+	if user.Status == "isolated" || user.Status == "suspended" {
+		rateLimit := ""
+		if user.Profile.RateLimit != nil {
+			rateLimit = *user.Profile.RateLimit
+		}
+		if err := h.radius.RestoreUser(user.Username, user.Profile.GroupName, user.IPAddress); err != nil {
+			log.Error().Err(err).Str("username", user.Username).Msg("payment: RADIUS restore failed")
+		} else {
+			_ = h.radius.SetRateLimit(user.Username, rateLimit)
+			log.Info().Str("username", user.Username).Str("invoiceId", inv.ID).Msg("payment: user restored after payment")
+		}
+	}
 }

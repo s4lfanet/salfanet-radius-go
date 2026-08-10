@@ -6,18 +6,23 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
 	"github.com/s4lfanet/salfanet-radius-go/internal/notify"
+	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
 
 // BillingHandler handles invoice, payment, and transaction endpoints.
 type BillingHandler struct {
-	db *gorm.DB
+	db     *gorm.DB
+	radius *radius.Service
 }
 
-func NewBillingHandler(db *gorm.DB) *BillingHandler { return &BillingHandler{db: db} }
+func NewBillingHandler(db *gorm.DB, rad *radius.Service) *BillingHandler {
+	return &BillingHandler{db: db, radius: rad}
+}
 
 // ─── Invoices ─────────────────────────────────────────────────────────────────
 
@@ -32,7 +37,7 @@ func (h *BillingHandler) ListInvoices(c fiber.Ctx) error {
 		query = query.Where("userId = ?", userID)
 	}
 	if search := c.Query("search"); search != "" {
-		query = query.Where("invoice_number LIKE ? OR customer_name LIKE ?",
+		query = query.Where("invoiceNumber LIKE ? OR customerName LIKE ?",
 			"%"+search+"%", "%"+search+"%")
 	}
 
@@ -60,7 +65,7 @@ func (h *BillingHandler) CreateInvoice(c fiber.Ctx) error {
 	}
 	body.ID = uuid.New().String()
 	if body.InvoiceNumber == "" {
-		body.InvoiceNumber = fmt.Sprintf("INV-%s", time.Now().Format("20060102150405"))
+		body.InvoiceNumber = fmt.Sprintf("INV-%s-%d", time.Now().Format("200601"), time.Now().UnixNano())
 	}
 	if err := h.db.Create(&body).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -92,6 +97,9 @@ func (h *BillingHandler) PayInvoice(c fiber.Ctx) error {
 	var inv models.Invoice
 	if err := h.db.First(&inv, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
+	}
+	if inv.Status == models.InvoicePaid {
+		return c.Status(400).JSON(fiber.Map{"error": "invoice already paid"})
 	}
 
 	var body struct {
@@ -128,6 +136,9 @@ func (h *BillingHandler) PayInvoice(c fiber.Ctx) error {
 		UpdatedAt:    now,
 	}
 	h.db.Create(&mp)
+
+	// Extend subscription + restore RADIUS
+	h.postPaymentProcess(&inv, now)
 
 	// Send WA confirmation
 	if inv.CustomerPhone != nil && inv.CustomerName != nil {
@@ -305,7 +316,68 @@ func (h *BillingHandler) markInvoicePaidByToken(token string) {
 	inv.PaidAt = &now
 	h.db.Save(&inv)
 
+	// Extend subscription + restore RADIUS
+	h.postPaymentProcess(&inv, now)
+
 	if inv.CustomerPhone != nil && inv.CustomerName != nil {
 		_ = notify.SendPaymentSuccess(*inv.CustomerPhone, *inv.CustomerName, inv.InvoiceNumber, inv.Amount)
+	}
+}
+
+// postPaymentProcess extends the user's subscription and restores RADIUS access.
+// Called after any invoice is marked PAID (manual, gateway webhook, QRIS).
+func (h *BillingHandler) postPaymentProcess(inv *models.Invoice, paidAt time.Time) {
+	if inv.UserID == nil || *inv.UserID == "" {
+		return
+	}
+	var user models.PppoeUser
+	if err := h.db.Preload("Profile").First(&user, "id = ?", *inv.UserID).Error; err != nil {
+		log.Error().Err(err).Str("invoiceId", inv.ID).Msg("billing: post-payment user lookup failed")
+		return
+	}
+
+	// Extend expiry based on profile validity
+	var newExpiry time.Time
+	if user.ExpiredAt != nil {
+		newExpiry = *user.ExpiredAt
+	} else {
+		newExpiry = paidAt
+	}
+	validity := user.Profile.ValidityValue
+	if validity <= 0 {
+		validity = 1
+	}
+	switch user.Profile.ValidityUnit {
+	case "MONTHS":
+		newExpiry = newExpiry.AddDate(0, validity, 0)
+	case "DAYS":
+		newExpiry = newExpiry.AddDate(0, 0, validity)
+	default:
+		newExpiry = newExpiry.AddDate(0, 1, 0)
+	}
+
+	updates := map[string]interface{}{
+		"expiredAt":       newExpiry,
+		"lastPaymentDate": paidAt,
+		"status":          "active",
+	}
+	if err := h.db.Model(&user).Updates(updates).Error; err != nil {
+		log.Error().Err(err).Str("userId", user.ID).Msg("billing: post-payment update failed")
+		return
+	}
+
+	// Restore RADIUS if user was isolated/suspended
+	if user.Status == "isolated" || user.Status == "suspended" {
+		rateLimit := ""
+		if user.Profile.RateLimit != nil {
+			rateLimit = *user.Profile.RateLimit
+		}
+		if err := h.radius.RestoreUser(user.Username, user.Profile.GroupName, user.IPAddress); err != nil {
+			log.Error().Err(err).Str("username", user.Username).Msg("billing: post-payment RADIUS restore failed")
+		} else {
+			// Also upsert rate limit in case it was missing
+			_ = h.radius.SetRateLimit(user.Username, rateLimit)
+			log.Info().Str("username", user.Username).Str("invoiceId", inv.ID).Msg("billing: user restored after payment")
+		}
 	}
 }

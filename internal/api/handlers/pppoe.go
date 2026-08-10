@@ -374,6 +374,24 @@ func (h *PPPoEHandler) UpdateUser(c fiber.Ctx) error {
 	}
 
 	h.db.Save(&user)
+
+	// Sync to RADIUS (reload profile for rate limit / group name)
+	var profile models.PppoeProfile
+	h.db.First(&profile, "id = ?", user.ProfileID)
+	rateLimit := ""
+	if profile.RateLimit != nil {
+		rateLimit = *profile.RateLimit
+	}
+	groupName := profile.GroupName
+	if user.Status == "isolated" {
+		groupName = "isolir"
+	}
+	if err := h.radius.UpsertUser(user.Username, user.Password, rateLimit, groupName); err != nil {
+		log.Error().Err(err).Str("username", user.Username).Msg("pppoe: radius sync error on update")
+	} else {
+		h.db.Model(&user).Update("syncedToRadius", true)
+	}
+
 	return c.JSON(user)
 }
 
@@ -394,7 +412,7 @@ func (h *PPPoEHandler) SuspendUser(c fiber.Ctx) error {
 	if err := h.db.First(&user, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
 	}
-	h.db.Model(&user).Update("status", "suspended")
+	h.db.Model(&user).Update("status", "stop")
 	_ = h.radius.Isolate(user.Username)
 	return c.JSON(fiber.Map{"message": "suspended"})
 }
@@ -402,11 +420,19 @@ func (h *PPPoEHandler) SuspendUser(c fiber.Ctx) error {
 func (h *PPPoEHandler) ActivateUser(c fiber.Ctx) error {
 	id := c.Params("id")
 	var user models.PppoeUser
-	if err := h.db.First(&user, "id = ?", id).Error; err != nil {
+	if err := h.db.Preload("Profile").First(&user, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
 	}
 	h.db.Model(&user).Update("status", "active")
-	_ = h.radius.Activate(user.Username, user.Password)
+	// Full RADIUS restore: password, group, rate limit, static IP
+	rateLimit := ""
+	if user.Profile.RateLimit != nil {
+		rateLimit = *user.Profile.RateLimit
+	}
+	_ = h.radius.RestoreUser(user.Username, user.Profile.GroupName, user.IPAddress)
+	if rateLimit != "" {
+		_ = h.radius.SetRateLimit(user.Username, rateLimit)
+	}
 	_ = notify.SendActivationNotice(user.Phone, user.Name, user.Username)
 	return c.JSON(fiber.Map{"message": "activated"})
 }

@@ -32,7 +32,9 @@ func (s *Scheduler) jobSuspendCheck() {
 
 	for _, sr := range toSuspend {
 		if sr.User != nil && sr.User.Status == "active" {
-			s.db.Model(&models.PppoeUser{}).Where("id = ?", sr.UserID).Update("status", "stopped")
+			s.db.Model(&models.PppoeUser{}).Where("id = ?", sr.UserID).Update("status", "stop")
+			// Isolate in RADIUS (Auth-Type=Reject)
+			s.radius.Isolate(sr.User.Username)
 			suspended++
 		}
 	}
@@ -44,8 +46,12 @@ func (s *Scheduler) jobSuspendCheck() {
 		Find(&toRestore)
 
 	for _, sr := range toRestore {
-		if sr.User != nil && sr.User.Status == "stopped" {
+		if sr.User != nil && sr.User.Status == "stop" {
 			s.db.Model(&models.PppoeUser{}).Where("id = ?", sr.UserID).Update("status", "active")
+			// Restore in RADIUS
+			var profile models.PppoeProfile
+			s.db.First(&profile, "id = ?", sr.User.ProfileID)
+			s.radius.RestoreUser(sr.User.Username, profile.GroupName, sr.User.IPAddress)
 			restored++
 		}
 		s.db.Model(&sr).Update("status", "COMPLETED")

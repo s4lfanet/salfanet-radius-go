@@ -12,16 +12,21 @@ import (
 
 	ros "github.com/go-routeros/routeros/v3"
 	"github.com/gofiber/fiber/v3"
+	"github.com/rs/zerolog/log"
 	excelize "github.com/xuri/excelize/v2"
 	"gorm.io/gorm"
 
 	"github.com/s4lfanet/salfanet-radius-go/internal/db/models"
+	"github.com/s4lfanet/salfanet-radius-go/internal/radius"
 )
 
-type PppoeExtHandler struct{ db *gorm.DB }
+type PppoeExtHandler struct {
+	db        *gorm.DB
+	radiusSvc *radius.Service
+}
 
-func NewPppoeExtHandler(db *gorm.DB) *PppoeExtHandler {
-	return &PppoeExtHandler{db: db}
+func NewPppoeExtHandler(db *gorm.DB, rad *radius.Service) *PppoeExtHandler {
+	return &PppoeExtHandler{db: db, radiusSvc: rad}
 }
 
 // dialMikrotik connects to a MikroTik router API, automatically using TLS for
@@ -178,9 +183,9 @@ func (h *PppoeExtHandler) BulkGet(c fiber.Ctx) error {
 	q := h.db.Preload("Profile").Preload("Area").Preload("Router")
 	switch paymentStatus {
 	case "paid":
-		q = q.Where("id IN (SELECT userId FROM Invoice WHERE status = 'PAID')")
+		q = q.Where("id IN (SELECT userId FROM invoices WHERE status = 'PAID')")
 	case "unpaid":
-		q = q.Where("id IN (SELECT userId FROM Invoice WHERE status IN ('PENDING','OVERDUE'))")
+		q = q.Where("id IN (SELECT userId FROM invoices WHERE status IN ('PENDING','OVERDUE'))")
 	}
 	q.Find(&users)
 
@@ -657,13 +662,64 @@ func (h *PppoeExtHandler) MarkPaid(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&body); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "invalid body"})
 	}
-	now := time.Now()
-	result := h.db.Model(&models.Invoice{}).
-		Where("id = ? AND userId = ?", body.InvoiceID, id).
-		Updates(map[string]interface{}{"status": "PAID", "paidAt": now})
-	if result.RowsAffected == 0 {
+
+	// Check invoice exists and not already paid
+	var inv models.Invoice
+	if err := h.db.Where("id = ? AND userId = ?", body.InvoiceID, id).First(&inv).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "invoice not found"})
 	}
+	if inv.Status == models.InvoicePaid {
+		return c.Status(400).JSON(fiber.Map{"error": "invoice already paid"})
+	}
+
+	now := time.Now()
+	result := h.db.Model(&inv).Updates(map[string]interface{}{"status": "PAID", "paidAt": now})
+	if result.RowsAffected == 0 {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to update invoice"})
+	}
+
+	// Extend subscription + restore RADIUS
+	var user models.PppoeUser
+	if err := h.db.Preload("Profile").First(&user, "id = ?", id).Error; err == nil {
+		var newExpiry time.Time
+		if user.ExpiredAt != nil {
+			newExpiry = *user.ExpiredAt
+		} else {
+			newExpiry = now
+		}
+		validity := user.Profile.ValidityValue
+		if validity <= 0 {
+			validity = 1
+		}
+		switch user.Profile.ValidityUnit {
+		case "MONTHS":
+			newExpiry = newExpiry.AddDate(0, validity, 0)
+		case "DAYS":
+			newExpiry = newExpiry.AddDate(0, 0, validity)
+		default:
+			newExpiry = newExpiry.AddDate(0, 1, 0)
+		}
+		h.db.Model(&user).Updates(map[string]interface{}{
+			"expiredAt":       newExpiry,
+			"lastPaymentDate": now,
+			"status":          "active",
+		})
+
+		// Restore RADIUS if was isolated
+		if user.Status == "isolated" || user.Status == "suspended" {
+			rateLimit := ""
+			if user.Profile.RateLimit != nil {
+				rateLimit = *user.Profile.RateLimit
+			}
+			if err := h.radiusSvc.RestoreUser(user.Username, user.Profile.GroupName, user.IPAddress); err != nil {
+				log.Error().Err(err).Str("username", user.Username).Msg("mark-paid: RADIUS restore failed")
+			} else {
+				_ = h.radiusSvc.SetRateLimit(user.Username, rateLimit)
+				log.Info().Str("username", user.Username).Msg("mark-paid: user restored after payment")
+			}
+		}
+	}
+
 	return c.JSON(fiber.Map{"success": true, "paidAt": now})
 }
 
@@ -988,22 +1044,25 @@ func (h *PppoeExtHandler) SyncProfilesRadius(c fiber.Ctx) error {
 	return c.JSON(fiber.Map{"success": true, "synced": synced, "message": fmt.Sprintf("synced %d profiles to FreeRADIUS radgroupreply", synced)})
 }
 
-// GET /api/pppoe/users/:id/sync-radius — sync single user to RADIUS
+// POST /api/pppoe/users/:id/sync-radius — sync single user to RADIUS (full: password, rate limit, group)
 func (h *PppoeExtHandler) SyncUserRadius(c fiber.Ctx) error {
 	id := c.Params("id")
 	var user models.PppoeUser
 	if err := h.db.Preload("Profile").First(&user, "id = ?", id).Error; err != nil {
 		return c.Status(404).JSON(fiber.Map{"error": "user not found"})
 	}
-	// Upsert to radcheck
-	rc := models.Radcheck{
-		Username:  user.Username,
-		Attribute: "Cleartext-Password",
-		Op:        ":=",
-		Value:     user.Password,
+	rateLimit := ""
+	if user.Profile.RateLimit != nil {
+		rateLimit = *user.Profile.RateLimit
 	}
-	h.db.Where("username = ? AND attribute = ?", user.Username, "Cleartext-Password").
-		Assign(rc).FirstOrCreate(&rc)
+	groupName := user.Profile.GroupName
+	if user.Status == "isolated" {
+		groupName = "isolir"
+	}
+	if err := h.radiusSvc.UpsertUser(user.Username, user.Password, rateLimit, groupName); err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "radius sync failed: " + err.Error()})
+	}
+	h.db.Model(&user).Update("syncedToRadius", true)
 	return c.JSON(fiber.Map{"success": true, "message": "user synced to radius"})
 }
 
