@@ -346,6 +346,7 @@ export default function RouterPage() {
             ...prev,
             password: full.password || '',
             secret: full.secret || '',
+            authMode: full.authMode || prev.authMode,
           }))
         }
       }
