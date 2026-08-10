@@ -20,11 +20,8 @@ func New(db *gorm.DB) *Service { return &Service{db: db} }
 
 // SetPassword sets or replaces the Cleartext-Password in radcheck.
 func (s *Service) SetPassword(username, password string) error {
-	return s.db.Exec(`
-		INSERT INTO radcheck (username, attribute, op, value)
-		VALUES (?, 'Cleartext-Password', ':=', ?)
-		ON DUPLICATE KEY UPDATE value = VALUES(value)
-	`, username, password).Error
+	s.db.Where("username = ? AND attribute = ?", username, "Cleartext-Password").Delete(&models.Radcheck{})
+	return s.db.Exec(`INSERT INTO radcheck (username, attribute, op, value) VALUES (?, 'Cleartext-Password', ':=', ?)`, username, password).Error
 }
 
 // Isolate moves user to isolir group for restricted access (user can still login
@@ -67,20 +64,17 @@ func (s *Service) Activate(username, password string) error {
 
 // SetRateLimit sets or updates Mikrotik-Rate-Limit in radreply.
 func (s *Service) SetRateLimit(username, rateLimit string) error {
+	s.db.Where("username = ? AND attribute = ?", username, "Mikrotik-Rate-Limit").Delete(&models.Radreply{})
 	return s.db.Exec(`
 		INSERT INTO radreply (username, attribute, op, value)
 		VALUES (?, 'Mikrotik-Rate-Limit', '=', ?)
-		ON DUPLICATE KEY UPDATE value = VALUES(value)
 	`, username, rateLimit).Error
 }
 
 // SetGroup sets or updates radusergroup mapping.
 func (s *Service) SetGroup(username, groupname string) error {
-	return s.db.Exec(`
-		INSERT INTO radusergroup (username, groupname, priority)
-		VALUES (?, ?, 1)
-		ON DUPLICATE KEY UPDATE groupname = VALUES(groupname)
-	`, username, groupname).Error
+	s.db.Where("username = ?", username).Delete(&models.Radusergroup{})
+	return s.db.Exec(`INSERT INTO radusergroup (username, groupname, priority) VALUES (?, ?, 1)`, username, groupname).Error
 }
 
 // DeleteUser removes all radius entries for a username.

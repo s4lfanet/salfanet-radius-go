@@ -131,9 +131,8 @@ func (s *Scheduler) jobHotspotSync() {
 			Update("value", "EXPIRED")
 
 		// 2. Add/update Reply-Message in radreply
-		s.db.Exec(`INSERT INTO radreply (username, attribute, op, value)
-			VALUES (?, 'Reply-Message', '=', 'Kode Voucher Kadaluarsa')
-			ON DUPLICATE KEY UPDATE value = VALUES(value)`, voucher.Code)
+		s.db.Exec(`DELETE FROM radreply WHERE username = ? AND attribute = 'Reply-Message'`, voucher.Code)
+		s.db.Exec(`INSERT INTO radreply (username, attribute, op, value) VALUES (?, 'Reply-Message', '=', 'Kode Voucher Kadaluarsa')`, voucher.Code)
 
 		// 3. Remove from radusergroup (removes bandwidth limits)
 		s.db.Where("username = ?", voucher.Code).Delete(&models.Radusergroup{})

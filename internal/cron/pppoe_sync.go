@@ -109,10 +109,8 @@ func (s *Scheduler) isolateUser(user *models.PppoeUser) error {
 	}
 
 	// 2. Keep password in radcheck (allow login for isolation)
-	s.db.Exec(`INSERT INTO radcheck (username, attribute, op, value)
-		VALUES (?, 'Cleartext-Password', ':=', ?)
-		ON DUPLICATE KEY UPDATE value = VALUES(value)`,
-		user.Username, user.Password)
+	s.db.Exec(`DELETE FROM radcheck WHERE username = ? AND attribute = 'Cleartext-Password'`, user.Username)
+	s.db.Exec(`INSERT INTO radcheck (username, attribute, op, value) VALUES (?, 'Cleartext-Password', ':=', ?)`, user.Username, user.Password)
 
 	// 2b. Remove Auth-Type Reject (allow login for isolation)
 	s.db.Exec(`DELETE FROM radcheck WHERE username = ? AND attribute = 'Auth-Type'`, user.Username)

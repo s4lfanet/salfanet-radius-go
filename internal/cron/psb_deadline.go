@@ -33,7 +33,8 @@ func (s *Scheduler) jobPsbDeadline() {
 	for _, user := range expiredUsers {
 		s.db.Model(&user).Update("status", "isolated")
 		// Set Auth-Type Reject in radcheck
-		s.db.Exec("INSERT INTO radcheck (username, attribute, op, value) VALUES (?, 'Auth-Type', ':=', 'Reject') ON DUPLICATE KEY UPDATE value = 'Reject'", user.Username)
+		s.db.Exec("DELETE FROM radcheck WHERE username = ? AND attribute = 'Auth-Type'", user.Username)
+		s.db.Exec("INSERT INTO radcheck (username, attribute, op, value) VALUES (?, 'Auth-Type', ':=', 'Reject')", user.Username)
 		isolated++
 		log.Info().Str("username", user.Username).Msg("psb_deadline: auto-isolated (24h passed, no payment)")
 	}

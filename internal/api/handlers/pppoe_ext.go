@@ -1004,7 +1004,7 @@ func (h *PppoeExtHandler) SyncProfilesMikrotik(c fiber.Ctx) error {
 	})
 }
 
-// POST /api/pppoe/profiles/sync-radius — sync profiles rate limits to FreeRADIUS radgroupreply
+// POST /api/pppoe/profiles/sync-radius — sync profiles rate limits + IP pool to FreeRADIUS radgroupreply
 func (h *PppoeExtHandler) SyncProfilesRadius(c fiber.Ctx) error {
 	// Support syncing a single profile by ID (from action button)
 	var reqBody struct {
@@ -1031,17 +1031,24 @@ func (h *PppoeExtHandler) SyncProfilesRadius(c fiber.Ctx) error {
 		} else if p.DownloadSpeed > 0 && p.UploadSpeed > 0 {
 			rateLimit = fmt.Sprintf("%dM/%dM", p.UploadSpeed, p.DownloadSpeed)
 		}
-		if rateLimit == "" {
-			continue
-		}
-		// Delete existing then insert fresh (no UNIQUE constraint on radgroupreply)
+
+		// Sync Mikrotik-Rate-Limit to radgroupreply
 		h.db.Exec(`DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Mikrotik-Rate-Limit'`, p.GroupName)
-		h.db.Exec(`INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)`, p.GroupName, rateLimit)
-		// Update syncedToRadius flag in pppoe_profiles table using raw Exec (field now in model)
+		if rateLimit != "" {
+			h.db.Exec(`INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)`, p.GroupName, rateLimit)
+		}
+
+		// Sync Framed-Pool (IP pool name) to radgroupreply
+		h.db.Exec(`DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Framed-Pool'`, p.GroupName)
+		if p.IPPoolName != nil && *p.IPPoolName != "" {
+			h.db.Exec(`INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Framed-Pool', ':=', ?)`, p.GroupName, *p.IPPoolName)
+		}
+
+		// Update syncedToRadius flag
 		h.db.Exec(`UPDATE pppoe_profiles SET syncedToRadius = 1 WHERE id = ?`, p.ID)
 		synced++
 	}
-	return c.JSON(fiber.Map{"success": true, "synced": synced, "message": fmt.Sprintf("synced %d profiles to FreeRADIUS radgroupreply", synced)})
+	return c.JSON(fiber.Map{"success": true, "synced": synced, "message": fmt.Sprintf("synced %d profiles to FreeRADIUS radgroupreply (rate-limit + framed-pool)", synced)})
 }
 
 // POST /api/pppoe/users/:id/sync-radius — sync single user to RADIUS (full: password, rate limit, group)

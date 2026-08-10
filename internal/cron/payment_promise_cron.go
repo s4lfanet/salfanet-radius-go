@@ -38,7 +38,8 @@ func (s *Scheduler) jobPaymentPromiseCheck() {
 
 			// Isolir user
 			s.db.Model(&models.PppoeUser{}).Where("id = ?", promise.UserID).Update("status", "isolated")
-			s.db.Exec("INSERT INTO radcheck (username, attribute, op, value) VALUES (?, 'Auth-Type', ':=', 'Reject') ON DUPLICATE KEY UPDATE value = 'Reject'", promise.Username)
+			s.db.Exec("DELETE FROM radcheck WHERE username = ? AND attribute = 'Auth-Type'", promise.Username)
+			s.db.Exec("INSERT INTO radcheck (username, attribute, op, value) VALUES (?, 'Auth-Type', ':=', 'Reject')", promise.Username)
 
 			broken++
 			log.Info().Str("username", promise.Username).Msg("payment_promise: broken, user re-isolated")
