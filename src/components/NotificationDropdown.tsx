@@ -50,7 +50,7 @@ export default function NotificationDropdown() {
       const res = await fetch('/api/notifications?limit=10');
       const data = await res.json();
       if (data.success) {
-        setNotifications(data.notifications);
+        setNotifications(data.notifications || []);
         setUnreadCount(data.unreadCount);
       }
     } catch (error) {

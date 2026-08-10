@@ -814,7 +814,7 @@ function AdminLayoutContent({
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
-            setUserPermissions(data.permissions);
+            setUserPermissions(data.permissions || []);
           }
         })
         .catch(console.error);
