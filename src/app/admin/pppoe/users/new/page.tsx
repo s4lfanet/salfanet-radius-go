@@ -101,10 +101,13 @@ export default function NewPppoeUserPage() {
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!formData.profileId) { await showError('Paket harus dipilih'); setActiveTab(0); return; }
-    if (!formData.name) { await showError('Nama pelanggan wajib diisi'); setActiveTab(1); return; }
-    if (!formData.phone) { await showError('No. telepon wajib diisi'); setActiveTab(1); return; }
     if (hasPppoeAccount && !formData.username) { await showError('Username PPPoE wajib diisi'); setActiveTab(0); return; }
     if (hasPppoeAccount && !formData.password) { await showError('Password PPPoE wajib diisi'); setActiveTab(0); return; }
+    if (!formData.name) { await showError('Nama pelanggan wajib diisi'); setActiveTab(1); return; }
+    if (!formData.phone) { await showError('No. telepon wajib diisi'); setActiveTab(1); return; }
+    if (!formData.idCardNumber) { await showError('No. NIK KTP wajib diisi'); setActiveTab(1); return; }
+    if (!formData.idCardPhoto) { await showError('Foto KTP wajib diupload'); setActiveTab(1); return; }
+    if (!formData.latitude || !formData.longitude) { await showError('Lokasi GPS wajib diisi'); setActiveTab(2); return; }
     setSaving(true);
     try {
       const payload = {
@@ -152,10 +155,38 @@ export default function NewPppoeUserPage() {
 
   const tabDone = [
     !!formData.profileId && (hasPppoeAccount ? !!(formData.username && formData.password) : true),
-    !!(formData.name && formData.phone),
-    true,
+    !!(formData.name && formData.phone && formData.idCardNumber && formData.idCardPhoto),
+    !!(formData.latitude && formData.longitude),
     true,
   ];
+
+  // Validation per tab — block Next if incomplete
+  const tabValid = [
+    !!formData.profileId && (hasPppoeAccount ? !!(formData.username && formData.password) : true),
+    !!(formData.name && formData.phone && formData.idCardNumber && formData.idCardPhoto),
+    !!(formData.latitude && formData.longitude),
+    true,
+  ];
+
+  const tabErrors = [
+    hasPppoeAccount && !formData.username ? 'Username PPPoE wajib diisi' :
+    hasPppoeAccount && !formData.password ? 'Password PPPoE wajib diisi' :
+    !formData.profileId ? 'Paket internet wajib dipilih' : '',
+    !formData.name ? 'Nama lengkap wajib diisi' :
+    !formData.phone ? 'No. telepon wajib diisi' :
+    !formData.idCardNumber ? 'No. NIK KTP wajib diisi' :
+    !formData.idCardPhoto ? 'Foto KTP wajib diupload' : '',
+    !formData.latitude || !formData.longitude ? 'Lokasi GPS wajib diisi (gunakan tombol Lokasi Saya atau Pilih di Map)' : '',
+    '',
+  ];
+
+  const handleNext = () => {
+    if (!tabValid[activeTab]) {
+      showError(tabErrors[activeTab] || 'Lengkapi data terlebih dahulu');
+      return;
+    }
+    setActiveTab(t => Math.min(TABS.length - 1, t + 1));
+  };
 
   const prorateInfo = useMemo(() => {
     if (formData.subscriptionType !== 'POSTPAID') return null;
@@ -464,14 +495,14 @@ export default function NewPppoeUserPage() {
                 </div>
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Dokumen KTP (opsional)</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Dokumen KTP <span className="text-red-500">*</span></p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <ModalLabel>No. NIK</ModalLabel>
+                    <ModalLabel required>No. NIK</ModalLabel>
                     <ModalInput type="text" value={formData.idCardNumber} onChange={(e) => field('idCardNumber', e.target.value)} placeholder="3201234567890123" maxLength={16} />
                   </div>
                   <div>
-                    <ModalLabel>Foto KTP</ModalLabel>
+                    <ModalLabel required>Foto KTP</ModalLabel>
                     <input type="file" accept="image/*" onChange={handleUploadIdCard} disabled={uploadingIdCard} className="hidden" id="idCardUpload" />
                     <label htmlFor="idCardUpload" className={`w-full flex items-center justify-center px-3 py-2 text-xs border border-dashed border-border rounded-lg cursor-pointer hover:bg-muted text-muted-foreground ${uploadingIdCard ? 'opacity-50 cursor-not-allowed' : ''}`}>
                       {uploadingIdCard ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" />Upload...</span> : 'Upload KTP'}
@@ -525,7 +556,7 @@ export default function NewPppoeUserPage() {
                 )}
               </div>
               <div className="bg-card border border-border rounded-xl p-4 space-y-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Lokasi GPS (opsional)</p>
+                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Lokasi GPS <span className="text-red-500">*</span></p>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <ModalLabel>Latitude</ModalLabel>
@@ -608,8 +639,8 @@ export default function NewPppoeUserPage() {
           ))}
         </div>
         {activeTab < TABS.length - 1 ? (
-          <button type="button" onClick={() => setActiveTab(t => Math.min(TABS.length - 1, t + 1))}
-            className="inline-flex items-center gap-1 px-3 py-2 text-xs bg-primary hover:bg-primary/90 text-white rounded-lg">
+          <button type="button" onClick={handleNext}
+            className={`inline-flex items-center gap-1 px-3 py-2 text-xs rounded-lg ${tabValid[activeTab] ? 'bg-primary hover:bg-primary/90 text-white' : 'bg-muted text-muted-foreground cursor-not-allowed'}`}>
             Berikutnya <ChevronRight className="h-3.5 w-3.5" />
           </button>
         ) : (

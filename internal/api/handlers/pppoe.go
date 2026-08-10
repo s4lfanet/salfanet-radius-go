@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -22,28 +23,33 @@ import (
 // which cannot be directly bound to the PppoeUser struct (*float64, *int, *time.Time).
 // Password is also included here because PppoeUser.Password has json:"-" tag.
 type createUserBody struct {
-	Username         string `json:"username"`
-	Password         string `json:"password"`
-	ProfileID        string `json:"profileId"`
-	AreaID           string `json:"areaId"`
-	RouterID         string `json:"routerId"`
-	Name             string `json:"name"`
-	Phone            string `json:"phone"`
-	Email            string `json:"email"`
-	Address          string `json:"address"`
-	IPAddress        string `json:"ipAddress"`
-	MACAddress       string `json:"macAddress"`
-	Comment          string `json:"comment"`
-	ReferralCode     string `json:"referralCode"`
-	SubscriptionType string `json:"subscriptionType"`
-	Status           string `json:"status"`
-	Latitude         string `json:"latitude"`
-	Longitude        string `json:"longitude"`
-	BillingDay       string `json:"billingDay"`
-	ExpiredAt        string `json:"expiredAt"`
-	NoPppoeAccount   bool   `json:"noPppoeAccount"`
-	FirstInvoice     string `json:"firstInvoice"`
-	CreatePppSecret  bool   `json:"createPppSecret"`
+	Username           string   `json:"username"`
+	Password           string   `json:"password"`
+	ProfileID          string   `json:"profileId"`
+	AreaID             string   `json:"areaId"`
+	RouterID           string   `json:"routerId"`
+	Name               string   `json:"name"`
+	Phone              string   `json:"phone"`
+	Email              string   `json:"email"`
+	Address            string   `json:"address"`
+	IPAddress          string   `json:"ipAddress"`
+	MACAddress         string   `json:"macAddress"`
+	Comment            string   `json:"comment"`
+	ReferralCode       string   `json:"referralCode"`
+	SubscriptionType   string   `json:"subscriptionType"`
+	Status             string   `json:"status"`
+	Latitude           string   `json:"latitude"`
+	Longitude          string   `json:"longitude"`
+	BillingDay         string   `json:"billingDay"`
+	ExpiredAt          string   `json:"expiredAt"`
+	NoPppoeAccount     bool     `json:"noPppoeAccount"`
+	FirstInvoice       string   `json:"firstInvoice"`
+	CreatePppSecret    bool     `json:"createPppSecret"`
+	IdCardNumber       string   `json:"idCardNumber"`
+	IdCardPhoto        string   `json:"idCardPhoto"`
+	InstallationPhotos []string `json:"installationPhotos"`
+	FollowRoad         bool     `json:"followRoad"`
+	RegisteredAt       string   `json:"registeredAt"`
 }
 
 // PPPoEHandler handles all PPPoE user/customer/profile/area endpoints.
@@ -242,19 +248,36 @@ func (h *PPPoEHandler) CreateUser(c fiber.Ctx) error {
 		}
 	}
 
+	// Generate customer/registration ID: CMP-YYYYMM-XXXX
+	now := time.Now()
+	customerID := fmt.Sprintf("CMP-%s%02d-%04d", now.Format("2006"), int(now.Month()), now.Unix()%10000)
+
+	// Marshal installation photos to JSON
+	var installPhotosJSON string
+	if len(body.InstallationPhotos) > 0 {
+		if b, err := json.Marshal(body.InstallationPhotos); err == nil {
+			installPhotosJSON = string(b)
+		}
+	}
+
 	user := models.PppoeUser{
-		ID:             uuid.New().String(),
-		Username:       username,
-		Password:       password,
-		ProfileID:      body.ProfileID,
-		Name:           body.Name,
-		Phone:          body.Phone,
-		Status:         body.Status,
-		IPAddress:      ptrStr(body.IPAddress),
-		MACAddress:     ptrStr(body.MACAddress),
-		Comment:        ptrStr(body.Comment),
-		ReferralCode:   ptrStr(body.ReferralCode),
-		SyncedToRadius: false,
+		ID:                 uuid.New().String(),
+		Username:           username,
+		CustomerID:         &customerID,
+		Password:           password,
+		ProfileID:          body.ProfileID,
+		Name:               body.Name,
+		Phone:              body.Phone,
+		Status:             body.Status,
+		IPAddress:          ptrStr(body.IPAddress),
+		MACAddress:         ptrStr(body.MACAddress),
+		Comment:            ptrStr(body.Comment),
+		ReferralCode:       ptrStr(body.ReferralCode),
+		SyncedToRadius:     false,
+		IdCardNumber:       ptrStr(body.IdCardNumber),
+		IdCardPhoto:        ptrStr(body.IdCardPhoto),
+		InstallationPhotos: installPhotosJSON,
+		FollowRoad:         body.FollowRoad,
 	}
 
 	if body.AreaID != "" {

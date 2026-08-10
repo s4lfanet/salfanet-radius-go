@@ -164,6 +164,10 @@ type PppoeUser struct {
 	TerritoryAreaID       *string          `gorm:"index;column:territoryAreaId" json:"territoryAreaId"`
 	InitialPaymentPending bool             `gorm:"default:false;column:initialPaymentPending" json:"initialPaymentPending"`
 	PsbDeadlineAt         *time.Time       `gorm:"index;column:psbDeadlineAt" json:"psbDeadlineAt"`
+	IdCardNumber          *string          `gorm:"column:idCardNumber;type:varchar(50)" json:"idCardNumber"`
+	IdCardPhoto           *string          `gorm:"column:idCardPhoto;type:varchar(500)" json:"idCardPhoto"`
+	InstallationPhotos    string           `gorm:"column:installationPhotos;type:json" json:"installationPhotos"`
+	FollowRoad            bool             `gorm:"default:false;column:followRoad" json:"followRoad"`
 
 	Profile       PppoeProfile           `gorm:"foreignKey:ProfileID" json:"profile,omitempty"`
 	Territory     *Territory             `gorm:"foreignKey:TerritoryID" json:"territory,omitempty"`
