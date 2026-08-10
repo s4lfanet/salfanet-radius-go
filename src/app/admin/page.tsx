@@ -599,7 +599,7 @@ export default function AdminDashboard() {
               </a>
             </div>
             <div className="flex-1 overflow-y-auto max-h-[236px] divide-y divide-white/5">
-              {!stats || stats.upcomingInvoices.length === 0 ? (
+              {!stats || !stats.upcomingInvoices || stats.upcomingInvoices.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 gap-1">
                   <CheckCircle2 className="h-5 w-5 text-green-400/40" />
                   <p className="text-[10px] text-muted-foreground">Tidak ada tagihan mendekati jatuh tempo</p>
