@@ -638,6 +638,21 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 
 <!-- AUTO-CHANGELOG:START -->
 
+### v2.54.32 — 2026-08-10
+
+### Fixed — CSP Violation & PPPoE User Create/Update 400 Error
+- **CSP blocking leaflet.css from unpkg.com** (`src/proxy.ts`, `next.config.ts`, `vps-install/install-nginx.sh`, `production/nginx-salfanet-radius.conf`, `production/nginx-radius.hotspotapp.net.conf`) — Added `https://unpkg.com` to `style-src` CSP directive in all CSP definitions (Next.js middleware, Next.js headers, nginx install script, production nginx configs). The Leaflet CSS stylesheet from `https://unpkg.com/leaflet@1.9.4/dist/leaflet.css` was being blocked by the browser because `unpkg.com` was only in `script-src` but not `style-src`.
+- **PPPoE user create/update 400 Bad Request** (`internal/api/handlers/pppoe.go`, `internal/api/handlers/helpers.go`) — `CreateUser` and `UpdateUser` handlers bound JSON directly to `models.PppoeUser` which expects `*float64` for `latitude`/`longitude`, `*int` for `billingDay`, and `*time.Time` for `expiredAt`. The frontend sends these as strings (e.g. `''`, `'1'`, `'2024-01-01'`), causing JSON binding errors. Also `Password` field has `json:"-"` tag so it was never populated from JSON. Added `createUserBody` struct with all-string fields for loose JSON binding, then convert to proper Go types using `strconv.ParseFloat`, `strconv.Atoi`, and `time.Parse`. Added `ptrStr` helper function in `helpers.go`.
+
+### Files
+- `src/proxy.ts` — **EDIT** — Added `https://unpkg.com` to `style-src` CSP directive
+- `next.config.ts` — **EDIT** — Added `https://unpkg.com` to `style-src` CSP directive
+- `vps-install/install-nginx.sh` — **EDIT** — Added `https://unpkg.com` and `https://cdnjs.cloudflare.com` to `style-src` and `font-src` CSP directives
+- `production/nginx-salfanet-radius.conf` — **EDIT** — Added `https://unpkg.com` to `style-src` CSP directive
+- `production/nginx-radius.hotspotapp.net.conf` — **EDIT** — Added `https://unpkg.com` to `style-src` CSP directive
+- `internal/api/handlers/pppoe.go` — **EDIT** — Added `createUserBody` struct, rewrote `CreateUser` and `UpdateUser` handlers with proper type conversion
+- `internal/api/handlers/helpers.go` — **EDIT** — Added `ptrStr` helper function
+
 ### v2.54.31 — 2026-08-10
 
 ### Fixed — Backend ↔ Database ↔ Frontend Consistency Audit
@@ -741,19 +756,6 @@ Bagian ini otomatis sinkron dari `CHANGELOG.md` saat file changelog berubah di G
 - `internal/api/router.go` — **EDIT** — Added DELETE /faults route (body-based)
 - `src/components/genieacs/DeviceStatusBadge.tsx` — **EDIT** — Default threshold 15→60min
 - `src/app/admin/genieacs/devices/[deviceId]/page.tsx` — **EDIT** — Fixed response format expectations
-
-### v2.54.27 — 2026-08-08
-
-### Fixed — Footer Login, Cronjob Emoji, GenieACS Test Connection
-- **Footer Login not saving** (`internal/db/models/models.go`) — Root cause: Go `Company` struct was missing `footerAdmin`, `footerCustomer`, `footerTechnician`, `footerAgent` fields. These fields exist in Prisma schema and MySQL table, but were absent from the Go model. When the frontend sent footer values via `POST /api/company`, `json.Unmarshal` silently dropped them and `db.Save` never persisted them to the database. Added the 4 missing fields with proper GORM column tags.
-- **Cronjob emoji not rendering** (`internal/db/db.go`) — Root cause: `cron_history` table may have been created with `utf8` charset instead of `utf8mb4`, causing 4-byte emoji characters to be corrupted. Added `ALTER TABLE cron_history CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci` migration. Also added same conversion for `companies` table (footer text may contain emoji).
-- **GenieACS test connection always failing** (`internal/api/handlers/settings_genieacs.go`) — Root cause: `TestConnection` handler was a stub that always returned `{"success": false, "message": "GenieACS connection test not configured"}`. Implemented real connection test: makes HTTP GET to `{host}/devices` with Basic Auth, parses response to count devices, returns success with device count.
-- **Missing qrisDeviceKey migration** (`internal/db/db.go`) — Added `ALTER TABLE companies ADD COLUMN qrisDeviceKey VARCHAR(100) NULL` migration that was referenced in v2.54.26 changelog but not actually added to db.go.
-
-### Files
-- `internal/db/models/models.go` — **EDIT** — Added FooterAdmin, FooterCustomer, FooterTechnician, FooterAgent fields to Company struct
-- `internal/db/db.go` — **EDIT** — Added utf8mb4 conversion migrations for cron_history and companies, qrisDeviceKey column migration
-- `internal/api/handlers/settings_genieacs.go` — **EDIT** — Implemented real TestConnection handler with HTTP request to GenieACS NBI API
 
 <!-- AUTO-CHANGELOG:END -->
 
