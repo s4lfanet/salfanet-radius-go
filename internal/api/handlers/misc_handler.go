@@ -1214,10 +1214,10 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 			"# ============================================",
 		router.Name, nasSrcAddress, radiusServerIP, gatewayIP, connectionType, now,
 		nasSrcAddress, radiusServerIP, secret, srcAddr, authPort, acctPort,
-		poolCmdsRos7,
-		primaryPool,
 		gatewayEntry7,
 		coaPort,
+		poolCmdsRos7,
+		primaryPool,
 		fwRos7,
 		netwatch)
 
@@ -1262,10 +1262,10 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 			"# ============================================",
 		router.Name, nasSrcAddress, radiusServerIP, gatewayIP, connectionType, now,
 		nasSrcAddress, radiusServerIP, secret, srcAddr, authPort, acctPort,
-		poolCmdsRos6,
-		primaryPool,
 		gatewayEntry6,
 		coaPort,
+		poolCmdsRos6,
+		primaryPool,
 		fwRos6,
 		netwatch)
 
