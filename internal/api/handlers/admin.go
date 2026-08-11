@@ -152,14 +152,14 @@ func (h *AdminHandler) Stats(c fiber.Ctx) error {
 	// ── Voucher revenue (estimate from sold vouchers) ──────────────────────────
 	var voucherRevenue, voucherRevenueToday int64
 	h.db.Raw(`
-		SELECT COALESCE(SUM(hp.price),0)
+		SELECT COALESCE(SUM(hp.sellingPrice),0)
 		FROM hotspot_vouchers hv
 		JOIN hotspot_profiles hp ON hp.id = hv.profileId
 		WHERE hv.status IN ('ACTIVE','EXPIRED','SOLD')
 		  AND hv.firstLoginAt >= ? AND hv.firstLoginAt < ?
 	`, startOfMonth, startOfNextMonth).Scan(&voucherRevenue)
 	h.db.Raw(`
-		SELECT COALESCE(SUM(hp.price),0)
+		SELECT COALESCE(SUM(hp.sellingPrice),0)
 		FROM hotspot_vouchers hv
 		JOIN hotspot_profiles hp ON hp.id = hv.profileId
 		WHERE hv.status IN ('ACTIVE','EXPIRED','SOLD')
@@ -176,7 +176,7 @@ func (h *AdminHandler) Stats(c fiber.Ctx) error {
 	var agentSales []agentSaleRow
 	h.db.Raw(`
 		SELECT hv.agentId, ag.name AS agentName,
-		       COUNT(*) AS sold, COALESCE(SUM(hp.price),0) AS revenue
+		       COUNT(*) AS sold, COALESCE(SUM(hp.sellingPrice),0) AS revenue
 		FROM hotspot_vouchers hv
 		JOIN agents ag ON ag.id = hv.agentId
 		JOIN hotspot_profiles hp ON hp.id = hv.profileId
