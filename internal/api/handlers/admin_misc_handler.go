@@ -382,6 +382,33 @@ func (h *AdminMiscHandler) Update2FA(c fiber.Ctx) error {
 
 // POST /api/admin/pppoe/sync-all-radius — sync all active PPPoE users to RADIUS
 func (h *AdminMiscHandler) SyncAllRadius(c fiber.Ctx) error {
+	// First sync all active profiles to radgroupreply (rate-limit + Framed-Pool)
+	var profiles []models.PppoeProfile
+	h.db.Where("isActive = ?", true).Find(&profiles)
+	profileSynced := 0
+	for _, p := range profiles {
+		if p.GroupName == "" {
+			continue
+		}
+		rateLimit := ""
+		if p.RateLimit != nil && *p.RateLimit != "" {
+			rateLimit = *p.RateLimit
+		} else if p.DownloadSpeed > 0 && p.UploadSpeed > 0 {
+			rateLimit = fmt.Sprintf("%dM/%dM", p.UploadSpeed, p.DownloadSpeed)
+		}
+		h.db.Exec("DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Mikrotik-Rate-Limit'", p.GroupName)
+		if rateLimit != "" {
+			h.db.Exec("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)", p.GroupName, rateLimit)
+		}
+		h.db.Exec("DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Framed-Pool'", p.GroupName)
+		if p.IPPoolName != nil && *p.IPPoolName != "" {
+			h.db.Exec("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Framed-Pool', ':=', ?)", p.GroupName, *p.IPPoolName)
+		}
+		h.db.Exec("UPDATE pppoe_profiles SET syncedToRadius = 1 WHERE id = ?", p.ID)
+		profileSynced++
+	}
+	log.Info().Int("profiles", profileSynced).Msg("sync-all-radius: profiles synced to radgroupreply")
+
 	var users []models.PppoeUser
 	if err := h.db.Preload("Profile").
 		Where("status IN ('active','isolated')").

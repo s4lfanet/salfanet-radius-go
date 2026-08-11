@@ -400,7 +400,7 @@ export default function PppoeUsersPage() {
 
   const handleSaveUser = async (data: any) => {
     try {
-      const res = await fetch('/api/pppoe/users', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const res = await fetch(`/api/pppoe/users/${data.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const result = await res.json();
       if (res.ok) { await loadData(); await showSuccess(t('management.userUpdated')); }
       else { await showError(result.error || t('common.failed')); throw new Error(result.error); }

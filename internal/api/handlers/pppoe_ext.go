@@ -986,6 +986,20 @@ func (h *PppoeExtHandler) SyncProfilesMikrotik(c fiber.Ctx) error {
 	h.db.Model(&profile).Updates(updates)
 	h.db.First(&profile, "id = ?", body.ID) // reload
 
+	// Also sync Framed-Pool to FreeRADIUS radgroupreply so RADIUS sends the correct pool name
+	if profile.GroupName != "" {
+		h.db.Exec("DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Framed-Pool'", profile.GroupName)
+		if profile.IPPoolName != nil && *profile.IPPoolName != "" {
+			h.db.Exec("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Framed-Pool', ':=', ?)", profile.GroupName, *profile.IPPoolName)
+		}
+		// Also sync rate-limit to radgroupreply
+		h.db.Exec("DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Mikrotik-Rate-Limit'", profile.GroupName)
+		if rateLimit != "" {
+			h.db.Exec("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)", profile.GroupName, rateLimit)
+		}
+		h.db.Exec("UPDATE pppoe_profiles SET syncedToRadius = 1 WHERE id = ?", profile.ID)
+	}
+
 	success := successCount > 0
 	msg := fmt.Sprintf("Berhasil sync ke %d dari %d router", successCount, len(body.RouterIDs))
 	if !success {

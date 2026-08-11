@@ -1099,7 +1099,7 @@ func (h *MiscHandler) SetupRadiusOnRouter(c fiber.Ctx) error {
 	// Query all distinct IPPoolName values from pppoe_profiles to generate pool creation commands.
 	// This ensures MikroTik has pools matching the Framed-Pool attribute returned by RADIUS.
 	var poolNames []string
-	if err := h.db.Raw("SELECT DISTINCT IPPoolName FROM pppoe_profiles WHERE IPPoolName IS NOT NULL AND IPPoolName != ''").Scan(&poolNames).Error; err != nil {
+	if err := h.db.Raw("SELECT DISTINCT ipPoolName FROM pppoe_profiles WHERE ipPoolName IS NOT NULL AND ipPoolName != ''").Scan(&poolNames).Error; err != nil {
 		log.Warn().Err(err).Msg("setup-radius: failed to query pool names")
 	}
 	if len(poolNames) == 0 {

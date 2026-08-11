@@ -124,6 +124,8 @@ func (h *PPPoEHandler) CreateProfile(c fiber.Ctx) error {
 	if err := h.db.Create(&body).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
+	// Auto-sync to FreeRADIUS radgroupreply
+	h.syncProfileToRadius(body)
 	return c.Status(fiber.StatusCreated).JSON(body)
 }
 
@@ -133,17 +135,59 @@ func (h *PPPoEHandler) UpdateProfile(c fiber.Ctx) error {
 	if err := h.db.First(&profile, "id = ?", id).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "not found"})
 	}
+	oldGroupName := profile.GroupName
 	if err := c.Bind().JSON(&profile); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 	h.db.Save(&profile)
+	// Auto-sync to FreeRADIUS radgroupreply
+	h.syncProfileToRadius(profile)
+	// If group name changed, clean up old radgroupreply entries
+	if oldGroupName != "" && oldGroupName != profile.GroupName {
+		h.db.Exec("DELETE FROM radgroupreply WHERE groupname = ?", oldGroupName)
+		h.db.Exec("DELETE FROM radgroupcheck WHERE groupname = ?", oldGroupName)
+	}
 	return c.JSON(profile)
 }
 
 func (h *PPPoEHandler) DeleteProfile(c fiber.Ctx) error {
 	id := c.Params("id")
+	var profile models.PppoeProfile
+	if err := h.db.First(&profile, "id = ?", id).Error; err == nil && profile.GroupName != "" {
+		// Clean up FreeRADIUS entries for this group
+		h.db.Exec("DELETE FROM radgroupreply WHERE groupname = ?", profile.GroupName)
+		h.db.Exec("DELETE FROM radgroupcheck WHERE groupname = ?", profile.GroupName)
+	}
 	h.db.Delete(&models.PppoeProfile{}, "id = ?", id)
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+// syncProfileToRadius syncs a single profile's rate-limit and Framed-Pool to FreeRADIUS radgroupreply.
+func (h *PPPoEHandler) syncProfileToRadius(p models.PppoeProfile) {
+	if p.GroupName == "" {
+		return
+	}
+	rateLimit := ""
+	if p.RateLimit != nil && *p.RateLimit != "" {
+		rateLimit = *p.RateLimit
+	} else if p.DownloadSpeed > 0 && p.UploadSpeed > 0 {
+		rateLimit = fmt.Sprintf("%dM/%dM", p.UploadSpeed, p.DownloadSpeed)
+	}
+
+	// Sync Mikrotik-Rate-Limit
+	h.db.Exec("DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Mikrotik-Rate-Limit'", p.GroupName)
+	if rateLimit != "" {
+		h.db.Exec("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Mikrotik-Rate-Limit', ':=', ?)", p.GroupName, rateLimit)
+	}
+
+	// Sync Framed-Pool (IP pool name)
+	h.db.Exec("DELETE FROM radgroupreply WHERE groupname = ? AND attribute = 'Framed-Pool'", p.GroupName)
+	if p.IPPoolName != nil && *p.IPPoolName != "" {
+		h.db.Exec("INSERT INTO radgroupreply (groupname, attribute, op, value) VALUES (?, 'Framed-Pool', ':=', ?)", p.GroupName, *p.IPPoolName)
+	}
+
+	h.db.Exec("UPDATE pppoe_profiles SET syncedToRadius = 1 WHERE id = ?", p.ID)
+	log.Info().Str("group", p.GroupName).Str("rateLimit", rateLimit).Msg("profile: auto-synced to FreeRADIUS radgroupreply")
 }
 
 // ─── PPPoE Customers ─────────────────────────────────────────────────────────
