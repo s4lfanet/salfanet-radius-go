@@ -118,7 +118,7 @@ export default function UserDetailModal({
     address: '',
     ipAddress: '',
     expiredAt: '',
-    billingDay: 1,
+    billingDay: '1',
     latitude: '',
     longitude: '',
     subscriptionType: 'PREPAID' as 'PREPAID' | 'POSTPAID',
@@ -145,7 +145,7 @@ export default function UserDetailModal({
         address: user.address || '',
         ipAddress: user.ipAddress || '',
         expiredAt: user.expiredAt ? user.expiredAt.split('T')[0] : '',
-        billingDay: user.billingDay ?? (user.expiredAt && (user.subscriptionType ?? 'POSTPAID') === 'POSTPAID' ? new Date(user.expiredAt).getDate() : 1),
+        billingDay: String(user.billingDay ?? (user.expiredAt && (user.subscriptionType ?? 'POSTPAID') === 'POSTPAID' ? new Date(user.expiredAt).getDate() : 1)),
         latitude: user.latitude?.toString() || '',
         longitude: user.longitude?.toString() || '',
         subscriptionType: user.subscriptionType ?? 'POSTPAID',
@@ -568,7 +568,7 @@ export default function UserDetailModal({
                         const yyyy = next.getFullYear();
                         const mm = String(next.getMonth() + 1).padStart(2, '0');
                         const dd = String(next.getDate()).padStart(2, '0');
-                        setFormData({ ...formData, billingDay: bd, expiredAt: `${yyyy}-${mm}-${dd}` });
+                        setFormData({ ...formData, billingDay: String(bd), expiredAt: `${yyyy}-${mm}-${dd}` });
                       }}
                       className={selectCls}
                     >
