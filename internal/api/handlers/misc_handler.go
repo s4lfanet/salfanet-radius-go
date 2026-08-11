@@ -175,7 +175,7 @@ func (h *MiscHandler) RadiusAuthorize(c fiber.Ctx) error {
 
 // POST /api/radius/post-auth — FreeRADIUS post-auth hook
 func (h *MiscHandler) RadiusPostAuth(c fiber.Ctx) error {
-	return c.JSON(fiber.Map{"reply": "ok"})
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 // POST /api/radius/coa — Change of Authorization
