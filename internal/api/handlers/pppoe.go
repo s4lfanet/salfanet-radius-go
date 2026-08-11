@@ -534,6 +534,10 @@ func (h *PPPoEHandler) UpdateUser(c fiber.Ctx) error {
 		} else {
 			h.db.Model(&user).Update("syncedToRadius", true)
 		}
+		// Sync PPP secret to MikroTik so the correct profile is used
+		if user.RouterID != nil && *user.RouterID != "" {
+			h.managePppSecretAsync(*user.RouterID, user.Username, user.Password, groupName, false)
+		}
 	}
 
 	return c.JSON(user)
@@ -884,8 +888,11 @@ func (h *PPPoEHandler) generateFirstInvoice(user *models.PppoeUser, profile *mod
 }
 
 // managePppSecretAsync creates/updates a PPP Secret in MikroTik based on router auth_mode.
-// - auth_mode 'local': always create PPP Secret (enabled) — router manages auth locally
-// - auth_mode 'radius': only create if createPppSecret=true (disabled as backup)
+//   - auth_mode 'local': create PPP Secret (enabled) — router manages auth locally
+//   - auth_mode 'radius': create PPP Secret (enabled) — RADIUS handles auth, secret provides profile
+//     The PPP secret ensures MikroTik uses the user's assigned profile (e.g., "TEST PAKET")
+//     instead of the PPPoE server's default-profile. RADIUS still authenticates the user.
+//
 // Runs in a goroutine (fire-and-forget, best-effort) to not block the API response.
 func (h *PPPoEHandler) managePppSecretAsync(routerID, username, password, profileGroup string, createPppSecret bool) {
 	go func() {
@@ -900,14 +907,10 @@ func (h *PPPoEHandler) managePppSecretAsync(routerID, username, password, profil
 			authMode = "radius" // default
 		}
 
-		// RADIUS mode: skip unless admin explicitly requested PPP Secret
-		if authMode == "radius" && !createPppSecret {
-			log.Info().Str("username", username).Msg("[PPP_SECRET] skipped — router mode RADIUS, checkbox not checked")
-			return
-		}
-
-		// Local mode: create enabled. RADIUS mode with checkbox: create disabled (backup)
-		disabled := authMode == "radius"
+		// Always create enabled PPP secret so MikroTik uses the correct profile
+		// per user (e.g., "TEST PAKET") instead of the PPPoE server's default-profile.
+		// RADIUS still handles authentication; the secret only provides the profile.
+		disabled := false
 
 		// Build MikroTik API address
 		addr := fmt.Sprintf("%s:%d", router.IPAddress, router.Port)
